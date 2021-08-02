@@ -1,13 +1,27 @@
 @use '/src/scss/underscore' as _;
 
-.wrapper {
-  position: relative;
-  padding: _.unit(8);
+
+@mixin flex-colomn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.wrapper {
+  position: relative;
+  padding: _.unit(8);
   height: 100%;
+  @include flex-colomn;
+}
+
+.form {
+  width: 100%;
+  @include flex-colomn;
+
+  > * {
+    margin-bottom: _.unit(1.5);
+  }
 
   .title {
     font: var(--font-heading-1);

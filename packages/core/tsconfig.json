@@ -1,15 +1,9 @@
 {
-  "extends": "@logto/ts-config/tsconfig.base",
-  "compilerOptions": {
-    "outDir": "build",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    }
-  },
+  "extends": "./tsconfig.base",
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
   ]
 }

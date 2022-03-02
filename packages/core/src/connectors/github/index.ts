@@ -12,7 +12,7 @@ import {
   ConnectorError,
   ConnectorErrorCodes,
 } from '../types';
-import { getConnectorConfig } from '../utilities';
+import { getConnectorConfig, getConnectorRequestTimeout } from '../utilities';
 import { authorizationEndpoint, accessTokenEndpoint, scope, userInfoEndpoint } from './constant';
 
 export const metadata: ConnectorMetadata = {
@@ -77,6 +77,7 @@ export const getAccessToken: GetAccessToken = async (code) => {
         client_secret,
         code,
       },
+      timeout: await getConnectorRequestTimeout(),
     })
     .json<AccessTokenResponse>();
 
@@ -90,9 +91,9 @@ export const getAccessToken: GetAccessToken = async (code) => {
 export const getUserInfo: GetUserInfo = async (accessToken: string) => {
   type UserInfoResponse = {
     id: number;
-    avatar_url: string;
-    email: string;
-    name: string;
+    avatar_url?: string;
+    email?: string;
+    name?: string;
   };
 
   try {
@@ -106,6 +107,7 @@ export const getUserInfo: GetUserInfo = async (accessToken: string) => {
         headers: {
           authorization: `token ${accessToken}`,
         },
+        timeout: await getConnectorRequestTimeout(),
       })
       .json<UserInfoResponse>();
 

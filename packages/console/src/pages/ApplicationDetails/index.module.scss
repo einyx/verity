@@ -6,19 +6,6 @@
   }
 }
 
-.button {
-  padding-left: 0;
-
-  .body {
-    display: flex;
-    align-items: center;
-
-    > *:not(:first-child) {
-      margin-left: _.unit(1);
-    }
-  }
-}
-
 .container .header {
   padding: _.unit(8);
   display: flex;

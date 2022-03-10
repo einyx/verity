@@ -1,8 +1,10 @@
 import classNames from 'classnames';
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
-import CloseIcon from '../Icons/CloseIcon';
+import { ClearIcon } from '../Icons';
 import * as styles from './index.module.scss';
+
+type SupportedInputType = 'text' | 'email';
 
 export type Props = {
   name: string;
@@ -10,7 +12,7 @@ export type Props = {
   isDisabled?: boolean;
   className?: string;
   placeholder?: string;
-  type?: InputType;
+  type?: SupportedInputType;
   value: string;
   hasError?: boolean;
   onChange: (value: string) => void;
@@ -27,9 +29,13 @@ const Input = ({
   hasError = false,
   onChange,
 }: Props) => {
+  const [onFocus, setOnFocus] = useState(false);
+  const inputReference = useRef<HTMLInputElement>(null);
+
   return (
     <div className={classNames(styles.wrapper, className)}>
       <input
+        ref={inputReference}
         name={name}
         disabled={isDisabled}
         className={classNames(styles.input, hasError && styles.error)}
@@ -37,14 +43,22 @@ const Input = ({
         type={type}
         value={value}
         autoComplete={autoComplete}
+        onFocus={() => {
+          setOnFocus(true);
+        }}
+        onBlur={() => {
+          setOnFocus(false);
+        }}
         onChange={({ target: { value } }) => {
           onChange(value);
         }}
       />
-      {value && (
-        <CloseIcon
-          className={classNames(styles.clearButton)}
-          onClick={() => {
+      {value && onFocus && (
+        <ClearIcon
+          className={styles.actionButton}
+          onMouseDown={(event) => {
+            // Should execute before onFocus
+            event.preventDefault();
             onChange('');
           }}
         />

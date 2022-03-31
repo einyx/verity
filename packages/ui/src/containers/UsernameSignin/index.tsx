@@ -3,12 +3,12 @@
  * 1. API redesign handle api error and loading status globally in PageContext
  * 2. Input field validation, should move the validation rule to the input field scope
  * 3. Forgot password URL
- * 4. read terms of use settings from SignInExperience Settings
+ * 4. Read terms of use settings from SignInExperience Settings
  */
 
 import { LogtoErrorI18nKey } from '@logto/phrases';
 import classNames from 'classnames';
-import React, { FC, useState, useCallback, useEffect, useContext } from 'react';
+import React, { FC, useState, useCallback, useEffect, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { signInBasic } from '@/apis/sign-in';
@@ -33,6 +33,10 @@ type ErrorState = {
   [key in keyof FieldState]?: ErrorType;
 };
 
+type FieldValidations = {
+  [key in keyof FieldState]?: (state: FieldState) => ErrorType | undefined;
+};
+
 const defaultState: FieldState = {
   username: '',
   password: '',
@@ -48,41 +52,60 @@ const UsernameSignin: FC = () => {
 
   const { error, loading, result, run: asyncSignInBasic } = useApi(signInBasic);
 
+  const validations = useMemo<FieldValidations>(
+    () => ({
+      username: ({ username }) => {
+        if (!username) {
+          return { code: 'form.required', data: { fieldName: t('sign_in.username') } };
+        }
+      },
+      password: ({ password }) => {
+        if (!password) {
+          return { code: 'form.required', data: { fieldName: t('sign_in.password') } };
+        }
+      },
+      termsAgreement: ({ termsAgreement }) => {
+        if (!termsAgreement) {
+          return 'form.terms_required';
+        }
+      },
+    }),
+    [t]
+  );
+
   const onSubmitHandler = useCallback(async () => {
     // Should be removed after api redesign
     if (loading) {
       return;
     }
 
-    if (!fieldState.username) {
+    // Validates
+    const usernameError = validations.username?.(fieldState);
+    const passwordError = validations.password?.(fieldState);
+
+    if (usernameError || passwordError) {
       setFieldErrors((previous) => ({
         ...previous,
-        username: { code: 'form.required', data: { fieldName: t('sign_in.username') } },
+        username: usernameError,
+        password: passwordError,
       }));
-    }
 
-    if (!fieldState.password) {
-      setFieldErrors((previous) => ({
-        ...previous,
-        password: { code: 'form.required', data: { fieldName: t('sign_in.password') } },
-      }));
-    }
-
-    if (!fieldState.username || !fieldState.password) {
       return;
     }
 
-    if (!fieldState.termsAgreement) {
+    const termsAgreementError = validations.termsAgreement?.(fieldState);
+
+    if (termsAgreementError) {
       setFieldErrors((previous) => ({
         ...previous,
-        termsAgreement: 'form.terms_required',
+        termsAgreement: termsAgreementError,
       }));
 
       return;
     }
 
     void asyncSignInBasic(fieldState.username, fieldState.password);
-  }, [asyncSignInBasic, loading, t, fieldState]);
+  }, [loading, validations, fieldState, asyncSignInBasic]);
 
   useEffect(() => {
     if (result?.redirectTo) {
@@ -93,13 +116,20 @@ const UsernameSignin: FC = () => {
   useEffect(() => {
     // Clear errors
     for (const key of Object.keys(fieldState) as [keyof FieldState]) {
-      if (fieldState[key] && fieldErrors[key]) {
-        setFieldErrors((previous) => ({ ...previous, [key]: undefined }));
+      if (fieldState[key]) {
+        setFieldErrors((previous) => {
+          if (!previous[key]) {
+            return previous;
+          }
+
+          return { ...previous, [key]: undefined };
+        });
       }
     }
-  }, [fieldErrors, fieldState]);
+  }, [fieldState]);
 
   useEffect(() => {
+    // TODO: username password not correct error message
     if (error) {
       setToast(i18n.t<string, LogtoErrorI18nKey>(`errors:${error.code}`));
     }

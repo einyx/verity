@@ -10,6 +10,7 @@
 -   [LogtoClient.NotificationObject](Structs/LogtoClient.NotificationObject.md)
 -   [LogtoConfig](Structs/LogtoConfig.md)
 -   [LogtoError](Structs/LogtoError.md)
+
 ## Enums
 
 -   [LogtoClientErrorTypes](Enums/LogtoClientErrorTypes.md)

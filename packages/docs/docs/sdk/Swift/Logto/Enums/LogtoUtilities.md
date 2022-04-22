@@ -38,14 +38,13 @@ static func decodeIdToken(_ idToken: String) throws -> IdTokenClaims
 ```
 
 Decode ID Token claims WITHOUT validation.
-- Parameter token: The JWT to decode
-- Returns: A set of ID Token claims
+- Returns: A set of ID Token claims.
 
 #### Parameters
 
 | Name | Description |
 | ---- | ----------- |
-| token | The JWT to decode |
+| token | The JWT to decode. |
 
 ### `verifyIdToken(_:issuer:clientId:jwks:forTimeInterval:)`
 

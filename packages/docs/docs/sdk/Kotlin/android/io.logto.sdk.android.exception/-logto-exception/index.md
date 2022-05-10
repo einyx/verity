@@ -1,19 +1,19 @@
 # LogtoException
 
 
-class LogtoException(message: [Enum](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html)&lt;[LogtoException.Message](-message/index.md)&gt;, cause: [Throwable](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html)? = null) : [RuntimeException](https://developer.android.com/reference/kotlin/java/lang/RuntimeException.html)
+class LogtoException(type: [LogtoException.Type](-type/index.md), cause: [Throwable](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html)? = null) : [RuntimeException](https://developer.android.com/reference/kotlin/java/lang/RuntimeException.html)
 
 ## Constructors
 
-| Name  | Summary |
+| Name | Summary |
 |---|---|
-| LogtoException | fun LogtoException(message: [Enum](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html)&lt;[LogtoException.Message](-message/index.md)&gt;, cause: [Throwable](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html)? = null) |
+| LogtoException | fun LogtoException(type: [LogtoException.Type](-type/index.md), cause: [Throwable](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html)? = null) |
 
 ## Types
 
 | Name | Summary |
 |---|---|
-| [Message](-message/index.md) | enum [Message](-message/index.md) : [Enum](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html)&lt;[LogtoException.Message](-message/index.md)&gt; |
+| [Type](-type/index.md) | enum [Type](-type/index.md) : [Enum](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html)&lt;[LogtoException.Type](-type/index.md)&gt; |
 
 ## Properties
 

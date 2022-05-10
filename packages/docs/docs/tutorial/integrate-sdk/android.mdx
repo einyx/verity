@@ -7,27 +7,26 @@ import TabItem from '@theme/TabItem';
 
 # Integrate `io.logto.sdk:android`
 
-<Step
-  title="Install SDK"
-  subtitle="Install Logto Android SDK with Gradle"
-  index={0}
-  activeIndex={props.activeStepIndex}
-  invalidIndex={props.invalidStepIndex}
-  onNext={() => props.onNext(1)}
->
-
 ## Step1: Install Logto Android SDK with Gradle
 
 ### Prerequisite
-* Minimal Android SDK: Level 24 (TBD)
+* Minimal Android SDK: Level 24
 
+Add the `mavenCentral()` repository to your Gradle project build file:
+```kotlin
+repositories {
+    mavenCentral()
+}
+```
+
+Add the Logto Android SDK to your dependencies:
 <Tabs>
 
 <TabItem value="kotlin" label="Kotlin">
 
 ```kotlin
 dependencies {
-	implementation("io.logto.sdk:android:1.0.0")
+    implementation("io.logto.sdk:android:1.0.0")
 }
 ```
 
@@ -37,7 +36,7 @@ dependencies {
 
 ```groovy
 dependencies {
-	implementation 'io.logto.sdk:android:1.0.0'
+    implementation 'io.logto.sdk:android:1.0.0'
 }
 ```
 
@@ -45,16 +44,6 @@ dependencies {
 
 </Tabs>
 
-</Step>
-
-<Step
-  title="Configure"
-  subtitle="Configure your application and LogtoClient"
-  index={1}
-  activeIndex={props.activeStepIndex}
-  invalidIndex={props.invalidStepIndex}
-  onNext={() => props.onNext(2)}
->
 
 ## Step2: Configure
 
@@ -87,15 +76,15 @@ import io.logto.sdk.android.LogtoClient
 import io.logto.sdk.android.type.LogtoConfig
 
 class MainActivity : AppCompatActivity() {
-		val logtoConfig = LogtoConfig(
-            endpoint = "<your-logto-endpoint>",
-            appId = "<your-app-id>",
-            scopes = null,
-            resources = null,
-            usingPersistStorage = true,
-        )
+    val logtoConfig = LogtoConfig(
+        endpoint = "<your-logto-endpoint>",
+        appId = "<your-app-id>",
+        scopes = null,
+        resources = null,
+        usingPersistStorage = true,
+    )
 
-		val logtoClient = LogtoClient(logtoConfig, application)
+    val logtoClient = LogtoClient(logtoConfig, application)
 }
 ```
 
@@ -108,22 +97,22 @@ import io.logto.sdk.android.LogtoClient;
 import io.logto.sdk.android.type.LogtoConfig;
 
 public class MainActivity extends AppCompatActivity {
-		private LogtoClient logtoClient;
+    private LogtoClient logtoClient;
 
-		@Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_main);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-			LogtoConfig logtoConfig = new LogtoConfig(
-                "<your-logto-endpoint>",
-                "<your-app-id>",
-                null,
-                null,
-                true
-		    );
-	
-			logtoClient = new LogtoClient(logtoConfig, getApplication());
+        LogtoConfig logtoConfig = new LogtoConfig(
+            "<your-logto-endpoint>",
+            "<your-app-id>",
+            null,
+            null,
+            true
+        );
+
+        logtoClient = new LogtoClient(logtoConfig, getApplication());
     }
 }
 ```
@@ -137,16 +126,6 @@ Notes:
 - `<your-logto-endpoint>` is the logto service running in your machine. If you start logto service in `http://localhost:300` then `<your-logto-endpoint` will be `http://localhost:300`
 - `<your-app-id>` is the Application ID of your application, which is created in the Admin Console.
 
-</Step>
-
-<Step
-  title="Sign In"
-  subtitle="Sin In to your application by Logto and do some extra works"
-  index={2}
-  activeIndex={props.activeStepIndex}
-  invalidIndex={props.invalidStepIndex}
-  onNext={() => props.onNext(3)}
->
 
 ## Step3: Sign In
 
@@ -192,15 +171,15 @@ logtoClient.signInWithBrowser(
 
 ```kotlin
 logtoClient.getAccessToken { logtoException: LogtoException?, result: AccessToken? ->
-	// custom logic
+    // custom logic
 }
 
-logtoClient.getIdTokenClaims { logtoException: LogtoException?, result: IdTokenCliams? ->
-	// custom logic
+logtoClient.getIdTokenClaims { logtoException: LogtoException?, result: IdTokenClaims? ->
+    // custom logic
 }
 
 logtoClient.fetchUserInfo { logtoException: LogtoException?, userInfoResponse: UserInfoResponse? ->
-		// custom logic
+    // custom logic
 }
 ```
 
@@ -210,7 +189,7 @@ logtoClient.fetchUserInfo { logtoException: LogtoException?, userInfoResponse: U
 
 ```java
 logtoClient.getAccessToken((logtoException, accessToken) -> {
-	// custom logic
+    // custom logic
 });
 
 logtoClient.getIdTokenClaims((logtoException, idTokenClaims) -> {
@@ -226,15 +205,6 @@ logtoClient.fetchUserInfo((logtoException, userInfoResponse) -> {
 
 </Tabs>
 
-</Step>
-
-<Step
-  title="Sign Out"
-  index={3}
-  activeIndex={props.activeStepIndex}
-  invalidIndex={props.invalidStepIndex}
-  onNext={() => props.onNext(4)}
->
 
 ## Step4: Sign Out
 
@@ -246,7 +216,7 @@ logtoClient.fetchUserInfo((logtoException, userInfoResponse) -> {
 
 ```kotlin
 logtoClient.signOut { logtoException: LogtoException? ->
-	// custom logic
+    // custom logic
 }
 ```
 
@@ -268,22 +238,9 @@ Notes:
 
 - `signOut` will always clear local credentials even if errors occurred.
 
-</Step>
-
-<Step
-  title="Further Readings"
-  subtitle="3 steps"
-  index={4}
-  activeIndex={props.activeStepIndex}
-  invalidIndex={props.invalidStepIndex}
-  buttonText="general.done"
-  buttonHtmlType="submit"
->
 
 ## Step5: Further Readings
 
 - Fetch User Info
 - Configure Social Sign-In
 - Access Protected API Resources
-
-</Step>

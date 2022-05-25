@@ -1,3 +1,4 @@
+import MultiTextInputField from '@mdx/components/MultiTextInputField';
 import Step from '@mdx/components/Step';
 import Tabs from '@mdx/components/Tabs';
 import TabItem from '@mdx/components/TabItem';
@@ -12,8 +13,16 @@ import TabItem from '@mdx/components/TabItem';
 >
 
 ### Prerequisite
-* Minimal Android SDK: Level 24 (TBD)
+* Minimal Android SDK: Level 24
 
+Add the `mavenCentral()` repository to your Gradle project build file:
+```kotlin
+repositories {
+    mavenCentral()
+}
+```
+
+Add the Logto Android SDK to your dependencies:
 <Tabs>
 
 <TabItem value="kotlin" label="Kotlin">
@@ -55,7 +64,7 @@ The `Redirect URI` indicates the endpoint that the application used to receive a
 
 ### Configure Redirect URI in Admin Console
 
-Add the following value to Redirect URIs on the application settings page.
+Add the following value to Redirect URIs input field
 
 ```bash
 $(LOGTO_REDIRECT_SCHEME)://$(YOUR_APP_PACKAGE)/callback
@@ -66,6 +75,8 @@ Notes:
 - Replace `$(LOGTO_REDIRECT_SCHEME)` with your own settings.
 
 e.g. `io.logto.android://io.logto.sample/callback`
+
+<MultiTextInputField name="redirectUris" title="Redirect URI" onError={() => props.onError(2)} />
 
 ### Configure Logto Android SDK
 
@@ -132,7 +143,7 @@ Notes:
 
 <Step
   title="Sign In"
-  subtitle="Sin In to your application by Logto and do some extra works"
+  subtitle="Sign In to your application by Logto and do some extra works"
   index={2}
   activeIndex={props.activeStepIndex}
   invalidIndex={props.invalidStepIndex}

@@ -70,7 +70,7 @@ describe('<EmailForm/>', () => {
   });
 
   test('should display and clear the form error message as expected', () => {
-    const { queryByText, container, getByText } = renderWithPageContext(
+    const { queryByText, container } = renderWithPageContext(
       <MemoryRouter>
         <EmailForm
           errorMessage="form error"

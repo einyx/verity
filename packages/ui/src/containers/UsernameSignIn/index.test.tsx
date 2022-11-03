@@ -3,12 +3,12 @@ import { act } from 'react-dom/test-utils';
 
 import renderWithPageContext from '@/__mocks__/RenderWithPageContext';
 import SettingsProvider from '@/__mocks__/RenderWithPageContext/SettingsProvider';
-import { signInBasic } from '@/apis/sign-in';
+import { signInWithUsername } from '@/apis/sign-in';
 import ConfirmModalProvider from '@/containers/ConfirmModalProvider';
 
 import UsernameSignIn from '.';
 
-jest.mock('@/apis/sign-in', () => ({ signInBasic: jest.fn(async () => 0) }));
+jest.mock('@/apis/sign-in', () => ({ signInWithUsername: jest.fn(async () => 0) }));
 jest.mock('react-device-detect', () => ({
   isMobile: true,
 }));
@@ -163,7 +163,7 @@ describe('<UsernameSignIn>', () => {
 
     act(() => {
       void waitFor(() => {
-        expect(signInBasic).toBeCalledWith('username', 'password', undefined);
+        expect(signInWithUsername).toBeCalledWith('username', 'password', undefined);
       });
     });
   });

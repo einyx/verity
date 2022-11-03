@@ -7,14 +7,7 @@
     width: 100%;
   }
 
-  .inputField {
-    margin-bottom: _.unit(4);
-  }
-
-  .formFields {
-    margin-bottom: _.unit(8);
-  }
-
+  .inputField,
   .terms {
     margin-bottom: _.unit(4);
   }
@@ -22,11 +15,5 @@
   .formErrors {
     margin-top: _.unit(-2);
     margin-bottom: _.unit(4);
-  }
-}
-
-:global(body.desktop) {
-  .formFields {
-    margin-bottom: _.unit(2);
   }
 }

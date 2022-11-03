@@ -21,7 +21,7 @@ const useEmailSignIn = ({ password, isPasswordPrimary, verificationCode }: Metho
         setErrorMessage('invalid_email');
       },
     }),
-    [setErrorMessage]
+    []
   );
 
   const clearErrorMessage = useCallback(() => {

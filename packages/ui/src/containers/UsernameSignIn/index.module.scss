@@ -7,26 +7,19 @@
     width: 100%;
   }
 
-  .inputField {
-    margin-bottom: _.unit(4);
-  }
-
-  .formFields {
-    margin-bottom: _.unit(8);
-  }
-
+  .inputField,
+  .link,
   .terms {
     margin-bottom: _.unit(4);
+  }
+
+  .link {
+    align-self: start;
+    width: auto;
   }
 
   .formErrors {
     margin-top: _.unit(-2);
     margin-bottom: _.unit(4);
-  }
-}
-
-:global(body.desktop) {
-  .formFields {
-    margin-bottom: _.unit(2);
   }
 }

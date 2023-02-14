@@ -38,11 +38,13 @@ const PasswordSignInForm = ({ className, autoFocus, signInMethods }: Props) => {
 
   const { termsValidation } = useTerms();
   const { errorMessage, clearErrorMessage, onSubmit } = usePasswordSignIn();
-  const { isForgotPasswordEnabled, ...passwordlessMethod } = useForgotPasswordSettings();
+  const { getEnabledRetrievePasswordIdentifier } = useForgotPasswordSettings();
 
   const [inputType, setInputType] = useState<IdentifierInputType>(
     signInMethods[0] ?? SignInIdentifier.Username
   );
+
+  const forgotPasswordIdentifier = getEnabledRetrievePasswordIdentifier(inputType);
 
   const {
     register,
@@ -119,14 +121,11 @@ const PasswordSignInForm = ({ className, autoFocus, signInMethods }: Props) => {
         {...register('password', { required: true })}
       />
 
-      {isForgotPasswordEnabled && (
-        <ForgotPasswordLink
-          className={styles.link}
-          method={passwordlessMethod.email ? SignInIdentifier.Email : SignInIdentifier.Phone}
-        />
-      )}
-
       {errorMessage && <ErrorMessage className={styles.formErrors}>{errorMessage}</ErrorMessage>}
+
+      {forgotPasswordIdentifier && (
+        <ForgotPasswordLink className={styles.link} method={forgotPasswordIdentifier} />
+      )}
 
       <TermsOfUse className={styles.terms} />
 

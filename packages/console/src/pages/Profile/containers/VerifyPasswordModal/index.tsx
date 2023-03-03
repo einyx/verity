@@ -1,6 +1,7 @@
+import { conditional } from '@silverhand/essentials';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import ArrowConnection from '@/assets/images/arrow-connection.svg';
 import Button from '@/components/Button';
@@ -10,6 +11,7 @@ import { adminTenantEndpoint, meApi } from '@/consts';
 import { useStaticApi } from '@/hooks/use-api';
 
 import MainFlowLikeModal from '../../components/MainFlowLikeModal';
+import { checkLocationState } from '../../utils';
 
 type FormFields = {
   password: string;
@@ -18,6 +20,7 @@ type FormFields = {
 const VerifyPasswordModal = () => {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const navigate = useNavigate();
+  const { state } = useLocation();
   const {
     register,
     reset,
@@ -28,6 +31,7 @@ const VerifyPasswordModal = () => {
     reValidateMode: 'onBlur',
   });
   const api = useStaticApi({ prefixUrl: adminTenantEndpoint, resourceIndicator: meApi.indicator });
+  const email = conditional(checkLocationState(state) && state.email);
 
   const onClose = () => {
     navigate('/profile');
@@ -36,9 +40,9 @@ const VerifyPasswordModal = () => {
   const onSubmit = () => {
     clearErrors();
     void handleSubmit(async ({ password }) => {
-      await api.post(`me/password/verify`, { json: { password } }).json();
+      await api.post(`me/password/verify`, { json: { password } });
       reset({});
-      navigate('../change-password');
+      navigate('../change-password', { state });
     })();
   };
 
@@ -47,6 +51,7 @@ const VerifyPasswordModal = () => {
       title="profile.password.enter_password"
       subtitle="profile.password.enter_password_subtitle"
       onClose={onClose}
+      onGoBack={onClose}
     >
       <TextInput
         {...register('password', {
@@ -71,7 +76,17 @@ const VerifyPasswordModal = () => {
         isLoading={isSubmitting}
         onClick={onSubmit}
       />
-      <TextLink icon={<ArrowConnection />}>{t('profile.code.verify_via_code')}</TextLink>
+      {email && (
+        <TextLink
+          icon={<ArrowConnection />}
+          onClick={() => {
+            void api.post('me/verification-codes', { json: { email } });
+            navigate('../verification-code', { state });
+          }}
+        >
+          {t('profile.code.verify_via_code')}
+        </TextLink>
+      )}
     </MainFlowLikeModal>
   );
 };

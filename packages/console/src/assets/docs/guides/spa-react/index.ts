@@ -10,6 +10,7 @@ const metadata: Readonly<GuideMetadata> = Object.freeze({
     repo: 'js',
     path: 'packages/react-sample',
   },
+  isFeatured: true,
 });
 
 export default metadata;

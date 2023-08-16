@@ -11,6 +11,7 @@ const metadata: Readonly<GuideMetadata> = Object.freeze({
     repo: 'js',
     path: 'packages/next-sample',
   },
+  isFeatured: true,
 });
 
 export default metadata;

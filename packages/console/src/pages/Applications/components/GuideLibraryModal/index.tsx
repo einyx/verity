@@ -38,6 +38,7 @@ function GuideLibraryModal({ isOpen, onClose }: Props) {
         />
         <GuideLibrary hasFilters hasCardButton className={styles.content} />
         <ModalFooter
+          wrapperClassName={styles.footerInnerWrapper}
           content="guide.do_not_need_tutorial"
           buttonText="guide.app.continue_without_framework"
           onClick={() => {

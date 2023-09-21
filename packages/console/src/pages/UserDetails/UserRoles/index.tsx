@@ -1,4 +1,5 @@
 import type { Role } from '@logto/schemas';
+import { RoleType } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -20,11 +21,11 @@ import { Tooltip } from '@/ds-components/Tip';
 import type { RequestError } from '@/hooks/use-api';
 import useApi from '@/hooks/use-api';
 import useSearchParametersWatcher from '@/hooks/use-search-parameters-watcher';
+import AssignToRoleModal from '@/pages/Roles/components/AssignToRoleModal';
 import { buildUrl, formatSearchKeyword } from '@/utils/url';
 
 import type { UserDetailsOutletContext } from '../types';
 
-import AssignRolesModal from './components/AssignRolesModal';
 import * as styles from './index.module.scss';
 
 const pageSize = defaultPageSize;
@@ -166,8 +167,9 @@ function UserRoles() {
         </ConfirmModal>
       )}
       {isAssignRolesModalOpen && (
-        <AssignRolesModal
-          user={user}
+        <AssignToRoleModal
+          entity={user}
+          type={RoleType.User}
           onClose={(success) => {
             if (success) {
               void mutate();

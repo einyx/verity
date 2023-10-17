@@ -1,19 +1,15 @@
-import { useLocation } from 'react-router-dom';
-import { validate } from 'superstruct';
-
 import SecondaryPageLayout from '@/Layout/SecondaryPageLayout';
 import SectionLayout from '@/Layout/SectionLayout';
 import SwitchMfaFactorsLink from '@/components/SwitchMfaFactorsLink';
 import TotpCodeVerification from '@/containers/TotpCodeVerification';
+import useMfaFactorsState from '@/hooks/use-mfa-factors-state';
 import ErrorPage from '@/pages/ErrorPage';
 import { UserMfaFlow } from '@/types';
-import { mfaFactorsStateGuard } from '@/types/guard';
 
 import * as styles from './index.module.scss';
 
 const TotpVerification = () => {
-  const { state } = useLocation();
-  const [, mfaFactorsState] = validate(state, mfaFactorsStateGuard);
+  const mfaFactorsState = useMfaFactorsState();
 
   if (!mfaFactorsState) {
     return <ErrorPage title="error.invalid_session" />;

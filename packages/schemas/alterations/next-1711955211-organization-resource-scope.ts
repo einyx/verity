@@ -20,6 +20,15 @@ const alteration: AlterationScript = {
     await applyTableRls(pool, 'organization_role_resource_scope_relations');
   },
   down: async (pool) => {
+    const result = await pool.maybeOne(sql`
+      select * from information_schema.tables 
+      where table_name = 'organization_role_resource_scope_relations'
+    `);
+
+    if (!result) {
+      return;
+    }
+
     await dropTableRls(pool, 'organization_role_resource_scope_relations');
     await pool.query(sql`
       drop table organization_role_resource_scope_relations

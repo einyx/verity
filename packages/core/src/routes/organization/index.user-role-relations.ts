@@ -8,12 +8,13 @@ import { type WithHookContext } from '#src/middleware/koa-management-api-hooks.j
 import koaPagination from '#src/middleware/koa-pagination.js';
 import type OrganizationQueries from '#src/queries/organization/index.js';
 
-// Manually add these routes since I don't want to over-engineer the `SchemaRouter`
+// Manually add these routes since I don't want to over-engineer the `SchemaRouter`.
+// Update: Now we also have "organization - organization role - application" relations. Consider
+// extracting the common logic to a class once we have one more relation like this.
 export default function userRoleRelationRoutes(
   router: Router<unknown, WithHookContext>,
   organizations: OrganizationQueries
 ) {
-  // MARK: Organization - user - organization role relation routes
   const params = Object.freeze({ id: z.string().min(1), userId: z.string().min(1) } as const);
   const pathname = '/:id/users/:userId/roles';
 
@@ -57,24 +58,6 @@ export default function userRoleRelationRoutes(
     }
   );
 
-  router.put(
-    pathname,
-    koaGuard({
-      params: z.object(params),
-      body: z.object({ organizationRoleIds: z.string().min(1).array() }),
-      status: [204, 422],
-    }),
-    async (ctx, next) => {
-      const { id, userId } = ctx.guard.params;
-      const { organizationRoleIds } = ctx.guard.body;
-
-      await organizations.relations.rolesUsers.replace(id, userId, organizationRoleIds);
-
-      ctx.status = 204;
-      return next();
-    }
-  );
-
   router.post(
     pathname,
     koaGuard({
@@ -95,6 +78,24 @@ export default function userRoleRelationRoutes(
       );
 
       ctx.status = 201;
+      return next();
+    }
+  );
+
+  router.put(
+    pathname,
+    koaGuard({
+      params: z.object(params),
+      body: z.object({ organizationRoleIds: z.string().min(1).array() }),
+      status: [204, 422],
+    }),
+    async (ctx, next) => {
+      const { id, userId } = ctx.guard.params;
+      const { organizationRoleIds } = ctx.guard.body;
+
+      await organizations.relations.rolesUsers.replace(id, userId, organizationRoleIds);
+
+      ctx.status = 204;
       return next();
     }
   );

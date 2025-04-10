@@ -1,9 +1,10 @@
 import ExpectConsole from '#src/ui-helpers/expect-console.js';
 import { getInputValue } from '#src/ui-helpers/index.js';
+import { devFeatureDisabledTest } from '#src/utils.js';
 
 const expectConsole = new ExpectConsole(await browser.newPage());
 
-describe('sign-in experience: password policy', () => {
+devFeatureDisabledTest.describe('sign-in experience: password policy', () => {
   it('navigates to sign-in experience page', async () => {
     await expectConsole.start();
     await expectConsole.gotoPage('/sign-in-experience', 'Sign-in experience');

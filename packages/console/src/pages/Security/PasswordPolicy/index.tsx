@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next';
-
 import { FormCardSkeleton } from '@/components/FormCard';
 import PageMeta from '@/components/PageMeta';
 import RequestDataError from '@/components/RequestDataError';
@@ -10,10 +8,6 @@ import usePasswordPolicy from './use-password-policy';
 
 function PasswordPolicy() {
   const { isLoading, data, error, mutate } = usePasswordPolicy();
-
-  const { t } = useTranslation(undefined, {
-    keyPrefix: 'admin_console.security.password_policy',
-  });
 
   return (
     <div className={styles.content}>

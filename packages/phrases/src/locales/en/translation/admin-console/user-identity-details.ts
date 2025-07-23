@@ -10,6 +10,14 @@ const user_identity_details = {
     identity_id: 'Social identity ID',
     user_profile: 'User profile synced from social identity provider',
   },
+  sso_account: {
+    title: 'Enterprise SSO account',
+    description:
+      'View user data and profile information synced from the linked {{connectorName}} account.',
+    provider_name: 'Enterprise SSO identity provider name',
+    identity_id: 'Enterprise SSO identity ID',
+    user_profile: 'User profile synced from enterprise SSO identity provider',
+  },
   token_storage: {
     title: 'Token status',
     description:

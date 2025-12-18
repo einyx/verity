@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import type { InputHTMLAttributes, Ref } from 'react';
 import { forwardRef } from 'react';
 
-import CheckboxIcon from '@/assets/icons/checkbox-icon.svg?react';
+import CheckboxIcon from '@/shared/assets/icons/checkbox-icon.svg?react';
 
 import styles from './index.module.scss';
 

@@ -5,9 +5,8 @@ import { useSWRConfig } from 'swr';
 
 import ConfirmModal from '@/ds-components/ConfirmModal';
 import useApi from '@/hooks/use-api';
+import { cimdConfigEndpoint } from '@/hooks/use-dynamic-app';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
-
-import { cimdConfigEndpoint } from '../../hooks/use-dynamic-app';
 
 type Props = {
   readonly onClose: () => void;

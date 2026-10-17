@@ -89,6 +89,8 @@ COPY packages/elements/package.json packages/elements/package.json
 COPY packages/experience/package.json packages/experience/package.json
 COPY packages/integration-tests/package.json packages/integration-tests/package.json
 COPY packages/mcp-portal/package.json packages/mcp-portal/package.json
+COPY packages/cloud/package.json packages/cloud/package.json
+COPY packages/tenant-seed/package.json packages/tenant-seed/package.json
 COPY packages/phrases-experience/package.json packages/phrases-experience/package.json
 COPY packages/phrases/package.json packages/phrases/package.json
 COPY packages/schemas/package.json packages/schemas/package.json

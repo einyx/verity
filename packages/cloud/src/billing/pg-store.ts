@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { z } from 'zod';
 
-import { invoiceGuard, type Invoice } from './invoice.js';
 import { type InvitationRecord, invitationStatusGuard } from './invitation.js';
+import { invoiceGuard, type Invoice } from './invoice.js';
+import { skuGuard, type Sku, type SkuType } from './sku.js';
+import { type BillingStore, type TenantRole } from './store.js';
+import { subscriptionGuard, type Subscription } from './subscription.js';
 
 const invitationRow = z.object({
   id: z.string(),
@@ -25,7 +29,6 @@ const toInvitationRecord = (row: z.infer<typeof invitationRow>): InvitationRecor
   createdAt: row.created_at,
   expiresAt: row.expires_at,
 });
-import { skuGuard, type Sku, type SkuType } from './sku.js';
 
 const invoiceRow = z.object({
   id: z.string(),
@@ -49,8 +52,6 @@ const invoiceRow = z.object({
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),
 });
-import { type BillingStore, type TenantRole } from './store.js';
-import { subscriptionGuard, type Subscription } from './subscription.js';
 
 const skuRow = z.object({
   type: z.string(),
@@ -120,6 +121,7 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       const parsed = skuRow.parse(row);
 
       return skuGuard.parse({
+        // eslint-disable-next-line no-restricted-syntax -- The column is constrained to the SKU type values by the schema, so the cast only narrows the string to the enum.
         type: parsed.type as SkuType,
         id: parsed.id,
         createdAt: parsed.created_at,
@@ -219,4 +221,47 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       update tenant_invitations set status = ${status} where id = ${id}
     `);
   },
+  claimStripeEvent: async (eventId, type): Promise<boolean> => {
+    const row = await pool.maybeOne(sql`
+      insert into billing_stripe_events (event_id, type)
+      values (${eventId}, ${type})
+      on conflict (event_id) do nothing
+      returning event_id
+    `);
+
+    return row !== null;
+  },
+  releaseStripeEvent: async (eventId): Promise<void> => {
+    await pool.query(sql`
+      delete from billing_stripe_events where event_id = ${eventId}
+    `);
+  },
+  activateStripeSubscription: async (activation): Promise<void> => {
+    // The quota snapshot is copied from the SKU so reads do not need to join the catalogue. An
+    // unknown plan makes the quota null, which violates the not-null constraint and fails the
+    // webhook loudly instead of storing an empty quota.
+    await pool.query(sql`
+      insert into billing_subscriptions (
+        tenant_id, plan_id, status, is_enterprise_plan, is_dev_plan, has_billing_customer,
+        current_period_start, current_period_end, quota, system_limit,
+        stripe_customer_id, stripe_subscription_id
+      ) values (
+        ${activation.tenantId}, ${activation.planId}, 'active', false, false, true,
+        ${activation.periodStart.toISOString()}, ${activation.periodEnd.toISOString()},
+        (select quota from billing_skus where id = ${activation.planId}),
+        '{}'::jsonb, ${activation.stripeCustomerId}, ${activation.stripeSubscriptionId}
+      )
+      on conflict (tenant_id) do update set
+        plan_id = excluded.plan_id,
+        status = excluded.status,
+        has_billing_customer = true,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        quota = excluded.quota,
+        stripe_customer_id = excluded.stripe_customer_id,
+        stripe_subscription_id = excluded.stripe_subscription_id
+    `);
+  },
 });
+
+/* eslint-enable @typescript-eslint/ban-types */

@@ -1,7 +1,8 @@
-import { type Invoice } from './invoice.js';
+/* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
 import { type InvitationRecord } from './invitation.js';
+import { type Invoice } from './invoice.js';
 import { type Sku, type SkuType } from './sku.js';
-import { type Subscription } from './subscription.js';
+import { logtoSkuQuotaGuard, type Subscription } from './subscription.js';
 
 /** A tenant member's role. Admins can manage the tenant's members and invitations. */
 export type TenantRole = 'admin' | 'member';
@@ -9,6 +10,16 @@ export type TenantRole = 'admin' | 'member';
 export type MemberIdentity = {
   issuer: string;
   sub: string;
+};
+
+/** The paid subscription that a Stripe checkout produced for a tenant. */
+export type StripeActivation = {
+  tenantId: string;
+  planId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  periodStart: Date;
+  periodEnd: Date;
 };
 
 /**
@@ -32,6 +43,15 @@ export type BillingStore = {
   createInvitation: (record: InvitationRecord) => Promise<void>;
   /** Moves an invitation to a new status. */
   setInvitationStatus: (id: string, status: InvitationRecord['status']) => Promise<void>;
+  /**
+   * Claims a Stripe event before it is processed. Returns `false` when the event was already
+   * claimed, so a redelivered event is not applied twice.
+   */
+  claimStripeEvent: (eventId: string, type: string) => Promise<boolean>;
+  /** Drops a claim so that Stripe's next delivery of the event is processed. */
+  releaseStripeEvent: (eventId: string) => Promise<void>;
+  /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
+  activateStripeSubscription: (activation: StripeActivation) => Promise<void>;
 };
 
 export const createInMemoryBillingStore = (
@@ -44,9 +64,11 @@ export const createInMemoryBillingStore = (
   } = {}
 ): BillingStore => {
   const invitations = [...(data.invitations ?? [])];
+  const subscriptions = new Map(Object.entries(data.subscriptions ?? {}));
+  const claimedEvents = new Set<string>();
 
   return {
-    findSubscription: async (tenantId) => data.subscriptions?.[tenantId] ?? null,
+    findSubscription: async (tenantId) => subscriptions.get(tenantId) ?? null,
     listSkus: async ({ type }) =>
       (data.skus ?? []).filter((sku) => (type ? sku.type === type : true)),
     listInvoices: async (tenantId) => data.invoices?.[tenantId] ?? [],
@@ -57,17 +79,51 @@ export const createInMemoryBillingStore = (
     listInvitations: async (tenantId) =>
       invitations
         .filter((invitation) => invitation.tenantId === tenantId)
-        .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        .toSorted((left, right) => right.createdAt.getTime() - left.createdAt.getTime()),
     findInvitation: async (id) => invitations.find((invitation) => invitation.id === id) ?? null,
     createInvitation: async (record) => {
+      // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- The in-memory store is the test double for the database and is mutated on purpose.
       invitations.push(record);
     },
     setInvitationStatus: async (id, status) => {
       const invitation = invitations.find((item) => item.id === id);
 
       if (invitation) {
+        // eslint-disable-next-line @silverhand/fp/no-mutation -- The in-memory store is the test double for the database and is mutated on purpose.
         invitation.status = status;
       }
     },
+    claimStripeEvent: async (eventId) => {
+      if (claimedEvents.has(eventId)) {
+        return false;
+      }
+
+      claimedEvents.add(eventId);
+      return true;
+    },
+    releaseStripeEvent: async (eventId) => {
+      claimedEvents.delete(eventId);
+    },
+    activateStripeSubscription: async (activation) => {
+      const sku = (data.skus ?? []).find((item) => item.id === activation.planId);
+
+      if (!sku) {
+        throw new Error(`Unknown plan ${activation.planId}.`);
+      }
+
+      subscriptions.set(activation.tenantId, {
+        planId: activation.planId,
+        status: 'active',
+        isEnterprisePlan: false,
+        isDevPlan: false,
+        hasBillingCustomer: true,
+        currentPeriodStart: activation.periodStart.toISOString(),
+        currentPeriodEnd: activation.periodEnd.toISOString(),
+        quota: logtoSkuQuotaGuard.parse(sku.quota),
+        systemLimit: {},
+      });
+    },
   };
 };
+
+/* eslint-enable @typescript-eslint/ban-types */

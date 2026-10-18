@@ -87,6 +87,16 @@ export const billingSchemaSql = sql`
   );
 
   create index if not exists tenant_invitations_tenant_id on tenant_invitations (tenant_id);
+
+  alter table billing_subscriptions add column if not exists stripe_customer_id text;
+  alter table billing_subscriptions add column if not exists stripe_subscription_id text;
+
+  create table if not exists billing_stripe_events (
+    event_id varchar(255) not null,
+    type varchar(128) not null,
+    received_at timestamptz not null default now(),
+    primary key (event_id)
+  );
 `;
 
 export const migrateBillingSchema = async (pool: CommonQueryMethods) => {

@@ -151,8 +151,8 @@ describe('create tools', () => {
         postLogoutRedirectUris: [],
       },
     });
-    expect(typeof sent.id).toBe('string');
-    expect(typeof sent.secret).toBe('string');
+    expect(sent).not.toHaveProperty('id');
+    expect(sent).not.toHaveProperty('secret');
   });
 });
 

@@ -24,15 +24,34 @@ import {
   buildLogtoToolUrl,
   callLogtoTool,
   enabledLogtoMcpTools,
+  type LogtoMcpTool,
   sendLogtoRequest,
 } from './mcp-logto-tools.js';
 import type { ManagementApiRouter, ManagementApiRouterContext, RouterInitArgs } from './types.js';
 
 const defaultModel = 'gpt-4.1';
 
-const systemPrompt = `You are MeshX AI, an assistant inside the MeshX admin console.
-Give short, step-by-step answers about setting up and operating MeshX and Logto.
+const systemPrompt = `You are MeshX AI, the assistant inside the MeshX admin console. You help the admin operate this tenant and answer questions about setting up MeshX and Logto.
+Answer the question asked, with specifics you have. Use short numbered steps for how-to questions.
 If you are not sure about a detail, say so instead of guessing.`;
+
+const capabilityGuidance = `When the admin asks what you can do, answer in two or three short sentences of plain language, not a list of tool names. Group what you can do by what the admin wants: looking things up (applications, users, organizations, roles, API resources), and creating things, which you propose and the admin approves. Then say what you cannot do yet: changing settings, configuring MFA, creating stacks or stack templates, and editing or deleting resources. End with one concrete thing they could ask next, such as "show me the applications in this tenant".`;
+
+const noToolsGuidance = `You cannot read or change this tenant right now, so answer from general knowledge and say so when a question needs the tenant's data.`;
+
+/**
+ * The system prompt for a chat. The tool list comes from the tools this caller may use, so the
+ * assistant only describes what the server will actually run.
+ */
+export const buildSystemPrompt = (tools: readonly LogtoMcpTool[]) => {
+  if (tools.length === 0) {
+    return `${systemPrompt}\n\n${noToolsGuidance}`;
+  }
+
+  const toolList = tools.map(({ name, description }) => `- ${name}: ${description}`).join('\n');
+
+  return `${systemPrompt}\n\n${toolGuidance}\n\n${capabilityGuidance}\n\nTools:\n${toolList}`;
+};
 
 const messageGuard = object({
   role: z.enum(['user', 'assistant']),
@@ -128,7 +147,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
       // Tools are only offered while dev features are on. Reads run with the caller's token, and
       // writes only become pending actions that the user confirms.
       const tools = isDevFeaturesEnabled ? enabledLogtoMcpTools(true) : [];
-      const prompt = tools.length > 0 ? `${systemPrompt}\n\n${toolGuidance}` : systemPrompt;
+      const prompt = buildSystemPrompt(tools);
       const token = bearer(ctx);
       const store = createPendingActionStore(tenant.envSet.pool);
       const actions = new Map<string, PendingActionSummary>();

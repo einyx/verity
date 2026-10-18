@@ -233,11 +233,7 @@ function AiChat({ className }: Props) {
       >
         <SetupBanner icon={Icon} />
         <div className={styles.messages}>
-          <MessageBubble
-            sender="assistant"
-            content={t('inkeep_ai_bot.intro_message')}
-            icon={Icon}
-          />
+          <MessageBubble sender="assistant" content={t('inkeep_ai_bot.intro_message')} />
           {messages.length === 0 && Array.isArray(exampleQuestions) && (
             <div className={styles.examples}>
               <div className={styles.examplesLabel}>
@@ -261,7 +257,7 @@ function AiChat({ className }: Props) {
             // Messages are only appended, never reordered, so the index is a stable key.
             // eslint-disable-next-line react/no-array-index-key
             <div key={index}>
-              <MessageBubble sender={message.role} content={message.content} icon={Icon} />
+              <MessageBubble sender={message.role} content={message.content} />
               {message.actions?.map((action) => (
                 <ProposedActionCard
                   key={action.id}
@@ -277,15 +273,15 @@ function AiChat({ className }: Props) {
             </div>
           ))}
           {isLoading && (
-            <div className={styles.row}>
-              <div className={styles.avatar}>{Icon}</div>
-              <div className={classNames(styles.bubble, styles.assistantBubble)}>
-                <span className={styles.typing} aria-label="…">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </div>
+            <div className={styles.working}>
+              <span aria-hidden className={styles.assistantMark}>
+                ●
+              </span>
+              <span className={styles.typing} aria-label="…">
+                <span />
+                <span />
+                <span />
+              </span>
             </div>
           )}
           {hasError && <div className={styles.error}>{t('inkeep_ai_bot.unavailable')}</div>}

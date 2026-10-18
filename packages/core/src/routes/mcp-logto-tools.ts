@@ -1,4 +1,3 @@
-import { generateStandardId, generateStandardSecret } from '@logto/shared';
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 // Tools for managing this Logto tenant over MCP. Each tool is one Management API call, made with
@@ -72,7 +71,8 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   },
   {
     name: 'list_organizations',
-    description: 'List the organizations in this tenant.',
+    description:
+      'List the Logto organizations in this tenant. Logto organizations are not Foundation workspaces: Foundation stacks are created and managed through Kubo, and this tenant has no tool for them.',
     path: '/organizations',
     properties: pagingProperties,
   },
@@ -91,7 +91,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
     name: 'create_application',
     description:
-      'Create an application in this tenant. The id and client secret are generated for you and returned in the result.',
+      'Create an application in this tenant. Logto generates its id and credentials; the client secret is not returned here.',
     path: '/applications',
     method: 'POST',
     properties: {
@@ -110,9 +110,9 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
       },
     },
     required: ['name', 'type'],
+    // The id and secret are left to Logto. A value sent here is ignored, and showing one for
+    // review would show the user a credential that is not the app's real one.
     body: (args) => ({
-      id: generateStandardId(),
-      secret: generateStandardSecret(),
       name: args.name,
       type: args.type,
       description: args.description,

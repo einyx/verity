@@ -263,6 +263,13 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         stripe_subscription_id = excluded.stripe_subscription_id
     `);
   },
+  findStripeCustomerId: async (tenantId): Promise<string | null> => {
+    const row = await pool.maybeOne(sql`
+      select stripe_customer_id from billing_subscriptions where tenant_id = ${tenantId}
+    `);
+
+    return row?.stripe_customer_id ? String(row.stripe_customer_id) : null;
+  },
   updateStripeSubscription: async (update): Promise<void> => {
     // The period end only moves forward, so an older event cannot overwrite a newer period. An ended
     // subscription stays ended: a paid status arriving late cannot restore it.

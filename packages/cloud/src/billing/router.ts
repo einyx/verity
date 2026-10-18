@@ -13,6 +13,7 @@ import {
   type CheckoutConfig,
   createCheckoutBodyGuard,
   createCheckoutSession,
+  createPortalSession,
   readCheckoutStatus,
 } from './checkout.js';
 import { effectiveSubscription } from './entitlement.js';
@@ -243,5 +244,39 @@ export const createBillingRouter = (
         );
 
         return next({ ...context, json: status });
+      }
+    )
+    // The console sends the page to Stripe's billing portal, where the customer manages their card.
+    .post(
+      '/api/tenants/:tenantId/stripe-customer-portal',
+      {
+        body: z.object({ callbackUrl: z.string() }),
+        response: z.object({ redirectUri: z.string() }),
+      },
+      async (context, next) => {
+        const { tenantId } = context.guarded.params;
+
+        await authorizeTenantAdmin(context.request.headers.authorization, tenantId, auth, store);
+
+        if (!checkout) {
+          throw new RequestError('Checkout is not configured.', 503);
+        }
+
+        const customerId = await store.findStripeCustomerId(tenantId);
+
+        if (!customerId) {
+          throw new RequestError('No billing account for this tenant.', 404);
+        }
+
+        const outcome = await createPortalSession(checkout, {
+          customerId,
+          returnUrl: context.guarded.body.callbackUrl,
+        });
+
+        if (!outcome.ok) {
+          throw new RequestError(outcome.message, outcome.status);
+        }
+
+        return next({ ...context, json: { redirectUri: outcome.redirectUri } });
       }
     );

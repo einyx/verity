@@ -60,6 +60,8 @@ export type BillingStore = {
   claimStripeEvent: (eventId: string, type: string) => Promise<boolean>;
   /** Drops a claim so that Stripe's next delivery of the event is processed. */
   releaseStripeEvent: (eventId: string) => Promise<void>;
+  /** The Stripe customer of a tenant's paid subscription, or `null` when none was recorded. */
+  findStripeCustomerId: (tenantId: string) => Promise<string | null>;
   /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
   activateStripeSubscription: (activation: StripeActivation) => Promise<void>;
   /** Applies a status and period from Stripe. Does nothing when no subscription has that Stripe id. */
@@ -79,6 +81,7 @@ export const createInMemoryBillingStore = (
   const subscriptions = new Map(Object.entries(data.subscriptions ?? {}));
   const claimedEvents = new Set<string>();
   const tenantByStripeSubscription = new Map<string, string>();
+  const stripeCustomerByTenant = new Map<string, string>();
 
   return {
     findSubscription: async (tenantId) => subscriptions.get(tenantId) ?? null,
@@ -106,6 +109,7 @@ export const createInMemoryBillingStore = (
         invitation.status = status;
       }
     },
+    findStripeCustomerId: async (tenantId) => stripeCustomerByTenant.get(tenantId) ?? null,
     claimStripeEvent: async (eventId) => {
       if (claimedEvents.has(eventId)) {
         return false;
@@ -125,6 +129,7 @@ export const createInMemoryBillingStore = (
       }
 
       tenantByStripeSubscription.set(activation.stripeSubscriptionId, activation.tenantId);
+      stripeCustomerByTenant.set(activation.tenantId, activation.stripeCustomerId);
       subscriptions.set(activation.tenantId, {
         planId: activation.planId,
         status: activation.status,

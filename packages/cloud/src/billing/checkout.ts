@@ -148,3 +148,46 @@ export const readCheckoutStatus = async (
     status: paid ? 'complete' : 'open',
   };
 };
+
+export type PortalOutcome =
+  | { ok: true; redirectUri: string }
+  | { ok: false; status: 400 | 502; message: string };
+
+const portalSessionGuard = z.object({ url: z.string().nullable() });
+
+/**
+ * Opens Stripe's hosted billing portal for a customer, where a card can be added or changed. The
+ * return URL must be on an allowed origin, the same rule as checkout.
+ */
+export const createPortalSession = async (
+  config: CheckoutConfig,
+  input: { customerId: string; returnUrl: string },
+  fetcher: typeof fetch = fetch
+): Promise<PortalOutcome> => {
+  const returnUrl = parseReturnUrl(input.returnUrl, config.returnOrigins);
+
+  if (!returnUrl) {
+    return { ok: false, status: 400, message: 'The return URL must be on an allowed origin.' };
+  }
+
+  const response = await fetcher('https://api.stripe.com/v1/billing_portal/sessions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.stripeSecretKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ customer: input.customerId, return_url: returnUrl }),
+    signal: AbortSignal.timeout(stripeRequestTimeoutMs),
+  });
+  const body: unknown = await response.json();
+  const session = portalSessionGuard.safeParse(body);
+
+  if (!response.ok || !session.success || !session.data.url) {
+    const failure = stripeErrorGuard.safeParse(body);
+    const stripeMessage = failure.success ? failure.data.error?.message : undefined;
+
+    return { ok: false, status: 502, message: stripeMessage ?? 'Stripe billing portal failed.' };
+  }
+
+  return { ok: true, redirectUri: session.data.url };
+};

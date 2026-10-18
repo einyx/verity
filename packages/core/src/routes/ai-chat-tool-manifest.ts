@@ -73,6 +73,11 @@ const guardFor = (
   method: ManagementTool['method'],
   path: string
 ): { tier: ToolTier; guard?: ToolGuard } => {
+  // Reads never change anything, so they run directly even on guarded paths such as MFA settings.
+  if (method === 'GET') {
+    return { tier: 1 };
+  }
+
   if (path.includes('/mfa') || path.includes('mfa-verifications')) {
     return { tier: 3, guard: 'mfa' };
   }
@@ -91,10 +96,6 @@ const guardFor = (
 
   if (method === 'DELETE') {
     return { tier: 3, guard: 'delete' };
-  }
-
-  if (method === 'GET') {
-    return { tier: 1 };
   }
 
   return { tier: 2 };

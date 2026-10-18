@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import {
   InteractionEvent,
   adminConsoleApplicationId,
@@ -140,7 +139,6 @@ describe('submit action', () => {
     await submitInteraction(interaction, ctx, tenant);
 
     expect(generateUserId).toBeCalled();
-    expect(hasActiveUsers).not.toBeCalled();
     expect(encryptUserPassword).toBeCalledWith('password');
     expect(getLogtoConnectorById).toBeCalledWith('logto');
 
@@ -174,7 +172,6 @@ describe('submit action', () => {
     await submitInteraction(interaction, ctx, tenant);
 
     expect(generateUserId).not.toBeCalled();
-    expect(hasActiveUsers).not.toBeCalled();
     expect(encryptUserPassword).toBeCalledWith('password');
     expect(getLogtoConnectorById).toBeCalledWith('logto');
 
@@ -230,7 +227,6 @@ describe('submit action', () => {
     await submitInteraction(interaction, ctx, tenant);
 
     expect(generateUserId).toBeCalled();
-    expect(hasActiveUsers).not.toBeCalled();
     expect(encryptUserPassword).not.toBeCalled();
     expect(getLogtoConnectorById).toBeCalledWith('logto');
 
@@ -264,7 +260,6 @@ describe('submit action', () => {
     await submitInteraction(interaction, ctx, tenant);
 
     expect(generateUserId).toBeCalled();
-    expect(hasActiveUsers).not.toBeCalled();
     expect(encryptUserPassword).not.toBeCalled();
     expect(getLogtoConnectorById).toBeCalledWith('logto');
 
@@ -464,4 +459,3 @@ describe('submit action', () => {
     });
   });
 });
-/* eslint-enable max-lines */

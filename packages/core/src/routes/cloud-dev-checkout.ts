@@ -119,6 +119,13 @@ const createStripeCheckout = async (
 };
 
 /** Without Stripe, the local flip moves a tenant to production with no payment. Production must not do that. */
+const markTenantProduction = async (tenantToMark: string) => {
+  const pool = await EnvSet.sharedPool;
+  await pool.query(
+    sql`update tenants set tag = ${TenantTag.Production} where id = ${tenantToMark}`
+  );
+};
+
 const createLocalCheckout = async (ctx: Context, body: CheckoutBody, skuId: string) => {
   if (EnvSet.values.isProduction) {
     reject(ctx, 503, 'checkout.not_configured', 'Checkout is not configured.');
@@ -128,8 +135,7 @@ const createLocalCheckout = async (ctx: Context, body: CheckoutBody, skuId: stri
   const sessionId = `local_${Date.now()}`;
   upgradeLocalTenant();
   // The console reads the tenant's tag from the tenants table, so the upgrade has to reach that row.
-  const pool = await EnvSet.sharedPool;
-  await pool.query(sql`update tenants set tag = ${TenantTag.Production} where id = ${tenantId}`);
+  await markTenantProduction(tenantId);
   saveCheckoutSession(sessionId, { tenantId, skuId });
   ctx.body = { redirectUri: body.successCallbackUrl ?? '', sessionId };
 };
@@ -168,6 +174,7 @@ const handleStripeStatus = async (ctx: Context, stripeKey: string, sessionId: st
 
   if (paid) {
     upgradeLocalTenant();
+    await markTenantProduction(tenantId);
   }
 
   ctx.body = {

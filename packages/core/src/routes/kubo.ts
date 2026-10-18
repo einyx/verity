@@ -3,11 +3,11 @@ import { array, boolean, number, object, string } from 'zod';
 import koaGuard from '#src/middleware/koa-guard.js';
 import { safeParseJson } from '#src/utils/json.js';
 
+import { kuboPortalUrl } from './kubo-portal-url.js';
 import type { ManagementApiRouter, ManagementApiRouterContext, RouterInitArgs } from './types.js';
 
 // Proxy to the Kubo operator portal running in the same cluster.
 // Mounted on the management API router, so Logto's admin auth applies.
-const defaultKuboPortalUrl = 'http://kubo-portal.kubo-system.svc.cluster.local:9090';
 const maxResponseBytes = 5 * 1024 * 1024;
 
 // Kubernetes DNS label: lowercase letters, digits, and dashes, up to 63 characters.
@@ -97,7 +97,7 @@ const priceKshowsNodes = async (snapshot: { nodes?: KshowsNode[] }) => {
 };
 
 const forward = async (ctx: ManagementApiRouterContext, path: string) => {
-  const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+  const baseUrl = kuboPortalUrl();
   const response = await fetch(new URL(path, baseUrl), {
     headers: { accept: 'application/json' },
     signal: AbortSignal.timeout(10_000),
@@ -151,7 +151,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
       return next();
     }
 
-    const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+    const baseUrl = kuboPortalUrl();
     const url = new URL('/api/airgap/bundle', baseUrl);
     url.searchParams.set('name', name);
 
@@ -207,7 +207,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
       return next();
     }
 
-    const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+    const baseUrl = kuboPortalUrl();
     const url = new URL(`/api/stacks/${namespace}/${name}`, baseUrl);
     url.searchParams.set('confirm', namespace);
     url.searchParams.set('purge', ctx.query.purge === 'true' ? 'true' : 'false');
@@ -263,7 +263,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
         return next();
       }
 
-      const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+      const baseUrl = kuboPortalUrl();
       const response = await fetch(new URL(`/api/stacks/${namespace}/${name}`, baseUrl), {
         method: 'PATCH',
         headers: { 'content-type': 'application/json', accept: 'application/json' },
@@ -292,7 +292,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
       return next();
     }
 
-    const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+    const baseUrl = kuboPortalUrl();
     const response = await fetch(new URL(`/api/stacks/${namespace}/${name}/bootstrap`, baseUrl), {
       method: 'POST',
       headers: { accept: 'application/json' },
@@ -321,7 +321,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
   // The upstream returns YAML text, so it is wrapped as JSON for the console.
   router.get('/kubo/template', async (ctx, next) => {
     const query = new URLSearchParams(ctx.querystring);
-    const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+    const baseUrl = kuboPortalUrl();
     const response = await fetch(new URL(`/api/template?${query.toString()}`, baseUrl), {
       signal: AbortSignal.timeout(30_000),
     });
@@ -339,7 +339,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
     '/kubo/stacks',
     koaGuard({ body: createStackBody, status: [200, 201, 502] }),
     async (ctx, next) => {
-      const baseUrl = process.env.KUBO_PORTAL_URL ?? defaultKuboPortalUrl;
+      const baseUrl = kuboPortalUrl();
       const response = await fetch(new URL('/api/stacks', baseUrl), {
         method: 'POST',
         headers: { 'content-type': 'application/json', accept: 'application/json' },

@@ -13,6 +13,12 @@ import { adminTenantId, defaultTenantId } from './tenant.js';
 
 export const defaultPrimaryColor = '#6139F6';
 
+/** The MeshX brand accent, used as the admin tenant's default primary colour. */
+const meshxPrimaryColor = '#FE330A';
+/** MeshX wordmarks served by the console build (`packages/console/public`). */
+const meshxLogoUrl = 'https://console.meshx.foundation/console/meshx-logo.svg';
+const meshxDarkLogoUrl = 'https://console.meshx.foundation/console/meshx-logo-dark.svg';
+
 export const createDefaultSignInExperience = (
   forTenantId: string,
   isCloud: boolean
@@ -87,13 +93,14 @@ export const createAdminTenantSignInExperience = (
     ...defaultSignInExperience,
     tenantId: adminTenantId,
     color: {
-      ...defaultSignInExperience.color,
+      primaryColor: meshxPrimaryColor,
       isDarkModeEnabled: true,
+      darkPrimaryColor: generateDarkColor(meshxPrimaryColor),
     },
     signInMode: SignInMode.Register,
     branding: {
-      logoUrl: 'https://logto.io/logo.svg',
-      darkLogoUrl: 'https://logto.io/logo-dark.svg',
+      logoUrl: meshxLogoUrl,
+      darkLogoUrl: meshxDarkLogoUrl,
     },
     passwordPolicy: options.disablePwnedPasswordCheck
       ? {

@@ -4,7 +4,6 @@ import { once } from '@silverhand/essentials';
 import type { MiddlewareType } from 'koa';
 import Koa from 'koa';
 import compose from 'koa-compose';
-import koaCompress from 'koa-compress';
 import mount from 'koa-mount';
 import type { Provider } from 'oidc-provider';
 
@@ -16,26 +15,18 @@ import { createConnectorLibrary } from '#src/libraries/connector.js';
 import { createLogtoConfigLibrary } from '#src/libraries/logto-config.js';
 import koaAccountCenterSsr from '#src/middleware/koa-account-center-ssr.js';
 import koaAutoConsent from '#src/middleware/koa-auto-consent.js';
-import koaConnectorErrorHandler from '#src/middleware/koa-connector-error-handler.js';
 import koaConsoleRedirectProxy from '#src/middleware/koa-console-redirect-proxy.js';
 import koaDeviceFlowShortcut from '#src/middleware/koa-device-flow-shortcut.js';
-import koaErrorHandler from '#src/middleware/koa-error-handler.js';
 import koaExperienceSsr from '#src/middleware/koa-experience-ssr.js';
-import koaI18next from '#src/middleware/koa-i18next.js';
 import koaInteractionDetails from '#src/middleware/koa-interaction-details.js';
-import koaOidcErrorHandler from '#src/middleware/koa-oidc-error-handler.js';
-import koaSecurityHeaders, {
-  koaExperienceSecurityHeaders,
-} from '#src/middleware/koa-security-headers.js';
+import { koaExperienceSecurityHeaders } from '#src/middleware/koa-security-headers.js';
 import koaServeDomainVerificationFiles from '#src/middleware/koa-serve-domain-verification-files.js';
-import koaSlonikErrorHandler from '#src/middleware/koa-slonik-error-handler.js';
 import koaSpaProxy from '#src/middleware/koa-spa-proxy.js';
 import koaSpaSessionGuard from '#src/middleware/koa-spa-session-guard.js';
 import initOidc from '#src/oidc/init.js';
 import { mountCallbackRouter } from '#src/routes/callback.js';
+import { isLocalCloud } from '#src/routes/cloud-dev.js';
 import initApis, { initMcpRouter, initPublicWellKnownApis } from '#src/routes/init.js';
-import { isLocalCloud, localCloudRoutes } from '#src/routes/cloud-dev.js';
-import { cloudTenantRoutes } from '#src/routes/cloud-tenants.js';
 import initMeApis from '#src/routes-me/init.js';
 import BasicSentinel from '#src/sentinel/basic-sentinel.js';
 
@@ -46,6 +37,8 @@ import koaConsentGuard from '../middleware/koa-consent-guard.js';
 import Libraries from './Libraries.js';
 import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
+import { mountAdminRoutes } from './admin-routes.js';
+import { mountBaseMiddleware } from './base-middleware.js';
 import {
   getSigningKeyRotationState,
   isTenantHealthy,
@@ -154,13 +147,7 @@ export default class Tenant implements TenantContext {
     // Init app
     const app = new Koa();
 
-    app.use(koaI18next());
-    app.use(koaErrorHandler());
-    app.use(koaOidcErrorHandler());
-    app.use(koaSlonikErrorHandler());
-    app.use(koaConnectorErrorHandler());
-    app.use(koaCompress());
-    app.use(koaSecurityHeaders(mountedApps, id));
+    mountBaseMiddleware(app, mountedApps, id);
 
     // Mount OIDC
     const provider = initOidc(id, envSet, queries, libraries, logtoConfigs, subscription);
@@ -195,14 +182,8 @@ export default class Tenant implements TenantContext {
     // Mount global well-known APIs
     app.use(mount('/.well-known', initPublicWellKnownApis(tenantContext)));
 
-    // Local cloud stand-ins (dev only): the console's cloud API, tenant and account proxies.
-    if (id === adminTenantId) {
-      if (EnvSet.values.isCloud) {
-        app.use(cloudTenantRoutes(envSet).routes());
-      }
-
-      app.use(localCloudRoutes());
-    }
+    // Admin cloud routes: the dev stand-ins and, in production, the billing API.
+    mountAdminRoutes(app, id, envSet);
 
     // Mount APIs
     app.use(mount('/api', initApis(tenantContext)));

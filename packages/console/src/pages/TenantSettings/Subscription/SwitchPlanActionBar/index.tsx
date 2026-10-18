@@ -201,7 +201,6 @@ function SwitchPlanActionBar({ onSubscriptionUpdated, currentSkuId, logtoSkus }:
       {canceledSkuId && (
         <CancelFeedbackModal
           isOpen
-          fromSkuId={canceledSkuId}
           onClose={() => {
             setCanceledSkuId(undefined);
           }}

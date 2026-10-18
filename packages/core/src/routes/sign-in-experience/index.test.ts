@@ -1073,9 +1073,10 @@ describe('PATCH /sign-in-exp customUiCsp', () => {
     expect(guardTenantUsageByKey).toHaveBeenCalledWith('bringYourUiEnabled');
   });
 
-  it('should reject non-empty Custom UI CSP updates outside Cloud', async () => {
-    const { requester, updateDefaultSignInExperience, guardTenantUsageByKey } =
-      await createCustomUiCspRequester({ isCloud: false });
+  it('should allow non-empty Custom UI CSP updates outside Cloud without a license', async () => {
+    const { requester, updateDefaultSignInExperience } = await createCustomUiCspRequester({
+      isCloud: false,
+    });
 
     const response = await requester.patch('/sign-in-exp').send({
       customUiCsp: {
@@ -1083,9 +1084,8 @@ describe('PATCH /sign-in-exp customUiCsp', () => {
       },
     });
 
-    expect(response.status).toEqual(400);
-    expect(updateDefaultSignInExperience).not.toHaveBeenCalled();
-    expect(guardTenantUsageByKey).not.toHaveBeenCalled();
+    expect(response.status).toEqual(200);
+    expect(updateDefaultSignInExperience).toHaveBeenCalled();
   });
 
   it('should allow hiding the Logto branding outside Cloud without a license', async () => {
@@ -1112,7 +1112,7 @@ describe('PATCH /sign-in-exp customUiCsp', () => {
     expect(updateDefaultSignInExperience).toHaveBeenCalledWith({ customUiCsp });
   });
 
-  it('should reject non-empty Custom UI CSP updates outside Cloud with a license that only grants hiding the branding', async () => {
+  it('should allow non-empty Custom UI CSP updates outside Cloud with a license that only grants hiding the branding', async () => {
     installLicense({ hideLogtoBranding: true });
     const { requester, updateDefaultSignInExperience } = await createCustomUiCspRequester({
       isCloud: false,
@@ -1122,8 +1122,8 @@ describe('PATCH /sign-in-exp customUiCsp', () => {
       customUiCsp: { scriptSrc: ['https://example.com'] },
     });
 
-    expect(response.status).toEqual(400);
-    expect(updateDefaultSignInExperience).not.toHaveBeenCalled();
+    expect(response.status).toEqual(200);
+    expect(updateDefaultSignInExperience).toHaveBeenCalled();
   });
 
   it('should not read the license on Cloud', async () => {

@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Get started',
   title: 'Something to help you succeed',
   subtitle: 'A few things you can do to quickly get value of MeshX',
+  greeting_morning: 'Good morning, {{name}}',
+  greeting_afternoon: 'Good afternoon, {{name}}',
+  greeting_evening: 'Good evening, {{name}}',
   develop: {
     title: 'Develop: Take 5 minutes to integrate your app',
     title_cloud: 'Develop: Securely integrate your app in minutes',
@@ -61,6 +64,38 @@ const get_started = {
       description: 'Let MeshX Cloud handle the infrastructure for you.',
       action: 'Try MeshX Cloud',
     },
+  },
+  header: {
+    docs: 'Docs',
+    create_app: 'Create application',
+  },
+  resources: {
+    title: 'Resources',
+    open_docs: 'Open docs',
+    integrate: {
+      title: 'Integrate your app',
+      description: 'Add sign-in to your app with guides for popular frameworks.',
+    },
+    sign_in: {
+      title: 'Customize sign-in',
+      description: 'Brand the sign-in experience to match your product.',
+    },
+    rbac: {
+      title: 'Manage roles and permissions',
+      description: 'Control what each user and app can access.',
+    },
+    api: {
+      title: 'Use the Management API',
+      description: 'Automate tenant setup and manage resources with code.',
+    },
+  },
+  models: {
+    title: 'Quick start',
+    create: 'Create',
+  },
+  footer: {
+    help: 'Help and support',
+    feedback: 'Feedback',
   },
   view_all: 'View all →',
 };

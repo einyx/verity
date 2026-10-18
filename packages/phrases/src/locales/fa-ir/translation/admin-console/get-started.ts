@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'شروع کار',
   title: 'چیزی برای کمک به موفقیت شما',
   subtitle: 'چند کاری که می‌توانید برای دریافت سریع ارزش از Logto انجام دهید',
+  greeting_morning: 'صبح بخیر، {{name}}',
+  greeting_afternoon: 'عصر بخیر، {{name}}',
+  greeting_evening: 'شب بخیر، {{name}}',
   develop: {
     title: 'توسعه: ۵ دقیقه وقت بگذارید تا برنامه خود را یکپارچه کنید',
     title_cloud: 'توسعه: برنامه خود را در چند دقیقه به‌صورت امن یکپارچه کنید',
@@ -61,6 +64,35 @@ const get_started = {
       description: 'بگذارید Logto Cloud زیرساخت احراز هویت را برای شما مدیریت کند.',
       action: 'Logto Cloud را امتحان کنید',
     },
+  },
+  header: {
+    docs: 'مستندات',
+    create_app: 'ایجاد برنامه',
+  },
+  resources: {
+    title: 'منابع',
+    open_docs: 'باز کردن مستندات',
+    integrate: {
+      title: 'یکپارچه‌سازی برنامه',
+      description: 'ورود را با راهنماهای چارچوب‌های رایج به برنامه خود اضافه کنید.',
+    },
+    sign_in: { title: 'سفارشی‌سازی ورود', description: 'تجربه ورود را با محصول خود هماهنگ کنید.' },
+    rbac: {
+      title: 'مدیریت نقش‌ها و دسترسی‌ها',
+      description: 'تعیین کنید هر کاربر و برنامه به چه چیزی دسترسی داشته باشد.',
+    },
+    api: {
+      title: 'استفاده از Management API',
+      description: 'راه‌اندازی تننت را خودکار کنید و منابع را با کد مدیریت کنید.',
+    },
+  },
+  models: {
+    title: 'شروع سریع',
+    create: 'ایجاد',
+  },
+  footer: {
+    help: 'راهنما و پشتیبانی',
+    feedback: 'بازخورد',
   },
   view_all: 'مشاهده همه →',
 };

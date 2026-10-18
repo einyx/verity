@@ -3,12 +3,18 @@ import classNames from 'classnames';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import useSWR from 'swr';
 
+import ApiResourceIcon from '@/assets/icons/api-resource.svg?react';
+import BookIcon from '@/assets/icons/book.svg?react';
 import CheckPreviewDark from '@/assets/icons/check-demo-dark.svg?react';
 import CheckPreview from '@/assets/icons/check-demo.svg?react';
+import ConnectionIcon from '@/assets/icons/connection.svg?react';
 import CreateRoleDark from '@/assets/icons/create-role-dark.svg?react';
 import CreateRole from '@/assets/icons/create-role.svg?react';
 import ExternalLinkIcon from '@/assets/icons/external-link.svg?react';
+import KeyIcon from '@/assets/icons/key.svg?react';
+import ShieldIcon from '@/assets/icons/shield.svg?react';
 import SocialDark from '@/assets/icons/social-dark.svg?react';
 import Social from '@/assets/icons/social.svg?react';
 import ApplicationCreation from '@/components/ApplicationCreation';
@@ -16,22 +22,30 @@ import { type SelectedGuide } from '@/components/Guide/GuideCard';
 import GuideCardGroup from '@/components/Guide/GuideCardGroup';
 import { useApiGuideMetadata, useAppGuideMetadata } from '@/components/Guide/hooks';
 import PageMeta from '@/components/PageMeta';
-import { ConnectorsTabs, convertToProductionThresholdDays } from '@/consts';
+import {
+  ConnectorsTabs,
+  contactEmailLink,
+  convertToProductionThresholdDays,
+  githubIssuesLink,
+} from '@/consts';
 import { isCloud } from '@/consts/env';
 import { AppDataContext } from '@/contexts/AppDataProvider';
 import { TenantsContext } from '@/contexts/TenantsProvider';
-import { LinkButton } from '@/ds-components/Button';
+import Button, { LinkButton } from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
 import Spacer from '@/ds-components/Spacer';
 import Tag from '@/ds-components/Tag';
 import TextLink from '@/ds-components/TextLink';
+import { type RequestError } from '@/hooks/use-api';
 import { isDevOnlyRegion } from '@/hooks/use-available-regions';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
+import useCurrentUser from '@/hooks/use-current-user';
 import useDocumentationUrl from '@/hooks/use-documentation-url';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 import useTheme from '@/hooks/use-theme';
 import useUserPreferences from '@/hooks/use-user-preferences';
 import useWindowResize from '@/hooks/use-window-resize';
+import { buildUrl } from '@/utils/url';
 
 import CreateApiForm from '../ApiResources/components/CreateForm';
 import ProtectedAppModal from '../Applications/components/ProtectedAppModal';
@@ -40,9 +54,36 @@ import ConvertToProductionCard from './ConvertToProductionCard';
 import OssCloudUpsell from './OssCloudUpsell';
 import styles from './index.module.scss';
 
+// Docs shortcuts shown in the Resources grid. Each path is resolved by `getDocumentationUrl`.
+const resourceCards = [
+  { key: 'integrate', path: '/integrations', Icon: ConnectionIcon },
+  { key: 'sign_in', path: '/docs/recipes/customize-sie/bring-your-ui', Icon: KeyIcon },
+  { key: 'rbac', path: '/docs/recipes/rbac/manage-permissions-and-roles', Icon: ShieldIcon },
+  { key: 'api', path: '/docs/recipes/interact-with-management-api', Icon: ApiResourceIcon },
+] as const;
+
+// Totals come from the first page of each list; only `totalCount` is read.
+const applicationsCountUrl = buildUrl('api/applications', [
+  ['page', '1'],
+  ['page_size', '1'],
+]);
+const resourcesCountUrl = buildUrl('api/resources', [
+  ['page', '1'],
+  ['page_size', '1'],
+]);
+
 const icons = {
   [Theme.Light]: { PreviewIcon: CheckPreview, SocialIcon: Social, RbacIcon: CreateRole },
   [Theme.Dark]: { PreviewIcon: CheckPreviewDark, SocialIcon: SocialDark, RbacIcon: CreateRoleDark },
+};
+
+/** Time-of-day greeting key for the page heading, e.g. "Good morning, Alessio". */
+const getGreetingKey = (hour: number) => {
+  if (hour < 12) {
+    return 'greeting_morning';
+  }
+
+  return hour < 18 ? 'greeting_afternoon' : 'greeting_evening';
 };
 
 function GetStarted() {
@@ -51,6 +92,8 @@ function GetStarted() {
   } = useCurrentTenantScopes();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { navigate } = useTenantPathname();
+  const { user } = useCurrentUser();
+  const greetingName = user?.name ?? user?.username;
   const { getDocumentationUrl } = useDocumentationUrl();
   const { tenantEndpoint } = useContext(AppDataContext);
   const { currentTenant, isDevTenant } = useContext(TenantsContext);
@@ -62,6 +105,10 @@ function GetStarted() {
   // The number of visible guide cards to show in one row per the current screen width
   const [visibleCardCount, setVisibleCardCount] = useState(4);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: applicationsData } = useSWR<[Application[], number], RequestError>(
+    applicationsCountUrl
+  );
+  const { data: resourcesData } = useSWR<[Resource[], number], RequestError>(resourcesCountUrl);
   const theme = useTheme();
   const { PreviewIcon, SocialIcon, RbacIcon } = icons[theme];
   const {
@@ -157,9 +204,93 @@ function GetStarted() {
   return (
     <div className={styles.container}>
       <PageMeta titleKey="get_started.page_title" />
-      <div className={styles.header}>
-        <div className={styles.title}>{t('get_started.title')}</div>
-        <div className={styles.subtitle}>{t('get_started.subtitle')}</div>
+      <div className={styles.pageHeader}>
+        <div className={styles.header}>
+          <div className={styles.title}>
+            {greetingName
+              ? t(`get_started.${getGreetingKey(new Date().getHours())}`, { name: greetingName })
+              : t('get_started.title')}
+          </div>
+          <div className={styles.subtitle}>{t('get_started.subtitle')}</div>
+        </div>
+        <div className={styles.headerActions}>
+          <LinkButton
+            title="get_started.header.docs"
+            href={getDocumentationUrl('/docs')}
+            targetBlank="noopener"
+          />
+          {!isReadOnly && (
+            <LinkButton
+              type="primary"
+              title="get_started.header.create_app"
+              href="/applications/create"
+            />
+          )}
+        </div>
+      </div>
+      <div className={styles.statGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>{t('applications.title')}</div>
+          <div className={styles.statValue}>{applicationsData?.[1] ?? '–'}</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>{t('api_resources.title')}</div>
+          <div className={styles.statValue}>{resourcesData?.[1] ?? '–'}</div>
+        </div>
+      </div>
+      <div className={styles.resources}>
+        <div className={styles.sectionTitle}>{t('get_started.models.title')}</div>
+        <div ref={containerRef} className={styles.modelGrid}>
+          {featuredAppGuides.map((guide) => (
+            <div key={guide.id} className={styles.modelCard}>
+              <div className={styles.modelBand} />
+              <div className={styles.modelBody}>
+                <div className={styles.resourceTitle}>{guide.metadata.name}</div>
+                <div className={styles.resourceDescription}>{guide.metadata.description}</div>
+                {!isReadOnly && (
+                  <Button
+                    title="get_started.models.create"
+                    onClick={() => {
+                      onClickAppGuide(guide);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.resources}>
+        <div className={styles.sectionTitle}>{t('get_started.resources.title')}</div>
+        <div className={styles.resourceGrid}>
+          {resourceCards.map(({ key, path, Icon }) => (
+            <div key={key} className={styles.resourceCard}>
+              <div className={styles.resourceHeader}>
+                <div className={styles.resourceIcon}>
+                  <Icon />
+                </div>
+                <div className={styles.resourceTitle}>
+                  {t(`get_started.resources.${key}.title`)}
+                </div>
+              </div>
+              <div className={styles.resourceDescription}>
+                {t(`get_started.resources.${key}.description`)}
+              </div>
+              <div className={styles.resourceAction}>
+                <LinkButton
+                  title={
+                    <>
+                      <BookIcon className={styles.bookIcon} />
+                      <span>{t('get_started.resources.open_docs')}</span>
+                    </>
+                  }
+                  href={getDocumentationUrl(path)}
+                  targetBlank="noopener"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       {shouldShowConvertToProductionCard && <ConvertToProductionCard />}
       {shouldShowOssCloudUpsell && (
@@ -168,53 +299,39 @@ function GetStarted() {
           onDismissBanner={onDismissOssCloudBanner}
         />
       )}
-      <Card className={styles.card}>
-        <div className={styles.title}>
-          {t(`get_started.develop.title${isCloud ? '_cloud' : ''}`)}
-        </div>
-        <GuideCardGroup
-          ref={containerRef}
-          hasCardBorder
-          hasCardButton
-          guides={featuredAppGuides}
-          onClickGuide={onClickAppGuide}
-        />
-        {selectedGuide?.metadata.target !== 'API' &&
-          selectedGuide?.metadata.target !== ApplicationType.Protected &&
-          showCreateAppForm && (
-            <ApplicationCreation
-              defaultCreateType={selectedGuide?.metadata.target}
-              defaultCreateFrameworkName={selectedGuide?.metadata.name}
-              onCompleted={onAppCreationCompleted}
-            />
-          )}
-        {selectedGuide?.metadata.target === ApplicationType.Protected && showCreateAppForm && (
-          <ProtectedAppModal
-            onClose={() => {
-              setShowCreateAppForm(false);
-              setSelectedGuide(undefined);
-            }}
+      {selectedGuide?.metadata.target !== 'API' &&
+        selectedGuide?.metadata.target !== ApplicationType.Protected &&
+        showCreateAppForm && (
+          <ApplicationCreation
+            defaultCreateType={selectedGuide?.metadata.target}
+            defaultCreateFrameworkName={selectedGuide?.metadata.name}
+            onCompleted={onAppCreationCompleted}
           />
         )}
-        <div className={styles.developActions}>
-          {!isReadOnly && (
-            <TextLink to="/applications/create">{t('get_started.view_all')}</TextLink>
-          )}
-          {isCloud && (
-            <Tag variant="plain" className={styles.mcpTag}>
-              <TextLink
-                isTrailingIcon
-                className={styles.mcpLink}
-                href={getDocumentationUrl('/logto-cloud/logto-mcp-server')}
-                icon={<ExternalLinkIcon className={styles.mcpLinkIcon} />}
-                targetBlank="noopener"
-              >
-                {t('get_started.develop.try_mcp')}
-              </TextLink>
-            </Tag>
-          )}
-        </div>
-      </Card>
+      {selectedGuide?.metadata.target === ApplicationType.Protected && showCreateAppForm && (
+        <ProtectedAppModal
+          onClose={() => {
+            setShowCreateAppForm(false);
+            setSelectedGuide(undefined);
+          }}
+        />
+      )}
+      <div className={styles.developActions}>
+        {!isReadOnly && <TextLink to="/applications/create">{t('get_started.view_all')}</TextLink>}
+        {isCloud && (
+          <Tag variant="plain" className={styles.mcpTag}>
+            <TextLink
+              isTrailingIcon
+              className={styles.mcpLink}
+              href={getDocumentationUrl('/logto-cloud/logto-mcp-server')}
+              icon={<ExternalLinkIcon className={styles.mcpLinkIcon} />}
+              targetBlank="noopener"
+            >
+              {t('get_started.develop.try_mcp')}
+            </TextLink>
+          </Tag>
+        )}
+      </div>
       <Card className={styles.card}>
         <div className={styles.title}>{t('get_started.customize.title')}</div>
         <div className={styles.borderBox}>
@@ -262,7 +379,6 @@ function GetStarted() {
       <Card className={styles.card}>
         <div className={styles.title}>{t('get_started.secure.title')}</div>
         <GuideCardGroup
-          ref={containerRef}
           hasCardBorder
           hasCardButton
           guides={apiGuideMetadata}
@@ -287,6 +403,12 @@ function GetStarted() {
           {!isReadOnly && <LinkButton title="get_started.manage.create_roles" href="/roles" />}
         </div>
       </Card>
+      <div className={styles.footerLinks}>
+        <TextLink href={contactEmailLink}>{t('get_started.footer.help')}</TextLink>
+        <TextLink href={githubIssuesLink} targetBlank="noopener">
+          {t('get_started.footer.feedback')}
+        </TextLink>
+      </div>
     </div>
   );
 }

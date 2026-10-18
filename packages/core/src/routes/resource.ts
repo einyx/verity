@@ -1,4 +1,4 @@
-import { isManagementApi, ProductEvent, Resources, Scopes } from '@logto/schemas';
+import { isManagementApi, Resources, Scopes } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { yes } from '@silverhand/essentials';
 import { boolean, object, string } from 'zod';
@@ -9,8 +9,6 @@ import koaPagination from '#src/middleware/koa-pagination.js';
 import { koaQuotaGuard, koaReportSubscriptionUpdates } from '#src/middleware/koa-quota-guard.js';
 import assertThat from '#src/utils/assert-that.js';
 import { attachScopesToResources } from '#src/utils/resource.js';
-
-import { captureEvent } from '../utils/posthog.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from './types.js';
 
@@ -114,7 +112,6 @@ export default function resourceRoutes<T extends ManagementApiRouter>(
       ctx.status = 201;
       ctx.body = { ...resource, scopes: [] };
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.ApiResourceCreated);
       return next();
     }
   );
@@ -207,7 +204,6 @@ export default function resourceRoutes<T extends ManagementApiRouter>(
 
       ctx.status = 204;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.ApiResourceDeleted);
       return next();
     }
   );

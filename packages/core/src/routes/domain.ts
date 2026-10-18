@@ -1,6 +1,5 @@
 import {
   Domains,
-  ProductEvent,
   domainResponseGuard,
   domainSelectFields,
   domainVerificationFilesGuard,
@@ -14,7 +13,6 @@ import assertThat from '#src/utils/assert-that.js';
 
 import { EnvSet } from '../env-set/index.js';
 import { assertCustomDomainLimit } from '../utils/domain.js';
-import { captureEvent } from '../utils/posthog.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from './types.js';
 
@@ -182,7 +180,6 @@ export default function domainRoutes<T extends ManagementApiRouter>(
       ctx.status = 201;
       ctx.body = pick(syncedDomain, ...domainSelectFields);
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.CustomDomainCreated);
       return next();
     }
   );
@@ -238,7 +235,6 @@ export default function domainRoutes<T extends ManagementApiRouter>(
 
       ctx.status = 204;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.CustomDomainDeleted);
       return next();
     }
   );

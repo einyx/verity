@@ -1,9 +1,7 @@
 /* eslint-disable max-lines */
 import { emailRegEx, phoneRegEx, usernameRegEx } from '@logto/core-kit';
 import {
-  ProductEvent,
   UsersPasswordEncryptionMethod,
-  adminTenantId,
   jsonObjectGuard,
   userMfaDataGuard,
   userPasskeySignInDataGuard,
@@ -31,7 +29,6 @@ import assertThat from '#src/utils/assert-that.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
 
 import { parseLegacyPassword } from '../../utils/password.js';
-import { captureDeveloperEvent } from '../../utils/posthog.js';
 import {
   adminUserProfileResponseGuard,
   transpileAdminUserProfileResponse,
@@ -530,9 +527,6 @@ export default function adminUserBasicsRoutes<T extends ManagementApiRouter>(
 
       await deleteUserById(userId);
 
-      if (tenantId === adminTenantId) {
-        captureDeveloperEvent(userId, ProductEvent.DeveloperDeleted);
-      }
       ctx.status = 204;
 
       // Manually trigger the `User.Deleted` hook since we need to send the user data in the payload

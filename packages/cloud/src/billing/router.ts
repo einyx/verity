@@ -1,8 +1,7 @@
+import { ReservedPlanId } from '@logto/schemas';
 import { RequestError, Router } from '@withtyped/server';
 import { z } from 'zod';
 
-import { invoicesResponseGuard } from './invoice.js';
-import { skuGuard, skuTypeGuard } from './sku.js';
 import {
   authorizeInvitee,
   authorizeOperator,
@@ -11,12 +10,23 @@ import {
   type OperatorAuthConfig,
 } from './auth.js';
 import {
+  type CheckoutConfig,
+  createCheckoutBodyGuard,
+  createCheckoutSession,
+  readCheckoutStatus,
+} from './checkout.js';
+import { effectiveSubscription } from './entitlement.js';
+import {
   acceptInvitationBodyGuard,
   createInvitationBodyGuard,
   invitationGuard,
   newInvitation,
   toInvitationView,
 } from './invitation.js';
+import { invoicesResponseGuard } from './invoice.js';
+import { skuGuard, skuTypeGuard } from './sku.js';
+import { type BillingStore } from './store.js';
+import { subscriptionGuard } from './subscription.js';
 
 /** Stands in for an invitation that does not exist, so the caller gets the same 403 either way. */
 const UNUSABLE_INVITATION: InvitationForAcceptance = {
@@ -25,14 +35,16 @@ const UNUSABLE_INVITATION: InvitationForAcceptance = {
   expiresAt: new Date(0),
   status: 'revoked',
 };
-import { type BillingStore } from './store.js';
-import { subscriptionGuard } from './subscription.js';
 
 /**
  * Billing routes served under `@meshx/cloud/routes`. Paths and response shapes match what the
  * console and core already call on the Cloud API, so they can switch imports without changes.
  */
-export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfig) =>
+export const createBillingRouter = (
+  store: BillingStore,
+  auth: OperatorAuthConfig,
+  checkout?: CheckoutConfig
+) =>
   new Router()
     .get(
       '/api/tenants/:tenantId/subscription',
@@ -48,7 +60,20 @@ export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfi
           throw new RequestError('Subscription not found', 404);
         }
 
-        return next({ ...context, json: subscription });
+        // Core reads this to decide the tenant's quota. An ended subscription reads as the development
+        // plan, and a missing development plan refuses the read instead of granting paid quota.
+        const skus = await store.listSkus({});
+        const entitled = effectiveSubscription(
+          subscription,
+          new Date(),
+          skus.find((sku) => sku.id === ReservedPlanId.Development)
+        );
+
+        if (!entitled) {
+          throw new RequestError('Subscription plan is unavailable', 503);
+        }
+
+        return next({ ...context, json: entitled });
       }
     )
     .get(
@@ -87,7 +112,7 @@ export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfi
         response: z.object({ invitation: invitationGuard, token: z.string() }),
       },
       async (context, next) => {
-        const tenantId = context.guarded.params.tenantId;
+        const { tenantId } = context.guarded.params;
         const caller = await authorizeTenantAdmin(
           context.request.headers.authorization,
           tenantId,
@@ -111,13 +136,16 @@ export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfi
         response: z.object({ invitations: z.array(invitationGuard) }),
       },
       async (context, next) => {
-        const tenantId = context.guarded.params.tenantId;
+        const { tenantId } = context.guarded.params;
 
         await authorizeTenantAdmin(context.request.headers.authorization, tenantId, auth, store);
 
         const invitations = await store.listInvitations(tenantId);
 
-        return next({ ...context, json: { invitations: invitations.map(toInvitationView) } });
+        return next({
+          ...context,
+          json: { invitations: invitations.map((invitation) => toInvitationView(invitation)) },
+        });
       }
     )
     // The invitee accepts with the one-time token. Authentication runs first, so an unauthenticated
@@ -139,7 +167,7 @@ export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfi
           auth
         );
 
-        // authorizeInvitee has already rejected a missing invitation, so this only narrows the type.
+        // AuthorizeInvitee has already rejected a missing invitation, so this only narrows the type.
         if (!invitation) {
           throw new RequestError('Forbidden', 403);
         }
@@ -149,5 +177,71 @@ export const createBillingRouter = (store: BillingStore, auth: OperatorAuthConfi
         await store.setInvitationStatus(accepted.id, 'accepted');
 
         return next({ ...context, json: { invitation: toInvitationView(accepted) } });
+      }
+    )
+    // Tenant admins start a subscription checkout for their own tenant. The route refuses when no
+    // checkout is configured, so a deployment cannot sell plans it has not set up.
+    .post(
+      '/api/checkout-session',
+      {
+        body: createCheckoutBodyGuard,
+        response: z.object({ redirectUri: z.string(), sessionId: z.string() }),
+      },
+      async (context, next) => {
+        const { body } = context.guarded;
+
+        await authorizeTenantAdmin(
+          context.request.headers.authorization,
+          body.tenantId,
+          auth,
+          store
+        );
+
+        if (!checkout) {
+          throw new RequestError('Checkout is not configured.', 503);
+        }
+
+        const outcome = await createCheckoutSession(checkout, body);
+
+        if (!outcome.ok) {
+          throw new RequestError(outcome.message, outcome.status);
+        }
+
+        return next({
+          ...context,
+          json: { redirectUri: outcome.redirectUri, sessionId: outcome.sessionId },
+        });
+      }
+    )
+    // The console polls this after Stripe returns the tenant. The session's own tenant decides who
+    // may read it, so a tenant admin of another tenant gets 403.
+    .get(
+      '/api/checkout-session/:sessionId',
+      {
+        response: z.object({
+          tenantId: z.string(),
+          skuId: z.string(),
+          status: z.enum(['complete', 'open']),
+        }),
+      },
+      async (context, next) => {
+        if (!checkout) {
+          throw new RequestError('Checkout is not configured.', 503);
+        }
+
+        const status = await readCheckoutStatus(checkout, context.guarded.params.sessionId);
+
+        if (!status) {
+          throw new RequestError('Checkout session not found', 404);
+        }
+
+        await authorizeTenantAdmin(
+          context.request.headers.authorization,
+          status.tenantId,
+          auth,
+          store
+        );
+
+        return next({ ...context, json: status });
       }
     );

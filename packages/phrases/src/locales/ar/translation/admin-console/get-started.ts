@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'البدء',
   title: 'شيء لمساعدتك على النجاح',
   subtitle: 'بعض الأشياء التي يمكنك القيام بها للحصول بسرعة على قيمة Logto',
+  greeting_morning: 'صباح الخير، {{name}}',
+  greeting_afternoon: 'مساء الخير، {{name}}',
+  greeting_evening: 'مساء الخير، {{name}}',
   develop: {
     title: 'التطوير: قم بدمج تطبيقك في 5 دقائق',
     title_cloud: 'التطوير: قم بدمج تطبيقك بأمان في دقائق',
@@ -59,6 +62,38 @@ const get_started = {
       description: 'دع Logto Cloud يتولى البنية التحتية للمصادقة نيابةً عنك.',
       action: 'جرّب Logto Cloud',
     },
+  },
+  header: {
+    docs: 'التوثيق',
+    create_app: 'إنشاء تطبيق',
+  },
+  resources: {
+    title: 'الموارد',
+    open_docs: 'فتح التوثيق',
+    integrate: {
+      title: 'ادمج تطبيقك',
+      description: 'أضف تسجيل الدخول إلى تطبيقك باستخدام أدلة للأطر الشائعة.',
+    },
+    sign_in: {
+      title: 'خصص تسجيل الدخول',
+      description: 'اجعل تجربة تسجيل الدخول متوافقة مع منتجك.',
+    },
+    rbac: {
+      title: 'إدارة الأدوار والصلاحيات',
+      description: 'تحكم في ما يمكن لكل مستخدم وتطبيق الوصول إليه.',
+    },
+    api: {
+      title: 'استخدم واجهة برمجة الإدارة',
+      description: 'أتمت إعداد المستأجر وإدارة الموارد باستخدام الشيفرة.',
+    },
+  },
+  models: {
+    title: 'بدء سريع',
+    create: 'إنشاء',
+  },
+  footer: {
+    help: 'المساعدة والدعم',
+    feedback: 'ملاحظات',
   },
   view_all: 'عرض الكل →',
 };

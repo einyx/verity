@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Rozpocznij',
   title: 'Coś do odkrycia, aby pomóc ci odnieść sukces',
   subtitle: 'Kilka rzeczy, które możesz zrobić, aby szybko uzyskać wartość Logto',
+  greeting_morning: 'Dzień dobry, {{name}}',
+  greeting_afternoon: 'Dzień dobry, {{name}}',
+  greeting_evening: 'Dobry wieczór, {{name}}',
   develop: {
     title: 'Develop: Zajmie to 5 minut, aby zintegrować swoją aplikację',
     title_cloud: 'Develop: Bezpiecznie zintegruj swoją aplikację w kilka minut',
@@ -62,6 +65,38 @@ const get_started = {
       description: 'Pozwól, aby Logto Cloud zajęło się za Ciebie infrastrukturą uwierzytelniania.',
       action: 'Wypróbuj Logto Cloud',
     },
+  },
+  header: {
+    docs: 'Dokumentacja',
+    create_app: 'Utwórz aplikację',
+  },
+  resources: {
+    title: 'Zasoby',
+    open_docs: 'Otwórz dokumentację',
+    integrate: {
+      title: 'Zintegruj swoją aplikację',
+      description: 'Dodaj logowanie do aplikacji dzięki przewodnikom dla popularnych frameworków.',
+    },
+    sign_in: {
+      title: 'Dostosuj logowanie',
+      description: 'Dopasuj doświadczenie logowania do swojego produktu.',
+    },
+    rbac: {
+      title: 'Zarządzaj rolami i uprawnieniami',
+      description: 'Określ, do czego każdy użytkownik i aplikacja ma dostęp.',
+    },
+    api: {
+      title: 'Użyj Management API',
+      description: 'Automatyzuj konfigurację tenantów i zarządzaj zasobami kodem.',
+    },
+  },
+  models: {
+    title: 'Szybki start',
+    create: 'Utwórz',
+  },
+  footer: {
+    help: 'Pomoc i wsparcie',
+    feedback: 'Opinie',
   },
   view_all: 'Zobacz wszystkie →',
 };

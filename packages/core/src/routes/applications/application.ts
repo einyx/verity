@@ -8,7 +8,6 @@ import {
   defaultApplicationSecretName,
   hasSecrets,
   InternalRole,
-  ProductEvent,
   isBuiltInApplicationId,
   applicationResponseGuard,
 } from '@logto/schemas';
@@ -23,7 +22,6 @@ import { buildOidcClientMetadata } from '#src/oidc/utils.js';
 import assertThat from '#src/utils/assert-that.js';
 import { parseSearchParamsForSearch } from '#src/utils/search.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
 import { assertApplicationAccessControlHasRules } from './application-access-control/utils.js';
@@ -280,10 +278,6 @@ export default function applicationRoutes<T extends ManagementApiRouter>(
         void quota.reportSubscriptionUpdatesUsage('thirdPartyApplicationsLimit');
       }
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.AppCreated, {
-        type: rest.type,
-        isThirdParty: rest.isThirdParty ?? false,
-      });
       return next();
     }
   );
@@ -490,11 +484,6 @@ export default function applicationRoutes<T extends ManagementApiRouter>(
       if (isThirdParty) {
         void quota.reportSubscriptionUpdatesUsage('thirdPartyApplicationsLimit');
       }
-
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.AppDeleted, {
-        type,
-        isThirdParty,
-      });
 
       return next();
     }

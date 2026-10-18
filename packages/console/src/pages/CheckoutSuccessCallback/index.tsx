@@ -1,3 +1,4 @@
+import { TenantTag } from '@logto/schemas';
 import { conditional, conditionalString } from '@silverhand/essentials';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -102,6 +103,8 @@ function CheckoutSuccessCallback() {
       updateTenant(checkoutTenantId, {
         subscription: tenantSubscription,
         ...conditional(tenantSubscription?.planId && { planId: tenantSubscription.planId }),
+        // A paid checkout moves the tenant out of the development plan, so the console stops treating it as a dev tenant.
+        tag: TenantTag.Production,
       });
 
       // No need to check `isDowngrade` here, since a downgrade must occur in a tenant with a Pro

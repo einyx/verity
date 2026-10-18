@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { z } from 'zod';
 
-import { invoiceGuard, type Invoice } from './invoice.js';
+import { isEndedStatus } from './entitlement.js';
 import { type InvitationRecord, invitationStatusGuard } from './invitation.js';
+import { invoiceGuard, type Invoice } from './invoice.js';
+import { skuGuard, type Sku, type SkuType } from './sku.js';
+import { type AdminCustomer, type BillingStore, type TenantRole } from './store.js';
+import { subscriptionGuard, type Subscription } from './subscription.js';
 
 const invitationRow = z.object({
   id: z.string(),
@@ -25,7 +30,6 @@ const toInvitationRecord = (row: z.infer<typeof invitationRow>): InvitationRecor
   createdAt: row.created_at,
   expiresAt: row.expires_at,
 });
-import { skuGuard, type Sku, type SkuType } from './sku.js';
 
 const invoiceRow = z.object({
   id: z.string(),
@@ -49,8 +53,6 @@ const invoiceRow = z.object({
   created_at: z.coerce.date(),
   updated_at: z.coerce.date(),
 });
-import { type BillingStore, type TenantRole } from './store.js';
-import { subscriptionGuard, type Subscription } from './subscription.js';
 
 const skuRow = z.object({
   type: z.string(),
@@ -120,6 +122,7 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       const parsed = skuRow.parse(row);
 
       return skuGuard.parse({
+        // eslint-disable-next-line no-restricted-syntax -- The column is constrained to the SKU type values by the schema, so the cast only narrows the string to the enum.
         type: parsed.type as SkuType,
         id: parsed.id,
         createdAt: parsed.created_at,
@@ -219,4 +222,110 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       update tenant_invitations set status = ${status} where id = ${id}
     `);
   },
+  claimStripeEvent: async (eventId, type): Promise<boolean> => {
+    const row = await pool.maybeOne(sql`
+      insert into billing_stripe_events (event_id, type)
+      values (${eventId}, ${type})
+      on conflict (event_id) do nothing
+      returning event_id
+    `);
+
+    return row !== null;
+  },
+  releaseStripeEvent: async (eventId): Promise<void> => {
+    await pool.query(sql`
+      delete from billing_stripe_events where event_id = ${eventId}
+    `);
+  },
+  activateStripeSubscription: async (activation): Promise<void> => {
+    // The quota snapshot is copied from the SKU so reads do not need to join the catalogue. An
+    // unknown plan makes the quota null, which violates the not-null constraint and fails the
+    // webhook loudly instead of storing an empty quota.
+    await pool.query(sql`
+      insert into billing_subscriptions (
+        tenant_id, plan_id, status, is_enterprise_plan, is_dev_plan, has_billing_customer,
+        current_period_start, current_period_end, quota, system_limit,
+        stripe_customer_id, stripe_subscription_id
+      ) values (
+        ${activation.tenantId}, ${activation.planId}, ${activation.status}, false, false, true,
+        ${activation.periodStart.toISOString()}, ${activation.periodEnd.toISOString()},
+        (select quota from billing_skus where id = ${activation.planId}),
+        '{}'::jsonb, ${activation.stripeCustomerId}, ${activation.stripeSubscriptionId}
+      )
+      on conflict (tenant_id) do update set
+        plan_id = excluded.plan_id,
+        status = excluded.status,
+        has_billing_customer = true,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        quota = excluded.quota,
+        stripe_customer_id = excluded.stripe_customer_id,
+        stripe_subscription_id = excluded.stripe_subscription_id
+    `);
+  },
+  findDefaultCustomerId: async (identity): Promise<string | null> => {
+    const row = await pool.maybeOne(sql`
+      select customer_id from billing_user_default_customers
+      where member_issuer = ${identity.issuer} and member_sub = ${identity.sub}
+    `);
+
+    return row ? String(row.customer_id) : null;
+  },
+  setDefaultCustomerId: async (identity, customerId): Promise<void> => {
+    await pool.query(sql`
+      insert into billing_user_default_customers (member_issuer, member_sub, customer_id)
+      values (${identity.issuer}, ${identity.sub}, ${customerId})
+      on conflict (member_issuer, member_sub) do update set
+        customer_id = excluded.customer_id, updated_at = now()
+    `);
+  },
+  listAdminCustomers: async (identity): Promise<AdminCustomer[]> => {
+    const rows = await pool.any(sql`
+      select b.tenant_id, b.stripe_customer_id, b.current_period_start
+      from tenant_members m
+      join billing_subscriptions b on b.tenant_id = m.tenant_id
+      where m.member_issuer = ${identity.issuer}
+        and m.member_sub = ${identity.sub}
+        and m.role = 'admin'
+        and b.stripe_customer_id is not null
+      order by b.tenant_id
+    `);
+
+    return rows.map((row) => ({
+      tenantId: String(row.tenant_id),
+      customerId: String(row.stripe_customer_id),
+      periodStart: new Date(String(row.current_period_start)),
+    }));
+  },
+  setStripeCustomerId: async (tenantId, customerId): Promise<void> => {
+    await pool.query(sql`
+      update billing_subscriptions set stripe_customer_id = ${customerId}
+      where tenant_id = ${tenantId}
+    `);
+  },
+  findStripeCustomerId: async (tenantId): Promise<string | null> => {
+    const row = await pool.maybeOne(sql`
+      select stripe_customer_id from billing_subscriptions where tenant_id = ${tenantId}
+    `);
+
+    return row?.stripe_customer_id ? String(row.stripe_customer_id) : null;
+  },
+  updateStripeSubscription: async (update): Promise<void> => {
+    // The period end only moves forward, so an older event cannot overwrite a newer period. An ended
+    // subscription stays ended: a paid status arriving late cannot restore it.
+    await pool.query(sql`
+      update billing_subscriptions
+      set status = ${update.status},
+        current_period_start = ${update.periodStart.toISOString()},
+        current_period_end = ${update.periodEnd.toISOString()}
+      where stripe_subscription_id = ${update.stripeSubscriptionId}
+        and current_period_end <= ${update.periodEnd.toISOString()}
+        and (
+          status not in ('canceled', 'incomplete_expired')
+          or ${isEndedStatus(update.status)}
+        )
+    `);
+  },
 });
+
+/* eslint-enable @typescript-eslint/ban-types */

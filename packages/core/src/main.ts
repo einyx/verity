@@ -12,7 +12,6 @@ import initI18n from './i18n/init.js';
 import SystemContext from './tenants/SystemContext.js';
 import { tenantPool } from './tenants/index.js';
 import { loadConnectorFactories } from './utils/connectors/index.js';
-import { shutdownPostHog } from './utils/posthog.js';
 
 const consoleLog = new ConsoleLog(chalk.magenta('index'));
 
@@ -55,11 +54,7 @@ try {
   consoleLog.error('Error while initializing app:');
   consoleLog.error(error);
 
-  void Promise.all([
-    trySafe(tenantPool.endAll()),
-    trySafe(redisCache.disconnect()),
-    shutdownPostHog(),
-  ]);
+  void Promise.all([trySafe(tenantPool.endAll()), trySafe(redisCache.disconnect())]);
 }
 
 // MARK: Integration test handling

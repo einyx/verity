@@ -5,7 +5,6 @@ import {
   ConnectorType,
   SignInExperiences,
   MfaPolicy,
-  ProductEvent,
   type SignInExperience,
   ForgotPasswordMethod,
   passwordExpirationPolicyGuard,
@@ -28,7 +27,6 @@ import koaGuard from '#src/middleware/koa-guard.js';
 import RequestError from '../../errors/RequestError/index.js';
 import assertThat from '../../utils/assert-that.js';
 import { checkPasswordPolicyForUser } from '../../utils/password.js';
-import { captureEvent } from '../../utils/posthog.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
 import customUiAssetsRoutes from './custom-ui-assets/index.js';
@@ -405,12 +403,6 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
       }
 
       // Only capture the event when MFA status changes
-      if (isMfaEnabled(currentSettings.mfa) !== isMfaEnabled(mfa)) {
-        captureEvent(
-          { tenantId, request: ctx.req },
-          isMfaEnabled(mfa) ? ProductEvent.MfaEnabled : ProductEvent.MfaDisabled
-        );
-      }
       return next();
     }
   );

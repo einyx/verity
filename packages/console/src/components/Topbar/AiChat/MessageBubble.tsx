@@ -1,5 +1,3 @@
-import classNames from 'classnames';
-import { type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -12,35 +10,42 @@ import styles from './index.module.scss';
 type Props = {
   readonly sender: 'user' | 'assistant';
   readonly content: string;
-  readonly icon: ReactNode;
 };
 
-function MessageBubble({ sender, content, icon }: Props) {
+/**
+ * One turn of the transcript, styled like a coding agent's session: the user's message follows a
+ * prompt marker, and the assistant's reply is plain output with a dot marker. Neither is a bubble.
+ */
+function MessageBubble({ sender, content }: Props) {
+  if (sender === 'user') {
+    return (
+      <div className={styles.userTurn}>
+        <span aria-hidden className={styles.promptMark}>
+          ›
+        </span>
+        <div className={styles.userText}>{content}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className={classNames(styles.row, sender === 'user' && styles.userRow)}>
-      {sender === 'assistant' && <div className={styles.avatar}>{icon}</div>}
-      <div
-        className={classNames(
-          styles.bubble,
-          sender === 'user' ? styles.userBubble : styles.assistantBubble
-        )}
-      >
-        {sender === 'assistant' ? (
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              a: ({ href, children }) => (
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-        ) : (
-          content
-        )}
+    <div className={styles.assistantTurn}>
+      <span aria-hidden className={styles.assistantMark}>
+        ●
+      </span>
+      <div className={styles.markdown}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ href, children }) => (
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                {children}
+              </a>
+            ),
+          }}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     </div>
   );

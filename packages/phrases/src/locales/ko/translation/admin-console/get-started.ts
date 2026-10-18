@@ -2,6 +2,9 @@ const get_started = {
   page_title: '시작하기',
   title: '성공하는 데 도움이 될 탐색 항목',
   subtitle: 'Logto의 가치를 빠르게 얻을 수 있는 몇 가지 방법',
+  greeting_morning: '좋은 아침입니다, {{name}}님',
+  greeting_afternoon: '좋은 오후입니다, {{name}}님',
+  greeting_evening: '좋은 저녁입니다, {{name}}님',
   develop: {
     title: '개발: 앱을 통합하는 데 5분이면 충분합니다',
     title_cloud: '개발: 몇 분 안에 앱을 안전하게 통합하기',
@@ -59,6 +62,38 @@ const get_started = {
       description: '인증 인프라는 Logto Cloud에 맡기세요.',
       action: 'Logto Cloud 사용해 보기',
     },
+  },
+  header: {
+    docs: '문서',
+    create_app: '애플리케이션 만들기',
+  },
+  resources: {
+    title: '리소스',
+    open_docs: '문서 열기',
+    integrate: {
+      title: '앱 연동하기',
+      description: '주요 프레임워크 가이드로 앱에 로그인을 추가하세요.',
+    },
+    sign_in: {
+      title: '로그인 사용자 지정',
+      description: '제품에 맞게 로그인 화면을 브랜딩하세요.',
+    },
+    rbac: {
+      title: '역할 및 권한 관리',
+      description: '각 사용자와 앱이 접근할 수 있는 범위를 설정하세요.',
+    },
+    api: {
+      title: 'Management API 사용',
+      description: '코드로 테넌트 설정을 자동화하고 리소스를 관리하세요.',
+    },
+  },
+  models: {
+    title: '빠른 시작',
+    create: '만들기',
+  },
+  footer: {
+    help: '도움말 및 지원',
+    feedback: '피드백',
   },
   view_all: '모두 보기 →',
 };

@@ -2,6 +2,9 @@ const get_started = {
   page_title: '開始上手',
   title: '成功開發身份方案，我們先來探索一番',
   subtitle: '一些你可以做的事情，以快速獲取 Logto 的價值',
+  greeting_morning: '早晨，{{name}}',
+  greeting_afternoon: '午安，{{name}}',
+  greeting_evening: '晚安，{{name}}',
   develop: {
     title: '開發：花 5 分鐘將你的應用集成進來',
     title_cloud: '開發：花 5 分鐘將你的應用安全集成進來',
@@ -59,6 +62,29 @@ const get_started = {
       description: '讓 Logto Cloud 為你處理身份驗證基礎設施。',
       action: '試用 Logto Cloud',
     },
+  },
+  header: {
+    docs: '文件',
+    create_app: '建立應用程式',
+  },
+  resources: {
+    title: '資源',
+    open_docs: '開啟文件',
+    integrate: {
+      title: '整合你的應用程式',
+      description: '透過主流框架的指南為應用程式加入登入功能。',
+    },
+    sign_in: { title: '自訂登入體驗', description: '讓登入頁面配合你的產品風格。' },
+    rbac: { title: '管理角色與權限', description: '控制每位用戶和應用程式可存取的內容。' },
+    api: { title: '使用 Management API', description: '透過程式碼自動化租戶設定並管理資源。' },
+  },
+  models: {
+    title: '快速開始',
+    create: '建立',
+  },
+  footer: {
+    help: '協助與支援',
+    feedback: '意見回饋',
   },
   view_all: '查看全部 →',
 };

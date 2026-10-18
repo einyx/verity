@@ -21,18 +21,4 @@ export const consoleEmbeddedPricingUrl =
   normalizeEnv(import.meta.env.CONSOLE_EMBEDDED_PRICING_URL) ??
   'https://logto.io/console-embedded-pricing';
 
-export const postHogKey = normalizeEnv(import.meta.env.POSTHOG_PUBLIC_KEY);
-/**
- * The PostHog API host URL. When using a self-hosted PostHog instance or a custom domain,
- * {@link postHogUiHost} should also be set accordingly.
- *
- * @see https://posthog.com/docs/libraries/js/config for more details.
- */
-export const postHogHost = normalizeEnv(import.meta.env.POSTHOG_PUBLIC_HOST);
-/**
- * The PostHog UI host URL. If {@link postHogHost} is set to a custom host, this should also be set accordingly.
- *
- * @see https://posthog.com/docs/libraries/js/config for more details.
- */
-export const postHogUiHost = normalizeEnv(import.meta.env.POSTHOG_PUBLIC_UI_HOST);
 export const ossSurveyEndpoint = normalizeEnv(import.meta.env.LOGTO_OSS_SURVEY_ENDPOINT);

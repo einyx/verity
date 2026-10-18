@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Başlangıca Başlayın',
   title: 'Başarınızı Desteklemek İçin Keşfedilecek Bir Şey',
   subtitle: "Logto'nun değerini hızla elde etmek için yapabileceğiniz birkaç şey",
+  greeting_morning: 'Günaydın, {{name}}',
+  greeting_afternoon: 'Merhaba, {{name}}',
+  greeting_evening: 'İyi akşamlar, {{name}}',
   develop: {
     title: 'Geliştir: Uygulamanızı entegre etmek için 5 dakika ayırın',
     title_cloud: 'Geliştir: Uygulamanızı dakikalar içinde güvenli bir şekilde entegre edin',
@@ -63,6 +66,38 @@ const get_started = {
       description: 'Kimlik doğrulama altyapısını sizin için Logto Cloud yönetsin.',
       action: "Logto Cloud'u deneyin",
     },
+  },
+  header: {
+    docs: 'Dokümantasyon',
+    create_app: 'Uygulama oluştur',
+  },
+  resources: {
+    title: 'Kaynaklar',
+    open_docs: 'Dokümantasyonu aç',
+    integrate: {
+      title: 'Uygulamanı entegre et',
+      description: 'Popüler framework’ler için rehberlerle uygulamana oturum açma ekle.',
+    },
+    sign_in: {
+      title: 'Oturum açmayı özelleştir',
+      description: 'Oturum açma deneyimini ürününe uygun hale getir.',
+    },
+    rbac: {
+      title: 'Rol ve izinleri yönet',
+      description: 'Her kullanıcı ve uygulamanın neye erişebileceğini belirle.',
+    },
+    api: {
+      title: 'Management API’yi kullan',
+      description: 'Kiracı kurulumunu otomatikleştir ve kaynakları kodla yönet.',
+    },
+  },
+  models: {
+    title: 'Hızlı başlangıç',
+    create: 'Oluştur',
+  },
+  footer: {
+    help: 'Yardım ve destek',
+    feedback: 'Geri bildirim',
   },
   view_all: 'Hepsini görüntüle →',
 };

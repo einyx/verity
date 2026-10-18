@@ -29,8 +29,10 @@ export type PortalsResponse = {
   portals: Portal[];
 };
 
+export type Tool = { name: string; description: string; enabled: boolean };
+
 export type ToolsResponse = {
-  tools: Array<{ name: string; description: string; enabled: boolean }>;
+  tools: Tool[];
 };
 
 export const portalsKey = 'api/mcp-portal/portals';

@@ -1,7 +1,6 @@
 import {
   Hooks,
   Logs,
-  ProductEvent,
   type WebhookLogPrefix,
   hook,
   hookConfigGuard,
@@ -21,8 +20,6 @@ import koaPagination from '#src/middleware/koa-pagination.js';
 import { koaReportSubscriptionUpdates, koaQuotaGuard } from '#src/middleware/koa-quota-guard.js';
 import assertThat from '#src/utils/assert-that.js';
 import { parseTimestampParam, validateTimeWindow } from '#src/utils/time-window.js';
-
-import { captureEvent } from '../utils/posthog.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from './types.js';
 
@@ -224,7 +221,6 @@ export default function hookRoutes<T extends ManagementApiRouter>(
 
       ctx.status = 201;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.WebhookCreated);
       return next();
     }
   );
@@ -310,7 +306,6 @@ export default function hookRoutes<T extends ManagementApiRouter>(
       await deleteHookById(id);
       ctx.status = 204;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.WebhookDeleted);
       return next();
     }
   );

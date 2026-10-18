@@ -46,7 +46,7 @@ export const defaultManagementApi = Object.freeze({
      *
      * Admin Console requires the access token of this resource to be functional.
      */
-    indicator: `https://${defaultTenantId}.logto.app/api`,
+    indicator: `https://${defaultTenantId}.meshx.foundation/api`,
     name: 'Logto Management API',
   },
   scopes: [
@@ -76,14 +76,14 @@ export const defaultManagementApi = Object.freeze({
 
 export function getManagementApiResourceIndicator<TenantId extends string>(
   tenantId: TenantId
-): `https://${TenantId}.logto.app/api`;
+): `https://${TenantId}.meshx.foundation/api`;
 export function getManagementApiResourceIndicator<TenantId extends string, Path extends string>(
   tenantId: TenantId,
   path: Path
-): `https://${TenantId}.logto.app/${Path}`;
+): `https://${TenantId}.meshx.foundation/${Path}`;
 
 export function getManagementApiResourceIndicator(tenantId: string, path = 'api') {
-  return `https://${tenantId}.logto.app/${path}`;
+  return `https://${tenantId}.meshx.foundation/${path}`;
 }
 
 /**

@@ -73,6 +73,8 @@ export type BillingStore = {
   findDefaultCustomerId: (identity: MemberIdentity) => Promise<string | null>;
   /** Records the customer this user picked as their default. */
   setDefaultCustomerId: (identity: MemberIdentity, customerId: string) => Promise<void>;
+  /** Sets or clears the Stripe customer recorded for a tenant. */
+  setStripeCustomerId: (tenantId: string, customerId: string | null) => Promise<void>;
   /** The Stripe customer of a tenant's paid subscription, or `null` when none was recorded. */
   findStripeCustomerId: (tenantId: string) => Promise<string | null>;
   /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
@@ -124,6 +126,13 @@ export const createInMemoryBillingStore = (
       }
     },
     findStripeCustomerId: async (tenantId) => stripeCustomerByTenant.get(tenantId) ?? null,
+    setStripeCustomerId: async (tenantId, customerId) => {
+      if (customerId === null) {
+        stripeCustomerByTenant.delete(tenantId);
+      } else {
+        stripeCustomerByTenant.set(tenantId, customerId);
+      }
+    },
     findDefaultCustomerId: async (identity) =>
       defaultCustomerByUser.get(`${identity.issuer}|${identity.sub}`) ?? null,
     setDefaultCustomerId: async (identity, customerId) => {

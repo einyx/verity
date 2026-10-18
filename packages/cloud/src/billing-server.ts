@@ -12,6 +12,7 @@ import {
 
 import { type OperatorAuthConfig } from './billing/auth.js';
 import { type CheckoutConfig } from './billing/checkout.js';
+import { createCustomerRouter } from './billing/customer-router.js';
 import { createBillingRouter } from './billing/router.js';
 import { type BillingStore } from './billing/store.js';
 import {
@@ -63,6 +64,7 @@ export const createBillingComposer = (options: {
   stripeWebhookSecret: string;
 }) => {
   const billing = createBillingRouter(options.store, options.auth, options.checkout);
+  const customers = createCustomerRouter(options.store, options.auth, options.checkout);
 
   return compose(withRequest())
     .and(
@@ -73,7 +75,8 @@ export const createBillingComposer = (options: {
       })
     )
     .and(withBody())
-    .and(billing.routes());
+    .and(billing.routes())
+    .and(customers.routes());
 };
 
 /**

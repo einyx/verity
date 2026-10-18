@@ -297,6 +297,12 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       periodStart: new Date(String(row.current_period_start)),
     }));
   },
+  setStripeCustomerId: async (tenantId, customerId): Promise<void> => {
+    await pool.query(sql`
+      update billing_subscriptions set stripe_customer_id = ${customerId}
+      where tenant_id = ${tenantId}
+    `);
+  },
   findStripeCustomerId: async (tenantId): Promise<string | null> => {
     const row = await pool.maybeOne(sql`
       select stripe_customer_id from billing_subscriptions where tenant_id = ${tenantId}

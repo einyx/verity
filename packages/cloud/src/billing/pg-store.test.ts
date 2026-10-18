@@ -156,24 +156,25 @@ describe.skipIf(!databaseUrl)('createPgBillingStore', () => {
     const pool = await createPool(databaseUrl!);
     const store = createPgBillingStore(pool);
     const identity = { issuer: 'https://auth.example.test/oidc', sub: 'pg-member-1' };
+    const organizationId = `t-${tenantId}`;
 
-    await pool.query(
-      sql`delete from tenant_members where tenant_id = ${tenantId} and member_sub = ${identity.sub}`
-    );
     await pool.query(sql`
-      insert into tenant_members (tenant_id, member_issuer, member_sub, role)
-      values (${tenantId}, ${identity.issuer}, ${identity.sub}, 'admin')
+      delete from organization_role_user_relations
+      where tenant_id = 'admin' and organization_id = ${organizationId} and user_id = ${identity.sub}
+    `);
+    await pool.query(sql`
+      insert into organization_role_user_relations
+        (tenant_id, organization_id, organization_role_id, user_id)
+      values ('admin', ${organizationId}, 'admin', ${identity.sub})
     `);
 
     await expect(store.findMembership(tenantId, identity)).resolves.toBe('admin');
-    await expect(
-      store.findMembership(tenantId, { ...identity, issuer: 'https://other.example.test' })
-    ).resolves.toBeNull();
     await expect(store.findMembership('nosuchtenant0001', identity)).resolves.toBeNull();
 
-    await pool.query(
-      sql`delete from tenant_members where tenant_id = ${tenantId} and member_sub = ${identity.sub}`
-    );
+    await pool.query(sql`
+      delete from organization_role_user_relations
+      where tenant_id = 'admin' and organization_id = ${organizationId} and user_id = ${identity.sub}
+    `);
     await pool.end();
   });
 

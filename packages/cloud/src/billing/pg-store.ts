@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
+import { adminTenantId, getTenantOrganizationId } from '@logto/schemas';
 import { z } from 'zod';
 
 import { isEndedStatus } from './entitlement.js';
@@ -173,19 +174,24 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
       });
     });
   },
+  /**
+   * Reads the caller's role from the tenant's Logto organization, the same record the console uses.
+   * The admin role id is `admin` (`TenantRole.Admin`); any other organization role reads as `member`.
+   */
   findMembership: async (tenantId, identity): Promise<TenantRole | null> => {
-    const row = await pool.maybeOne(sql`
-      select role from tenant_members
-      where tenant_id = ${tenantId}
-        and member_issuer = ${identity.issuer}
-        and member_sub = ${identity.sub}
+    const rows = await pool.any(sql`
+      select organization_role_id as role
+      from organization_role_user_relations
+      where tenant_id = ${adminTenantId}
+        and organization_id = ${getTenantOrganizationId(tenantId)}
+        and user_id = ${identity.sub}
     `);
 
-    if (!row) {
+    if (rows.length === 0) {
       return null;
     }
 
-    return z.enum(['admin', 'member']).parse(row.role);
+    return rows.some((row) => row.role === 'admin') ? 'admin' : 'member';
   },
   listInvitations: async (tenantId): Promise<InvitationRecord[]> => {
     const rows = await pool.any(sql`
@@ -282,11 +288,11 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
   listAdminCustomers: async (identity): Promise<AdminCustomer[]> => {
     const rows = await pool.any(sql`
       select b.tenant_id, b.stripe_customer_id, b.current_period_start
-      from tenant_members m
-      join billing_subscriptions b on b.tenant_id = m.tenant_id
-      where m.member_issuer = ${identity.issuer}
-        and m.member_sub = ${identity.sub}
-        and m.role = 'admin'
+      from organization_role_user_relations r
+      join billing_subscriptions b on r.organization_id = 't-' || b.tenant_id
+      where r.tenant_id = ${adminTenantId}
+        and r.user_id = ${identity.sub}
+        and r.organization_role_id = 'admin'
         and b.stripe_customer_id is not null
       order by b.tenant_id
     `);

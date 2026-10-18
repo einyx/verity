@@ -12,10 +12,12 @@ import { isCloud } from '@/consts/env';
  */
 const useRedirectUri = (flow: 'signIn' | 'signOut' = 'signIn') => {
   // Sign-out returns to the console's own sign-in, not the root: on cloud the root is the public landing page.
+  // On cloud the router's basename is already the console path, so useHref adds it; repeating it here would
+  // produce `/console/console`, which is not a registered post-logout URI.
   const path = useHref(
     flow === 'signIn'
       ? joinPath(...conditionalArray(!isCloud && ossConsolePath), '/callback')
-      : joinPath(ossConsolePath, '/')
+      : joinPath(...conditionalArray(!isCloud && ossConsolePath), '/')
   );
   const url = useMemo(() => new URL(path, window.location.origin), [path]);
 

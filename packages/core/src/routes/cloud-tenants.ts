@@ -199,9 +199,9 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
         where m.tenant_id = ${adminTenantId} and m.organization_id = ${organizationId}
         order by u.created_at
       `);
+      // This response ends the chain. Calling next() would let the billing API's catch-all for
+      // `/api/tenants/*` overwrite the members with its 404.
       ctx.body = rows;
-
-      return next();
     }
   );
 

@@ -77,6 +77,12 @@ const startServer = async (store: BillingStore) => {
     secret,
     store,
     now: () => nowSeconds * 1000,
+    retrieveSubscription: async () => ({
+      id: 'sub_1',
+      status: 'active',
+      current_period_start: 1_801_000_000,
+      current_period_end: 1_803_600_000,
+    }),
   });
   const server = createServer((request, response) => {
     void handler(request, response);

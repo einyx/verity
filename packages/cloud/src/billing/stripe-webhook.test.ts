@@ -4,10 +4,26 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { skuGuard } from './sku.js';
 import { createInMemoryBillingStore, type BillingStore } from './store.js';
-import { processStripeWebhook, verifyStripeSignature } from './stripe-webhook.js';
+import {
+  processStripeWebhook,
+  type StripeSubscription,
+  type SubscriptionRetriever,
+  verifyStripeSignature,
+} from './stripe-webhook.js';
 
 const secret = 'whsec_test';
 const nowSeconds = 1_800_000_000;
+
+const periodStartSeconds = 1_801_000_000;
+const periodEndSeconds = 1_803_600_000;
+
+/** The subscription Stripe reports for the checkout, read through the API. */
+const stripeSubscription: StripeSubscription = {
+  id: 'sub_1',
+  status: 'active',
+  current_period_start: periodStartSeconds,
+  current_period_end: periodEndSeconds,
+};
 
 const proSku = skuGuard.parse({
   type: 'Basic',
@@ -54,6 +70,14 @@ const proSku = skuGuard.parse({
 
 const newStore = () => createInMemoryBillingStore({ skus: [proSku] });
 
+const retrieveFromStripe: SubscriptionRetriever = async () => stripeSubscription;
+
+/** A Stripe read whose status this service does not recognize, so the checkout cannot be applied. */
+const retrieveUnusable: SubscriptionRetriever = async () => ({
+  ...stripeSubscription,
+  status: 'not-a-status',
+});
+
 const sign = (payload: string, timestamp = nowSeconds, key = secret) =>
   `t=${timestamp},v1=${createHmac('sha256', key).update(`${timestamp}.${payload}`).digest('hex')}`;
 
@@ -74,8 +98,12 @@ const checkoutEvent = (
     },
   });
 
-const deliver = async (store: BillingStore, payload: string, signature = sign(payload)) =>
-  processStripeWebhook({ payload, signature, secret, store, nowSeconds });
+const deliver = async (
+  store: BillingStore,
+  payload: string,
+  signature = sign(payload),
+  retrieveSubscription: SubscriptionRetriever = retrieveFromStripe
+) => processStripeWebhook({ payload, signature, secret, store, nowSeconds, retrieveSubscription });
 
 describe('verifyStripeSignature', () => {
   const payload = checkoutEvent();
@@ -119,7 +147,12 @@ describe('verifyStripeSignature', () => {
   });
 });
 
-const subscriptionEvent = (type: string, status: string, id = 'evt_sub') =>
+const subscriptionEvent = (
+  type: string,
+  status: string,
+  id = 'evt_sub',
+  periodEnd = periodEndSeconds
+) =>
   JSON.stringify({
     id,
     type,
@@ -127,8 +160,8 @@ const subscriptionEvent = (type: string, status: string, id = 'evt_sub') =>
       object: {
         id: 'sub_1',
         status,
-        current_period_start: 1_801_000_000,
-        current_period_end: 1_803_600_000,
+        current_period_start: periodStartSeconds,
+        current_period_end: periodEnd,
       },
     },
   });
@@ -140,27 +173,67 @@ describe('processStripeWebhook', () => {
 
     const result = await deliver(
       store,
-      subscriptionEvent('customer.subscription.updated', 'past_due'),
-      sign(subscriptionEvent('customer.subscription.updated', 'past_due'))
+      subscriptionEvent('customer.subscription.updated', 'past_due')
     );
     const subscription = await store.findSubscription('tenant_a');
 
     expect(result.status).toBe(200);
     expect(subscription?.status).toBe('past_due');
-    expect(subscription?.currentPeriodEnd).toBe(new Date(1_803_600_000 * 1000).toISOString());
+    expect(subscription?.currentPeriodEnd).toBe(new Date(periodEndSeconds * 1000).toISOString());
   });
 
-  it('marks the subscription canceled when Stripe deletes it', async () => {
+  it('marks the subscription canceled when Stripe deletes it, keeping the paid plan', async () => {
     const store = newStore();
     await deliver(store, checkoutEvent());
     const payload = subscriptionEvent('customer.subscription.deleted', 'canceled', 'evt_del');
 
     const result = await deliver(store, payload);
-
-    expect(result.message).toBe('Subscription canceled.');
     const subscription = await store.findSubscription('tenant_a');
 
+    expect(result.message).toBe('Subscription canceled.');
     expect(subscription?.status).toBe('canceled');
+    expect(subscription?.planId).toBe('pro');
+  });
+
+  it('takes the period from Stripe rather than a 30-day placeholder', async () => {
+    const store = newStore();
+
+    await deliver(store, checkoutEvent());
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(subscription?.currentPeriodStart).toBe(
+      new Date(periodStartSeconds * 1000).toISOString()
+    );
+    expect(subscription?.currentPeriodEnd).toBe(new Date(periodEndSeconds * 1000).toISOString());
+  });
+
+  it('applies a subscription update that arrived before checkout once checkout reads Stripe', async () => {
+    const store = newStore();
+
+    // The update arrives first, so there is no subscription to change yet.
+    await deliver(store, subscriptionEvent('customer.subscription.updated', 'active', 'evt_early'));
+    expect(await store.findSubscription('tenant_a')).toBeNull();
+
+    await deliver(store, checkoutEvent());
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(subscription?.currentPeriodEnd).toBe(new Date(periodEndSeconds * 1000).toISOString());
+  });
+
+  it('does not move the period end backwards for an older event', async () => {
+    const store = newStore();
+    await deliver(store, checkoutEvent());
+
+    const older = subscriptionEvent(
+      'customer.subscription.updated',
+      'active',
+      'evt_older',
+      periodEndSeconds - 86_400
+    );
+    await deliver(store, older);
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(subscription?.currentPeriodEnd).toBe(new Date(periodEndSeconds * 1000).toISOString());
   });
 
   it('ignores a subscription update for a subscription it has not activated', async () => {
@@ -248,6 +321,18 @@ describe('processStripeWebhook', () => {
 
     await expect(deliver(store, payload)).rejects.toThrow('Unknown plan unknown.');
     expect(await store.findSubscription('tenant_a')).toBeNull();
+  });
+
+  it('retries the checkout when the Stripe subscription has an unusable status', async () => {
+    const store = newStore();
+    const payload = checkoutEvent();
+    await expect(deliver(store, payload, sign(payload), retrieveUnusable)).rejects.toThrow(
+      'could not be read'
+    );
+    const retry = await deliver(store, payload);
+
+    expect(retry.message).toBe('Subscription activated.');
+    expect(await store.findSubscription('tenant_a')).not.toBeNull();
   });
 
   it('releases the claim when activation fails so the retry is applied', async () => {

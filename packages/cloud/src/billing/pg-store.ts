@@ -246,7 +246,7 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         current_period_start, current_period_end, quota, system_limit,
         stripe_customer_id, stripe_subscription_id
       ) values (
-        ${activation.tenantId}, ${activation.planId}, 'active', false, false, true,
+        ${activation.tenantId}, ${activation.planId}, ${activation.status}, false, false, true,
         ${activation.periodStart.toISOString()}, ${activation.periodEnd.toISOString()},
         (select quota from billing_skus where id = ${activation.planId}),
         '{}'::jsonb, ${activation.stripeCustomerId}, ${activation.stripeSubscriptionId}
@@ -263,12 +263,14 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
     `);
   },
   updateStripeSubscription: async (update): Promise<void> => {
+    // The period end only moves forward, so an older event cannot overwrite a newer period.
     await pool.query(sql`
       update billing_subscriptions
       set status = ${update.status},
         current_period_start = ${update.periodStart.toISOString()},
         current_period_end = ${update.periodEnd.toISOString()}
       where stripe_subscription_id = ${update.stripeSubscriptionId}
+        and current_period_end <= ${update.periodEnd.toISOString()}
     `);
   },
 });

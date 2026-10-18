@@ -2,7 +2,7 @@ import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { text } from 'node:stream/consumers';
 
 import { type BillingStore } from './store.js';
-import { processStripeWebhook } from './stripe-webhook.js';
+import { processStripeWebhook, type SubscriptionRetriever } from './stripe-webhook.js';
 
 /**
  * A Node request handler for the Stripe webhook. It reads the raw body, which the signature check
@@ -11,7 +11,12 @@ import { processStripeWebhook } from './stripe-webhook.js';
  * registers with Stripe, and it must not be behind a body parser that rewrites the body.
  */
 export const createStripeWebhookHandler =
-  (options: { secret: string; store: BillingStore; now?: () => number }) =>
+  (options: {
+    secret: string;
+    store: BillingStore;
+    retrieveSubscription: SubscriptionRetriever;
+    now?: () => number;
+  }) =>
   async (request: IncomingMessage, response: ServerResponse) => {
     const header = request.headers['stripe-signature'];
     const signature = Array.isArray(header) ? header[0] : header;
@@ -24,6 +29,7 @@ export const createStripeWebhookHandler =
         signature,
         secret: options.secret,
         store: options.store,
+        retrieveSubscription: options.retrieveSubscription,
         nowSeconds: Math.floor(nowMs / 1000),
       });
 

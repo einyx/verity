@@ -18,6 +18,7 @@ export type StripeActivation = {
   planId: string;
   stripeCustomerId: string;
   stripeSubscriptionId: string;
+  status: Subscription['status'];
   periodStart: Date;
   periodEnd: Date;
 };
@@ -125,7 +126,7 @@ export const createInMemoryBillingStore = (
       tenantByStripeSubscription.set(activation.stripeSubscriptionId, activation.tenantId);
       subscriptions.set(activation.tenantId, {
         planId: activation.planId,
-        status: 'active',
+        status: activation.status,
         isEnterprisePlan: false,
         isDevPlan: false,
         hasBillingCustomer: true,
@@ -139,7 +140,13 @@ export const createInMemoryBillingStore = (
       const tenantId = tenantByStripeSubscription.get(update.stripeSubscriptionId);
       const current = tenantId ? subscriptions.get(tenantId) : undefined;
 
-      if (!tenantId || !current) {
+      // An older event must not overwrite a newer period, so the update is skipped when it would
+      // move the period end backwards.
+      if (
+        !tenantId ||
+        !current ||
+        Date.parse(current.currentPeriodEnd) > update.periodEnd.getTime()
+      ) {
         return;
       }
 

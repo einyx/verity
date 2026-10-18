@@ -8,8 +8,6 @@ import { subscriptionStatusGuard } from './subscription.js';
 /** Stripe rejects signed payloads whose timestamp is further than this from the current time. */
 const toleranceSeconds = 300;
 
-const thirtyDaysSeconds = 30 * 24 * 60 * 60;
-
 const eventGuard = z.object({
   id: z.string(),
   type: z.string(),
@@ -31,6 +29,34 @@ const stripeSubscriptionGuard = z.object({
   current_period_end: z.number(),
 });
 
+export type StripeSubscription = z.infer<typeof stripeSubscriptionGuard>;
+
+/** Reads a subscription from Stripe. Returns `undefined` when Stripe does not return a usable one. */
+export type SubscriptionRetriever = (
+  subscriptionId: string
+) => Promise<StripeSubscription | undefined>;
+
+/**
+ * A retriever that reads the subscription from the Stripe API with the secret key. A host passes it
+ * to the webhook so that a checkout takes its period from Stripe rather than from a guess.
+ */
+export const createStripeSubscriptionRetriever =
+  (secretKey: string, fetcher: typeof fetch = fetch): SubscriptionRetriever =>
+  async (subscriptionId) => {
+    const response = await fetcher(
+      `https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+      { headers: { Authorization: `Bearer ${secretKey}` } }
+    );
+
+    if (!response.ok) {
+      return;
+    }
+
+    const parsed = stripeSubscriptionGuard.safeParse(await response.json());
+
+    return parsed.success ? parsed.data : undefined;
+  };
+
 export type StripeWebhookResult = { status: number; message: string };
 
 /** What an event asks for: nothing, a rejected payload, or a state change to apply once claimed. */
@@ -38,6 +64,8 @@ type EventPlan =
   | { kind: 'ignore'; message: string }
   | { kind: 'malformed'; message: string }
   | { kind: 'apply'; message: string; apply: (store: BillingStore) => Promise<void> };
+
+type PlanContext = { nowSeconds: number; retrieveSubscription: SubscriptionRetriever };
 
 const parseJson = (payload: string): unknown => {
   try {
@@ -82,7 +110,12 @@ export const verifyStripeSignature = (input: {
   });
 };
 
-const planCheckoutCompleted = (object: unknown, nowSeconds: number): EventPlan => {
+/**
+ * A paid checkout activates the tenant's subscription with the period and status that Stripe reports
+ * for it. The subscription is read from Stripe here, so the period does not depend on the order in
+ * which the subscription's own events arrive.
+ */
+const planCheckoutCompleted = (object: unknown, context: PlanContext): EventPlan => {
   const parsed = checkoutSessionGuard.safeParse(object);
 
   if (!parsed.success) {
@@ -95,20 +128,26 @@ const planCheckoutCompleted = (object: unknown, nowSeconds: number): EventPlan =
     return { kind: 'ignore', message: 'Checkout is not paid; nothing to activate.' };
   }
 
-  const periodStart = new Date(nowSeconds * 1000);
-
   return {
     kind: 'apply',
     message: 'Subscription activated.',
     apply: async (store) => {
-      // The period is a placeholder until the subscription's own events set the real one.
+      const subscription = await context.retrieveSubscription(data.subscription);
+      const status = subscriptionStatusGuard.safeParse(subscription?.status);
+
+      // Throwing releases the claim, so Stripe's retry reads the subscription again.
+      if (!subscription || !status.success) {
+        throw new Error(`Stripe subscription ${data.subscription} could not be read.`);
+      }
+
       await store.activateStripeSubscription({
         tenantId: data.metadata.tenantId,
         planId: data.metadata.skuId,
         stripeCustomerId: data.customer,
         stripeSubscriptionId: data.subscription,
-        periodStart,
-        periodEnd: new Date(periodStart.getTime() + thirtyDaysSeconds * 1000),
+        status: status.data,
+        periodStart: new Date(subscription.current_period_start * 1000),
+        periodEnd: new Date(subscription.current_period_end * 1000),
       });
     },
   };
@@ -138,11 +177,11 @@ const planSubscriptionChanged = (object: unknown, overrideStatus?: 'canceled'): 
   };
 };
 
-const planners: Record<string, (object: unknown, nowSeconds: number) => EventPlan> = {
+const planners: Record<string, (object: unknown, context: PlanContext) => EventPlan> = {
   'checkout.session.completed': planCheckoutCompleted,
   'customer.subscription.updated': (object) => planSubscriptionChanged(object),
-  // Deletion ends the subscription. Moving the tenant to a free plan is a product decision that
-  // this slice does not make; the subscription is only marked canceled.
+  // Deletion keeps the paid plan with status `canceled`. Access is gated on the status and the
+  // period end, so the plan record stays intact for reactivation.
   'customer.subscription.deleted': (object) => planSubscriptionChanged(object, 'canceled'),
 };
 
@@ -160,6 +199,7 @@ export const processStripeWebhook = async (input: {
   secret: string;
   store: BillingStore;
   nowSeconds: number;
+  retrieveSubscription: SubscriptionRetriever;
 }): Promise<StripeWebhookResult> => {
   if (!verifyStripeSignature({ ...input, header: input.signature })) {
     return { status: 401, message: 'Invalid signature.' };
@@ -173,7 +213,10 @@ export const processStripeWebhook = async (input: {
 
   const event = parsed.data;
   const planner = Object.hasOwn(planners, event.type) ? planners[event.type] : undefined;
-  const plan = planner?.(event.data.object, input.nowSeconds) ?? {
+  const plan = planner?.(event.data.object, {
+    nowSeconds: input.nowSeconds,
+    retrieveSubscription: input.retrieveSubscription,
+  }) ?? {
     kind: 'ignore' as const,
     message: 'Event type not handled.',
   };

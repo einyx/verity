@@ -87,24 +87,24 @@
 
 .controls { display: flex; gap: 12px; flex-wrap: wrap; }
 
-.seg {
-  display: inline-flex; gap: 2px; padding: 3px;
-  background: var(--surface-2); border-radius: 8px;
+/* Filter toggles share the namespace chips' outline style: white buttons on a 1px line, 6px radius. */
+.kshows .seg {
+  display: inline-flex; gap: 6px; flex-wrap: wrap;
 }
-/* MeshX button: 14px medium text, 6px radius, a 3px focus ring, and a 0.5 opacity when disabled. */
-.seg button {
-  display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
-  border-radius: 6px; font-family: var(--sans); font-size: 14px; font-weight: 500;
-  line-height: 1; white-space: nowrap; color: var(--ink-2);
-  transition: background-color 150ms, color 150ms, box-shadow 150ms;
+.kshows .seg button {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  font-family: var(--sans); font-size: 13px; font-weight: 500; line-height: 1;
+  white-space: nowrap; color: var(--ink-2);
+  transition: background-color 150ms, color 150ms, border-color 150ms;
 }
-.seg button:hover:not(:disabled) { color: var(--ink); }
-.seg button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 50%, transparent); outline-offset: 0; }
-.seg button[aria-pressed="true"] {
-  background: var(--surface); color: var(--ink);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), inset 0 0 0 1px var(--line);
+.kshows .seg button:hover:not(:disabled) { color: var(--ink); background: var(--surface-2); }
+.kshows .seg button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 50%, transparent); outline-offset: 0; }
+.kshows .seg button[aria-pressed="true"] {
+  color: var(--ink); border-color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--ink-2);
 }
-.seg button:disabled { opacity: 0.5; pointer-events: none; }
+.kshows .seg button:disabled { opacity: 0.5; pointer-events: none; }
 
 .spacer { flex: 1; }
 

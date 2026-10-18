@@ -77,6 +77,8 @@ export enum AdminTenantRole {
   User = 'user',
   /** The role for machine to machine applications that represent a user tenant and send requests to Logto Cloud. */
   TenantApplication = 'tenantApplication',
+  /** Given to the first user of the admin tenant. Holds the admin-only Cloud scopes, such as landing page editing. */
+  Admin = 'admin',
 }
 
 export enum PredefinedScope {

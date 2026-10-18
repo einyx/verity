@@ -247,6 +247,32 @@ export const createBillingRouter = (
         return next({ ...context, json: status });
       }
     )
+    // A tenant admin reads the Stripe customer recorded for the tenant.
+    .get(
+      '/api/tenants/:tenantId/stripe-customer',
+      {
+        response: z.object({
+          tenantId: z.string(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+          stripeCustomerId: z.string().nullable(),
+        }),
+      },
+      async (context, next) => {
+        const { tenantId } = context.guarded.params;
+
+        await authorizeTenantAdmin(context.request.headers.authorization, tenantId, auth, store);
+
+        const subscription = await store.findSubscription(tenantId);
+        const stripeCustomerId = await store.findStripeCustomerId(tenantId);
+        const since = subscription ? new Date(subscription.currentPeriodStart) : new Date(0);
+
+        return next({
+          ...context,
+          json: { tenantId, createdAt: since, updatedAt: since, stripeCustomerId },
+        });
+      }
+    )
     // The console sends the page to Stripe's billing portal, where the customer manages their card.
     .post(
       '/api/tenants/:tenantId/stripe-customer-portal',

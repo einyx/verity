@@ -41,28 +41,27 @@ export const verifyCaller = async (
     throw new RequestError('Unauthorized', 401);
   }
 
-  let sub: string | undefined;
-  let issuer: string | undefined;
-  let email: string | undefined;
-  let emailVerified: boolean | undefined;
+  const payload = await jwtVerify(token, config.getKey, {
+    issuer: config.issuer,
+    audience: config.audience,
+    // Logto signs the admin tenant's keys with ES384 as well as ES256. Both are ECDSA, and the
+    // issuer's JWKS, which the key set is fetched from, decides which key a token may use.
+    algorithms: ['ES256', 'ES384'],
+  }).then(
+    ({ payload }) => payload,
+    () => {
+      throw new RequestError('Unauthorized', 401);
+    }
+  );
 
-  try {
-    const { payload } = await jwtVerify(token, config.getKey, {
-      issuer: config.issuer,
-      audience: config.audience,
-      algorithms: ['ES256'],
-    });
-    sub = payload.sub;
-    issuer = payload.iss;
-    email = typeof payload.email === 'string' ? payload.email : undefined;
-    emailVerified = payload.email_verified === true;
-  } catch {
-    throw new RequestError('Unauthorized', 401);
-  }
+  const { sub, iss: issuer } = payload;
 
   if (!sub || !issuer) {
     throw new RequestError('Unauthorized', 401);
   }
+
+  const email = typeof payload.email === 'string' ? payload.email : undefined;
+  const emailVerified = payload.email_verified === true;
 
   return { issuer, sub, email, emailVerified };
 };

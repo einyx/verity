@@ -5,6 +5,7 @@ import {
   compose,
   type HttpContext,
   type NextFunction,
+  RequestError,
   type RequestContext,
   withBody,
   withRequest,
@@ -86,10 +87,25 @@ export const createBillingComposer = (options: {
 export const createBillingHandler =
   (composer: ReturnType<typeof createBillingComposer>) =>
   async (request: IncomingMessage, response: ServerResponse) => {
-    await composer({}, async (context) => writeJsonResult(response, context), {
-      request,
-      response,
-    });
+    try {
+      await composer({}, async (context) => writeJsonResult(response, context), {
+        request,
+        response,
+      });
+    } catch (error: unknown) {
+      // A rejected request, such as a missing token, throws from the composer. The host has
+      // already handed the socket to this handler, so the error must be answered here or the
+      // request never ends.
+      if (response.headersSent) {
+        response.end();
+        return;
+      }
+
+      const status = error instanceof RequestError ? error.status : 500;
+      const message = error instanceof RequestError ? error.message : 'Internal server error';
+
+      await writeJsonResult(response, { status, json: { message } });
+    }
   };
 
 /** Writes the billing result: its status and JSON body. Billing answers only with JSON or nothing. */

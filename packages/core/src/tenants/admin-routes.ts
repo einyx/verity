@@ -2,7 +2,7 @@ import { adminTenantId } from '@logto/schemas';
 import type Koa from 'koa';
 
 import { EnvSet } from '#src/env-set/index.js';
-import { billingRoutes } from '#src/routes/billing.js';
+import { billingRoutes, isBillingConfigured } from '#src/routes/billing.js';
 import { localCloudRoutes } from '#src/routes/cloud-dev.js';
 import { cloudTenantRoutes } from '#src/routes/cloud-tenants.js';
 import { periodicUsageRoute } from '#src/routes/periodic-usage.js';
@@ -24,7 +24,8 @@ export const mountAdminRoutes = (app: Koa, id: string, envSet: EnvSet) => {
   // Real usage is served before the billing API, which does not meter usage.
   app.use(periodicUsageRoute(envSet));
 
-  if (EnvSet.values.isProduction) {
+  // Local development serves billing only once its settings are present, so the stand-ins keep working without them.
+  if (EnvSet.values.isProduction || isBillingConfigured()) {
     app.use(billingRoutes());
   }
 };

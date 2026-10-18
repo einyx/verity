@@ -2,6 +2,7 @@ import type { Context, Next } from 'koa';
 import proxy from 'koa-proxies';
 
 import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
+import { isBillingConfigured } from '#src/routes/billing.js';
 
 import { handleCheckoutCreate, handleCheckoutStatus } from './cloud-dev-checkout.js';
 import { routes } from './cloud-dev-data.js';
@@ -10,14 +11,28 @@ import { routes } from './cloud-dev-data.js';
 // single Logto instance. The console calls these routes on its own origin. They return the same
 // defaults the OSS console uses, without checking tokens, so they are served only when the instance
 // is cloud and not production. Production cloud serves its own API and never reaches this code.
+// When billing is configured, the billing API serves the routes it owns instead, so checkouts and
+// invoices are stored in the billing database, as they are in production.
 
 const checkoutStatusPattern = /^\/api\/checkout-session\/([^/]+)$/;
+
+/** Routes the billing API answers. The stand-ins step aside for these when billing is configured. */
+const billingOwnedPaths = [
+  /^\/api\/tenants\/[^/]+\/subscription$/,
+  /^\/api\/tenants\/[^/]+\/invoices$/,
+  /^\/api\/tenants\/[^/]+\/invitations$/,
+  /^\/api\/skus$/,
+];
 
 /** Whether the local cloud stand-ins apply to this instance. */
 export const isLocalCloud = () => EnvSet.values.isCloud;
 
 /** Serves a local data route for a GET request. Returns whether one matched. */
 const serveDataRoute = (ctx: Context) => {
+  if (isBillingConfigured() && billingOwnedPaths.some((pattern) => pattern.test(ctx.path))) {
+    return false;
+  }
+
   const match =
     ctx.method === 'GET' ? routes.find(([pattern]) => pattern.test(ctx.path)) : undefined;
 
@@ -74,14 +89,16 @@ export const localCloudRoutes = () => {
     // stand-in moves the tenant without a payment.
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-    if (ctx.method === 'POST' && ctx.path === '/api/checkout-session') {
-      return handleCheckoutCreate(ctx, stripeKey);
-    }
+    if (!isBillingConfigured()) {
+      if (ctx.method === 'POST' && ctx.path === '/api/checkout-session') {
+        return handleCheckoutCreate(ctx, stripeKey);
+      }
 
-    const checkoutStatus = checkoutStatusPattern.exec(ctx.path);
+      const checkoutStatus = checkoutStatusPattern.exec(ctx.path);
 
-    if (ctx.method === 'GET' && checkoutStatus?.[1]) {
-      return handleCheckoutStatus(ctx, stripeKey, checkoutStatus[1]);
+      if (ctx.method === 'GET' && checkoutStatus?.[1]) {
+        return handleCheckoutStatus(ctx, stripeKey, checkoutStatus[1]);
+      }
     }
 
     if (ctx.path.startsWith('/m/')) {

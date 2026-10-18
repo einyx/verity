@@ -22,6 +22,12 @@ const billingEnvironment = z.object({
   STRIPE_PRO_PRICE_ID: z.string().startsWith('price_'),
 });
 
+/**
+ * Whether every billing setting is present. Local development serves the billing API only when it is,
+ * so an instance without billing keeps the local stand-ins.
+ */
+export const isBillingConfigured = () => billingEnvironment.safeParse(process.env).success;
+
 /** Paths the billing composition answers. Everything else goes on to the normal routes. */
 const billingPaths = [
   /^\/api\/tenants\//,

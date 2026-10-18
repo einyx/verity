@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
+import { isEndedStatus } from './entitlement.js';
 import { type InvitationRecord } from './invitation.js';
 import { type Invoice } from './invoice.js';
 import { type Sku, type SkuType } from './sku.js';
@@ -141,11 +142,13 @@ export const createInMemoryBillingStore = (
       const current = tenantId ? subscriptions.get(tenantId) : undefined;
 
       // An older event must not overwrite a newer period, so the update is skipped when it would
-      // move the period end backwards.
+      // move the period end backwards. An ended subscription stays ended, so a late paid status
+      // cannot restore access after cancellation.
       if (
         !tenantId ||
         !current ||
-        Date.parse(current.currentPeriodEnd) > update.periodEnd.getTime()
+        Date.parse(current.currentPeriodEnd) > update.periodEnd.getTime() ||
+        (isEndedStatus(current.status) && !isEndedStatus(update.status))
       ) {
         return;
       }

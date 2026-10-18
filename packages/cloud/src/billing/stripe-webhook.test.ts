@@ -195,6 +195,24 @@ describe('processStripeWebhook', () => {
     expect(subscription?.planId).toBe('pro');
   });
 
+  it('does not restore access when a late active update follows a deletion', async () => {
+    const store = newStore();
+    await deliver(store, checkoutEvent());
+    await deliver(store, subscriptionEvent('customer.subscription.deleted', 'canceled', 'evt_del'));
+
+    // The late update carries a newer period, so only the status rule can stop it.
+    const late = subscriptionEvent(
+      'customer.subscription.updated',
+      'active',
+      'evt_late',
+      periodEndSeconds + 86_400
+    );
+    await deliver(store, late);
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(subscription?.status).toBe('canceled');
+  });
+
   it('takes the period from Stripe rather than a 30-day placeholder', async () => {
     const store = newStore();
 

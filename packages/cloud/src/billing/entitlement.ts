@@ -7,6 +7,12 @@ import { logtoSkuQuotaGuard, type Subscription } from './subscription.js';
 const endedStatuses = new Set<Subscription['status']>(['canceled', 'incomplete_expired']);
 
 /**
+ * Whether a status is terminal for entitlement. Once a subscription is ended, no later event may
+ * move it back to a paid status, because Stripe does not reactivate a canceled subscription.
+ */
+export const isEndedStatus = (status: Subscription['status']) => endedStatuses.has(status);
+
+/**
  * The subscription a tenant is entitled to at `now`. A subscription whose status has ended keeps its
  * paid plan until its period end, and from then on reads as the development plan. Everything else is
  * returned as stored.

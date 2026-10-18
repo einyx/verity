@@ -2,6 +2,7 @@
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { z } from 'zod';
 
+import { isEndedStatus } from './entitlement.js';
 import { type InvitationRecord, invitationStatusGuard } from './invitation.js';
 import { invoiceGuard, type Invoice } from './invoice.js';
 import { skuGuard, type Sku, type SkuType } from './sku.js';
@@ -263,7 +264,8 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
     `);
   },
   updateStripeSubscription: async (update): Promise<void> => {
-    // The period end only moves forward, so an older event cannot overwrite a newer period.
+    // The period end only moves forward, so an older event cannot overwrite a newer period. An ended
+    // subscription stays ended: a paid status arriving late cannot restore it.
     await pool.query(sql`
       update billing_subscriptions
       set status = ${update.status},
@@ -271,6 +273,10 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         current_period_end = ${update.periodEnd.toISOString()}
       where stripe_subscription_id = ${update.stripeSubscriptionId}
         and current_period_end <= ${update.periodEnd.toISOString()}
+        and (
+          status not in ('canceled', 'incomplete_expired')
+          or ${isEndedStatus(update.status)}
+        )
     `);
   },
 });

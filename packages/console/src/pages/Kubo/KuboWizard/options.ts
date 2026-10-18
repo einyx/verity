@@ -85,7 +85,7 @@ const allComponents = [
 ];
 
 // Unavailable stacks have no components to show, so their card lists none.
-export const includedComponents = (option: Pick<StackOption, 'available' | 'exclude'>) =>
+const includedComponents = (option: Pick<StackOption, 'available' | 'exclude'>) =>
   option.available ? allComponents.filter((component) => !option.exclude.includes(component)) : [];
 
 // Maps a 1-based list position onto the three wizard steps.

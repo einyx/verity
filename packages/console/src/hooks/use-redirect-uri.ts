@@ -11,8 +11,11 @@ import { isCloud } from '@/consts/env';
  * the basename of react-router if it's set.
  */
 const useRedirectUri = (flow: 'signIn' | 'signOut' = 'signIn') => {
+  // Sign-out returns to the console's own sign-in, not the root: on cloud the root is the public landing page.
   const path = useHref(
-    joinPath(...conditionalArray(!isCloud && ossConsolePath), flow === 'signIn' ? '/callback' : '/')
+    flow === 'signIn'
+      ? joinPath(...conditionalArray(!isCloud && ossConsolePath), '/callback')
+      : joinPath(ossConsolePath, '/')
   );
   const url = useMemo(() => new URL(path, window.location.origin), [path]);
 

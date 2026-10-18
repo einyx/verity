@@ -1,5 +1,7 @@
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import { kuboPortalUrl } from './kubo-portal-url.js';
+
 // Tools for managing this Logto tenant over MCP. Each tool is one Management API call, made with
 // the caller's own bearer token, so the Management API's checks decide what each caller can do.
 // Read tools list and fetch resources. Write tools only create resources: changing and deleting
@@ -16,6 +18,8 @@ type ToolProperty = {
 export type LogtoMcpTool = {
   name: string;
   description: string;
+  /** Which service the path belongs to. Default is the Logto Management API; `kubo` is the Kubo portal. */
+  service?: 'kubo';
   /** The Management API path. `{name}` segments are filled from the tool arguments. */
   path: string;
   /** Defaults to GET. Write tools use POST and send the body built by `body`. */
@@ -43,6 +47,15 @@ const descriptionProperty: ToolProperty = {
 const applicationTypes = ['SPA', 'Traditional', 'Native', 'MachineToMachine'] as const;
 
 export const logtoMcpTools: readonly LogtoMcpTool[] = [
+  {
+    // Foundation stacks are Kubo workspaces, not Logto organizations.
+    name: 'list_foundation_stacks',
+    description:
+      'List the Foundation stacks (workspaces) created through Kubo, with their phase and readiness. These are not organizations.',
+    service: 'kubo',
+    path: '/api/stacks',
+    properties: {},
+  },
   {
     name: 'list_applications',
     description: 'List the applications in this tenant.',
@@ -72,7 +85,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
     name: 'list_organizations',
     description:
-      'List the Logto organizations in this tenant. Logto organizations are not Foundation workspaces: Foundation stacks are created and managed through Kubo, and this tenant has no tool for them.',
+      'List the organizations in this tenant. Organizations are not Foundation workspaces: Foundation stacks are created and managed through Kubo, and this tenant has no tool for them.',
     path: '/organizations',
     properties: pagingProperties,
   },
@@ -91,7 +104,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
     name: 'create_application',
     description:
-      'Create an application in this tenant. Logto generates its id and credentials; the client secret is not returned here.',
+      'Create an application in this tenant. MeshX generates its id and credentials; the client secret is not returned here.',
     path: '/applications',
     method: 'POST',
     properties: {
@@ -207,7 +220,7 @@ export const callLogtoTool = async (
   apiBase: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<CallToolResult> => {
-  const built = buildLogtoToolUrl(tool, args, apiBase);
+  const built = buildLogtoToolUrl(tool, args, tool.service === 'kubo' ? kuboPortalUrl() : apiBase);
 
   if ('error' in built) {
     return { content: [{ type: 'text', text: built.error }], isError: true };
@@ -227,17 +240,32 @@ export const sendLogtoRequest = async (
   token: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<CallToolResult> => {
-  const response = await fetchImpl(url, {
-    method: tool.method ?? 'GET',
-    headers: {
-      accept: 'application/json',
-      authorization: `Bearer ${token}`,
-      ...(requestBody ? { 'content-type': 'application/json' } : {}),
-    },
-    ...(requestBody ? { body: JSON.stringify(requestBody) } : {}),
-    signal: AbortSignal.timeout(10_000),
-  });
-  const body = await response.text();
+  // The Logto token is for the Management API only. Kubo gets no Logto credentials.
+  // A service that cannot be reached (for example Kubo outside the cluster) becomes a tool error the
+  // model can report, instead of failing the whole chat request.
+  try {
+    const response = await fetchImpl(url, {
+      method: tool.method ?? 'GET',
+      headers: {
+        accept: 'application/json',
+        ...(tool.service === 'kubo' ? {} : { authorization: `Bearer ${token}` }),
+        ...(requestBody ? { 'content-type': 'application/json' } : {}),
+      },
+      ...(requestBody ? { body: JSON.stringify(requestBody) } : {}),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const body = await response.text();
 
-  return { content: [{ type: 'text', text: body }], isError: !response.ok };
+    return { content: [{ type: 'text', text: body }], isError: !response.ok };
+  } catch {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${tool.service === 'kubo' ? 'Kubo' : 'Logto'} is not reachable from this server.`,
+        },
+      ],
+      isError: true,
+    };
+  }
 };

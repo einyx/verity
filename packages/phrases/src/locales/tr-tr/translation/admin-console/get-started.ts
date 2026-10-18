@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Başlangıca Başlayın',
   title: 'Başarınızı Desteklemek İçin Keşfedilecek Bir Şey',
   subtitle: "Logto'nun değerini hızla elde etmek için yapabileceğiniz birkaç şey",
+  greeting_morning: 'Günaydın, {{name}}',
+  greeting_afternoon: 'Merhaba, {{name}}',
+  greeting_evening: 'İyi akşamlar, {{name}}',
   develop: {
     title: 'Geliştir: Uygulamanızı entegre etmek için 5 dakika ayırın',
     title_cloud: 'Geliştir: Uygulamanızı dakikalar içinde güvenli bir şekilde entegre edin',

@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Get started',
   title: 'Something to help you succeed',
   subtitle: 'A few things you can do to quickly get value of MeshX',
+  greeting_morning: 'Good morning, {{name}}',
+  greeting_afternoon: 'Good afternoon, {{name}}',
+  greeting_evening: 'Good evening, {{name}}',
   develop: {
     title: 'Develop: Take 5 minutes to integrate your app',
     title_cloud: 'Develop: Securely integrate your app in minutes',

@@ -53,10 +53,8 @@ function AiChat({ className }: Props) {
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
-  // The modal opens as a compact launcher and grows into a full chat once the user types,
-  // attaches a file, or has a conversation going.
+  // The send button is enabled once there is text or an attachment.
   const hasContent = Boolean(input.trim()) || attachments.length > 0;
-  const isExpanded = messages.length > 0 || isLoading || hasError || hasContent;
 
   const exampleQuestions = t('inkeep_ai_bot.example_questions', {
     returnObjects: true,
@@ -209,6 +207,7 @@ function AiChat({ className }: Props) {
       <div
         tabIndex={0}
         aria-label={t('inkeep_ai_bot.ask_ai_label')}
+        title="Ask AI about MeshX (⌘K)"
         role="button"
         className={classNames(styles.askAiButton, className)}
         onClick={() => {
@@ -227,7 +226,7 @@ function AiChat({ className }: Props) {
         isOpen={isModalOpen}
         ariaHideApp={false}
         contentLabel={t('inkeep_ai_bot.ask_ai_label')}
-        className={classNames(styles.modal, isExpanded && styles.modalExpanded)}
+        className={classNames(styles.modal, styles.modalExpanded)}
         overlayClassName={styles.overlay}
         onRequestClose={closeModal}
       >
@@ -299,6 +298,9 @@ function AiChat({ className }: Props) {
           }}
           onFilesSelected={(files) => {
             void addFiles(files);
+          }}
+          onQuickAction={(prompt) => {
+            setInput(prompt);
           }}
           onRemoveAttachment={(id) => {
             setAttachments((current) => current.filter((item) => item.id !== id));

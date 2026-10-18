@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'Commencer',
   title: 'Quelque chose à explorer pour vous aider à réussir',
   subtitle: 'Quelques choses que vous pouvez faire pour obtenir rapidement de la valeur de Logto',
+  greeting_morning: 'Bonjour, {{name}}',
+  greeting_afternoon: 'Bon après-midi, {{name}}',
+  greeting_evening: 'Bonsoir, {{name}}',
   develop: {
     title: 'Développer: Prenez 5 minutes pour intégrer votre application',
     title_cloud: 'Développer: Intégrez votre application de manière sécurisée en quelques minutes',

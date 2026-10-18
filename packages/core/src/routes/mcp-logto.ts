@@ -1,3 +1,6 @@
+import { text } from 'node:stream/consumers';
+
+import { extractBearerToken } from '@logto/mcp-portal';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
@@ -6,8 +9,6 @@ import {
   type CallToolResult,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { extractBearerToken } from '@logto/mcp-portal';
-import { text } from 'node:stream/consumers';
 
 import { EnvSet } from '#src/env-set/index.js';
 
@@ -18,7 +19,7 @@ import type { AnonymousRouter, RouterInitArgs } from './types.js';
 // through to here (see mcp-portal-endpoint.ts). Tools run with the caller's token, so the
 // Management API decides what each caller can read and create.
 
-export const logtoMcpName = 'logto';
+export const logtoMcpName = 'meshx';
 
 /** One MCP server per request, bound to the caller's token and the tenant's Management API. */
 export const createLogtoMcpServer = (token: string, apiBase: string): Server => {
@@ -67,9 +68,7 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
   const bearer = (ctx: { get: (name: string) => string }) => {
     try {
       return extractBearerToken(ctx.get('authorization'));
-    } catch {
-      return undefined;
-    }
+    } catch {}
   };
 
   router.get('/mcp/info', async (ctx) => {
@@ -164,6 +163,5 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
 
     await server.connect(transport);
     await transport.handleRequest(ctx.req, ctx.res, body);
-    return;
   });
 }

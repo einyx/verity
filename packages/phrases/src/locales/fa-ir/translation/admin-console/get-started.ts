@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'شروع کار',
   title: 'چیزی برای کمک به موفقیت شما',
   subtitle: 'چند کاری که می‌توانید برای دریافت سریع ارزش از Logto انجام دهید',
+  greeting_morning: 'صبح بخیر، {{name}}',
+  greeting_afternoon: 'عصر بخیر، {{name}}',
+  greeting_evening: 'شب بخیر، {{name}}',
   develop: {
     title: 'توسعه: ۵ دقیقه وقت بگذارید تا برنامه خود را یکپارچه کنید',
     title_cloud: 'توسعه: برنامه خود را در چند دقیقه به‌صورت امن یکپارچه کنید',

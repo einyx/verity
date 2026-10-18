@@ -25,7 +25,15 @@ type Props = {
   readonly onSubmit: () => void;
   readonly onFilesSelected: (files: File[]) => void;
   readonly onRemoveAttachment: (id: string) => void;
+  /** Fills the prompt with a ready-made question, as the quick-action toolbar does. */
+  readonly onQuickAction: (prompt: string) => void;
 };
+
+const quickActions = [
+  { label: 'Explain', prompt: 'Explain this in simple terms: ' },
+  { label: 'Summarize', prompt: 'Summarize the key points of: ' },
+  { label: 'Next steps', prompt: 'What are the next steps for: ' },
+] as const;
 
 function Composer({
   value,
@@ -37,6 +45,7 @@ function Composer({
   onSubmit,
   onFilesSelected,
   onRemoveAttachment,
+  onQuickAction,
 }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -96,6 +105,21 @@ function Composer({
         }}
       />
       {attachmentError && <div className={styles.error}>{attachmentError}</div>}
+      <div className={styles.quickActions} role="toolbar" aria-label="Quick prompts">
+        {quickActions.map(({ label, prompt }) => (
+          <button
+            key={label}
+            type="button"
+            className={styles.quickAction}
+            disabled={isLoading}
+            onClick={() => {
+              onQuickAction(prompt);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className={styles.composerFooter}>
         <button
           type="button"

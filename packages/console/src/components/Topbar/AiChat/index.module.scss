@@ -24,13 +24,13 @@
   display: inline-flex;
   align-items: center;
   gap: _.unit(2);
-  @include pill;
   height: 32px;
   padding: 0 _.unit(3);
   white-space: nowrap;
   transition:
     background-color 0.15s ease,
     box-shadow 0.15s ease;
+  @include pill;
 
   svg {
     width: 18px;
@@ -72,10 +72,34 @@
 }
 
 // Once the user types or a session is running, the panel grows into a full-height transcript.
+// The growth is eased over about a second so the change reads as one motion.
 .modalExpanded {
   max-width: 820px;
-  height: min(80vh, 760px);
+  min-height: min(80vh, 760px);
   max-height: 80vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 16%);
+}
+
+@keyframes transcriptIn {
+  from {
+    opacity: 0%;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 100%;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    transition: none;
+  }
+
+  .messages {
+    animation: none;
+  }
 }
 
 // The transcript: turns stack with a steady rhythm, like lines in a terminal.
@@ -87,6 +111,24 @@
   min-height: 0;
   overflow-y: auto;
   padding: _.unit(4);
+  // A faint dot field behind the transcript, drifting very slowly, as in the toolbar template.
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 18px 18px;
+  animation: dotDrift 40s linear infinite;
+}
+
+@keyframes dotDrift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 18px 18px;
+  }
+}
+
+.modalExpanded .messages {
+  animation: transcriptIn 700ms cubic-bezier(0.22, 1, 0.36, 1) 250ms both;
 }
 
 // A user turn: the message is set after a prompt marker, the way a shell echoes the command.
@@ -283,9 +325,15 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-layer-1);
+  // Focus eases in over a long, soft curve so typing starts without a jump.
+  transition:
+    border-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 1600ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 1200ms ease;
 
   &:focus-within {
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
 }
 
@@ -597,4 +645,39 @@
 .actionStatus {
   color: var(--color-text-secondary);
   font: var(--font-body-3);
+}
+
+// Quick prompts above the composer: short pills that fill the input, like the toolbar template.
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: _.unit(2);
+  margin: 0 _.unit(4);
+}
+
+.quickAction {
+  height: 28px;
+  padding: 0 _.unit(3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-layer-2);
+  font: var(--font-label-2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease;
+
+  &:disabled {
+    cursor: default;
+    opacity: 60%;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-layer-3);
+    color: var(--color-text);
+  }
 }

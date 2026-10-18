@@ -13,7 +13,6 @@ import { pickupFeaturedLogtoSkus } from '@/utils/subscription';
 
 import Skeleton from '../components/Skeleton';
 
-import ConsoleEmbeddedPricing from './ConsoleEmbeddedPricing';
 import CurrentPlan from './CurrentPlan';
 import SwitchPlanActionBar from './SwitchPlanActionBar';
 import styles from './index.module.scss';
@@ -88,21 +87,18 @@ function Subscription() {
       <CurrentPlan periodicUsage={periodicUsage} usageAddOnSkus={usageAddOnSkus} />
       {/* Hide pricing table for private regions */}
       {!isPrivateRegionTenant && (
-        <>
-          <ConsoleEmbeddedPricing />
-          <SwitchPlanActionBar
-            currentSkuId={currentSku.id}
-            logtoSkus={reservedSkus}
-            onSubscriptionUpdated={async () => {
-              /**
-               * The upcoming billing info is calculated based on the current subscription usage,
-               * and the usage is based on the current subscription plan,
-               * need to manually trigger the usage update while the subscription plan is changed.
-               */
-              onCurrentSubscriptionUpdated();
-            }}
-          />
-        </>
+        <SwitchPlanActionBar
+          currentSkuId={currentSku.id}
+          logtoSkus={reservedSkus}
+          onSubscriptionUpdated={async () => {
+            /**
+             * The upcoming billing info is calculated based on the current subscription usage,
+             * and the usage is based on the current subscription plan,
+             * need to manually trigger the usage update while the subscription plan is changed.
+             */
+            onCurrentSubscriptionUpdated();
+          }}
+        />
       )}
     </div>
   );

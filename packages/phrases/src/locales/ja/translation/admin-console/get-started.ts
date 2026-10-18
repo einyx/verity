@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'はじめに',
   title: 'あなたの成功を手助けする探索',
   subtitle: 'Logtoの価値を迅速に把握するための数つの方法',
+  greeting_morning: 'おはようございます、{{name}}さん',
+  greeting_afternoon: 'こんにちは、{{name}}さん',
+  greeting_evening: 'こんばんは、{{name}}さん',
   develop: {
     title: '開発: 5分の時間を使ってアプリを統合してみましょう',
     title_cloud: '開発: 数分でアプリを安全に統合する',

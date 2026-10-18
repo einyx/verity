@@ -21,6 +21,7 @@ import DeleteAccount from './pages/DeleteAccount';
 import EnterpriseSubscription from './pages/EnterpriseSubscription';
 import BillingHistory from './pages/EnterpriseSubscription/BillingHistory';
 import Subscription from './pages/EnterpriseSubscription/Subscription';
+import LandingPageEditor from './pages/LandingPageEditor';
 import Main from './pages/Main';
 import SelfHostedLicenses from './pages/SelfHostedLicenses';
 import SocialDemoCallback from './pages/SocialDemoCallback';
@@ -51,6 +52,10 @@ function AppRoutes() {
                 path={`${GlobalRoute.SelfHostedLicenses}/:licenseId?`}
                 element={<SelfHostedLicenses />}
               />
+            )}
+            {/* Landing page CMS editor for the marketing site; dev feature, admin tenant only in practice. */}
+            {isCloud && isDevFeaturesEnabled && (
+              <Route path={GlobalRoute.LandingPage} element={<LandingPageEditor />} />
             )}
             {/* Console SSO */}
             {isCloud && isDevFeaturesEnabled && (

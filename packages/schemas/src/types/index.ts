@@ -39,3 +39,5 @@ export * from './user-sessions.js';
 export * from './trusted-device.js';
 export * from './personal-access-token.js';
 export * from './authentication-context.js';
+export * from './landing-page.js';
+export * from './landing-page-defaults.js';

@@ -24,9 +24,9 @@ import {
   toInvitationView,
 } from './invitation.js';
 import { invoicesResponseGuard } from './invoice.js';
-import { skuGuard, skuTypeGuard } from './sku.js';
+import { type Sku, skuGuard, skuTypeGuard } from './sku.js';
 import { type BillingStore } from './store.js';
-import { subscriptionGuard } from './subscription.js';
+import { logtoSkuQuotaGuard, type Subscription, subscriptionGuard } from './subscription.js';
 
 /** Stands in for an invitation that does not exist, so the caller gets the same 403 either way. */
 const UNUSABLE_INVITATION: InvitationForAcceptance = {
@@ -34,6 +34,36 @@ const UNUSABLE_INVITATION: InvitationForAcceptance = {
   tokenHash: '',
   expiresAt: new Date(0),
   status: 'revoked',
+};
+
+/**
+ * The subscription read for a tenant with no billing subscription, such as a development tenant. It
+ * carries the development plan's quota, or nothing when that plan is missing, so the caller refuses it.
+ */
+const developmentSubscription = (
+  tenantId: string,
+  developmentSku?: Sku
+): Subscription | undefined => {
+  const quota = logtoSkuQuotaGuard.safeParse(developmentSku?.quota);
+
+  if (!quota.success) {
+    return undefined;
+  }
+
+  const epoch = new Date(0).toISOString();
+
+  return {
+    id: tenantId,
+    planId: ReservedPlanId.Development,
+    currentPeriodStart: epoch,
+    currentPeriodEnd: epoch,
+    isEnterprisePlan: false,
+    isDevPlan: true,
+    hasBillingCustomer: false,
+    status: 'active',
+    quota: quota.data,
+    systemLimit: {},
+  };
 };
 
 /**
@@ -52,22 +82,32 @@ export const createBillingRouter = (
         response: subscriptionGuard,
       },
       async (context, next) => {
-        await authorizeOperator(context.request.headers.authorization, auth);
-
-        const subscription = await store.findSubscription(context.guarded.params.tenantId);
-
-        if (!subscription) {
-          throw new RequestError('Subscription not found', 404);
+        // Core reads this as an operator. A tenant admin reads the subscription of their own tenant.
+        try {
+          await authorizeOperator(context.request.headers.authorization, auth);
+        } catch {
+          await authorizeTenantAdmin(
+            context.request.headers.authorization,
+            context.guarded.params.tenantId,
+            auth,
+            store
+          );
         }
+
+        const { tenantId } = context.guarded.params;
+        const skus = await store.listSkus({});
+        const developmentSku = skus.find((sku) => sku.id === ReservedPlanId.Development);
+
+        // A tenant with no billing subscription, such as a development tenant, reads as the development
+        // plan. The development plan must exist to be granted, so a missing one refuses the read.
+        const subscription =
+          (await store.findSubscription(tenantId)) ??
+          developmentSubscription(tenantId, developmentSku);
 
         // Core reads this to decide the tenant's quota. An ended subscription reads as the development
         // plan, and a missing development plan refuses the read instead of granting paid quota.
-        const skus = await store.listSkus({});
-        const entitled = effectiveSubscription(
-          subscription,
-          new Date(),
-          skus.find((sku) => sku.id === ReservedPlanId.Development)
-        );
+        const entitled =
+          subscription && effectiveSubscription(subscription, new Date(), developmentSku);
 
         if (!entitled) {
           throw new RequestError('Subscription plan is unavailable', 503);

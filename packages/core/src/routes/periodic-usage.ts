@@ -1,7 +1,7 @@
 import { getCloudApiIndicator } from '@logto/schemas';
 import { createPgBillingStore } from '@meshx/cloud/routes';
 import { createPool } from '@silverhand/slonik';
-import { endOfDay, subDays } from 'date-fns';
+import { endOfDay, startOfMonth, subDays } from 'date-fns';
 import type { Context, Next } from 'koa';
 
 import { EnvSet } from '#src/env-set/index.js';
@@ -45,19 +45,15 @@ export const periodicUsageRoute = (envSet: EnvSet) => {
     }
 
     const subscription = await store.findSubscription(tenantId);
-
-    if (!subscription) {
-      ctx.status = 404;
-      ctx.body = { code: 'subscription.not_found', message: 'Subscription not found.' };
-
-      return;
-    }
+    const now = new Date();
+    // A tenant without a billing subscription (a development tenant, or one not yet synced) still has
+    // usage. It is measured over the current calendar month rather than refused.
+    const periodStart = subscription?.currentPeriodStart ?? startOfMonth(now);
 
     const tenant = await getTenantForUsage(tenantId);
-    const now = new Date();
     const [usage, mau] = await Promise.all([
       tenant.subscription.getTenantTokenUsage({
-        from: new Date(subscription.currentPeriodStart),
+        from: new Date(periodStart),
         to: now,
       }),
       tenant.queries.dailyActiveUsers.countActiveUsersByTimeInterval(

@@ -1,3 +1,4 @@
+import { buildOrganizationUrn } from '@logto/core-kit';
 import {
   adminTenantId,
   CloudScope,
@@ -94,6 +95,22 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     return sub;
   };
 
+  // The members list is read with the console's organization token for the tenant. The caller is still
+  // checked against that organization's members below, so the fallback only changes which token is accepted.
+  const authenticateTenantMember = async (ctx: Context, tenantId: string) => {
+    try {
+      return await authenticate(ctx, CloudScope.ManageTenantSelf);
+    } catch {
+      const { sub } = await verifyBearerTokenFromRequest(
+        envSet,
+        ctx.request,
+        buildOrganizationUrn(getTenantOrganizationId(tenantId))
+      );
+
+      return sub;
+    }
+  };
+
   const authorize = (scope: CloudScope) => async (ctx: Context, next: Next) => {
     await authenticate(ctx, scope);
 
@@ -144,7 +161,7 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     '/api/tenants/:tenantId/members',
     koaGuard({ status: [200, 304, 401, 403] }),
     async (ctx, next) => {
-      const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
+      const userId = await authenticateTenantMember(ctx, ctx.params.tenantId ?? '');
       const organizationId = getTenantOrganizationId(ctx.params.tenantId ?? '');
       const pool = await EnvSet.sharedPool;
 

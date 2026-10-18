@@ -220,11 +220,13 @@ describe('billing router over HTTP', () => {
     expect(response.status).toBe(400);
   });
 
-  it('returns 404 when the operator asks for a tenant without a subscription', async () => {
+  // The fixture has no development SKU, so the development plan a tenant without a subscription reads as
+  // is missing, and the read is refused rather than granting quota.
+  it('refuses a tenant without a subscription when the development plan is missing', async () => {
     const response = await fetch(`${baseUrl}/api/tenants/unknowntenant00001/subscription`, {
       headers: { authorization: `Bearer ${await tokenFor(operatorSub)}` },
     });
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(503);
   });
 });

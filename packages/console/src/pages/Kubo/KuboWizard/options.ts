@@ -105,5 +105,5 @@ export const templateHighlights: Record<
   foundation: { tags: ['Full platform', 'High availability', 'Trino catalog'], recommended: true },
   dai: { tags: ['AI dashboards', 'Smaller setup'] },
   fai: { tags: ['foundation-ai only', 'Smaller setup'] },
-  v1: { tags: ['Coming soon'] },
+  v1: { tags: [] },
 };

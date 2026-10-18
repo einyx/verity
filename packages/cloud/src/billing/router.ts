@@ -6,6 +6,7 @@ import {
   authorizeInvitee,
   authorizeOperator,
   authorizeTenantAdmin,
+  verifyCaller,
   type InvitationForAcceptance,
   type OperatorAuthConfig,
 } from './auth.js';
@@ -278,5 +279,31 @@ export const createBillingRouter = (
         }
 
         return next({ ...context, json: { redirectUri: outcome.redirectUri } });
+      }
+    )
+    // The account picker lists the Stripe customers of the tenants this user administers.
+    .get(
+      '/api/me/stripe-customers',
+      {
+        response: z.array(
+          z.object({
+            customerId: z.string(),
+            createdAt: z.date(),
+            isDefault: z.boolean(),
+          })
+        ),
+      },
+      async (context, next) => {
+        const caller = await verifyCaller(context.request.headers.authorization, auth);
+        const customers = await store.listAdminCustomers(caller);
+
+        return next({
+          ...context,
+          json: customers.map(({ customerId, periodStart }) => ({
+            customerId,
+            createdAt: periodStart,
+            isDefault: false,
+          })),
+        });
       }
     );

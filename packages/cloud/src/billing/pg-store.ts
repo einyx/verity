@@ -6,7 +6,7 @@ import { isEndedStatus } from './entitlement.js';
 import { type InvitationRecord, invitationStatusGuard } from './invitation.js';
 import { invoiceGuard, type Invoice } from './invoice.js';
 import { skuGuard, type Sku, type SkuType } from './sku.js';
-import { type BillingStore, type TenantRole } from './store.js';
+import { type AdminCustomer, type BillingStore, type TenantRole } from './store.js';
 import { subscriptionGuard, type Subscription } from './subscription.js';
 
 const invitationRow = z.object({
@@ -262,6 +262,24 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         stripe_customer_id = excluded.stripe_customer_id,
         stripe_subscription_id = excluded.stripe_subscription_id
     `);
+  },
+  listAdminCustomers: async (identity): Promise<AdminCustomer[]> => {
+    const rows = await pool.any(sql`
+      select b.tenant_id, b.stripe_customer_id, b.current_period_start
+      from tenant_members m
+      join billing_subscriptions b on b.tenant_id = m.tenant_id
+      where m.member_issuer = ${identity.issuer}
+        and m.member_sub = ${identity.sub}
+        and m.role = 'admin'
+        and b.stripe_customer_id is not null
+      order by b.tenant_id
+    `);
+
+    return rows.map((row) => ({
+      tenantId: String(row.tenant_id),
+      customerId: String(row.stripe_customer_id),
+      periodStart: new Date(String(row.current_period_start)),
+    }));
   },
   findStripeCustomerId: async (tenantId): Promise<string | null> => {
     const row = await pool.maybeOne(sql`

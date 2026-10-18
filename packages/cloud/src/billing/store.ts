@@ -24,6 +24,13 @@ export type StripeActivation = {
   periodEnd: Date;
 };
 
+/** A tenant's Stripe customer, as the user who administers that tenant may see it. */
+export type AdminCustomer = {
+  tenantId: string;
+  customerId: string;
+  periodStart: Date;
+};
+
 /** A status and period change that Stripe reported for one of its subscriptions. */
 export type StripeSubscriptionUpdate = {
   stripeSubscriptionId: string;
@@ -60,6 +67,8 @@ export type BillingStore = {
   claimStripeEvent: (eventId: string, type: string) => Promise<boolean>;
   /** Drops a claim so that Stripe's next delivery of the event is processed. */
   releaseStripeEvent: (eventId: string) => Promise<void>;
+  /** The Stripe customers of the tenants this identity administers, one per tenant with a customer. */
+  listAdminCustomers: (identity: MemberIdentity) => Promise<AdminCustomer[]>;
   /** The Stripe customer of a tenant's paid subscription, or `null` when none was recorded. */
   findStripeCustomerId: (tenantId: string) => Promise<string | null>;
   /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
@@ -110,6 +119,20 @@ export const createInMemoryBillingStore = (
       }
     },
     findStripeCustomerId: async (tenantId) => stripeCustomerByTenant.get(tenantId) ?? null,
+    listAdminCustomers: async (identity) =>
+      [...stripeCustomerByTenant.entries()].flatMap(([tenantId, customerId]) => {
+        const isAdmin = data.members?.[tenantId]?.some(
+          (member) =>
+            member.role === 'admin' &&
+            member.issuer === identity.issuer &&
+            member.sub === identity.sub
+        );
+        const periodStart = subscriptions.get(tenantId)?.currentPeriodStart;
+
+        return isAdmin && periodStart
+          ? [{ tenantId, customerId, periodStart: new Date(periodStart) }]
+          : [];
+      }),
     claimStripeEvent: async (eventId) => {
       if (claimedEvents.has(eventId)) {
         return false;

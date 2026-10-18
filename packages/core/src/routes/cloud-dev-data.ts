@@ -157,16 +157,6 @@ export const routes: ReadonlyArray<readonly [RegExp, Handler]> = [
   [/^\/api\/tenants\/[^/]+\/subscription-usage$/, subscriptionUsage],
   // No add-ons are sold, so the local tenant has none to offer.
   [/^\/api\/tenants\/[^/]+\/subscription\/add-on-skus$/, () => []],
-  // The pro plan's limits; the stand-in has no usage meter, so usage reads as the limits themselves.
-  [
-    /^\/api\/tenants\/[^/]+\/subscription\/periodic-usage$/,
-    () => ({
-      mauLimit: 50_000,
-      tokenLimit: 500_000,
-      userTokenLimit: 500_000,
-      m2mTokenLimit: 500_000,
-    }),
-  ],
   [/^\/api\/tenants\/[^/]+\/available-skus$/, () => [sku(), proSku()]],
   [/^\/api\/tenants\/[^/]+\/invoices$/, () => []],
   [/^\/api\/tenants\/[^/]+\/invitations$/, () => []],

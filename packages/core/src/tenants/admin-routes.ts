@@ -5,6 +5,7 @@ import { EnvSet } from '#src/env-set/index.js';
 import { billingRoutes } from '#src/routes/billing.js';
 import { localCloudRoutes } from '#src/routes/cloud-dev.js';
 import { cloudTenantRoutes } from '#src/routes/cloud-tenants.js';
+import { periodicUsageRoute } from '#src/routes/periodic-usage.js';
 
 /**
  * Mounts the admin tenant's cloud routes. The dev stand-ins serve only when the instance is cloud.
@@ -20,6 +21,8 @@ export const mountAdminRoutes = (app: Koa, id: string, envSet: EnvSet) => {
   }
 
   app.use(localCloudRoutes());
+  // Real usage is served before the billing API, which does not meter usage.
+  app.use(periodicUsageRoute(envSet));
 
   if (EnvSet.values.isProduction) {
     app.use(billingRoutes());

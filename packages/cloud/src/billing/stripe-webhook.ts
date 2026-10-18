@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { z } from 'zod';
 
+import { stripeRequestTimeoutMs } from './checkout.js';
 import { type BillingStore } from './store.js';
 import { subscriptionStatusGuard } from './subscription.js';
 
@@ -45,7 +46,10 @@ export const createStripeSubscriptionRetriever =
   async (subscriptionId) => {
     const response = await fetcher(
       `https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
-      { headers: { Authorization: `Bearer ${secretKey}` } }
+      {
+        headers: { Authorization: `Bearer ${secretKey}` },
+        signal: AbortSignal.timeout(stripeRequestTimeoutMs),
+      }
     );
 
     if (!response.ok) {

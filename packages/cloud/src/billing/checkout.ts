@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Longest a single Stripe API call may take. A hung call must not stall checkout or a webhook. */
+export const stripeRequestTimeoutMs = 10_000;
+
 /** The body the console sends to start a checkout. */
 export const createCheckoutBodyGuard = z.object({
   tenantId: z.string(),
@@ -79,6 +82,7 @@ export const createCheckoutSession = async (
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: form,
+    signal: AbortSignal.timeout(stripeRequestTimeoutMs),
   });
   const body: unknown = await response.json();
   const session = stripeSessionGuard.safeParse(body);
@@ -117,7 +121,10 @@ export const readCheckoutStatus = async (
 ): Promise<CheckoutStatus | undefined> => {
   const response = await fetcher(
     `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
-    { headers: { Authorization: `Bearer ${config.stripeSecretKey}` } }
+    {
+      headers: { Authorization: `Bearer ${config.stripeSecretKey}` },
+      signal: AbortSignal.timeout(stripeRequestTimeoutMs),
+    }
   );
 
   if (!response.ok) {

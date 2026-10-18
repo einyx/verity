@@ -19,6 +19,7 @@ import koaConsoleRedirectProxy from '#src/middleware/koa-console-redirect-proxy.
 import koaDeviceFlowShortcut from '#src/middleware/koa-device-flow-shortcut.js';
 import koaExperienceSsr from '#src/middleware/koa-experience-ssr.js';
 import koaInteractionDetails from '#src/middleware/koa-interaction-details.js';
+import koaLandingProxy from '#src/middleware/koa-landing-proxy.js';
 import { koaExperienceSecurityHeaders } from '#src/middleware/koa-security-headers.js';
 import koaServeDomainVerificationFiles from '#src/middleware/koa-serve-domain-verification-files.js';
 import koaSpaProxy from '#src/middleware/koa-spa-proxy.js';
@@ -65,6 +66,17 @@ type CreateTenant = {
    * owns the tenant instances.
    */
   withDefaultTenant: WithDefaultTenant;
+};
+
+/**
+ * Mounts the marketing site proxy at the root when `LANDING_UPSTREAM` names the site's server.
+ * Part of the landing page CMS feature, so it stays behind the dev-feature flag until it ships.
+ */
+const mountLandingSite = (app: Koa) => {
+  const upstream = process.env.LANDING_UPSTREAM?.trim();
+  if (EnvSet.values.isDevFeaturesEnabled && upstream) {
+    app.use(koaLandingProxy(upstream));
+  }
 };
 
 export default class Tenant implements TenantContext {
@@ -199,6 +211,10 @@ export default class Tenant implements TenantContext {
     if (id === adminTenantId) {
       // Mount `/me` APIs for admin tenant
       app.use(mount('/me', initMeApis(tenantContext)));
+
+      // Serve the marketing site at the root when a site is configured. Its paths are forwarded before
+      // the console redirect below, so `/` shows the site and `/console` stays with the console.
+      mountLandingSite(app);
 
       // Mount Admin Console when needed
       // Skip in multi-tenancy mode since Logto Cloud serves Admin Console in this case; local cloud

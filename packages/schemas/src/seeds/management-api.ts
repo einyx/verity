@@ -182,6 +182,8 @@ export const createMeApiInAdminTenant = (adminOrigin?: string) => {
       name: AdminTenantRole.User,
       description: 'Default role for admin tenant.',
       type: RoleType.User,
+      // New users in the admin tenant get this role automatically, so the console works for them.
+      isDefault: true,
     },
   } satisfies AdminData);
 };

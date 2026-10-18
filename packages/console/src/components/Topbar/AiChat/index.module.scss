@@ -23,9 +23,13 @@
 .askAiButton {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: _.unit(2);
-  height: 32px;
+  // A prompt-style bar, like the AI toolbar template: placeholder text, a shortcut hint on the right.
+  min-width: 260px;
+  height: 36px;
   padding: 0 _.unit(3);
+  color: var(--color-text-secondary);
   white-space: nowrap;
   transition:
     background-color 0.15s ease,
@@ -322,9 +326,10 @@
   gap: _.unit(2);
   margin: 0 _.unit(4) _.unit(3);
   padding: _.unit(2) _.unit(3);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-layer-1);
+  border: none;
+  border-radius: 20px;
+  background: #444446;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 25%);
   // Focus eases in over a long, soft curve so typing starts without a jump.
   transition:
     border-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -332,8 +337,8 @@
     background-color 1200ms ease;
 
   &:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 14%, transparent);
+    border-color: transparent;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 25%), 0 0 0 3px rgba(255, 255, 255, 12%);
   }
 }
 
@@ -658,11 +663,11 @@
 .quickAction {
   height: 28px;
   padding: 0 _.unit(3);
-  border: 1px solid var(--color-border);
+  border: 1px solid #56565a;
   border-radius: 999px;
-  background: var(--color-layer-2);
+  background: #262628;
   font: var(--font-label-2);
-  color: var(--color-text-secondary);
+  color: #d8d8dc;
   cursor: pointer;
   transition: background-color 200ms ease, color 200ms ease;
 
@@ -677,7 +682,28 @@
   }
 
   &:hover:not(:disabled) {
-    background: var(--color-layer-3);
-    color: var(--color-text);
+    background: #323235;
+    color: #f2f2f2;
   }
+}
+
+// Composer in the dark toolbar style of the template: a grey card with a darker inset input and a
+// rounded send pill. Colours are fixed on purpose so the look matches the reference in either theme.
+.composer .input {
+  color: #f2f2f2;
+  caret-color: #f2f2f2;
+
+  &::placeholder {
+    color: #8e8e93;
+  }
+}
+
+.composer .sendButton {
+  width: auto;
+  height: 32px;
+  padding: 0 _.unit(3);
+  border-radius: 999px;
+  background: #262628;
+  color: #d8d8dc;
+  font: var(--font-label-2);
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @silverhand/fp/no-let, @silverhand/fp/no-mutation -- The server and its base URL are created once in beforeAll and torn down in afterAll, so the test needs them reassigned. */
 import createServer, { compose, withBody, withRequest } from '@withtyped/server';
 import { generateKeyPair, SignJWT } from 'jose';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -96,7 +97,7 @@ describe('billing router over HTTP', () => {
   let publicKey: CryptoKey;
   let router: ReturnType<typeof createBillingRouter>;
   let baseUrl = '';
-  let close: () => Promise<void> = async () => {};
+  let close: (() => Promise<void>) | undefined;
 
   const auth = (): OperatorAuthConfig => ({
     issuer,
@@ -140,7 +141,7 @@ describe('billing router over HTTP', () => {
   });
 
   afterAll(async () => {
-    await close();
+    await close?.();
   });
 
   it('returns 401 when no token is sent', async () => {
@@ -230,3 +231,5 @@ describe('billing router over HTTP', () => {
     expect(response.status).toBe(503);
   });
 });
+
+/* eslint-enable @silverhand/fp/no-let, @silverhand/fp/no-mutation */

@@ -122,7 +122,17 @@ export const createBillingRouter = (
         response: invoicesResponseGuard,
       },
       async (context, next) => {
-        await authorizeOperator(context.request.headers.authorization, auth);
+        // The console reads this as a tenant admin for their own tenant. Operators may read any tenant.
+        try {
+          await authorizeOperator(context.request.headers.authorization, auth);
+        } catch {
+          await authorizeTenantAdmin(
+            context.request.headers.authorization,
+            context.guarded.params.tenantId,
+            auth,
+            store
+          );
+        }
 
         const invoices = await store.listInvoices(context.guarded.params.tenantId);
 

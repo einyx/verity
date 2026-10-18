@@ -1,3 +1,4 @@
+import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { text } from 'node:stream/consumers';
 
 import {
@@ -73,4 +74,34 @@ export const createBillingComposer = (options: {
     )
     .and(withBody())
     .and(billing.routes());
+};
+
+/**
+ * A plain Node request handler for the billing composition. A host that runs its own HTTP server
+ * mounts it on the billing paths and passes everything else on.
+ */
+export const createBillingHandler =
+  (composer: ReturnType<typeof createBillingComposer>) =>
+  async (request: IncomingMessage, response: ServerResponse) => {
+    await composer({}, async (context) => writeJsonResult(response, context), {
+      request,
+      response,
+    });
+  };
+
+/** Writes the billing result: its status and JSON body. Billing answers only with JSON or nothing. */
+const writeJsonResult = async (
+  response: ServerResponse,
+  context: { status?: number | 'ignore'; json?: unknown }
+) => {
+  const status = context.status === 'ignore' ? response.statusCode : (context.status ?? 404);
+
+  if (context.json === undefined) {
+    response.writeHead(status);
+    response.end();
+    return;
+  }
+
+  response.writeHead(status, { 'content-type': 'application/json' });
+  response.end(JSON.stringify(context.json));
 };

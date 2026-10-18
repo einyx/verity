@@ -47,6 +47,7 @@
     "@logto/phrases": "workspace:^",
     "@logto/phrases-experience": "workspace:^",
     "@logto/schemas": "workspace:^",
+    "@meshx/cloud": "workspace:^",
     "@logto/shared": "workspace:^",
     "@logto/tenant-seed": "workspace:^",
     "@modelcontextprotocol/sdk": "1.20.2",

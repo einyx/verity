@@ -214,8 +214,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
  */
 export const enabledLogtoMcpTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] =>
   logtoMcpTools.filter(
-    ({ method, devFeature }) =>
-      (method !== 'POST' && !devFeature) || isDevFeaturesEnabled
+    ({ method, devFeature }) => (method !== 'POST' && !devFeature) || isDevFeaturesEnabled
   );
 
 /** The paging parameters a list tool passes on to the Management API as query parameters. */
@@ -308,7 +307,10 @@ export const sendLogtoRequest = async (
 
         return { content: [{ type: 'text', text: JSON.stringify(projected) }], isError: false };
       } catch {
-        return { content: [{ type: 'text', text: 'The response could not be read.' }], isError: true };
+        return {
+          content: [{ type: 'text', text: 'The response could not be read.' }],
+          isError: true,
+        };
       }
     }
 

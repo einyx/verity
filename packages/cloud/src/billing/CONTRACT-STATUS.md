@@ -11,7 +11,7 @@ Status of the routes the console expects from the Cloud API (`@logto/cloud` cont
 - `GET /api/tenants/:tenantId/stripe-customer`, `PUT /api/tenants/:tenantId/stripe-customer` (clear, or re-select the recorded customer only)
 - `GET /api/me/stripe-customers`, `PATCH /api/me/stripe-customers/:customerId`
 - `POST /api/webhooks/stripe`
-- `POST /api/me/logto-enterprises/:id/stripe-customer-portal`: provisional. An enterprise account is assumed to be the admin tenant that holds the shared subscription, and only an admin of that tenant may open its portal. Revisit when the PM answers the enterprise questions.
+- `POST /api/me/logto-enterprises/:id/stripe-customer-portal`: an enterprise account is the admin tenant that holds the shared subscription. Confirmed: a user belongs to one enterprise, an admin adds users, and the customer pays under the existing logic. Only an admin of that tenant may open its portal.
 
 ## Not needed
 
@@ -19,4 +19,4 @@ Status of the routes the console expects from the Cloud API (`@logto/cloud` cont
 
 ## Open questions
 
-- Enterprise accounts: one or many per user, who adds users, who pays. The current enterprise portal assumes an admin-tenant model until these are answered.
+- None for enterprise accounts. The success path of the enterprise portal still needs a Stripe test-mode run to verify over HTTP.

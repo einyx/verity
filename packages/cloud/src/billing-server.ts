@@ -20,7 +20,6 @@ import {
   processStripeWebhook,
   type SubscriptionRetriever,
 } from './billing/stripe-webhook.js';
-import { createUsageRouter } from './billing/usage-router.js';
 
 export const stripeWebhookPath = '/api/webhooks/stripe';
 
@@ -66,7 +65,6 @@ export const createBillingComposer = (options: {
 }) => {
   const billing = createBillingRouter(options.store, options.auth, options.checkout);
   const customers = createCustomerRouter(options.store, options.auth, options.checkout);
-  const usage = createUsageRouter(options.store, options.auth);
 
   return compose(withRequest())
     .and(
@@ -78,8 +76,7 @@ export const createBillingComposer = (options: {
     )
     .and(withBody())
     .and(billing.routes())
-    .and(customers.routes())
-    .and(usage.routes());
+    .and(customers.routes());
 };
 
 /**

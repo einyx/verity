@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 
 import { type BillingStore } from './store.js';
+import { subscriptionStatusGuard } from './subscription.js';
 
 /** Stripe rejects signed payloads whose timestamp is further than this from the current time. */
 const toleranceSeconds = 300;
@@ -23,7 +24,20 @@ const checkoutSessionGuard = z.object({
   metadata: z.object({ tenantId: z.string(), skuId: z.string() }),
 });
 
+const stripeSubscriptionGuard = z.object({
+  id: z.string(),
+  status: z.string(),
+  current_period_start: z.number(),
+  current_period_end: z.number(),
+});
+
 export type StripeWebhookResult = { status: number; message: string };
+
+/** What an event asks for: nothing, a rejected payload, or a state change to apply once claimed. */
+type EventPlan =
+  | { kind: 'ignore'; message: string }
+  | { kind: 'malformed'; message: string }
+  | { kind: 'apply'; message: string; apply: (store: BillingStore) => Promise<void> };
 
 const parseJson = (payload: string): unknown => {
   try {
@@ -68,9 +82,74 @@ export const verifyStripeSignature = (input: {
   });
 };
 
+const planCheckoutCompleted = (object: unknown, nowSeconds: number): EventPlan => {
+  const parsed = checkoutSessionGuard.safeParse(object);
+
+  if (!parsed.success) {
+    return { kind: 'malformed', message: 'Malformed checkout session.' };
+  }
+
+  const { data } = parsed;
+
+  if (data.status !== 'complete' || data.payment_status !== 'paid') {
+    return { kind: 'ignore', message: 'Checkout is not paid; nothing to activate.' };
+  }
+
+  const periodStart = new Date(nowSeconds * 1000);
+
+  return {
+    kind: 'apply',
+    message: 'Subscription activated.',
+    apply: async (store) => {
+      // The period is a placeholder until the subscription's own events set the real one.
+      await store.activateStripeSubscription({
+        tenantId: data.metadata.tenantId,
+        planId: data.metadata.skuId,
+        stripeCustomerId: data.customer,
+        stripeSubscriptionId: data.subscription,
+        periodStart,
+        periodEnd: new Date(periodStart.getTime() + thirtyDaysSeconds * 1000),
+      });
+    },
+  };
+};
+
+const planSubscriptionChanged = (object: unknown, overrideStatus?: 'canceled'): EventPlan => {
+  const parsed = stripeSubscriptionGuard.safeParse(object);
+  const status = subscriptionStatusGuard.safeParse(parsed.data?.status);
+
+  if (!parsed.success || !status.success) {
+    return { kind: 'malformed', message: 'Malformed subscription.' };
+  }
+
+  const { data } = parsed;
+
+  return {
+    kind: 'apply',
+    message: overrideStatus ? 'Subscription canceled.' : 'Subscription updated.',
+    apply: async (store) => {
+      await store.updateStripeSubscription({
+        stripeSubscriptionId: data.id,
+        status: overrideStatus ?? status.data,
+        periodStart: new Date(data.current_period_start * 1000),
+        periodEnd: new Date(data.current_period_end * 1000),
+      });
+    },
+  };
+};
+
+const planners: Record<string, (object: unknown, nowSeconds: number) => EventPlan> = {
+  'checkout.session.completed': planCheckoutCompleted,
+  'customer.subscription.updated': (object) => planSubscriptionChanged(object),
+  // Deletion ends the subscription. Moving the tenant to a free plan is a product decision that
+  // this slice does not make; the subscription is only marked canceled.
+  'customer.subscription.deleted': (object) => planSubscriptionChanged(object, 'canceled'),
+};
+
 /**
- * Applies a signed Stripe webhook. Only `checkout.session.completed` changes state: a paid checkout
- * makes the tenant's subscription the Stripe subscription it bought. Every other event is ignored.
+ * Applies a signed Stripe webhook. Paid checkouts activate the tenant's subscription, and
+ * subscription updates and deletions keep its status and period in step with Stripe. Every other
+ * event is ignored.
  *
  * A failure after the event is claimed releases the claim and rethrows, so Stripe's retry runs the
  * event again. A redelivered event that was already applied returns 200 without changing anything.
@@ -93,44 +172,30 @@ export const processStripeWebhook = async (input: {
   }
 
   const event = parsed.data;
+  const planner = Object.hasOwn(planners, event.type) ? planners[event.type] : undefined;
+  const plan = planner?.(event.data.object, input.nowSeconds) ?? {
+    kind: 'ignore' as const,
+    message: 'Event type not handled.',
+  };
 
-  if (event.type !== 'checkout.session.completed') {
-    return { status: 200, message: 'Event type not handled.' };
+  if (plan.kind === 'malformed') {
+    return { status: 400, message: plan.message };
   }
 
-  const session = checkoutSessionGuard.safeParse(event.data.object);
-
-  if (!session.success) {
-    return { status: 400, message: 'Malformed checkout session.' };
-  }
-
-  const { data } = session;
-
-  if (data.status !== 'complete' || data.payment_status !== 'paid') {
-    return { status: 200, message: 'Checkout is not paid; nothing to activate.' };
+  if (plan.kind === 'ignore') {
+    return { status: 200, message: plan.message };
   }
 
   if (!(await input.store.claimStripeEvent(event.id, event.type))) {
     return { status: 200, message: 'Event already processed.' };
   }
 
-  const periodStart = new Date(input.nowSeconds * 1000);
-
   try {
-    // The period is a placeholder until `customer.subscription.updated` (a later slice) sets the
-    // real one from Stripe.
-    await input.store.activateStripeSubscription({
-      tenantId: data.metadata.tenantId,
-      planId: data.metadata.skuId,
-      stripeCustomerId: data.customer,
-      stripeSubscriptionId: data.subscription,
-      periodStart,
-      periodEnd: new Date(periodStart.getTime() + thirtyDaysSeconds * 1000),
-    });
+    await plan.apply(input.store);
   } catch (error: unknown) {
     await input.store.releaseStripeEvent(event.id);
     throw error;
   }
 
-  return { status: 200, message: 'Subscription activated.' };
+  return { status: 200, message: plan.message };
 };

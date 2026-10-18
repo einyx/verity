@@ -119,7 +119,69 @@ describe('verifyStripeSignature', () => {
   });
 });
 
+const subscriptionEvent = (type: string, status: string, id = 'evt_sub') =>
+  JSON.stringify({
+    id,
+    type,
+    data: {
+      object: {
+        id: 'sub_1',
+        status,
+        current_period_start: 1_801_000_000,
+        current_period_end: 1_803_600_000,
+      },
+    },
+  });
+
 describe('processStripeWebhook', () => {
+  it('follows Stripe when a paid subscription changes status and period', async () => {
+    const store = newStore();
+    await deliver(store, checkoutEvent());
+
+    const result = await deliver(
+      store,
+      subscriptionEvent('customer.subscription.updated', 'past_due'),
+      sign(subscriptionEvent('customer.subscription.updated', 'past_due'))
+    );
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(result.status).toBe(200);
+    expect(subscription?.status).toBe('past_due');
+    expect(subscription?.currentPeriodEnd).toBe(new Date(1_803_600_000 * 1000).toISOString());
+  });
+
+  it('marks the subscription canceled when Stripe deletes it', async () => {
+    const store = newStore();
+    await deliver(store, checkoutEvent());
+    const payload = subscriptionEvent('customer.subscription.deleted', 'canceled', 'evt_del');
+
+    const result = await deliver(store, payload);
+
+    expect(result.message).toBe('Subscription canceled.');
+    const subscription = await store.findSubscription('tenant_a');
+
+    expect(subscription?.status).toBe('canceled');
+  });
+
+  it('ignores a subscription update for a subscription it has not activated', async () => {
+    const store = newStore();
+    const payload = subscriptionEvent('customer.subscription.updated', 'active', 'evt_other');
+
+    const result = await deliver(store, payload);
+
+    expect(result.status).toBe(200);
+    expect(await store.findSubscription('tenant_a')).toBeNull();
+  });
+
+  it('refuses a subscription event with an unknown status', async () => {
+    const store = newStore();
+    const payload = subscriptionEvent('customer.subscription.updated', 'bogus', 'evt_bad');
+
+    const result = await deliver(store, payload);
+
+    expect(result.status).toBe(400);
+  });
+
   it('activates the tenant subscription from a paid checkout', async () => {
     const store = newStore();
 

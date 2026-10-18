@@ -22,6 +22,14 @@ export type StripeActivation = {
   periodEnd: Date;
 };
 
+/** A status and period change that Stripe reported for one of its subscriptions. */
+export type StripeSubscriptionUpdate = {
+  stripeSubscriptionId: string;
+  status: Subscription['status'];
+  periodStart: Date;
+  periodEnd: Date;
+};
+
 /**
  * Read and write access to billing, membership, and invitation data. The Postgres implementation
  * reads and writes the `meshx_cloud` database; the in-memory one exists for tests only.
@@ -52,6 +60,8 @@ export type BillingStore = {
   releaseStripeEvent: (eventId: string) => Promise<void>;
   /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
   activateStripeSubscription: (activation: StripeActivation) => Promise<void>;
+  /** Applies a status and period from Stripe. Does nothing when no subscription has that Stripe id. */
+  updateStripeSubscription: (update: StripeSubscriptionUpdate) => Promise<void>;
 };
 
 export const createInMemoryBillingStore = (
@@ -66,6 +76,7 @@ export const createInMemoryBillingStore = (
   const invitations = [...(data.invitations ?? [])];
   const subscriptions = new Map(Object.entries(data.subscriptions ?? {}));
   const claimedEvents = new Set<string>();
+  const tenantByStripeSubscription = new Map<string, string>();
 
   return {
     findSubscription: async (tenantId) => subscriptions.get(tenantId) ?? null,
@@ -111,6 +122,7 @@ export const createInMemoryBillingStore = (
         throw new Error(`Unknown plan ${activation.planId}.`);
       }
 
+      tenantByStripeSubscription.set(activation.stripeSubscriptionId, activation.tenantId);
       subscriptions.set(activation.tenantId, {
         planId: activation.planId,
         status: 'active',
@@ -121,6 +133,21 @@ export const createInMemoryBillingStore = (
         currentPeriodEnd: activation.periodEnd.toISOString(),
         quota: logtoSkuQuotaGuard.parse(sku.quota),
         systemLimit: {},
+      });
+    },
+    updateStripeSubscription: async (update) => {
+      const tenantId = tenantByStripeSubscription.get(update.stripeSubscriptionId);
+      const current = tenantId ? subscriptions.get(tenantId) : undefined;
+
+      if (!tenantId || !current) {
+        return;
+      }
+
+      subscriptions.set(tenantId, {
+        ...current,
+        status: update.status,
+        currentPeriodStart: update.periodStart.toISOString(),
+        currentPeriodEnd: update.periodEnd.toISOString(),
       });
     },
   };

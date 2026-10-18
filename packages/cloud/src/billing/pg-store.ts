@@ -262,6 +262,15 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         stripe_subscription_id = excluded.stripe_subscription_id
     `);
   },
+  updateStripeSubscription: async (update): Promise<void> => {
+    await pool.query(sql`
+      update billing_subscriptions
+      set status = ${update.status},
+        current_period_start = ${update.periodStart.toISOString()},
+        current_period_end = ${update.periodEnd.toISOString()}
+      where stripe_subscription_id = ${update.stripeSubscriptionId}
+    `);
+  },
 });
 
 /* eslint-enable @typescript-eslint/ban-types */

@@ -1,7 +1,7 @@
 import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { promisify } from 'node:util';
 
-import type { CustomUiCsp } from '@logto/schemas';
+import { type CustomUiCsp, defaultTenantId } from '@logto/schemas';
 import { conditional, conditionalArray } from '@silverhand/essentials';
 import helmet, { type HelmetOptions } from 'helmet';
 import type { MiddlewareType } from 'koa';
@@ -59,6 +59,8 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
   // Logto Cloud uses cloud service to serve the admin console; while Logto OSS uses a fixed path under the admin URL set.
   const adminOrigins = isCloud ? cloudUrlSet.origins : adminUrlSet.origins;
   const coreOrigins = urlSet.origins;
+  // The default tenant sits on the bare host (e.g. auth.meshx.foundation), which the wildcard origins do not cover.
+  const defaultTenantOrigin = getTenantEndpoint(defaultTenantId, EnvSet.values).origin;
   const developmentOrigins = isProduction
     ? []
     : [
@@ -264,7 +266,7 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
           ...ossSurveyOrigins,
           ...developmentOrigins,
         ],
-        frameSrc: ["'self'", ...adminOrigins, ...coreOrigins],
+        frameSrc: ["'self'", ...adminOrigins, ...coreOrigins, defaultTenantOrigin],
       },
     },
   };

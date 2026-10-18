@@ -57,6 +57,23 @@ describe('buildLogtoToolUrl', () => {
 });
 
 describe('callLogtoTool', () => {
+  it('sends Foundation stack reads to Kubo without the Logto token', async () => {
+    const fetchImpl = jest.fn(async () => new Response('[]', { status: 200 }));
+
+    await callLogtoTool(
+      tool('list_foundation_stacks'),
+      {},
+      'caller-token',
+      apiBase,
+      fetchImpl as unknown as typeof fetch
+    );
+
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(String(url)).toMatch(/\/api\/stacks$/);
+    expect(String(url)).not.toContain(apiBase);
+    expect(init.headers).not.toHaveProperty('authorization');
+  });
+
   it('forwards the caller’s own token to the Management API', async () => {
     const fetchImpl = jest.fn(async () => new Response('{"id":"app-1"}', { status: 200 }));
 
@@ -151,8 +168,8 @@ describe('create tools', () => {
         postLogoutRedirectUris: [],
       },
     });
-    expect(typeof sent.id).toBe('string');
-    expect(typeof sent.secret).toBe('string');
+    expect(sent).not.toHaveProperty('id');
+    expect(sent).not.toHaveProperty('secret');
   });
 });
 

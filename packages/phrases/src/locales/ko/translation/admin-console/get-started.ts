@@ -2,6 +2,9 @@ const get_started = {
   page_title: '시작하기',
   title: '성공하는 데 도움이 될 탐색 항목',
   subtitle: 'Logto의 가치를 빠르게 얻을 수 있는 몇 가지 방법',
+  greeting_morning: '좋은 아침입니다, {{name}}님',
+  greeting_afternoon: '좋은 오후입니다, {{name}}님',
+  greeting_evening: '좋은 저녁입니다, {{name}}님',
   develop: {
     title: '개발: 앱을 통합하는 데 5분이면 충분합니다',
     title_cloud: '개발: 몇 분 안에 앱을 안전하게 통합하기',

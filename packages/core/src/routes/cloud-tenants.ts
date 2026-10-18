@@ -11,7 +11,7 @@ import type { Context, Next } from 'koa';
 import Router from 'koa-router';
 import { z } from 'zod';
 
-import { EnvSet } from '#src/env-set/index.js';
+import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import { verifyBearerTokenFromRequest } from '#src/middleware/koa-auth/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
@@ -47,7 +47,7 @@ const toTenantResponse = (row: TenantRow) => {
     id: row.id,
     name: row.name,
     tag: row.tag,
-    indicator: `https://${row.id}.logto.app/api`,
+    indicator: getCloudApiIndicator(getTenantEndpoint(row.id, EnvSet.values).origin),
     subscription: {
       status: 'active',
       planId: 'development',

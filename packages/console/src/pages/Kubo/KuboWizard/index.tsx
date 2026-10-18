@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
 import BarGraphIcon from '@/assets/icons/bar-graph.svg?react';
+import BookIcon from '@/assets/icons/book.svg?react';
 import ConnectionIcon from '@/assets/icons/connection.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
 import DocumentIcon from '@/assets/icons/document.svg?react';
@@ -12,14 +13,55 @@ import Button from '@/ds-components/Button';
 import Select from '@/ds-components/Select';
 import useApi, { type RequestError } from '@/hooks/use-api';
 
-import styles from '../index.module.scss';
-
 import ChoiceItem from './ChoiceItem';
 import { StepIntro } from './StepIntro';
 import { readError } from './errors';
-import { type StackOption, stackOptions, toStep } from './options';
+import { type StackOption, stackOptions, templateHighlights, toStep } from './options';
+import wizardStyles from './wizard.module.scss';
 
 // Lowercase RFC-1123 label, as the portal requires for a tenant ID.
+const documentationUrl = 'https://docs.meshx.io/';
+
+// What is missing before the Next button enables, shown beside it.
+const continueHints: Record<1 | 2 | 3, string> = {
+  1: 'Choose a template to continue.',
+  2: 'Enter a valid tenant ID to continue.',
+  3: '',
+};
+
+// The components a template leaves out, or "none" for a complete template.
+const describeExcluded = (option?: StackOption) =>
+  option && option.exclude.length > 0 ? option.exclude.join(', ') : 'none';
+
+// Resource cards below the wizard. Copy follows ASD-STE100: short sentences, one instruction each.
+
+const resourceCards = [
+  {
+    icon: CubeIcon,
+    title: 'Choose a template',
+    text: 'Select a template. Foundation is the full platform. It has high availability.',
+    action: { label: 'Open docs', href: documentationUrl },
+  },
+  {
+    icon: BarGraphIcon,
+    title: 'Check capacity',
+    text: 'Check the free CPU and memory on each node. Do this before you create a workspace.',
+    action: { label: 'Open capacity map', href: '/infrastructure/capacity' },
+  },
+  {
+    icon: DocumentIcon,
+    title: 'Review the YAML',
+    text: 'The workspace shows a YAML manifest. Read it before you apply it.',
+    action: { label: 'Open docs', href: documentationUrl },
+  },
+  {
+    icon: ConnectionIcon,
+    title: 'Set the tenant',
+    text: 'Use a lowercase tenant ID. Select the sign-in provider for the workspace.',
+    action: { label: 'Open docs', href: documentationUrl },
+  },
+] as const;
+
 const tenantPattern = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
 
 // The template preview endpoint for the review step, or null until a template and tenant are set.
@@ -89,45 +131,58 @@ function KuboWizard() {
   const tenantValid = tenantPattern.test(tenant);
   const canContinue = step === 1 ? Boolean(selected?.available) : tenantValid;
 
-  const introduction = (
-    <StepIntro
-      step={step}
-      onStepChange={(number) => {
-        setStep(toStep(number));
-      }}
-    />
-  );
   return (
-    <>
+    <div className={wizardStyles.page}>
       <Helmet title="MeshX · New workspace" />
-      <div className={styles.wizardHeader}>
-        <div className={styles.title}>New workspace</div>
-        <a className={styles.headerLink} href="/">
-          Back to landing
-        </a>
-      </div>
-      <div className={styles.statGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Workspaces</div>
-          <div className={styles.statValue}>{workspaceTotal ?? '–'}</div>
+      <div className={wizardStyles.stats}>
+        <div className={wizardStyles.stat}>
+          <div className={wizardStyles.statLabel}>Workspaces</div>
+          <div className={wizardStyles.statValue}>{workspaceTotal ?? '–'}</div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Ready</div>
-          <div className={styles.statValue}>{workspaceReady ?? '–'}</div>
+        <div className={wizardStyles.stat}>
+          <div className={wizardStyles.statLabel}>Ready</div>
+          <div className={wizardStyles.statValue}>{workspaceReady ?? '–'}</div>
         </div>
       </div>
-      <FormCardLayout introduction={introduction}>
+      {workspaceTotal === 0 && (
+        <section className={wizardStyles.callout} aria-label="Getting started">
+          <h2 className={wizardStyles.calloutTitle}>Create your first workspace</h2>
+          <p className={wizardStyles.calloutText}>
+            Start with Foundation for the full platform. Choose a template, set the tenant, then
+            review the YAML before anything is applied. Your workspace will appear under Workspaces
+            once it’s created.
+          </p>
+        </section>
+      )}
+      <FormCardLayout
+        introduction={
+          <StepIntro
+            step={step}
+            onStepChange={(number) => {
+              setStep(toStep(number));
+            }}
+          />
+        }
+      >
+        <div className={wizardStyles.progress} aria-label={`Step ${step} of 3`}>
+          {[1, 2, 3].map((number) => (
+            <span key={number} className={step >= number ? wizardStyles.progressOn : undefined} />
+          ))}
+        </div>
+
         {step === 1 && (
           <>
-            <div className={styles.progress} aria-label="Step 1 of 3">
-              <span className={styles.progressOn} />
-              <span />
-              <span />
-            </div>
-            <div className={styles.sectionTitle}>Templates</div>
-            <ul className={styles.templateGrid}>
+            <h2 className={wizardStyles.sectionTitle}>Templates</h2>
+            <p className={wizardStyles.recommendation}>
+              Recommended for most teams: <strong>Foundation</strong>. Dashboards AI and Foundation
+              AI are smaller, single-purpose setups.
+            </p>
+            <ul className={wizardStyles.templateGrid}>
               {stackOptions.map((option) => (
-                <li key={option.id}>
+                <li key={option.id} className={wizardStyles.templateItem}>
+                  {templateHighlights[option.id].recommended && (
+                    <span className={wizardStyles.badge}>Recommended</span>
+                  )}
                   <ChoiceItem
                     option={option}
                     selected={selected}
@@ -135,6 +190,13 @@ function KuboWizard() {
                       setSelected(option);
                     }}
                   />
+                  <ul className={wizardStyles.tags}>
+                    {templateHighlights[option.id].tags.map((tag) => (
+                      <li key={tag} className={wizardStyles.tag}>
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
@@ -142,9 +204,12 @@ function KuboWizard() {
         )}
 
         {step === 2 && (
-          <div className={styles.form}>
-            <label className={styles.field}>
+          <div className={wizardStyles.form}>
+            <label className={wizardStyles.field}>
               Tenant ID
+              <span className={wizardStyles.hint}>
+                A short, lowercase name for this workspace, such as acme.
+              </span>
               <input
                 value={tenant}
                 placeholder="acme"
@@ -153,13 +218,16 @@ function KuboWizard() {
                 }}
               />
               {tenant && !tenantValid && (
-                <span className={styles.error}>
+                <span className={wizardStyles.error}>
                   Use lowercase letters, digits and hyphens. Start and end with a letter or digit.
                 </span>
               )}
             </label>
-            <div className={styles.field}>
-              Identity provider
+            <div className={wizardStyles.field}>
+              Sign-in provider
+              <span className={wizardStyles.hint}>
+                Where your users sign in. Logto is recommended.
+              </span>
               <Select
                 value={provider}
                 options={[
@@ -173,8 +241,11 @@ function KuboWizard() {
                 }}
               />
             </div>
-            <label className={styles.field}>
-              Mode (optional)
+            <label className={wizardStyles.field}>
+              Deployment mode (optional)
+              <span className={wizardStyles.hint}>
+                Leave this blank unless your team uses a specific mode.
+              </span>
               <input
                 value={mode}
                 placeholder="Direct"
@@ -188,7 +259,7 @@ function KuboWizard() {
 
         {step === 3 && (
           <>
-            <dl className={styles.budget}>
+            <dl className={wizardStyles.budget}>
               <dt>Type</dt>
               <dd>{selected?.title}</dd>
               <dt>Template</dt>
@@ -196,18 +267,17 @@ function KuboWizard() {
               <dt>Tenant</dt>
               <dd>{tenant}</dd>
               <dt>Excluded</dt>
-              <dd>
-                {selected && selected.exclude.length > 0 ? selected.exclude.join(', ') : 'none'}
-              </dd>
+              <dd>{describeExcluded(selected)}</dd>
             </dl>
-            {preview.isLoading && <p className={styles.muted}>Rendering preview…</p>}
-            {preview.error && <p className={styles.muted}>Preview unavailable.</p>}
-            {preview.data && <pre className={styles.pre}>{preview.data.yaml}</pre>}
-            {submitError && <p className={styles.error}>{submitError}</p>}
+            {preview.isLoading && <p className={wizardStyles.muted}>Rendering preview…</p>}
+            {preview.error && <p className={wizardStyles.muted}>Preview unavailable.</p>}
+            {preview.data && <pre className={wizardStyles.pre}>{preview.data.yaml}</pre>}
+            {submitError && <p className={wizardStyles.error}>{submitError}</p>}
           </>
         )}
 
-        <div className={styles.actions}>
+        <div className={wizardStyles.actions}>
+          {step < 3 && !canContinue && <p className={wizardStyles.hint}>{continueHints[step]}</p>}
           {step > 1 && (
             <Button
               title="general.back"
@@ -240,67 +310,30 @@ function KuboWizard() {
           )}
         </div>
       </FormCardLayout>
-      <section className={styles.guide} aria-label="Before you start">
-        <h2 className={styles.sectionTitle}>Resources</h2>
-        <div className={styles.guideGrid}>
-          <article className={styles.guideTile}>
-            <CubeIcon className={styles.guideIcon} aria-hidden="true" />
-            <h3 className={styles.guideTitle}>Pick a template</h3>
-            <p className={styles.guideText}>
-              Foundation is the full platform, with high availability.
-            </p>
-            <a
-              className={styles.guideLink}
-              href="https://docs.meshx.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open docs
-            </a>
-          </article>
-          <article className={styles.guideTile}>
-            <BarGraphIcon className={styles.guideIcon} aria-hidden="true" />
-            <h3 className={styles.guideTitle}>Check capacity</h3>
-            <p className={styles.guideText}>
-              See free CPU and memory on each node before you create a workspace.
-            </p>
-            <Link className={styles.guideLink} to="/infrastructure/capacity">
-              Open capacity map
-            </Link>
-          </article>
-          <article className={styles.guideTile}>
-            <DocumentIcon className={styles.guideIcon} aria-hidden="true" />
-            <h3 className={styles.guideTitle}>Review the YAML</h3>
-            <p className={styles.guideText}>
-              Every workspace renders a manifest you can read before anything is applied.
-            </p>
-            <a
-              className={styles.guideLink}
-              href="https://docs.meshx.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open docs
-            </a>
-          </article>
-          <article className={styles.guideTile}>
-            <ConnectionIcon className={styles.guideIcon} aria-hidden="true" />
-            <h3 className={styles.guideTitle}>Set the tenant</h3>
-            <p className={styles.guideText}>
-              Use a lowercase tenant ID and choose the identity provider for the workspace.
-            </p>
-            <a
-              className={styles.guideLink}
-              href="https://docs.meshx.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open docs
-            </a>
-          </article>
+      <section className={wizardStyles.resourcesSection} aria-label="Resources">
+        <h2 className={wizardStyles.resourcesTitle}>Resources</h2>
+        <div className={wizardStyles.resourceGrid}>
+          {resourceCards.map((card) => (
+            <article key={card.title} className={wizardStyles.resourceCard}>
+              <div className={wizardStyles.resourceHeader}>
+                <card.icon className={wizardStyles.resourceIcon} aria-hidden="true" />
+                <h3 className={wizardStyles.resourceName}>{card.title}</h3>
+              </div>
+              <p className={wizardStyles.resourceText}>{card.text}</p>
+              <a
+                className={wizardStyles.resourceButton}
+                href={card.action.href}
+                target={card.action.href.startsWith('/') ? undefined : '_blank'}
+                rel={card.action.href.startsWith('/') ? undefined : 'noopener noreferrer'}
+              >
+                <BookIcon className={wizardStyles.resourceBook} aria-hidden="true" />
+                {card.action.label}
+              </a>
+            </article>
+          ))}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

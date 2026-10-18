@@ -105,6 +105,16 @@ export const billingSchemaSql = sql`
     received_at timestamptz not null default now(),
     primary key (event_id)
   );
+
+  -- Core refuses to start unless every business table has row-level security enabled. The
+  -- cloud service's role owns these tables and bypasses RLS, so enabling it does not change access.
+  alter table billing_skus enable row level security;
+  alter table billing_subscriptions enable row level security;
+  alter table billing_invoices enable row level security;
+  alter table tenant_members enable row level security;
+  alter table tenant_invitations enable row level security;
+  alter table billing_user_default_customers enable row level security;
+  alter table billing_stripe_events enable row level security;
 `;
 
 export const migrateBillingSchema = async (pool: CommonQueryMethods) => {

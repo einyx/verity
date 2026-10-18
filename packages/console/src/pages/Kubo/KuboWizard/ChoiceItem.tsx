@@ -1,15 +1,18 @@
 import styles from '../index.module.scss';
 
-import workspaceCluster from '@/assets/images/wizard/workspace-cluster.svg?url';
+import inspiredDai from '@/assets/images/wizard/inspired-dai.svg?url';
+import inspiredFai from '@/assets/images/wizard/inspired-fai.svg?url';
+import inspiredFoundation from '@/assets/images/wizard/inspired-foundation.svg?url';
+import inspiredV1 from '@/assets/images/wizard/inspired-v1.svg?url';
 
 import { type StackOption } from './options';
 
-// Existing wizard artwork, one per template, shown on the card's band.
+// Line artwork in the reference's style, one per template band.
 const artwork: Record<StackOption['id'], string> = {
-  foundation: workspaceCluster,
-  dai: workspaceCluster,
-  fai: workspaceCluster,
-  v1: workspaceCluster,
+  foundation: inspiredFoundation,
+  dai: inspiredDai,
+  fai: inspiredFai,
+  v1: inspiredV1,
 };
 
 // One workspace choice. The whole row is the button; a disabled option shows its label instead.

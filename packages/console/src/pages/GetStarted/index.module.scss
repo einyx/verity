@@ -39,6 +39,13 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: _.unit(4);
+
+  .title {
+    font-family: ui-serif, Georgia, 'Times New Roman', serif;
+    font-size: 36px;
+    font-weight: normal;
+    line-height: 1.2;
+  }
 }
 
 .headerActions {
@@ -76,11 +83,34 @@
 .resourceCard {
   display: flex;
   flex-direction: column;
-  gap: _.unit(2);
+  gap: _.unit(3);
   padding: _.unit(5);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 16px;
+  background: var(--color-layer-1);
+}
+
+.resourceHeader {
+  display: flex;
+  align-items: center;
+  gap: _.unit(3);
+}
+
+.resourceIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--color-layer-2);
+  color: var(--color-text);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .resourceTitle {
@@ -92,6 +122,13 @@
   flex: 1;
   font: var(--font-body-2);
   color: var(--color-text-secondary);
+}
+
+.bookIcon {
+  width: 16px;
+  height: 16px;
+  margin-right: _.unit(1.5);
+  vertical-align: middle;
 }
 
 .resourceAction {
@@ -411,6 +448,23 @@
 .modelBand {
   height: 96px;
   background: var(--color-function-n-overlay-primary-focused);
+}
+
+/* Brand-coloured bands cycled across the model cards, matching the reference layout. */
+.modelCard:nth-child(4n + 1) .modelBand {
+  background: #7ca5e6;
+}
+
+.modelCard:nth-child(4n + 2) .modelBand {
+  background: #e59c7c;
+}
+
+.modelCard:nth-child(4n + 3) .modelBand {
+  background: #f0eee8;
+}
+
+.modelCard:nth-child(4n + 4) .modelBand {
+  background: #bfd3cb;
 }
 
 .modelBody {

@@ -1,0 +1,403 @@
+{
+  "tags": [
+    {
+      "name": "Mcp portal",
+      "description": "MCP portals, the upstream MCP servers they expose, and their credentials."
+    }
+  ],
+  "paths": {
+    "/api/mcp-portal/portals": {
+      "get": {
+        "summary": "List MCP portals",
+        "description": "List the MCP portals in this tenant.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an MCP portal",
+        "description": "Create an MCP portal.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/settings": {
+      "get": {
+        "summary": "Get MCP portal settings",
+        "description": "Return the MCP portal settings for this tenant.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update MCP portal settings",
+        "description": "Replace the MCP portal settings for this tenant.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}": {
+      "delete": {
+        "summary": "Delete an MCP portal",
+        "description": "Delete an MCP portal and its upstream links.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/organizations": {
+      "put": {
+        "summary": "Set the organizations of an MCP portal",
+        "description": "Replace the organizations that may open this MCP portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/upstreams": {
+      "get": {
+        "summary": "List upstream MCP servers",
+        "description": "List the upstream MCP servers linked to a portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      },
+      "post": {
+        "summary": "Add an upstream MCP server",
+        "description": "Link an upstream MCP server to a portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/upstreams/{name}/tools": {
+      "get": {
+        "summary": "List an upstream server's tools",
+        "description": "List the tools that an upstream MCP server exposes through the portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/upstreams/{name}": {
+      "patch": {
+        "summary": "Update an upstream MCP server",
+        "description": "Update the settings of an upstream MCP server linked to a portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove an upstream MCP server",
+        "description": "Unlink an upstream MCP server from a portal.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/upstreams/{name}/credential": {
+      "put": {
+        "summary": "Set an upstream credential",
+        "description": "Store the credential the portal uses to call an upstream MCP server. The credential is encrypted at rest.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove an upstream credential",
+        "description": "Delete the stored credential for an upstream MCP server.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/upstreams/{name}/oauth/start": {
+      "post": {
+        "summary": "Start upstream OAuth sign-in",
+        "description": "Start the OAuth sign-in that gives the portal a credential for an upstream MCP server. Returns the authorization URL.",
+        "parameters": [
+          {
+            "name": "portalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/mcp-portal/oauth/callback": {
+      "get": {
+        "summary": "Complete upstream OAuth sign-in",
+        "description": "The browser redirect target of the upstream OAuth sign-in. It is not called by API clients.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    }
+  }
+}

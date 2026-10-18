@@ -1,6 +1,6 @@
 import congratsImage from '@/assets/images/congrats.svg?url';
 import organizationImage from '@/assets/images/organization-empty.svg?url';
-import welcomeImage from '@/assets/images/wizard/welcome-cluster.svg?url';
+import welcomeImage from '@/assets/images/wizard/inspired-intro.svg?url';
 
 import styles from '../index.module.scss';
 
@@ -24,6 +24,7 @@ const steps = [
   },
 ];
 
+// eslint-disable-next-line import/no-unused-modules -- Kept on purpose until the developer decides whether its uncommitted edits are obsolete.
 export function StepIntro({
   step,
   onStepChange,

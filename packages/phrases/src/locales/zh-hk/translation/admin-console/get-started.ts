@@ -2,6 +2,9 @@ const get_started = {
   page_title: '開始上手',
   title: '成功開發身份方案，我們先來探索一番',
   subtitle: '一些你可以做的事情，以快速獲取 Logto 的價值',
+  greeting_morning: '早晨，{{name}}',
+  greeting_afternoon: '午安，{{name}}',
+  greeting_evening: '晚安，{{name}}',
   develop: {
     title: '開發：花 5 分鐘將你的應用集成進來',
     title_cloud: '開發：花 5 分鐘將你的應用安全集成進來',

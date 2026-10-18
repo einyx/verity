@@ -96,3 +96,14 @@ export const toStep = (value: number): 1 | 2 | 3 => {
 
   return value <= 1 ? 1 : 2;
 };
+
+// Short labels and the default pick, shown next to each template card.
+export const templateHighlights: Record<
+  StackOption['id'],
+  { tags: string[]; recommended?: boolean }
+> = {
+  foundation: { tags: ['Full platform', 'High availability', 'Trino catalog'], recommended: true },
+  dai: { tags: ['AI dashboards', 'Smaller setup'] },
+  fai: { tags: ['foundation-ai only', 'Smaller setup'] },
+  v1: { tags: ['Coming soon'] },
+};

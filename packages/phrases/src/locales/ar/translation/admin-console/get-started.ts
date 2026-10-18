@@ -2,6 +2,9 @@ const get_started = {
   page_title: 'البدء',
   title: 'شيء لمساعدتك على النجاح',
   subtitle: 'بعض الأشياء التي يمكنك القيام بها للحصول بسرعة على قيمة Logto',
+  greeting_morning: 'صباح الخير، {{name}}',
+  greeting_afternoon: 'مساء الخير، {{name}}',
+  greeting_evening: 'مساء الخير، {{name}}',
   develop: {
     title: 'التطوير: قم بدمج تطبيقك في 5 دقائق',
     title_cloud: 'التطوير: قم بدمج تطبيقك بأمان في دقائق',

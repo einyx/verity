@@ -1,7 +1,6 @@
 import {
   LogtoJwtTokenKey,
   LogtoJwtTokenKeyType,
-  ProductEvent,
   accessTokenJwtCustomizerGuard,
   adminTenantId,
   clientCredentialsJwtCustomizerGuard,
@@ -21,7 +20,6 @@ import { koaQuotaGuard } from '#src/middleware/koa-quota-guard.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
 import { isAccessDeniedError, parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
 const getJwtTokenKeyAndBody = (tokenPath: LogtoJwtTokenKeyType, body: unknown) => {
@@ -88,7 +86,6 @@ export default function logtoConfigJwtCustomizerRoutes<T extends ManagementApiRo
 
       ctx.body = jwtCustomizer.value;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.CustomJwtDeployed);
       return next();
     }
   );
@@ -114,7 +111,6 @@ export default function logtoConfigJwtCustomizerRoutes<T extends ManagementApiRo
 
       ctx.body = await updateJwtCustomizer(key, body);
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.CustomJwtDeployed);
       return next();
     }
   );

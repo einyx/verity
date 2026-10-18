@@ -60,6 +60,38 @@ const get_started = {
       action: 'Logto Cloud 사용해 보기',
     },
   },
+  header: {
+    docs: '문서',
+    create_app: '애플리케이션 만들기',
+  },
+  resources: {
+    title: '리소스',
+    open_docs: '문서 열기',
+    integrate: {
+      title: '앱 연동하기',
+      description: '주요 프레임워크 가이드로 앱에 로그인을 추가하세요.',
+    },
+    sign_in: {
+      title: '로그인 사용자 지정',
+      description: '제품에 맞게 로그인 화면을 브랜딩하세요.',
+    },
+    rbac: {
+      title: '역할 및 권한 관리',
+      description: '각 사용자와 앱이 접근할 수 있는 범위를 설정하세요.',
+    },
+    api: {
+      title: 'Management API 사용',
+      description: '코드로 테넌트 설정을 자동화하고 리소스를 관리하세요.',
+    },
+  },
+  models: {
+    title: '빠른 시작',
+    create: '만들기',
+  },
+  footer: {
+    help: '도움말 및 지원',
+    feedback: '피드백',
+  },
   view_all: '모두 보기 →',
 };
 

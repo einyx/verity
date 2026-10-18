@@ -209,6 +209,13 @@ const fillForm = (container: HTMLElement, values: Record<string, string>) => {
   }
 };
 
+/** Opens the add-server dialog from the servers page and returns its form. */
+const openAddServer = () => {
+  fireEvent.click(screen.getAllByText('Add server')[0]!);
+
+  return document.querySelector<HTMLFormElement>('form.modalForm')!;
+};
+
 describe('McpPortal', () => {
   beforeEach(() => {
     mockPortalId = undefined;
@@ -288,19 +295,20 @@ describe('McpPortal', () => {
 
     render(<McpPortal />);
 
-    expect(screen.getByText('No MCP servers yet. Add one above.')).toBeTruthy();
+    expect(screen.getByText('No MCP servers yet. Add one with the button above.')).toBeTruthy();
   });
 
   it('posts a new server to the open portal and refreshes its list', async () => {
     mockState({ portals: [portal] });
     mockPortalId = 'portal-1';
-    const { container } = render(<McpPortal />);
+    render(<McpPortal />);
+    const form = openAddServer();
 
-    fillForm(container, {
+    fillForm(document.body, {
       'my-server': 'kubo',
       'https://example.com/mcp': 'https://kubo.example.com/mcp',
     });
-    fireEvent.submit(container.querySelector('form[class]')!);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(post).toHaveBeenCalledWith(upstreamsKey('portal-1'), {
@@ -310,26 +318,27 @@ describe('McpPortal', () => {
     expect(upstreamsMutate).toHaveBeenCalled();
   });
 
-  it('shows the portal address and a client config to connect with', () => {
+  it('shows the portal address and a setup command for each client', () => {
     mockState({ portals: [portal] });
     mockPortalId = 'portal-1';
     render(<McpPortal />);
 
     expect(screen.getByText('https://mcp-eng.example.com/mcp')).toBeTruthy();
-    expect(screen.getByText(/mcp-remote@latest/)).toBeTruthy();
+    expect(screen.getByText(/claude mcp add --transport http/)).toBeTruthy();
   });
 
   it('warns when a newly added server does not answer', async () => {
     mockState({ portals: [portal] });
     post.mockReturnValue({ json: async () => ({ reachable: false }) });
     mockPortalId = 'portal-1';
-    const { container } = render(<McpPortal />);
+    render(<McpPortal />);
+    const form = openAddServer();
 
-    fillForm(container, {
+    fillForm(document.body, {
       'my-server': 'kubo',
       'https://example.com/mcp': 'https://kubo.example.com/mcp',
     });
-    fireEvent.submit(container.querySelector('form[class]')!);
+    fireEvent.submit(form);
 
     expect(await screen.findByText(/did not answer/)).toBeTruthy();
   });
@@ -401,13 +410,14 @@ describe('McpPortal', () => {
       },
     });
     mockPortalId = 'portal-1';
-    const { container } = render(<McpPortal />);
+    render(<McpPortal />);
+    const form = openAddServer();
 
-    fillForm(container, {
+    fillForm(document.body, {
       'my-server': 'kubo',
       'https://example.com/mcp': 'https://kubo.example.com/mcp',
     });
-    fireEvent.submit(container.querySelector('form[class]')!);
+    fireEvent.submit(form);
 
     expect(await screen.findByRole('alert')).toBeTruthy();
   });

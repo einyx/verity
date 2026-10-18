@@ -5,9 +5,12 @@ import { MemoryRouter } from 'react-router-dom';
 import useSWR from 'swr';
 
 import { useCloudApi } from '@/cloud/hooks/use-cloud-api';
+import { type EnvTestUtils } from '@/test-utils/env';
 import { saveRedirect } from '@/utils/storage';
 
 import AcceptInvitation from '.';
+
+jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
 
 jest.mock('swr', () => ({
   __esModule: true,

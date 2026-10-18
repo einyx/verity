@@ -2,13 +2,7 @@
 import { type ConnectorFactory } from '@logto/cli/lib/connector/index.js';
 import type router from '@logto/cloud/routes';
 import { demoConnectorIds, validateConfig } from '@logto/connector-kit';
-import {
-  Connectors,
-  ConnectorType,
-  connectorResponseGuard,
-  type JsonObject,
-  ProductEvent,
-} from '@logto/schemas';
+import { Connectors, ConnectorType, connectorResponseGuard, type JsonObject } from '@logto/schemas';
 import { generateStandardShortId } from '@logto/shared';
 import { conditional } from '@silverhand/essentials';
 import cleanDeep from 'clean-deep';
@@ -23,7 +17,6 @@ import { buildExtraInfo } from '#src/utils/connectors/extra-information.js';
 import { loadConnectorFactories, transpileLogtoConnector } from '#src/utils/connectors/index.js';
 import { checkSocialConnectorTargetAndPlatformUniqueness } from '#src/utils/connectors/platform.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
 import connectorAuthorizationUriRoutes from './authorization-uri.js';
@@ -177,24 +170,12 @@ export default function connectorRoutes<T extends ManagementApiRouter>(
           },
           connectorIdsOfSameType
         );
-
-        captureEvent(
-          { tenantId: tenant.id, request: ctx.req },
-          ProductEvent.PasswordlessConnectorUpdated,
-          pickFactoryProperties(connectorFactory)
-        );
       } else {
         await insertConnector({
           id: insertConnectorId,
           connectorId,
           ...cleanDeep({ syncProfile, config, metadata, enableTokenStorage }),
         });
-
-        captureEvent(
-          { tenantId: tenant.id, request: ctx.req },
-          ProductEvent.SocialConnectorCreated,
-          pickFactoryProperties(connectorFactory)
-        );
       }
 
       const connector = await getLogtoConnectorById(insertConnectorId);
@@ -400,11 +381,6 @@ export default function connectorRoutes<T extends ManagementApiRouter>(
 
       if (connectorFactory?.type === ConnectorType.Social) {
         await removeUnavailableSocialConnectorTargets();
-        captureEvent(
-          { tenantId: tenant.id, request: ctx.req },
-          ProductEvent.SocialConnectorDeleted,
-          pickFactoryProperties(connectorFactory)
-        );
       }
 
       ctx.status = 204;

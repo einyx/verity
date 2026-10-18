@@ -164,3 +164,80 @@ export function AddPortalModal({
     </ModalLayout>
   );
 }
+
+/** Adds an MCP server to a portal. The list shows the result; the modal only collects the name and URL. */
+export function AddServerModal({
+  listKey,
+  onClose,
+  onAdded,
+}: {
+  readonly listKey: string;
+  readonly onClose: () => void;
+  readonly onAdded: (added: { name: string; reachable: boolean }) => Promise<void>;
+}) {
+  const api = useApi();
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string>();
+
+  const addServer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSaving(true);
+    setFormError(undefined);
+
+    try {
+      const added = await api
+        .post(listKey, { json: { name, url } })
+        .json<{ reachable?: boolean }>();
+      await onAdded({ name, reachable: added.reachable !== false });
+      onClose();
+    } catch {
+      setFormError('Could not add the MCP server. Check the name and URL, then try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <ModalLayout title={<>Add MCP server</>} size="medium" onClose={onClose}>
+      <form className={styles.modalForm} onSubmit={addServer}>
+        <label className={styles.field}>
+          <span>Name</span>
+          <input
+            required
+            value={name}
+            placeholder="my-server"
+            pattern="[a-z][a-z0-9-]{0,31}"
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
+          />
+        </label>
+        <label className={styles.field}>
+          <span>HTTPS URL</span>
+          <input
+            required
+            type="url"
+            value={url}
+            placeholder="https://example.com/mcp"
+            onChange={(event) => {
+              setUrl(event.target.value);
+            }}
+          />
+        </label>
+        <p className={styles.muted}>
+          The server shows as unreachable until its URL answers over HTTPS.
+        </p>
+        {formError && (
+          <p role="alert" className={styles.error}>
+            {formError}
+          </p>
+        )}
+        <button type="submit" className={styles.submit} disabled={isSaving}>
+          {isSaving ? 'Adding…' : 'Add server'}
+        </button>
+      </form>
+    </ModalLayout>
+  );
+}

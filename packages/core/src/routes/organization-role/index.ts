@@ -1,7 +1,6 @@
 import {
   OrganizationRoles,
   organizationRoleWithScopesGuard,
-  ProductEvent,
   RoleType,
   type CreateOrganizationRole,
   type OrganizationRole,
@@ -17,7 +16,6 @@ import { organizationRoleSearchKeys } from '#src/queries/organization/index.js';
 import SchemaRouter from '#src/utils/SchemaRouter.js';
 import { parseSearchOptions } from '#src/utils/search.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import { errorHandler } from '../organization/utils.js';
 import {
   type ManagementApiRouter,
@@ -51,10 +49,6 @@ export default function organizationRoleRoutes<T extends ManagementApiRouter>(
     disabled: { get: true, post: true },
     errorHandler,
     searchFields: ['name'],
-    hooks: {
-      afterDelete: (ctx) =>
-        captureEvent({ tenantId, request: ctx.req }, ProductEvent.OrganizationRoleDeleted),
-    },
   });
 
   router.get(
@@ -125,9 +119,6 @@ export default function organizationRoleRoutes<T extends ManagementApiRouter>(
         });
       }
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.OrganizationRoleCreated, {
-        type: data.type,
-      });
       return next();
     }
   );

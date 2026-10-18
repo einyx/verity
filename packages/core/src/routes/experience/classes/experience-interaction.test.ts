@@ -1994,6 +1994,16 @@ describe('ExperienceInteraction class', () => {
   });
 
   describe('requested ACR as a sign-in completion requirement', () => {
+    // Creating a password checks the breach list over the network. The sandbox has no network, and an
+    // empty range response means "not breached".
+    beforeEach(() => {
+      jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(''));
+    });
+
+    afterEach(() => {
+      jest.mocked(globalThis.fetch).mockRestore();
+    });
+
     const passwordRecord = {
       id: 'password',
       type: VerificationType.Password,

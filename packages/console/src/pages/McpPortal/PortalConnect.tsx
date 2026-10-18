@@ -7,33 +7,52 @@ import DangerousRaw from '@/ds-components/DangerousRaw';
 import styles from './index.module.scss';
 import { type Portal } from './types';
 
-/** The URL and MCP client config for a portal, plus the prompt an agent can be given to set it up. */
+type Client = 'claude' | 'codex' | 'opencode';
+
+const clients: Client[] = ['claude', 'codex', 'opencode'];
+
+const clientLabels: Record<Client, string> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+};
+
+/** The URL, a short name for the portal, and each client's setup command. */
 const getPortalSetup = (portal: Portal) => {
   const url = `https://${portal.hostname}/mcp`;
-  const config = JSON.stringify(
-    {
-      mcpServers: {
-        [portal.name.toLowerCase().replaceAll(/[^\da-z]+/g, '-') || 'portal']: {
-          command: 'npx',
-          args: ['-y', 'mcp-remote@latest', url],
-        },
+  const name = portal.name.toLowerCase().replaceAll(/[^\da-z]+/g, '-') || 'portal';
+  const commands: Record<Client, string> = {
+    claude: `claude mcp add --transport http ${name} ${url}`,
+    codex: `codex mcp add ${name} --url ${url}`,
+    opencode: JSON.stringify(
+      {
+        $schema: 'https://opencode.ai/config.json',
+        mcp: { [name]: { type: 'remote', url } },
       },
-    },
-    null,
-    2
-  );
+      null,
+      2
+    ),
+  };
+  const setupPrompt = [
+    "Add this MCP portal to my MCP client. Run the command for the client you use, restart it, then confirm the portal's servers are listed.",
+    '',
+    `Portal URL: ${url}`,
+    '',
+    `Claude Code: ${commands.claude}`,
+    `Codex: ${commands.codex}`,
+    `OpenCode (add to opencode.json):\n${commands.opencode}`,
+  ].join('\n');
 
-  const setupPrompt = `Add this MCP portal to my MCP client configuration. Use the config below, then restart the client and confirm the portal's servers are listed.\n\nPortal URL: ${url}\n\n${config}`;
-
-  return { url, config, setupPrompt };
+  return { url, commands, setupPrompt };
 };
 
 /** How people connect their agents to this portal. The URL is the only thing they need to paste. */
 function PortalConnect({ portal }: { readonly portal: Portal }) {
-  const [copied, setCopied] = useState<'url' | 'config' | 'prompt'>();
-  const { url, config } = getPortalSetup(portal);
+  const [client, setClient] = useState<Client>('claude');
+  const [copied, setCopied] = useState<'url' | 'command'>();
+  const { url, commands } = getPortalSetup(portal);
 
-  const copy = async (value: string, which: 'url' | 'config' | 'prompt') => {
+  const copy = async (value: string, which: 'url' | 'command') => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(which);
@@ -60,15 +79,39 @@ function PortalConnect({ portal }: { readonly portal: Portal }) {
           }}
         />
       </div>
-      <p className={styles.muted}>Or add this to an MCP client config:</p>
-      <pre className={styles.code}>{config}</pre>
-      <Button
-        type="outline"
-        title={<DangerousRaw>{copied === 'config' ? 'Copied' : 'Copy config'}</DangerousRaw>}
-        onClick={() => {
-          void copy(config, 'config');
-        }}
-      />
+
+      <p className={styles.muted}>Or add it to your client:</p>
+      <div className={styles.clientTabs} role="tablist" aria-label="MCP client">
+        {clients.map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={client === item}
+            className={styles.clientTab}
+            onClick={() => {
+              setClient(item);
+              setCopied(undefined);
+            }}
+          >
+            {clientLabels[item]}
+          </button>
+        ))}
+      </div>
+      <div className={styles.commandBox}>
+        <pre className={styles.commandText}>{commands[client]}</pre>
+        <Button
+          type="outline"
+          size="small"
+          title={<DangerousRaw>{copied === 'command' ? 'Copied' : 'Copy command'}</DangerousRaw>}
+          onClick={() => {
+            void copy(commands[client], 'command');
+          }}
+        />
+      </div>
+      {client === 'opencode' && (
+        <p className={styles.muted}>Put this in opencode.json in your project or home directory.</p>
+      )}
     </FormCard>
   );
 }

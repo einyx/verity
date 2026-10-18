@@ -1,6 +1,5 @@
 import {
   ApplicationType,
-  ProductEvent,
   samlApplicationCreateGuard,
   samlApplicationResponseGuard,
   samlApplicationSecretResponseGuard,
@@ -26,7 +25,6 @@ import type { ManagementApiRouter, RouterInitArgs } from '#src/routes/types.js';
 import { getSamlAppCallbackUrl } from '#src/saml-application/SamlApplication/utils.js';
 import assertThat from '#src/utils/assert-that.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import { assertApplicationAccessControlHasRules } from '../applications/application-access-control/utils.js';
 
 import { samlApplicationPatchGuard } from './types.js';
@@ -120,9 +118,6 @@ export default function samlApplicationRoutes<T extends ManagementApiRouter>(
         throw error;
       }
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.AppCreated, {
-        type: ApplicationType.SAML,
-      });
       return next();
     }
   );
@@ -197,9 +192,6 @@ export default function samlApplicationRoutes<T extends ManagementApiRouter>(
 
       ctx.status = 204;
 
-      captureEvent({ tenantId, request: ctx.req }, ProductEvent.AppDeleted, {
-        type: ApplicationType.SAML,
-      });
       return next();
     }
   );

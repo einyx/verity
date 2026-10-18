@@ -195,9 +195,44 @@
 }
 
 .badge {
-  padding: 2px 8px;
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
+  font: var(--font-label-3);
+  color: var(--color-text-secondary);
+}
+
+// Wizard choice: a radio on the right marks the selected option.
+.radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  transition-property: border-color, background-color;
+  transition-duration: 150ms;
+}
+
+.radioOn {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 3px var(--color-layer-1);
+  background: var(--color-primary);
+}
+
+// Included components as chips, so each one reads as a unit.
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 8px;
   font-size: 12px;
+  font-weight: 500;
   color: var(--color-text-secondary);
   background: var(--color-layer-2);
 }
@@ -342,10 +377,10 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  padding: 16px 20px;
+  padding: 20px;
   text-align: left;
-  border: none;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   background: var(--color-layer-1);
   cursor: pointer;
   transition-property: transform, background-color;
@@ -354,7 +389,15 @@
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 50%;
+
+    .choiceTitle {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
@@ -366,9 +409,29 @@
   }
 }
 
-.quickstartItemSelected {
+.choiceMain {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.choiceIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font: var(--font-title-3);
+  color: var(--color-primary);
   background: var(--color-layer-2);
-  box-shadow: inset 4px 0 0 var(--color-primary);
+}
+
+.quickstartItemSelected {
+  border-color: var(--color-primary);
+  background: var(--color-layer-2);
 }
 
 .quickstartText {
@@ -591,23 +654,27 @@
 
 .guideGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
 .guideTile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--color-layer-1);
   padding: 20px;
 }
 
 .guideIcon {
   display: block;
-  width: 32px;
-  height: 32px;
-  margin-bottom: 12px;
-  image-rendering: pixelated;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--color-text);
 }
 
 .guideTitle {
@@ -622,14 +689,33 @@
 }
 
 .guideLink {
-  display: inline-block;
-  margin-top: 12px;
-  font: var(--font-label-1);
-  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  margin-top: auto;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: var(--font-label-2);
+  color: var(--color-text);
+  text-decoration: none;
+  background: var(--color-layer-2);
+
+  &:hover {
+    background: var(--color-layer-2);
+    text-decoration: underline;
+  }
 }
 
-@media (max-width: 760px) {
-  .guideGrid {
+@media (max-width: 1080px) {
+  .guideGrid,
+  .templateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .guideGrid,
+  .templateGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -872,3 +958,119 @@
     animation: none;
   }
 }
+
+// Wizard header, stats and template grid, laid out like the dashboard.
+.wizardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.headerLink {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: var(--font-label-2);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+}
+
+.statLabel {
+  font: var(--font-body-2);
+  color: var(--color-text-secondary);
+}
+
+.statValue {
+  font: var(--font-title-1);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionTitle {
+  padding: 0 0 12px;
+  font: var(--font-title-3);
+  color: var(--color-text);
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li + li {
+    border-top: none;
+  }
+}
+
+.templateCard {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+
+  > .choiceMain {
+    padding: 16px 20px 0;
+  }
+
+  .choiceIcon {
+    display: none;
+  }
+
+  > :last-child {
+    align-self: flex-end;
+    margin: 0 20px 20px;
+  }
+}
+
+.templateBand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96px;
+  background: var(--color-layer-2);
+
+  &[data-option='foundation'] {
+    background: #7aa2e8;
+  }
+
+  &[data-option='dai'] {
+    background: #e8a07a;
+  }
+
+  &[data-option='fai'] {
+    background: #c2d6cc;
+  }
+}
+
+.templateArt {
+  display: block;
+  max-height: 72px;
+  max-width: 80%;
+  height: auto;
+  width: auto;
+}
+

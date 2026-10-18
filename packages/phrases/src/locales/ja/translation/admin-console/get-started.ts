@@ -61,6 +61,38 @@ const get_started = {
       action: 'Logto Cloud を試す',
     },
   },
+  header: {
+    docs: 'ドキュメント',
+    create_app: 'アプリケーションを作成',
+  },
+  resources: {
+    title: 'リソース',
+    open_docs: 'ドキュメントを開く',
+    integrate: {
+      title: 'アプリを連携',
+      description: '主要なフレームワーク向けのガイドで、アプリにサインインを追加します。',
+    },
+    sign_in: {
+      title: 'サインインをカスタマイズ',
+      description: 'サインイン画面を製品に合わせてブランディングします。',
+    },
+    rbac: {
+      title: 'ロールと権限を管理',
+      description: 'ユーザーやアプリがアクセスできる範囲を管理します。',
+    },
+    api: {
+      title: 'Management API を使う',
+      description: 'コードでテナントの設定やリソースの管理を自動化します。',
+    },
+  },
+  models: {
+    title: 'クイックスタート',
+    create: '作成',
+  },
+  footer: {
+    help: 'ヘルプとサポート',
+    feedback: 'フィードバック',
+  },
   view_all: 'すべての内容を表示 →',
 };
 

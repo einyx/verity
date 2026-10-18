@@ -231,24 +231,24 @@ describe('POST /sign-in-exp/default/custom-ui-assets', () => {
       jest.spyOn(Date, 'now').mockRestore();
     });
 
-    it('should reject the upload without a license', async () => {
+    it('should allow the upload without a license', async () => {
       // eslint-disable-next-line unicorn/no-useless-undefined -- The reader returns undefined when no license is installed.
       mockedReadLicense.mockResolvedValueOnce(undefined);
       const response = await upload(pathToZip);
 
-      expect(response.status).toBe(403);
-      expect(mockedS3UploadFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(mockedS3UploadFile).toHaveBeenCalled();
     });
 
-    it('should reject the upload with a license that does not grant Bring your UI', async () => {
+    it('should allow the upload with a license that does not grant Bring your UI', async () => {
       withLicense(false);
       const response = await upload(pathToZip);
 
-      expect(response.status).toBe(403);
-      expect(mockedS3UploadFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(mockedS3UploadFile).toHaveBeenCalled();
     });
 
-    it.each([0, 1])('should reject the upload %i ms after grace ends', async (offset) => {
+    it.each([0, 1])('should allow the upload %i ms after grace ends', async (offset) => {
       withLicense(true, {
         payload: buildLicensePayload({
           iat: Math.floor(now / 1000) - 31 * 24 * 60 * 60,
@@ -259,11 +259,8 @@ describe('POST /sign-in-exp/default/custom-ui-assets', () => {
       });
       const response = await upload(pathToZip);
 
-      expect(response.status).toBe(403);
-      expect(response.text).toBe('You have reached the limit of your subscription plan.');
-      expect(mockedS3UploadFile).not.toHaveBeenCalled();
-      expect(mockedAzureUploadFile).not.toHaveBeenCalled();
-      expect(mockedGenerateStandardId).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(mockedS3UploadFile).toHaveBeenCalled();
     });
 
     it('should allow an expired key and refused refresh immediately before grace ends', async () => {

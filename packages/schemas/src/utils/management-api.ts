@@ -1,8 +1,8 @@
 /**
- * The pattern of Management API resource indicators, e.g. `https://default.logto.app/api`. It is
+ * The pattern of Management API resource indicators, e.g. `https://default.meshx.foundation/api`. It is
  * valid in both JavaScript and PostgreSQL regular expressions.
  */
-export const managementApiIndicatorPattern = String.raw`^https://[^.]+\.logto\.app/api$`;
+export const managementApiIndicatorPattern = String.raw`^https://[^.]+\.meshx\.foundation/api$`;
 
 const managementApiIndicatorRegExp = new RegExp(managementApiIndicatorPattern);
 

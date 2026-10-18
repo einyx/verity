@@ -64,6 +64,38 @@ const get_started = {
       action: 'Experimentar o Logto Cloud',
     },
   },
+  header: {
+    docs: 'Documentação',
+    create_app: 'Criar aplicação',
+  },
+  resources: {
+    title: 'Recursos',
+    open_docs: 'Abrir documentação',
+    integrate: {
+      title: 'Integre a sua aplicação',
+      description: 'Adicione início de sessão à sua app com guias para frameworks populares.',
+    },
+    sign_in: {
+      title: 'Personalize o início de sessão',
+      description: 'Adapte a experiência de início de sessão ao seu produto.',
+    },
+    rbac: {
+      title: 'Gerir funções e permissões',
+      description: 'Defina o que cada utilizador e aplicação pode aceder.',
+    },
+    api: {
+      title: 'Use a API de Gestão',
+      description: 'Automatize a configuração do tenant e faça a gestão de recursos com código.',
+    },
+  },
+  models: {
+    title: 'Início rápido',
+    create: 'Criar',
+  },
+  footer: {
+    help: 'Ajuda e suporte',
+    feedback: 'Feedback',
+  },
   view_all: 'Ver tudo →',
 };
 

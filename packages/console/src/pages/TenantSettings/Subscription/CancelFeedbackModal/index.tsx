@@ -1,5 +1,3 @@
-import { conditional } from '@silverhand/essentials';
-import { usePostHog } from 'posthog-js/react';
 import { useState } from 'react';
 import ReactModal from 'react-modal';
 
@@ -12,35 +10,26 @@ import modalStyles from '@/scss/modal.module.scss';
 type Props = {
   readonly isOpen: boolean;
   /** The SKU the tenant was subscribed to before the cancellation. */
-  readonly fromSkuId: string;
   readonly onClose: () => void;
 };
 
-function CancelFeedbackModal({ isOpen, fromSkuId, onClose }: Props) {
-  const postHog = usePostHog();
+function CancelFeedbackModal({ isOpen, onClose }: Props) {
   const [whatMadeYouCancel, setWhatMadeYouCancel] = useState('');
   const [howToReconsider, setHowToReconsider] = useState('');
 
   const cancelReason = whatMadeYouCancel.trim();
   const reconsiderSuggestion = howToReconsider.trim();
 
-  const captureAndClose = (properties: Record<string, unknown>) => {
-    postHog.capture('console:subscription_cancel_feedback', {
-      from_sku_id: fromSkuId,
-      ...properties,
-    });
+  const closeModal = () => {
     onClose();
   };
 
   const skip = () => {
-    captureAndClose({ skipped: true });
+    closeModal();
   };
 
   const submit = () => {
-    captureAndClose({
-      ...conditional(cancelReason && { cancel_reason: cancelReason }),
-      ...conditional(reconsiderSuggestion && { reconsider_suggestion: reconsiderSuggestion }),
-    });
+    closeModal();
   };
 
   return (

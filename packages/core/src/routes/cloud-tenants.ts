@@ -2,11 +2,12 @@ import {
   adminTenantId,
   CloudScope,
   getCloudApiIndicator,
+  getTenantOrganizationId,
   PredefinedScope,
   TenantTag,
 } from '@logto/schemas';
-import type { Context, Next } from 'koa';
 import { sql } from '@silverhand/slonik';
+import type { Context, Next } from 'koa';
 import Router from 'koa-router';
 import { z } from 'zod';
 
@@ -21,11 +22,21 @@ import assertThat from '#src/utils/assert-that.js';
 // only when `IS_CLOUD` is set. A caller needs a token issued for the instance's own cloud API resource,
 // `<admin endpoint>/api`, and the scope for the route.
 
+type TenantMemberRow = {
+  id: string;
+  name: string | undefined;
+  username: string | undefined;
+  primaryEmail: string | undefined;
+  primaryPhone: string | undefined;
+  avatar: string | undefined;
+  organizationRoles: Array<{ id: string; name: string; description: string | undefined }>;
+};
+
 type TenantRow = {
   id: string;
   name: string;
   tag: string;
-  regionName: string | null;
+  regionName: string | undefined;
   createdAt: string | number | Date;
 };
 
@@ -102,7 +113,7 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
         where id <> ${adminTenantId}
         order by created_at
       `);
-      ctx.body = rows.map(toTenantResponse);
+      ctx.body = rows.map((row) => toTenantResponse(row));
 
       return next();
     }
@@ -122,6 +133,56 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
       `);
       assertThat(row, new RequestError({ code: 'entity.not_found', status: 404 }));
       ctx.body = toTenantResponse(row);
+
+      return next();
+    }
+  );
+
+  // Members of a tenant are the users in its organization in the admin tenant. A caller sees the list only
+  // when they are a member themselves, so one tenant's members are not visible to other users.
+  router.get(
+    '/api/tenants/:tenantId/members',
+    koaGuard({ status: [200, 304, 401, 403] }),
+    async (ctx, next) => {
+      const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
+      const organizationId = getTenantOrganizationId(ctx.params.tenantId ?? '');
+      const pool = await EnvSet.sharedPool;
+
+      const caller = await pool.maybeOne<{ userId: string }>(sql`
+        select user_id as "userId"
+        from organization_user_relations
+        where tenant_id = ${adminTenantId}
+          and organization_id = ${organizationId}
+          and user_id = ${userId}
+      `);
+      assertThat(caller, new RequestError({ code: 'auth.forbidden', status: 403 }));
+
+      const rows = await pool.any<TenantMemberRow>(sql`
+        select
+          u.id,
+          u.name,
+          u.username,
+          u.primary_email as "primaryEmail",
+          u.primary_phone as "primaryPhone",
+          u.avatar,
+          coalesce(
+            (
+              select json_agg(json_build_object('id', r.id, 'name', r.name, 'description', r.description))
+              from organization_role_user_relations rr
+              join organization_roles r
+                on r.tenant_id = rr.tenant_id and r.id = rr.organization_role_id
+              where rr.tenant_id = ${adminTenantId}
+                and rr.organization_id = ${organizationId}
+                and rr.user_id = u.id
+            ),
+            '[]'
+          ) as "organizationRoles"
+        from organization_user_relations m
+        join users u on u.tenant_id = m.tenant_id and u.id = m.user_id
+        where m.tenant_id = ${adminTenantId} and m.organization_id = ${organizationId}
+        order by u.created_at
+      `);
+      ctx.body = rows;
 
       return next();
     }

@@ -40,6 +40,11 @@ describe('cloud tenant routes', () => {
     expect(response.status).toBe(401);
   });
 
+  it("refuses listing a tenant's members without a bearer token", async () => {
+    const response = await request(createApp()).get('/api/tenants/some-tenant/members');
+    expect(response.status).toBe(401);
+  });
+
   it('refuses creating a tenant without a bearer token', async () => {
     const response = await request(createApp())
       .post('/api/tenants')

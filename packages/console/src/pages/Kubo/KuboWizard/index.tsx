@@ -3,12 +3,10 @@ import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
-import congratsImage from '@/assets/images/congrats.svg?url';
-import organizationImage from '@/assets/images/organization-empty.svg?url';
-import robotCapacity from '@/assets/images/wizard/robot-capacity.png';
-import robotReview from '@/assets/images/wizard/robot-review.png';
-import robotTemplate from '@/assets/images/wizard/robot-template.png';
-import welcomeImage from '@/assets/images/wizard/welcome-cluster.svg?url';
+import BarGraphIcon from '@/assets/icons/bar-graph.svg?react';
+import ConnectionIcon from '@/assets/icons/connection.svg?react';
+import CubeIcon from '@/assets/icons/cube.svg?react';
+import DocumentIcon from '@/assets/icons/document.svg?react';
 import FormCardLayout from '@/components/FormCard/FormCardLayout';
 import Button from '@/ds-components/Button';
 import Select from '@/ds-components/Select';
@@ -16,11 +14,32 @@ import useApi, { type RequestError } from '@/hooks/use-api';
 
 import styles from '../index.module.scss';
 
+import ChoiceItem from './ChoiceItem';
+import { StepIntro } from './StepIntro';
 import { readError } from './errors';
-import { type StackOption, includedComponents, stackOptions, toStep } from './options';
+import { type StackOption, stackOptions, toStep } from './options';
 
 // Lowercase RFC-1123 label, as the portal requires for a tenant ID.
 const tenantPattern = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
+
+// The template preview endpoint for the review step, or null until a template and tenant are set.
+function previewUrl(
+  template: string | undefined,
+  tenant: string,
+  provider: 'logto' | 'auth0',
+  mode: string
+): string | undefined {
+  if (!template || !tenant) {
+    return undefined;
+  }
+  const query = new URLSearchParams({
+    template,
+    tenant,
+    authProvider: provider,
+    ...(mode ? { mode } : {}),
+  });
+  return `api/kubo/template?${query.toString()}`;
+}
 
 function KuboWizard() {
   const api = useApi();
@@ -34,10 +53,12 @@ function KuboWizard() {
   const [submitError, setSubmitError] = useState<string>();
 
   const previewKey =
-    step === 3 && selected?.template && tenant
-      ? `api/kubo/template?${new URLSearchParams({ template: selected.template ?? '', tenant, authProvider: provider, ...(mode ? { mode } : {}) }).toString()}`
-      : null;
+    step === 3 ? previewUrl(selected?.template, tenant, provider, mode) : undefined;
   const preview = useSWR<{ yaml: string }, RequestError>(previewKey);
+  // Workspace totals for the header stats; the list is the same one the Workspaces page reads.
+  const workspaces = useSWR<Array<{ phase: string }>, RequestError>('api/kubo/stacks');
+  const workspaceTotal = workspaces.data?.length;
+  const workspaceReady = workspaces.data?.filter((stack) => stack.phase === 'Ready').length;
 
   const create = async () => {
     if (!selected?.template) {
@@ -68,70 +89,33 @@ function KuboWizard() {
   const tenantValid = tenantPattern.test(tenant);
   const canContinue = step === 1 ? Boolean(selected?.available) : tenantValid;
 
-  // Vertical stepper: each step has a title, a short description and an image.
-  // Completed steps stay clickable so users can go back and change an answer.
-  const steps = [
-    {
-      title: 'Choose a workspace',
-      text: 'Pick a workspace type. Each type starts from an approved template.',
-      image: welcomeImage,
-    },
-    {
-      title: 'Set the tenant',
-      text: 'Enter the tenant ID. Mode is optional.',
-      image: organizationImage,
-    },
-    {
-      title: 'Review and create',
-      text: 'Check the rendered YAML before you create the workspace.',
-      image: congratsImage,
-    },
-  ];
-
   const introduction = (
-    <>
-      <img className={styles.stepImage} src={steps[step - 1]?.image} alt="" />
-      <ol className={styles.stepper} aria-label={`Step ${step} of 3`}>
-        {steps.map((item, index) => {
-          const number = index + 1;
-          const isActive = number === step;
-          const isDone = number < step;
-          return (
-            <li
-              key={item.title}
-              className={styles.stepItem}
-              aria-current={isActive ? 'step' : undefined}
-            >
-              <button
-                type="button"
-                className={styles.stepButton}
-                disabled={number > step}
-                onClick={() => {
-                  setStep(toStep(number));
-                }}
-              >
-                <span
-                  className={`${styles.stepBubble} ${isActive ? styles.stepBubbleActive : ''} ${isDone ? styles.stepBubbleDone : ''}`}
-                >
-                  {number}
-                </span>
-                <span className={styles.stepText}>
-                  <span className={isActive ? styles.stepTitleActive : styles.stepTitle}>
-                    {item.title}
-                  </span>
-                  {isActive && <span className={styles.stepDescription}>{item.text}</span>}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-    </>
+    <StepIntro
+      step={step}
+      onStepChange={(number) => {
+        setStep(toStep(number));
+      }}
+    />
   );
-
   return (
     <>
       <Helmet title="MeshX · New workspace" />
+      <div className={styles.wizardHeader}>
+        <div className={styles.title}>New workspace</div>
+        <a className={styles.headerLink} href="/">
+          Back to landing
+        </a>
+      </div>
+      <div className={styles.statGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Workspaces</div>
+          <div className={styles.statValue}>{workspaceTotal ?? '–'}</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Ready</div>
+          <div className={styles.statValue}>{workspaceReady ?? '–'}</div>
+        </div>
+      </div>
       <FormCardLayout introduction={introduction}>
         {step === 1 && (
           <>
@@ -140,27 +124,17 @@ function KuboWizard() {
               <span />
               <span />
             </div>
-            <ul className={styles.quickstart}>
+            <div className={styles.sectionTitle}>Templates</div>
+            <ul className={styles.templateGrid}>
               {stackOptions.map((option) => (
                 <li key={option.id}>
-                  <button
-                    type="button"
-                    disabled={!option.available}
-                    aria-pressed={selected?.id === option.id}
-                    className={`${styles.quickstartItem} ${selected?.id === option.id ? styles.quickstartItemSelected : ''}`}
-                    onClick={() => {
+                  <ChoiceItem
+                    option={option}
+                    selected={selected}
+                    onSelect={() => {
                       setSelected(option);
                     }}
-                  >
-                    <span className={styles.quickstartText}>
-                      <span className={styles.choiceTitle}>{option.title}</span>
-                      <span className={styles.muted}>{option.description}</span>
-                      <span className={styles.componentList}>
-                        {includedComponents(option).join(' · ')}
-                      </span>
-                    </span>
-                    {!option.available && <span className={styles.badge}>Coming soon</span>}
-                  </button>
+                  />
                 </li>
               ))}
             </ul>
@@ -267,17 +241,25 @@ function KuboWizard() {
         </div>
       </FormCardLayout>
       <section className={styles.guide} aria-label="Before you start">
-        <h2 className={styles.guideLabel}>Before you start</h2>
+        <h2 className={styles.sectionTitle}>Resources</h2>
         <div className={styles.guideGrid}>
           <article className={styles.guideTile}>
-            <img className={styles.guideIcon} src={robotTemplate} alt="" width={32} height={32} />
+            <CubeIcon className={styles.guideIcon} aria-hidden="true" />
             <h3 className={styles.guideTitle}>Pick a template</h3>
             <p className={styles.guideText}>
               Foundation is the full platform, with high availability.
             </p>
+            <a
+              className={styles.guideLink}
+              href="https://docs.meshx.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open docs
+            </a>
           </article>
           <article className={styles.guideTile}>
-            <img className={styles.guideIcon} src={robotCapacity} alt="" width={32} height={32} />
+            <BarGraphIcon className={styles.guideIcon} aria-hidden="true" />
             <h3 className={styles.guideTitle}>Check capacity</h3>
             <p className={styles.guideText}>
               See free CPU and memory on each node before you create a workspace.
@@ -287,11 +269,34 @@ function KuboWizard() {
             </Link>
           </article>
           <article className={styles.guideTile}>
-            <img className={styles.guideIcon} src={robotReview} alt="" width={32} height={32} />
+            <DocumentIcon className={styles.guideIcon} aria-hidden="true" />
             <h3 className={styles.guideTitle}>Review the YAML</h3>
             <p className={styles.guideText}>
               Every workspace renders a manifest you can read before anything is applied.
             </p>
+            <a
+              className={styles.guideLink}
+              href="https://docs.meshx.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open docs
+            </a>
+          </article>
+          <article className={styles.guideTile}>
+            <ConnectionIcon className={styles.guideIcon} aria-hidden="true" />
+            <h3 className={styles.guideTitle}>Set the tenant</h3>
+            <p className={styles.guideText}>
+              Use a lowercase tenant ID and choose the identity provider for the workspace.
+            </p>
+            <a
+              className={styles.guideLink}
+              href="https://docs.meshx.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open docs
+            </a>
           </article>
         </div>
       </section>

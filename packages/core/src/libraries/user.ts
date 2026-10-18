@@ -1,10 +1,5 @@
 import type { BindMfa, CreateUser, Scope, User } from '@logto/schemas';
-import {
-  adminTenantId,
-  ProductEvent,
-  RoleType,
-  UsersPasswordEncryptionMethod,
-} from '@logto/schemas';
+import { RoleType, UsersPasswordEncryptionMethod } from '@logto/schemas';
 import { generateStandardShortId, generateStandardId } from '@logto/shared';
 import type { Nullable } from '@silverhand/essentials';
 import { deduplicateByKey, condArray } from '@silverhand/essentials';
@@ -17,8 +12,6 @@ import { createUsersRolesQueries } from '#src/queries/users-roles.js';
 import type Queries from '#src/tenants/Queries.js';
 import assertThat from '#src/utils/assert-that.js';
 import type { OmitAutoSetFields } from '#src/utils/sql.js';
-
-import { captureDeveloperEvent } from '../utils/posthog.js';
 
 import { isPasswordValid, rejectInvalidCredentials } from './user-password-verification.js';
 import { convertBindMfaToMfaVerification, encryptUserPassword } from './user.utils.js';
@@ -102,10 +95,6 @@ export const createUserLibrary = (tenantId: string, queries: Queries) => {
 
       return [user];
     });
-
-    if (tenantId === adminTenantId) {
-      captureDeveloperEvent(result[0].id, ProductEvent.DeveloperCreated, { isInteractive });
-    }
 
     return result;
   };

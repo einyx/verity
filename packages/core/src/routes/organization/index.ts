@@ -1,9 +1,4 @@
-import {
-  type OrganizationWithFeatured,
-  Organizations,
-  ProductEvent,
-  featuredUserGuard,
-} from '@logto/schemas';
+import { type OrganizationWithFeatured, Organizations, featuredUserGuard } from '@logto/schemas';
 import { yes } from '@silverhand/essentials';
 import { z } from 'zod';
 
@@ -13,7 +8,6 @@ import { koaQuotaGuard, koaReportSubscriptionUpdates } from '#src/middleware/koa
 import SchemaRouter from '#src/utils/SchemaRouter.js';
 import { parseSearchOptions } from '#src/utils/search.js';
 
-import { captureEvent } from '../../utils/posthog.js';
 import organizationInvitationRoutes from '../organization-invitation/index.js';
 import organizationRoleRoutes from '../organization-role/index.js';
 import organizationScopeRoutes from '../organization-scope/index.js';
@@ -60,14 +54,6 @@ export default function organizationRoutes<T extends ManagementApiRouter>(
     disabled: { get: true },
     idLength: 12,
     entityGuard: organizationResponseGuard,
-    hooks: {
-      afterInsert: async (ctx) => {
-        captureEvent({ tenantId, request: ctx.req }, ProductEvent.OrganizationCreated);
-      },
-      afterDelete: async (ctx) => {
-        captureEvent({ tenantId, request: ctx.req }, ProductEvent.OrganizationDeleted);
-      },
-    },
   });
 
   router.get(

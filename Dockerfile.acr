@@ -23,6 +23,7 @@ COPY packages/account/package.json packages/account/package.json
 COPY packages/api/package.json packages/api/package.json
 COPY packages/app-insights/package.json packages/app-insights/package.json
 COPY packages/cli/package.json packages/cli/package.json
+COPY packages/tenant-seed/package.json packages/tenant-seed/package.json
 COPY packages/connectors/connector-acs-email/package.json packages/connectors/connector-acs-email/package.json
 COPY packages/connectors/connector-alipay-native/package.json packages/connectors/connector-alipay-native/package.json
 COPY packages/connectors/connector-alipay-web/package.json packages/connectors/connector-alipay-web/package.json
@@ -123,7 +124,9 @@ ENV LOGTO_OSS_SURVEY_ENDPOINT=${logto_oss_survey_endpoint}
 # the install above already applied. The dependencies are installed, so skip only that check for the
 # rest of the image build.
 ENV pnpm_config_verify_deps_before_run=false
-RUN pnpm -r --filter "@logto/core..." --filter "./packages/connectors/connector-*" build
+# Cloud console build: the flag is used for this build step only and is not kept in the runtime environment.
+ARG is_cloud=
+RUN IS_CLOUD=${is_cloud} pnpm -r --filter "@logto/core..." --filter "./packages/connectors/connector-*" build
 
 ### Add official connectors ###
 ARG additional_connector_args

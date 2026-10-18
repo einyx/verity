@@ -3986,7 +3986,7 @@ importers:
         version: 1.11.13
       debug:
         specifier: ^4.3.4
-        version: 4.4.1(supports-color@5.5.0)
+        version: 4.4.1(supports-color@10.0.0)
       deep-object-diff:
         specifier: ^1.1.9
         version: 1.1.9
@@ -4056,9 +4056,6 @@ importers:
       postcss-modules:
         specifier: ^6.0.0
         version: 6.0.0(postcss@8.5.23)
-      posthog-js:
-        specifier: ^1.268.6
-        version: 1.268.6
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -4383,9 +4380,6 @@ importers:
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
-      posthog-node:
-        specifier: ^5.9.2
-        version: 5.9.2
       qrcode:
         specifier: ^1.5.3
         version: 1.5.4
@@ -6993,12 +6987,6 @@ packages:
     resolution: {integrity: sha512-s9RtWoxkOLmRJdw3oFvhFbs9OJS0BzrLUc8Hf6l2UdCNd1rqeEyD4BhCJkvzeEoD1FsK4mirsWwGerhVmYKtZg==}
     engines: {node: '>=18'}
     hasBin: true
-
-  '@posthog/core@1.2.1':
-    resolution: {integrity: sha512-zNw96BipqM5/Tf161Q8/K5zpwGY3ezfb2wz+Yc3fIT5OQHW8eEzkQldPgtFKMUkqImc73ukEa2IdUpS6vEGH7w==}
-
-  '@posthog/core@1.2.2':
-    resolution: {integrity: sha512-f16Ozx6LIigRG+HsJdt+7kgSxZTHeX5f1JlCGKI1lXcvlZgfsCR338FuMI2QRYXGl+jg/vYFzGOTQBxl90lnBg==}
 
   '@puppeteer/browsers@2.10.0':
     resolution: {integrity: sha512-HdHF4rny4JCvIcm7V1dpvpctIGqM3/Me255CB44vW7hDG1zYMmcBMjpNqZEDxdCfXGLkx5kP0+Jz5DUS+ukqtA==}
@@ -10387,9 +10375,6 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.4.9:
-    resolution: {integrity: sha512-zdxgIEddhfsyCaWpJ2SdXEP8ZMrKJ6+5jl4OupODcywU0IhRk6gdXuVGcPICyfx2H97hVK7xmJtRLPjkxAX8Vw==}
-
   figures@5.0.0:
     resolution: {integrity: sha512-ej8ksPF4x6e5wvK9yevct0UCXh8TTFlWGVLlgjZuoBH1HwjIfKE/IdL5mq89sFA7zELi1VhKpmtDnrs7zWyeyg==}
     engines: {node: '>=14'}
@@ -13245,26 +13230,8 @@ packages:
   postgres-range@1.1.2:
     resolution: {integrity: sha512-CmPJDSpd3/xYJrtw/tI0Cv029B0zMtnesUOHCZmgvypGBLn+eExXcjCS5OY7mpiw6imYEvd2IMD36sAOYA9U1w==}
 
-  posthog-js@1.268.6:
-    resolution: {integrity: sha512-3IWd5dbs/Bs6akesiDNn+QhN7QBU6xdYV31KG8ive/6srSV7DBcH0W+UgclNvlZanVqpwPTg3mbOgNKa7mEPrQ==}
-    peerDependencies:
-      '@rrweb/types': 2.0.0-alpha.17
-      rrweb-snapshot: 2.0.0-alpha.17
-    peerDependenciesMeta:
-      '@rrweb/types':
-        optional: true
-      rrweb-snapshot:
-        optional: true
-
-  posthog-node@5.9.2:
-    resolution: {integrity: sha512-oU7FbFcH5cn40nhP04cBeT67zE76EiGWjKKzDvm6IOm5P83sqM0Ij0wMJQSHp+QI6ZN7MLzb+4xfMPUEZ4q6CA==}
-    engines: {node: '>=20'}
-
   postmark@4.0.5:
     resolution: {integrity: sha512-nerZdd3TwOH4CgGboZnlUM/q7oZk0EqpZgJL+Y3Nup8kHeaukxouQ6JcFF3EJEijc4QbuNv1TefGhboAKtf/SQ==}
-
-  preact@10.28.2:
-    resolution: {integrity: sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA==}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -14952,9 +14919,6 @@ packages:
 
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
-
-  web-vitals@4.2.4:
-    resolution: {integrity: sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw==}
 
   web-worker@1.5.0:
     resolution: {integrity: sha512-RiMReJrTAiA+mBjGONMnjVDP2u3p9R1vkcGz6gDIrOMT3oGuYwX2WRMYI9ipkphSuE5XKEhydbhNEJh4NY9mlw==}
@@ -17568,10 +17532,6 @@ snapshots:
   '@playwright/test@1.48.1':
     dependencies:
       playwright: 1.56.1
-
-  '@posthog/core@1.2.1': {}
-
-  '@posthog/core@1.2.2': {}
 
   '@puppeteer/browsers@2.10.0(supports-color@10.0.0)':
     dependencies:
@@ -22365,8 +22325,6 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.4
 
-  fflate@0.4.9: {}
-
   figures@5.0.0:
     dependencies:
       escape-string-regexp: 5.0.0
@@ -26332,26 +26290,12 @@ snapshots:
 
   postgres-range@1.1.2: {}
 
-  posthog-js@1.268.6:
-    dependencies:
-      '@posthog/core': 1.2.1
-      core-js: 3.45.1
-      fflate: 0.4.9
-      preact: 10.28.2
-      web-vitals: 4.2.4
-
-  posthog-node@5.9.2:
-    dependencies:
-      '@posthog/core': 1.2.2
-
   postmark@4.0.5(debug@4.4.3(supports-color@10.0.0))(supports-color@10.0.0):
     dependencies:
       axios: 1.20.0(debug@4.4.3(supports-color@10.0.0))(supports-color@10.0.0)
     transitivePeerDependencies:
       - debug
       - supports-color
-
-  preact@10.28.2: {}
 
   prelude-ls@1.2.1: {}
 
@@ -28466,8 +28410,6 @@ snapshots:
   wcwidth@1.0.1:
     dependencies:
       defaults: 1.0.4
-
-  web-vitals@4.2.4: {}
 
   web-worker@1.5.0: {}
 

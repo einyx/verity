@@ -64,6 +64,38 @@ const get_started = {
       action: "Logto Cloud'u deneyin",
     },
   },
+  header: {
+    docs: 'Dokümantasyon',
+    create_app: 'Uygulama oluştur',
+  },
+  resources: {
+    title: 'Kaynaklar',
+    open_docs: 'Dokümantasyonu aç',
+    integrate: {
+      title: 'Uygulamanı entegre et',
+      description: 'Popüler framework’ler için rehberlerle uygulamana oturum açma ekle.',
+    },
+    sign_in: {
+      title: 'Oturum açmayı özelleştir',
+      description: 'Oturum açma deneyimini ürününe uygun hale getir.',
+    },
+    rbac: {
+      title: 'Rol ve izinleri yönet',
+      description: 'Her kullanıcı ve uygulamanın neye erişebileceğini belirle.',
+    },
+    api: {
+      title: 'Management API’yi kullan',
+      description: 'Kiracı kurulumunu otomatikleştir ve kaynakları kodla yönet.',
+    },
+  },
+  models: {
+    title: 'Hızlı başlangıç',
+    create: 'Oluştur',
+  },
+  footer: {
+    help: 'Yardım ve destek',
+    feedback: 'Geri bildirim',
+  },
   view_all: 'Hepsini görüntüle →',
 };
 

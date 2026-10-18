@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
 import http2 from 'node:http2';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { appInsights } from '@logto/app-insights/node';
+import { ossConsolePath } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
 import { toTitle, trySafe } from '@silverhand/essentials';
 import chalk from 'chalk';
@@ -27,6 +29,26 @@ const logListening = (type: 'core' | 'admin' = 'core') => {
 
 const serverTimeout = 120_000;
 
+
+// The landing page ships with the console: `dist/landing` in the image, `public/landing` in the source tree.
+const readLandingPage = async (): Promise<string | undefined> => {
+  const consoleDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../console');
+  const candidates = [
+    path.join(consoleDirectory, 'dist/landing/index.html'),
+    path.join(consoleDirectory, 'public/landing/index.html'),
+  ];
+
+  for (const file of candidates) {
+    const content = await trySafe(fs.readFile(file, 'utf8'));
+
+    if (content) {
+      return content;
+    }
+  }
+
+  return undefined;
+};
+
 export default async function initApp(app: Koa): Promise<void> {
   app.use(async (ctx, next) => {
     const requestId = nanoid(16);
@@ -49,7 +71,26 @@ export default async function initApp(app: Koa): Promise<void> {
   });
 
   app.use(async (ctx, next) => {
-    if (EnvSet.values.isDomainBasedMultiTenancy && ['/status', '/'].includes(ctx.URL.pathname)) {
+    // The root answers 204 for health probes. A browser asking for the root gets the landing page instead.
+    const isProbe = ['/status', '/'].includes(ctx.URL.pathname);
+
+    if (EnvSet.values.isDomainBasedMultiTenancy && isProbe) {
+      // Only a browser asks for HTML; probes send no Accept header or a non-HTML one.
+      if (
+        ctx.URL.pathname === '/' &&
+        EnvSet.values.isCloud &&
+        ctx.get('accept').includes('text/html')
+      ) {
+        const landing = await readLandingPage();
+
+        if (landing) {
+          ctx.type = 'html';
+          ctx.body = landing;
+
+          return;
+        }
+      }
+
       ctx.status = 204;
 
       return next();

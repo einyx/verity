@@ -65,6 +65,38 @@ const get_started = {
       action: 'Prova Logto Cloud',
     },
   },
+  header: {
+    docs: 'Documentazione',
+    create_app: 'Crea applicazione',
+  },
+  resources: {
+    title: 'Risorse',
+    open_docs: 'Apri documentazione',
+    integrate: {
+      title: 'Integra la tua app',
+      description: 'Aggiungi l’accesso alla tua app con guide per i framework più diffusi.',
+    },
+    sign_in: {
+      title: 'Personalizza l’accesso',
+      description: 'Adatta l’esperienza di accesso al tuo prodotto.',
+    },
+    rbac: {
+      title: 'Gestisci ruoli e permessi',
+      description: 'Controlla a cosa può accedere ogni utente e applicazione.',
+    },
+    api: {
+      title: 'Usa l’API di gestione',
+      description: 'Automatizza la configurazione e gestisci le risorse via codice.',
+    },
+  },
+  models: {
+    title: 'Avvio rapido',
+    create: 'Crea',
+  },
+  footer: {
+    help: 'Aiuto e supporto',
+    feedback: 'Feedback',
+  },
   view_all: 'Visualizza tutto →',
 };
 

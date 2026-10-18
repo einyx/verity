@@ -60,6 +60,29 @@ const get_started = {
       action: '試用 Logto Cloud',
     },
   },
+  header: {
+    docs: '文件',
+    create_app: '建立應用程式',
+  },
+  resources: {
+    title: '資源',
+    open_docs: '開啟文件',
+    integrate: {
+      title: '整合您的應用程式',
+      description: '透過主流框架的指南為應用程式加入登入功能。',
+    },
+    sign_in: { title: '自訂登入體驗', description: '讓登入頁面符合您的產品風格。' },
+    rbac: { title: '管理角色與權限', description: '控制每位使用者和應用程式可存取的內容。' },
+    api: { title: '使用 Management API', description: '透過程式碼自動化租戶設定並管理資源。' },
+  },
+  models: {
+    title: '快速開始',
+    create: '建立',
+  },
+  footer: {
+    help: '協助與支援',
+    feedback: '意見回饋',
+  },
   view_all: '查看全部 →',
 };
 

@@ -92,3 +92,52 @@ export const createCheckoutSession = async (
 
   return { ok: true, redirectUri: session.data.url, sessionId: session.data.id };
 };
+
+const stripeStatusGuard = z.object({
+  status: z.string().nullable().optional(),
+  payment_status: z.string().optional(),
+  metadata: z.record(z.string()).optional(),
+});
+
+export type CheckoutStatus = {
+  tenantId: string;
+  skuId: string;
+  status: 'complete' | 'open';
+};
+
+/**
+ * Reads a checkout session from Stripe. It reports `complete` only once Stripe has the payment, and
+ * returns the tenant the session was created for, so the caller can be authorized for that tenant.
+ * Returns `undefined` when Stripe does not know the session or it carries no tenant.
+ */
+export const readCheckoutStatus = async (
+  config: CheckoutConfig,
+  sessionId: string,
+  fetcher: typeof fetch = fetch
+): Promise<CheckoutStatus | undefined> => {
+  const response = await fetcher(
+    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+    { headers: { Authorization: `Bearer ${config.stripeSecretKey}` } }
+  );
+
+  if (!response.ok) {
+    return undefined;
+  }
+
+  const parsed = stripeStatusGuard.safeParse(await response.json());
+
+  if (!parsed.success || !parsed.data.metadata?.tenantId || !parsed.data.metadata.skuId) {
+    return undefined;
+  }
+
+  const { data } = parsed;
+  const paid =
+    data.status === 'complete' &&
+    ['paid', 'no_payment_required'].includes(data.payment_status ?? '');
+
+  return {
+    tenantId: data.metadata?.tenantId ?? '',
+    skuId: data.metadata?.skuId ?? '',
+    status: paid ? 'complete' : 'open',
+  };
+};

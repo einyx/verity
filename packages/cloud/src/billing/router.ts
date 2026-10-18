@@ -8,7 +8,12 @@ import {
   type InvitationForAcceptance,
   type OperatorAuthConfig,
 } from './auth.js';
-import { type CheckoutConfig, createCheckoutBodyGuard, createCheckoutSession } from './checkout.js';
+import {
+  type CheckoutConfig,
+  createCheckoutBodyGuard,
+  createCheckoutSession,
+  readCheckoutStatus,
+} from './checkout.js';
 import {
   acceptInvitationBodyGuard,
   createInvitationBodyGuard,
@@ -191,5 +196,37 @@ export const createBillingRouter = (
           ...context,
           json: { redirectUri: outcome.redirectUri, sessionId: outcome.sessionId },
         });
+      }
+    )
+    // The console polls this after Stripe returns the tenant. The session's own tenant decides who
+    // may read it, so a tenant admin of another tenant gets 403.
+    .get(
+      '/api/checkout-session/:sessionId',
+      {
+        response: z.object({
+          tenantId: z.string(),
+          skuId: z.string(),
+          status: z.enum(['complete', 'open']),
+        }),
+      },
+      async (context, next) => {
+        if (!checkout) {
+          throw new RequestError('Checkout is not configured.', 503);
+        }
+
+        const status = await readCheckoutStatus(checkout, context.guarded.params.sessionId);
+
+        if (!status) {
+          throw new RequestError('Checkout session not found', 404);
+        }
+
+        await authorizeTenantAdmin(
+          context.request.headers.authorization,
+          status.tenantId,
+          auth,
+          store
+        );
+
+        return next({ ...context, json: status });
       }
     );

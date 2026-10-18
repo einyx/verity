@@ -173,7 +173,6 @@ function SwitchPlanActionBar({ onSubscriptionUpdated, currentSkuId, logtoSkus }:
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.buttonPlaceholder} />
         {/** Public reserved plan buttons */}
         {logtoSkus.map(({ id: skuId }) => {
           return (

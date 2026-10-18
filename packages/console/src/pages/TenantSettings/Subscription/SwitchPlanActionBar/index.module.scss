@@ -10,19 +10,14 @@
   padding-block: _.unit(4);
   padding-inline: _.unit(4) _.unit(3);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: _.unit(3);
 
   > * {
-    flex: 1;
     display: flex;
-    justify-content: center;
   }
 }
 
 .buttonLink {
   text-decoration: none;
-}
-
-.buttonPlaceholder {
-  flex: 1.3;
 }

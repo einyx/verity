@@ -69,6 +69,10 @@ export type BillingStore = {
   releaseStripeEvent: (eventId: string) => Promise<void>;
   /** The Stripe customers of the tenants this identity administers, one per tenant with a customer. */
   listAdminCustomers: (identity: MemberIdentity) => Promise<AdminCustomer[]>;
+  /** The customer this user picked as their default, or `null` when none was picked. */
+  findDefaultCustomerId: (identity: MemberIdentity) => Promise<string | null>;
+  /** Records the customer this user picked as their default. */
+  setDefaultCustomerId: (identity: MemberIdentity, customerId: string) => Promise<void>;
   /** The Stripe customer of a tenant's paid subscription, or `null` when none was recorded. */
   findStripeCustomerId: (tenantId: string) => Promise<string | null>;
   /** Makes a tenant's subscription the paid Stripe subscription. Creates it when missing. */
@@ -91,6 +95,7 @@ export const createInMemoryBillingStore = (
   const claimedEvents = new Set<string>();
   const tenantByStripeSubscription = new Map<string, string>();
   const stripeCustomerByTenant = new Map<string, string>();
+  const defaultCustomerByUser = new Map<string, string>();
 
   return {
     findSubscription: async (tenantId) => subscriptions.get(tenantId) ?? null,
@@ -119,6 +124,11 @@ export const createInMemoryBillingStore = (
       }
     },
     findStripeCustomerId: async (tenantId) => stripeCustomerByTenant.get(tenantId) ?? null,
+    findDefaultCustomerId: async (identity) =>
+      defaultCustomerByUser.get(`${identity.issuer}|${identity.sub}`) ?? null,
+    setDefaultCustomerId: async (identity, customerId) => {
+      defaultCustomerByUser.set(`${identity.issuer}|${identity.sub}`, customerId);
+    },
     listAdminCustomers: async (identity) =>
       [...stripeCustomerByTenant.entries()].flatMap(([tenantId, customerId]) => {
         const isAdmin = data.members?.[tenantId]?.some(

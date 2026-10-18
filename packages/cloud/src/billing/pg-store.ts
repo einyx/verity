@@ -263,6 +263,22 @@ export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => 
         stripe_subscription_id = excluded.stripe_subscription_id
     `);
   },
+  findDefaultCustomerId: async (identity): Promise<string | null> => {
+    const row = await pool.maybeOne(sql`
+      select customer_id from billing_user_default_customers
+      where member_issuer = ${identity.issuer} and member_sub = ${identity.sub}
+    `);
+
+    return row ? String(row.customer_id) : null;
+  },
+  setDefaultCustomerId: async (identity, customerId): Promise<void> => {
+    await pool.query(sql`
+      insert into billing_user_default_customers (member_issuer, member_sub, customer_id)
+      values (${identity.issuer}, ${identity.sub}, ${customerId})
+      on conflict (member_issuer, member_sub) do update set
+        customer_id = excluded.customer_id, updated_at = now()
+    `);
+  },
   listAdminCustomers: async (identity): Promise<AdminCustomer[]> => {
     const rows = await pool.any(sql`
       select b.tenant_id, b.stripe_customer_id, b.current_period_start

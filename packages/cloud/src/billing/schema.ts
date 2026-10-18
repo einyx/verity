@@ -91,6 +91,14 @@ export const billingSchemaSql = sql`
   alter table billing_subscriptions add column if not exists stripe_customer_id text;
   alter table billing_subscriptions add column if not exists stripe_subscription_id text;
 
+  create table if not exists billing_user_default_customers (
+    member_issuer text not null,
+    member_sub text not null,
+    customer_id varchar(255) not null,
+    updated_at timestamptz not null default now(),
+    primary key (member_issuer, member_sub)
+  );
+
   create table if not exists billing_stripe_events (
     event_id varchar(255) not null,
     type varchar(128) not null,

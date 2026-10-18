@@ -296,14 +296,44 @@ export const createBillingRouter = (
       async (context, next) => {
         const caller = await verifyCaller(context.request.headers.authorization, auth);
         const customers = await store.listAdminCustomers(caller);
+        const defaultCustomerId = await store.findDefaultCustomerId(caller);
 
         return next({
           ...context,
           json: customers.map(({ customerId, periodStart }) => ({
             customerId,
             createdAt: periodStart,
-            isDefault: false,
+            isDefault: customerId === defaultCustomerId,
           })),
+        });
+      }
+    )
+    // The picker's default is stored per user. Only a customer the user administers can be picked.
+    .patch(
+      '/api/me/stripe-customers/:customerId',
+      {
+        body: z.object({ isDefault: z.literal(true) }),
+        response: z.object({
+          customerId: z.string(),
+          createdAt: z.date(),
+          isDefault: z.boolean(),
+        }),
+      },
+      async (context, next) => {
+        const caller = await verifyCaller(context.request.headers.authorization, auth);
+        const { customerId } = context.guarded.params;
+        const customers = await store.listAdminCustomers(caller);
+        const customer = customers.find((item) => item.customerId === customerId);
+
+        if (!customer) {
+          throw new RequestError('Stripe customer not found', 404);
+        }
+
+        await store.setDefaultCustomerId(caller, customerId);
+
+        return next({
+          ...context,
+          json: { customerId, createdAt: customer.periodStart, isDefault: true },
         });
       }
     );

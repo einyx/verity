@@ -28,6 +28,13 @@ export type LogtoMcpTool = {
   required?: string[];
   /** Builds the JSON body of a POST tool from its arguments. Only the fields it names are sent. */
   body?: (args: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Keeps only the fields the model may see from a successful response. Use it for settings that
+   * hold values we do not want to pass to the model, such as provider configuration.
+   */
+  project?: (body: unknown) => unknown;
+  /** A read tool that is only offered while dev features are enabled. */
+  devFeature?: boolean;
 };
 
 const pagingProperties: Record<string, ToolProperty> = {
@@ -45,6 +52,30 @@ const descriptionProperty: ToolProperty = {
 };
 
 const applicationTypes = ['SPA', 'Traditional', 'Native', 'MachineToMachine'] as const;
+
+const signInExperienceFields = [
+  'color',
+  'branding',
+  'hideLogtoBranding',
+  'languageInfo',
+  'termsOfUseUrl',
+  'privacyPolicyUrl',
+  'agreeToTermsPolicy',
+  'signIn',
+  'signUp',
+  'signInMode',
+];
+
+/** Keeps the allowlisted sign-in fields and drops everything else, so unlisted settings never reach the model. */
+const pickSignInExperience = (body: unknown): unknown => {
+  if (typeof body !== 'object' || body === null) {
+    return body;
+  }
+
+  return Object.fromEntries(
+    Object.entries(body).filter(([key]) => signInExperienceFields.includes(key))
+  );
+};
 
 export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
@@ -81,6 +112,17 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
     path: '/users/{id}',
     properties: { id: idProperty },
     required: ['id'],
+  },
+  {
+    // Only the sign-in fields the admin can see in the console. Captcha, sentinel and custom
+    // asset or CSP settings, and connector targets, are left out.
+    name: 'get_sign_in_experience',
+    description:
+      'Get the sign-in experience of this tenant: sign-in and sign-up methods, sign-in mode, branding, language and terms links.',
+    path: '/sign-in-exp',
+    properties: {},
+    devFeature: true,
+    project: pickSignInExperience,
   },
   {
     name: 'list_organizations',
@@ -171,7 +213,9 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
  * and callable while dev features are enabled. Read tools are always available.
  */
 export const enabledLogtoMcpTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] =>
-  logtoMcpTools.filter(({ method }) => method !== 'POST' || isDevFeaturesEnabled);
+  logtoMcpTools.filter(
+    ({ method, devFeature }) => (method !== 'POST' && !devFeature) || isDevFeaturesEnabled
+  );
 
 /** The paging parameters a list tool passes on to the Management API as query parameters. */
 const queryKeys = ['page', 'page_size'] as const;
@@ -255,6 +299,20 @@ export const sendLogtoRequest = async (
       signal: AbortSignal.timeout(10_000),
     });
     const body = await response.text();
+
+    if (response.ok && tool.project) {
+      // A projection that cannot read the body returns a tool error, not the raw response.
+      try {
+        const projected = tool.project(JSON.parse(body));
+
+        return { content: [{ type: 'text', text: JSON.stringify(projected) }], isError: false };
+      } catch {
+        return {
+          content: [{ type: 'text', text: 'The response could not be read.' }],
+          isError: true,
+        };
+      }
+    }
 
     return { content: [{ type: 'text', text: body }], isError: !response.ok };
   } catch {

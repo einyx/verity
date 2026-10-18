@@ -189,6 +189,74 @@ describe('enabledLogtoMcpTools', () => {
   });
 });
 
+describe('get_sign_in_experience', () => {
+  const settings = {
+    id: 'default',
+    signInMode: 'SignInAndRegister',
+    signIn: { methods: [] },
+    signUp: { identifiers: ['email'] },
+    branding: { logoUrl: 'https://cdn.example.com/logo.png' },
+    captchaPolicy: { provider: 'recaptcha', secretKey: 'do-not-send' },
+    customUiAssets: { id: 'assets' },
+    connectorTargets: ['internal-connector'],
+  };
+
+  it('hides the tool while dev features are disabled', () => {
+    const names = enabledLogtoMcpTools(false).map(({ name }) => name);
+
+    expect(names).not.toContain('get_sign_in_experience');
+  });
+
+  it('offers the tool while dev features are enabled', () => {
+    const names = enabledLogtoMcpTools(true).map(({ name }) => name);
+
+    expect(names).toContain('get_sign_in_experience');
+  });
+
+  it('passes only the allowlisted sign-in fields to the model', async () => {
+    const fetchImpl = jest.fn(async () => new Response(JSON.stringify(settings), { status: 200 }));
+
+    const result = await callLogtoTool(
+      tool('get_sign_in_experience'),
+      {},
+      'caller-token',
+      apiBase,
+      fetchImpl as unknown as typeof fetch
+    );
+
+    const [url] = fetchImpl.mock.calls[0] as unknown as [URL];
+    expect(String(url)).toBe(`${apiBase}/sign-in-exp`);
+    expect(result.isError).toBe(false);
+
+    const text = (result.content[0] as { text: string }).text;
+    expect(JSON.parse(text)).toEqual({
+      signInMode: 'SignInAndRegister',
+      signIn: { methods: [] },
+      signUp: { identifiers: ['email'] },
+      branding: { logoUrl: 'https://cdn.example.com/logo.png' },
+    });
+    expect(text).not.toContain('do-not-send');
+    expect(text).not.toContain('internal-connector');
+  });
+
+  it('returns a tool error when the body cannot be read, not the raw response', async () => {
+    const fetchImpl = jest.fn(async () => new Response('not json', { status: 200 }));
+
+    const result = await callLogtoTool(
+      tool('get_sign_in_experience'),
+      {},
+      'caller-token',
+      apiBase,
+      fetchImpl as unknown as typeof fetch
+    );
+
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'The response could not be read.' }],
+      isError: true,
+    });
+  });
+});
+
 describe('logtoMcpTools', () => {
   it('exposes reads and creates only, never update or delete', () => {
     for (const { name } of logtoMcpTools) {

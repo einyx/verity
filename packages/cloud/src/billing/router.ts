@@ -1,3 +1,4 @@
+import { ReservedPlanId } from '@logto/schemas';
 import { RequestError, Router } from '@withtyped/server';
 import { z } from 'zod';
 
@@ -14,6 +15,7 @@ import {
   createCheckoutSession,
   readCheckoutStatus,
 } from './checkout.js';
+import { effectiveSubscription } from './entitlement.js';
 import {
   acceptInvitationBodyGuard,
   createInvitationBodyGuard,
@@ -58,7 +60,20 @@ export const createBillingRouter = (
           throw new RequestError('Subscription not found', 404);
         }
 
-        return next({ ...context, json: subscription });
+        // Core reads this to decide the tenant's quota. An ended subscription reads as the development
+        // plan, and a missing development plan refuses the read instead of granting paid quota.
+        const skus = await store.listSkus({});
+        const entitled = effectiveSubscription(
+          subscription,
+          new Date(),
+          skus.find((sku) => sku.id === ReservedPlanId.Development)
+        );
+
+        if (!entitled) {
+          throw new RequestError('Subscription plan is unavailable', 503);
+        }
+
+        return next({ ...context, json: entitled });
       }
     )
     .get(

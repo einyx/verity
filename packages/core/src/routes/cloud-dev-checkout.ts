@@ -1,6 +1,7 @@
 import { text } from 'node:stream/consumers';
 
-import { ReservedPlanId } from '@logto/schemas';
+import { ReservedPlanId, TenantTag } from '@logto/schemas';
+import { sql } from '@silverhand/slonik';
 import type { Context } from 'koa';
 import { z } from 'zod';
 
@@ -118,7 +119,7 @@ const createStripeCheckout = async (
 };
 
 /** Without Stripe, the local flip moves a tenant to production with no payment. Production must not do that. */
-const createLocalCheckout = (ctx: Context, body: CheckoutBody, skuId: string) => {
+const createLocalCheckout = async (ctx: Context, body: CheckoutBody, skuId: string) => {
   if (EnvSet.values.isProduction) {
     reject(ctx, 503, 'checkout.not_configured', 'Checkout is not configured.');
     return;
@@ -126,6 +127,9 @@ const createLocalCheckout = (ctx: Context, body: CheckoutBody, skuId: string) =>
 
   const sessionId = `local_${Date.now()}`;
   upgradeLocalTenant();
+  // The console reads the tenant's tag from the tenants table, so the upgrade has to reach that row.
+  const pool = await EnvSet.sharedPool;
+  await pool.query(sql`update tenants set tag = ${TenantTag.Production} where id = ${tenantId}`);
   saveCheckoutSession(sessionId, { tenantId, skuId });
   ctx.body = { redirectUri: body.successCallbackUrl ?? '', sessionId };
 };
@@ -144,7 +148,7 @@ export const handleCheckoutCreate = async (ctx: Context, stripeKey: string | und
     return;
   }
 
-  createLocalCheckout(ctx, body, skuId);
+  await createLocalCheckout(ctx, body, skuId);
 };
 
 const isPaid = (session: StripeSession) =>

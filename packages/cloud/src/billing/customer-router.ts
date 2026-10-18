@@ -163,4 +163,39 @@ export const createCustomerRouter = (
           json: { customerId, createdAt: customer.periodStart, isDefault: true },
         });
       }
+    )
+    // An enterprise account is the tenant that holds the shared subscription. Its id is the tenant id.
+    // Until the enterprise model is defined, only an admin of that tenant may open its portal.
+    .post(
+      '/api/me/logto-enterprises/:id/stripe-customer-portal',
+      {
+        body: z.object({ callbackUrl: z.string().optional() }),
+        response: z.object({ redirectUri: z.string() }),
+      },
+      async (context, next) => {
+        const caller = await verifyCaller(context.request.headers.authorization, auth);
+        const enterpriseId = context.guarded.params.id;
+        const adminCustomers = await store.listAdminCustomers(caller);
+        const customer = adminCustomers.find((item) => item.tenantId === enterpriseId);
+
+        if (!customer) {
+          throw new RequestError('Enterprise account not found', 404);
+        }
+
+        if (!checkout) {
+          throw new RequestError('Checkout is not configured.', 503);
+        }
+
+        const returnUrl = context.guarded.body.callbackUrl ?? checkout.returnOrigins[0] ?? '';
+        const outcome = await createPortalSession(checkout, {
+          customerId: customer.customerId,
+          returnUrl,
+        });
+
+        if (!outcome.ok) {
+          throw new RequestError(outcome.message, outcome.status);
+        }
+
+        return next({ ...context, json: { redirectUri: outcome.redirectUri } });
+      }
     );

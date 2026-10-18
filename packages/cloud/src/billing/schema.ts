@@ -115,6 +115,49 @@ export const billingSchemaSql = sql`
   alter table tenant_invitations enable row level security;
   alter table billing_user_default_customers enable row level security;
   alter table billing_stripe_events enable row level security;
+
+  -- Seed the development plan that tenants without a subscription read as. Idempotent, so an
+  -- existing row (for example one edited by an operator) is left unchanged.
+  insert into billing_skus (id, type, name, quota)
+  values (
+    'dev',
+    'Basic',
+    'Development',
+    '{
+      "mauLimit": 1000,
+      "applicationsLimit": 10,
+      "thirdPartyApplicationsLimit": 1,
+      "scopesPerResourceLimit": 10,
+      "socialConnectorsLimit": 3,
+      "userRolesLimit": 10,
+      "machineToMachineRolesLimit": 10,
+      "scopesPerRoleLimit": 10,
+      "hooksLimit": 1,
+      "auditLogsRetentionDays": 7,
+      "customJwtEnabled": false,
+      "actionsEnabled": false,
+      "subjectTokenEnabled": false,
+      "bringYourUiEnabled": false,
+      "collectUserProfileEnabled": false,
+      "passkeySignInEnabled": false,
+      "tokenLimit": 1000000,
+      "hostedEmailLimit": 100,
+      "hostedEmailDailyLimit": 10,
+      "machineToMachineLimit": 3,
+      "resourcesLimit": 3,
+      "enterpriseSsoLimit": 0,
+      "consoleSsoConnectorLimit": 0,
+      "tenantMembersLimit": 3,
+      "mfaEnabled": true,
+      "organizationsEnabled": true,
+      "organizationsLimit": 3,
+      "idpInitiatedSsoEnabled": false,
+      "samlApplicationsLimit": 0,
+      "securityFeaturesEnabled": false,
+      "customDomainsLimit": 0
+    }'::jsonb
+  )
+  on conflict (id) do nothing;
 `;
 
 export const migrateBillingSchema = async (pool: CommonQueryMethods) => {

@@ -41,6 +41,8 @@ export enum CloudScope {
   CreateAffiliate = 'create:affiliate',
   /** Allow accessing Logto MCP API (part of Logto Cloud API). This scope is only available to M2M MCP server. */
   AccessMcpApi = 'access:mcp:api',
+  /** The user can edit the landing page content of the marketing site. Not granted to any role by default. */
+  ManageLandingPage = 'manage:landing:page',
 }
 
 export const createCloudApi = (endpoint: string): Readonly<[UpdateAdminData, ...CreateScope[]]> => {
@@ -97,6 +99,10 @@ export const createCloudApi = (endpoint: string): Readonly<[UpdateAdminData, ...
     buildScope(
       CloudScope.ManageAffiliate,
       'Allow managing affiliates, including create, update, and delete.'
+    ),
+    buildScope(
+      CloudScope.ManageLandingPage,
+      'Allow editing and publishing the landing page of the marketing site.'
     ),
   ]);
 };

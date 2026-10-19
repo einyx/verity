@@ -1,14 +1,12 @@
 {
   "tags": [
-    { "name": "Ai chat", "description": "The Ask AI assistant in the admin console, and the writes it proposes." },
-    { "name": "Dev feature" }
+    { "name": "Ai chat", "description": "The Ask AI assistant in the admin console, and the writes it proposes." }
   ],
   "paths": {
     "/api/ai-chat/completions": {
       "post": {
         "summary": "Ask AI chat",
         "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them.",
-        "tags": ["Dev feature"],
         "requestBody": {
           "required": true,
           "content": {
@@ -58,7 +56,6 @@
       "post": {
         "summary": "Propose a write",
         "description": "Store a write as a pending action. Nothing is created here. The stored body is returned for review, and the write runs only when the user confirms the action.",
-        "tags": ["Dev feature"],
         "requestBody": {
           "required": true,
           "content": {
@@ -91,8 +88,7 @@
               }
             }
           },
-          "400": { "description": "The tool is not a write tool, or the arguments do not fit it." },
-          "404": { "description": "Dev features are disabled." }
+          "400": { "description": "The tool is not a write tool, or the arguments do not fit it." }
         }
       }
     },
@@ -100,7 +96,6 @@
       "post": {
         "summary": "Confirm a pending action",
         "description": "Run a pending action once, with the body stored when it was proposed. The caller's bearer token is used for the Management API call.",
-        "tags": ["Dev feature"],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -128,7 +123,6 @@
       "post": {
         "summary": "Cancel a pending action",
         "description": "Cancel a proposed write that has not been confirmed yet.",
-        "tags": ["Dev feature"],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],

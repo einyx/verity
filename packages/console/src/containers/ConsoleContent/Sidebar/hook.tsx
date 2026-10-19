@@ -4,7 +4,7 @@ import type { TFuncKey } from 'i18next';
 import { useContext } from 'react';
 import type { FC, ReactNode } from 'react';
 
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 
@@ -178,7 +178,7 @@ export const useSidebarMenuItems = (): {
           title: 'landing_page',
           path: 'landing-page',
           // Landing page CMS for the marketing site. Dev feature, Cloud only, admin tenant only.
-          isHidden: !(isCloud && isDevFeaturesEnabled && currentTenantId === adminTenantId),
+          isHidden: !(isCloud && currentTenantId === adminTenantId),
         },
         {
           Icon: menuIcons.tenant_settings,

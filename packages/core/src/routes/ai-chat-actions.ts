@@ -69,7 +69,7 @@ export const hashBody = (body: Record<string, unknown>) =>
 
 type ProposeResult =
   | { ok: true; action: PendingAction }
-  | { ok: false; code: 'disabled' | 'unknown_tool' | 'invalid_arguments' };
+  | { ok: false; code: 'unknown_tool' | 'invalid_arguments' };
 
 /**
  * Stores a write as a pending action. Nothing reaches the Management API here: the model and the
@@ -82,7 +82,6 @@ export const proposePendingAction = async ({
   userId,
   tenantId,
   now,
-  isDevFeaturesEnabled,
   newId = generateStandardId,
 }: {
   store: PendingActionStore;
@@ -91,14 +90,9 @@ export const proposePendingAction = async ({
   userId: string;
   tenantId: string;
   now: Date;
-  isDevFeaturesEnabled: boolean;
   newId?: () => string;
 }): Promise<ProposeResult> => {
-  if (!isDevFeaturesEnabled) {
-    return { ok: false, code: 'disabled' };
-  }
-
-  const found = enabledLogtoMcpTools(isDevFeaturesEnabled).find(({ name }) => name === tool);
+  const found = enabledLogtoMcpTools().find(({ name }) => name === tool);
 
   if (!found || found.method !== 'POST') {
     return { ok: false, code: 'unknown_tool' };
@@ -131,7 +125,7 @@ export type ConfirmResult =
   | { ok: true; result: CallToolResult }
   | {
       ok: false;
-      code: 'disabled' | 'not_found' | 'not_pending' | 'expired' | 'tampered' | 'unknown_tool';
+      code: 'not_found' | 'not_pending' | 'expired' | 'tampered' | 'unknown_tool';
     };
 
 /**
@@ -144,7 +138,6 @@ export const confirmPendingAction = async ({
   tenantId,
   userId,
   now,
-  isDevFeaturesEnabled,
   execute,
 }: {
   store: PendingActionStore;
@@ -152,13 +145,8 @@ export const confirmPendingAction = async ({
   tenantId: string;
   userId: string;
   now: Date;
-  isDevFeaturesEnabled: boolean;
   execute: (tool: LogtoMcpTool, body: Record<string, unknown>) => Promise<CallToolResult>;
 }): Promise<ConfirmResult> => {
-  if (!isDevFeaturesEnabled) {
-    return { ok: false, code: 'disabled' };
-  }
-
   const claimed = await store.claim(id, tenantId, userId, now);
 
   if (!claimed) {
@@ -178,7 +166,7 @@ export const confirmPendingAction = async ({
     return { ok: false, code: 'not_pending' };
   }
 
-  const tool = enabledLogtoMcpTools(isDevFeaturesEnabled).find(({ name }) => name === claimed.tool);
+  const tool = enabledLogtoMcpTools().find(({ name }) => name === claimed.tool);
 
   if (!tool) {
     await store.setOutcome(id, 'cancelled', { reason: 'unknown_tool' });

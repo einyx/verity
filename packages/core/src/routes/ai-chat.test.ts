@@ -31,7 +31,7 @@ const { enabledLogtoMcpTools } = await import('./mcp-logto-tools.js');
 
 describe('buildSystemPrompt', () => {
   it('names each tool the server will run, with its description', () => {
-    const tools = enabledLogtoMcpTools(true);
+    const tools = enabledLogtoMcpTools();
     const prompt = buildSystemPrompt(tools);
 
     for (const { name, description } of tools) {
@@ -41,13 +41,6 @@ describe('buildSystemPrompt', () => {
     // The capability answer must also say what the assistant cannot do yet.
     expect(prompt).toContain('changing settings');
     expect(prompt).toContain('configuring MFA');
-  });
-
-  it('leaves out the write tools while dev features are disabled', () => {
-    const prompt = buildSystemPrompt(enabledLogtoMcpTools(false));
-
-    expect(prompt).toContain('list_users');
-    expect(prompt).not.toContain('create_application');
   });
 
   it('says it cannot read the tenant when no tools are offered', () => {
@@ -131,7 +124,6 @@ describe('POST /ai-chat/actions/:id/confirm', () => {
 
   it.each([
     ['not_found', 404],
-    ['disabled', 404],
     ['not_pending', 409],
     ['tampered', 409],
     ['expired', 410],
@@ -194,17 +186,6 @@ describe('POST /ai-chat/actions', () => {
       expiresAt: expiresAt.toISOString(),
     });
     expect(confirmPendingAction).not.toHaveBeenCalled();
-  });
-
-  it('answers 404 when dev features are disabled', async () => {
-    proposePendingAction.mockResolvedValue({ ok: false, code: 'disabled' });
-
-    const response = await request(createApp())
-      .post('/ai-chat/actions')
-      .send({ tool: 'create_organization', arguments: { name: 'Team' } });
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: 'disabled' });
   });
 
   it('answers 400 for a tool that is not a write', async () => {

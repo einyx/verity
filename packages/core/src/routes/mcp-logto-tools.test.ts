@@ -174,15 +174,8 @@ describe('create tools', () => {
 });
 
 describe('enabledLogtoMcpTools', () => {
-  it('hides the create tools while dev features are disabled', () => {
-    const names = enabledLogtoMcpTools(false).map(({ name }) => name);
-
-    expect(names).toContain('list_applications');
-    expect(names.some((name) => name.startsWith('create_'))).toBe(false);
-  });
-
-  it('lists the create tools when dev features are enabled', () => {
-    const names = enabledLogtoMcpTools(true).map(({ name }) => name);
+  it('lists the create tools', () => {
+    const names = enabledLogtoMcpTools().map(({ name }) => name);
 
     expect(names).toContain('create_application');
     expect(names).toContain('create_organization');

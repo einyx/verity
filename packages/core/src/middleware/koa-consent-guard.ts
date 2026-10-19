@@ -4,7 +4,6 @@ import { NotFoundError } from '@silverhand/slonik';
 import { type MiddlewareType } from 'koa';
 import { z } from 'zod';
 
-import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import type { WithInteractionDetailsContext } from '#src/middleware/koa-interaction-details.js';
 import type Libraries from '#src/tenants/Libraries.js';
@@ -63,10 +62,6 @@ const resetPasswordOneTimeTokenParamsGuard = z.object({
 });
 
 const getResetPasswordOneTimeTokenParams = (params: unknown) => {
-  if (!EnvSet.values.isDevFeaturesEnabled) {
-    return;
-  }
-
   const result = resetPasswordOneTimeTokenParamsGuard.safeParse(params);
 
   if (!result.success) {

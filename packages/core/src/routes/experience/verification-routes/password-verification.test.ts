@@ -715,17 +715,6 @@ describe('password verification route dev feature gate', () => {
       originalIsDevFeaturesEnabled;
   });
 
-  it('rejects the identifier-less payload and omits the 404 status when dev features are disabled', () => {
-    // eslint-disable-next-line @silverhand/fp/no-mutation -- Exercise the released contract.
-    (EnvSet.values as { isDevFeaturesEnabled: boolean }).isDevFeaturesEnabled = false;
-    registerRoute();
-
-    const config = getLastGuardConfig();
-    expect(config?.body.safeParse({ password }).success).toBe(false);
-    expect(config?.body.safeParse({ identifier, password }).success).toBe(true);
-    expect(config?.status).not.toContain(404);
-  });
-
   it('accepts the identifier-less payload and declares the 404 status when dev features are enabled', () => {
     // eslint-disable-next-line @silverhand/fp/no-mutation -- Exercise the dev-only contract.
     (EnvSet.values as { isDevFeaturesEnabled: boolean }).isDevFeaturesEnabled = true;

@@ -154,17 +154,6 @@ describe('getExtraTokenClaimsForAuthenticationContext', () => {
 
       expect(getExtraTokenClaimsForAuthenticationContext(ctx, createAccessToken())).toBeUndefined();
     });
-
-    it('should not emit authentication context when dev features are disabled', () => {
-      Reflect.set(EnvSet.values, 'isDevFeaturesEnabled', false);
-
-      expect(
-        getExtraTokenClaimsForAuthenticationContext(
-          buildSourceContext(codeContext),
-          createAccessToken()
-        )
-      ).toBeUndefined();
-    });
   });
 
   it('should preserve device authentication context when issuing an access token via refresh', () => {

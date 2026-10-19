@@ -6,7 +6,7 @@ import { SWRConfig } from 'swr';
 
 import AppLoading from '@/components/AppLoading';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
-import { isCloud, isDevFeaturesEnabled, isProduction } from '@/consts/env';
+import { isCloud, isProduction } from '@/consts/env';
 import AppBoundary from '@/containers/AppBoundary';
 import AppContent, { RedirectToFirstItem } from '@/containers/AppContent';
 import ConsoleContent from '@/containers/ConsoleContent';
@@ -56,18 +56,14 @@ export function ConsoleRoutes() {
               element={<OssAcceptInvitation />}
             />
           )}
-          {isDevFeaturesEnabled && (
-            <Route path="__internal__/import-error" element={<__Internal__ImportError />} />
-          )}
+          <Route path="__internal__/import-error" element={<__Internal__ImportError />} />
           <Route element={<ProtectedRoutes />}>
             <Route
               path={dropLeadingSlash(GlobalRoute.Profile) + '/*'}
               element={<RedirectToAccountCenter />}
             />
             <Route element={<TenantAccess />}>
-              {!isCloud && isProduction && isDevFeaturesEnabled && (
-                <Route path="onboarding" element={<OssOnboarding />} />
-              )}
+              {!isCloud && isProduction && <Route path="onboarding" element={<OssOnboarding />} />}
               {isCloud && (
                 <Route
                   path={dropLeadingSlash(GlobalRoute.CheckoutSuccessCallback)}

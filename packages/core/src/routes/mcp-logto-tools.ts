@@ -166,12 +166,8 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   },
 ];
 
-/**
- * The tools a caller can see. Write tools are an in-development surface, so they are only listed
- * and callable while dev features are enabled. Read tools are always available.
- */
-export const enabledLogtoMcpTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] =>
-  logtoMcpTools.filter(({ method }) => method !== 'POST' || isDevFeaturesEnabled);
+/** The tools a caller can see and call, including write tools. */
+export const enabledLogtoMcpTools = (): readonly LogtoMcpTool[] => logtoMcpTools;
 
 /** The paging parameters a list tool passes on to the Management API as query parameters. */
 const queryKeys = ['page', 'page_size'] as const;

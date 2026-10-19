@@ -20,10 +20,7 @@ export const mountAdminRoutes = (app: Koa, id: string, envSet: EnvSet) => {
   if (EnvSet.values.isCloud) {
     app.use(cloudTenantRoutes(envSet).routes());
 
-    // The landing page CMS is in development; keep its routes out of production until the feature ships.
-    if (EnvSet.values.isDevFeaturesEnabled) {
-      app.use(landingPageRoutes(envSet).routes());
-    }
+    app.use(landingPageRoutes(envSet).routes());
   }
 
   app.use(localCloudRoutes());

@@ -7,7 +7,6 @@ import HostedEmailCapBanner from '@/components/HostedEmailCapBanner';
 import OssLicenseBanner from '@/components/OssLicenseBanner';
 import OssTenantMfaBanner from '@/components/OssTenantMfaBanner';
 import ReadOnlyAccessNotification from '@/components/ReadOnlyAccessNotification';
-import { isDevFeaturesEnabled } from '@/consts/env';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
 import Tag from '@/ds-components/Tag';
@@ -49,11 +48,9 @@ function ConsoleContent() {
           <Suspense fallback={<DelayedSuspenseFallback />}>{routes}</Suspense>
         </div>
       </OverlayScrollbar>
-      {isDevFeaturesEnabled && (
-        <Tag type="state" status="success" variant="plain" className={styles.devStatus}>
-          Dev features enabled
-        </Tag>
-      )}
+      <Tag type="state" status="success" variant="plain" className={styles.devStatus}>
+        Dev features enabled
+      </Tag>
     </div>
   );
 }

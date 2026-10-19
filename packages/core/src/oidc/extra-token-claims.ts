@@ -211,8 +211,7 @@ export const getExtraTokenClaimsForJwtCustomization = async (
     return;
   }
 
-  const shouldBlockIssuanceOnError =
-    EnvSet.values.isDevFeaturesEnabled && Boolean(blockIssuanceOnError);
+  const shouldBlockIssuanceOnError = Boolean(blockIssuanceOnError);
   const defaultJwtCustomizerErrorMessage = 'Failed to customize token claims';
 
   try {

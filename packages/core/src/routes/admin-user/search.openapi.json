@@ -8,8 +8,7 @@
             "name": "isSuspended",
             "description": "Filter by suspension status: true returns suspended users and false returns active users. Omit to return both. Combined with other filters using AND logic.",
             "schema": {
-              "type": "boolean",
-              "x-logto-dev-feature": true
+              "type": "boolean"
             }
           },
           {

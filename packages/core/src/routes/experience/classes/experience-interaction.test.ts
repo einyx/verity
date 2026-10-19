@@ -1172,17 +1172,6 @@ describe('ExperienceInteraction class', () => {
       expect(experienceInteraction.toJson()).not.toHaveProperty('authenticationContext');
     });
 
-    it('ignores the prompt details when dev features are disabled', () => {
-      setDevFeaturesEnabled(false);
-
-      const { experienceInteraction } = createInteraction({
-        details: { authenticationContext: stepUpContext },
-      });
-
-      expect(experienceInteraction.isStepUp).toBe(false);
-      expect(experienceInteraction.identifiedUserId).toBeUndefined();
-    });
-
     it('rejects a pure step-up with a non-sign-in event', () => {
       expect(() =>
         createInteraction({

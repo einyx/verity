@@ -11,6 +11,7 @@ import {
 import type { DatabaseTransactionConnection } from '@silverhand/slonik';
 
 import { seedOidcConfigs } from './oidc-config.js';
+import { seedProductionSubscription } from './production-subscription.js';
 import { seedPreConfiguredManagementApiAccessRole } from './roles.js';
 import { insertInto } from './insert-into.js';
 import { createTenant, seedAdminData, type TenantMetadata } from './tenant.js';
@@ -28,6 +29,9 @@ export const seedTenant = async (
   metadata: TenantMetadata = {}
 ) => {
   await createTenant(connection, tenantId, metadata);
+  if (metadata.tag === 'production') {
+    await seedProductionSubscription(connection, tenantId);
+  }
   await seedOidcConfigs(connection, tenantId);
   // The console and token settings every tenant reads on sign-in, matching the default tenant's seed.
   await connection.query(insertInto(createDefaultAdminConsoleConfig(tenantId), LogtoConfigs.table));

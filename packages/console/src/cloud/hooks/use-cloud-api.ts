@@ -7,16 +7,14 @@ import {
   type userStripeCustomersRouter,
 } from '@logto/cloud/routes';
 import { useLogto } from '@logto/react';
-import { adminTenantId, getTenantOrganizationId } from '@logto/schemas';
 import { conditional, trySafe } from '@silverhand/essentials';
 import Client, { ResponseError } from '@withtyped/client';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { cloudApi } from '@/consts';
-import { TenantsContext } from '@/contexts/TenantsProvider';
 
 const responseErrorBodyGuard = z.object({
   message: z.string(),
@@ -87,11 +85,7 @@ export const useCloudApi = <R extends ConsoleCloudRouter = typeof router>({
 };
 
 type CreateTenantOptions = UseCloudApiProps &
-  Pick<
-    ReturnType<typeof useLogto>,
-    'isAuthenticated' | 'getAccessToken' | 'getOrganizationToken'
-  > & {
-    tenantId: string;
+  Pick<ReturnType<typeof useLogto>, 'isAuthenticated' | 'getAccessToken'> & {
     language: string;
   };
 
@@ -99,23 +93,16 @@ export const createTenantApi = ({
   hideErrorToast = false,
   isAuthenticated,
   getAccessToken,
-  getOrganizationToken,
-  tenantId,
   language,
 }: CreateTenantOptions): Client<typeof tenantAuthRouter> =>
   new Client<typeof tenantAuthRouter>({
     baseUrl: window.location.origin,
     headers: async () => {
       if (isAuthenticated) {
-        // The admin tenant's members are checked with the Cloud API token. Its organization token
-        // has the organization as audience, which the Cloud API does not accept.
-        const token =
-          tenantId === adminTenantId
-            ? await getAccessToken(cloudApi.indicator)
-            : await getOrganizationToken(getTenantOrganizationId(tenantId));
-
+        // The tenant auth routes verify the bearer against the Cloud API audience. An organization
+        // token has the organization as its audience, so the Cloud API token is sent instead.
         return {
-          Authorization: `Bearer ${token ?? ''}`,
+          Authorization: `Bearer ${(await getAccessToken(cloudApi.indicator)) ?? ''}`,
           'Accept-Language': language,
         };
       }
@@ -132,26 +119,16 @@ export const useAuthedCloudApi = ({ hideErrorToast = false }: UseCloudApiProps =
   typeof tenantAuthRouter
 > => {
   const { i18n } = useTranslation();
-  const { currentTenantId } = useContext(TenantsContext);
-  const { isAuthenticated, getAccessToken, getOrganizationToken } = useLogto();
+  const { isAuthenticated, getAccessToken } = useLogto();
   const api = useMemo(
     () =>
       createTenantApi({
         hideErrorToast,
         isAuthenticated,
         getAccessToken,
-        getOrganizationToken,
-        tenantId: currentTenantId,
         language: i18n.language,
       }),
-    [
-      currentTenantId,
-      getAccessToken,
-      getOrganizationToken,
-      hideErrorToast,
-      isAuthenticated,
-      i18n.language,
-    ]
+    [getAccessToken, hideErrorToast, isAuthenticated, i18n.language]
   );
 
   return api;

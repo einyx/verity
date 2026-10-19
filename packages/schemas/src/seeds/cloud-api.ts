@@ -116,3 +116,17 @@ export const createTenantApplicationRole = (): Readonly<Role> => ({
   type: RoleType.MachineToMachine,
   isDefault: false,
 });
+
+/**
+ * The admin-tenant role for the first user. Unlike `User`, which every admin-tenant user gets, this
+ * one carries the scopes that only the instance's admin should have, so it is not a default role.
+ */
+export const createAdminTenantAdminRole = (): Readonly<Role> => ({
+  tenantId: adminTenantId,
+  id: generateStandardId(),
+  name: AdminTenantRole.Admin,
+  description:
+    'The admin of the admin tenant, who manages Logto Cloud pages such as the landing page.',
+  type: RoleType.User,
+  isDefault: false,
+});

@@ -14,6 +14,7 @@ import {
   type AdminSignInExperienceSeedOptions,
   createDefaultAdminConsoleApplication,
   createCloudApi,
+  createAdminTenantAdminRole,
   createTenantApplicationRole,
   CloudScope,
   Roles,
@@ -200,6 +201,18 @@ export const seedTables = async (
           name === CloudScope.FetchCustomJwt ||
           name === CloudScope.ReportSubscriptionUpdates
       )
+      .map(({ id }) => id)
+  );
+
+  // Create the admin role for the first admin-tenant user, with the scopes only admins should have
+  const adminRole = createAdminTenantAdminRole();
+  await connection.query(insertInto(adminRole, Roles.table));
+  await assignScopesToRole(
+    connection,
+    adminTenantId,
+    adminRole.id,
+    ...cloudAdditionalScopes
+      .filter(({ name }) => name === CloudScope.ManageLandingPage)
       .map(({ id }) => id)
   );
 

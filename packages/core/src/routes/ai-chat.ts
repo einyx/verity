@@ -96,7 +96,6 @@ const parseArguments = (raw: string): Record<string, unknown> | undefined => {
 };
 
 const confirmStatus: Record<Exclude<ConfirmResult, { ok: true }>['code'], number> = {
-  disabled: 404,
   not_found: 404,
   not_pending: 409,
   expired: 410,
@@ -143,10 +142,8 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
       }
 
       const { messages } = ctx.guard.body;
-      const { isDevFeaturesEnabled } = EnvSet.values;
-      // Read tools are always offered. Write tools only appear while dev features are on, and writes
-      // only become pending actions that the user confirms.
-      const tools = enabledLogtoMcpTools(isDevFeaturesEnabled);
+      // Writes are offered as tools too, but they only become pending actions that the user confirms.
+      const tools = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled);
       const prompt = buildSystemPrompt(tools);
       const token = bearer(ctx);
       const store = createPendingActionStore(tenant.envSet.pool);
@@ -212,7 +209,6 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
             userId: ctx.auth.id,
             tenantId: tenant.id,
             now: new Date(),
-            isDevFeaturesEnabled,
           });
 
           if (!proposal.ok) {
@@ -280,11 +276,10 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
         userId: ctx.auth.id,
         tenantId: tenant.id,
         now: new Date(),
-        isDevFeaturesEnabled: EnvSet.values.isDevFeaturesEnabled,
       });
 
       if (!proposal.ok) {
-        ctx.status = proposal.code === 'disabled' ? 404 : 400;
+        ctx.status = 400;
         ctx.body = { error: proposal.code };
 
         return next();
@@ -320,7 +315,6 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
       tenantId: tenant.id,
       userId: ctx.auth.id,
       now: new Date(),
-      isDevFeaturesEnabled: EnvSet.values.isDevFeaturesEnabled,
       execute: async (logtoTool, body) => {
         const built = buildLogtoToolUrl(logtoTool, {}, apiBase());
 

@@ -22,7 +22,7 @@ import assertThat from '#src/utils/assert-that.js';
 
 // Landing page CMS for the marketing site. The public read returns only the published document; the
 // editor routes need a Cloud API token carrying `manage:landing:page`. Mounted on the admin tenant
-// only, behind the dev-feature flag. Each publish keeps an immutable version row for rollback. Until
+// only. Each publish keeps an immutable version row for rollback. Until
 // something is saved, the draft is the shipped default copy.
 
 type PageRow = {

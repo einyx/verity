@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Navigate, useParams, type RouteObject } from 'react-router-dom';
 import { safeLazy } from 'react-safe-lazy';
 
+import { isCloud } from '@/consts/env';
 import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 import NotFound from '@/pages/NotFound';
 
@@ -14,6 +15,7 @@ import { connectors } from './routes/connectors';
 import { customizeJwt } from './routes/customize-jwt';
 import { enterpriseSso } from './routes/enterprise-sso';
 import { kubo } from './routes/kubo';
+import { landingPage } from './routes/landing-page';
 import { mcpPortal, mcpPortalDetails } from './routes/mcp-portal';
 import { mfa } from './routes/mfa';
 import { organizationTemplate } from './routes/organization-template';
@@ -59,6 +61,7 @@ export const useConsoleRoutes = () => {
         mcpPortalDetails,
         webhooks,
         ...(isActionsEnabled ? [actions] : []),
+        ...(isCloud ? [landingPage] : []),
         users,
         auditLogs,
         roles,

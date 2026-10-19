@@ -65,9 +65,7 @@ export function ConsoleRoutes() {
               element={<RedirectToAccountCenter />}
             />
             <Route element={<TenantAccess />}>
-              {!isCloud && isProduction && isDevFeaturesEnabled && (
-                <Route path="onboarding" element={<OssOnboarding />} />
-              )}
+              {!isCloud && isProduction && <Route path="onboarding" element={<OssOnboarding />} />}
               {isCloud && (
                 <Route
                   path={dropLeadingSlash(GlobalRoute.CheckoutSuccessCallback)}

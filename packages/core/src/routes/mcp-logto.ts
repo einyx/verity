@@ -9,6 +9,7 @@ import {
   type CallToolResult,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
 import { EnvSet } from '#src/env-set/index.js';
 
@@ -19,10 +20,10 @@ import type { AnonymousRouter, RouterInitArgs } from './types.js';
 // through to here (see mcp-portal-endpoint.ts). Tools run with the caller's token, so the
 // Management API decides what each caller can read and create.
 
-export const logtoMcpName = 'meshx';
+const logtoMcpName = 'meshx';
 
 /** One MCP server per request, bound to the caller's token and the tenant's Management API. */
-export const createLogtoMcpServer = (token: string, apiBase: string): Server => {
+const createLogtoMcpServer = (token: string, apiBase: string): Server => {
   const server = new Server(
     { name: logtoMcpName, version: '0.1.0' },
     { capabilities: { tools: {} } }
@@ -57,6 +58,25 @@ export const createLogtoMcpServer = (token: string, apiBase: string): Server => 
   return server;
 };
 
+/** The bearer token of a request, or `undefined` when the header is missing or malformed. */
+const bearer = (ctx: { get: (name: string) => string }) => {
+  try {
+    return extractBearerToken(ctx.get('authorization'));
+  } catch {}
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/** The parsed JSON body, or `undefined` when the text is not valid JSON. An empty body is `undefined`. */
+const parseJsonBody = (raw: string): { body: unknown } | undefined => {
+  try {
+    return { body: raw ? JSON.parse(raw) : undefined };
+  } catch {}
+};
+
+const callBody = z.object({ name: z.unknown().optional(), arguments: z.unknown().optional() });
+
 export default function mcpLogtoRoutes<T extends AnonymousRouter>(
   ...[router, tenant]: RouterInitArgs<T>
 ) {
@@ -65,12 +85,6 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
 
   // REST wrappers over the same tools, matching Kubo's /api/mcp surface: info, tool schemas, and a
   // call endpoint. Each call is still made with the caller's token, so the Management API decides.
-  const bearer = (ctx: { get: (name: string) => string }) => {
-    try {
-      return extractBearerToken(ctx.get('authorization'));
-    } catch {}
-  };
-
   router.get('/mcp/info', async (ctx) => {
     ctx.body = {
       enabled: true,
@@ -103,7 +117,8 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
     }
 
     const raw = await text(ctx.req);
-    const body = raw ? (JSON.parse(raw) as { name?: unknown; arguments?: unknown }) : {};
+    const parsed = callBody.safeParse(raw ? JSON.parse(raw) : {});
+    const body = parsed.success ? parsed.data : {};
     const tool = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
       ({ name }) => name === body.name
     );
@@ -114,8 +129,8 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
       return;
     }
 
-    const args = typeof body.arguments === 'object' && body.arguments ? body.arguments : {};
-    ctx.body = await callLogtoTool(tool, args as Record<string, unknown>, token, apiBase());
+    const args = isRecord(body.arguments) ? body.arguments : {};
+    ctx.body = await callLogtoTool(tool, args, token, apiBase());
   });
 
   router.all('/mcp', async (ctx, next) => {
@@ -126,11 +141,9 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
       return;
     }
 
-    let token: string;
+    const token = bearer(ctx);
 
-    try {
-      token = extractBearerToken(ctx.get('authorization'));
-    } catch {
+    if (!token) {
       ctx.status = 401;
       ctx.set(
         'www-authenticate',
@@ -140,12 +153,9 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
       return;
     }
 
-    const raw = await text(ctx.req);
-    let body: unknown;
+    const parsed = parseJsonBody(await text(ctx.req));
 
-    try {
-      body = raw ? (JSON.parse(raw) as unknown) : undefined;
-    } catch {
+    if (!parsed) {
       ctx.status = 400;
       ctx.body = { error: 'Request body is not valid JSON' };
       return;
@@ -162,6 +172,6 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
     });
 
     await server.connect(transport);
-    await transport.handleRequest(ctx.req, ctx.res, body);
+    await transport.handleRequest(ctx.req, ctx.res, parsed.body);
   });
 }

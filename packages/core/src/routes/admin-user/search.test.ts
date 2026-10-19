@@ -130,16 +130,6 @@ describe('adminUserRoutes', () => {
       expect(conditions?.search?.matches).toHaveLength(1);
       expect(conditions?.relation).toMatchObject({ value: 'role-id' });
     });
-
-    it('ignores the filter when dev features are disabled', async () => {
-      Reflect.set(EnvSet.values, 'isDevFeaturesEnabled', false);
-      const response = await userRequest.get('/users').query({ isSuspended: 'true' });
-
-      expect(response.status).toEqual(200);
-      expect(mockedQueries.users.countUsers.mock.calls[0]?.[0]).toEqual(
-        expect.objectContaining({ isSuspended: undefined })
-      );
-    });
   });
 
   it('GET /users', async () => {

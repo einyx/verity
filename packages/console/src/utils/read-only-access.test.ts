@@ -2,7 +2,7 @@ import { TenantScope } from '@logto/schemas';
 
 import { getIsReadOnlyAccess, getIsWriteAccessConfirmed } from './read-only-access';
 
-const cloud = { isDevFeaturesEnabled: true, isCloud: true };
+const cloud = { isCloud: true };
 const readOnlyScopes = [TenantScope.ReadData, TenantScope.ReadMember];
 
 describe('getIsReadOnlyAccess', () => {
@@ -21,13 +21,7 @@ describe('getIsReadOnlyAccess', () => {
   });
 
   it('is never read-only outside Cloud', () => {
-    expect(getIsReadOnlyAccess({ ...cloud, isCloud: false, scopes: readOnlyScopes })).toBe(false);
-  });
-
-  it('is never read-only with dev features off', () => {
-    expect(
-      getIsReadOnlyAccess({ ...cloud, isDevFeaturesEnabled: false, scopes: readOnlyScopes })
-    ).toBe(false);
+    expect(getIsReadOnlyAccess({ isCloud: false, scopes: readOnlyScopes })).toBe(false);
   });
 });
 
@@ -46,12 +40,6 @@ describe('getIsWriteAccessConfirmed', () => {
   );
 
   it('is always confirmed outside Cloud', () => {
-    expect(getIsWriteAccessConfirmed({ ...cloud, isCloud: false, scopes: undefined })).toBe(true);
-  });
-
-  it('is always confirmed with dev features off', () => {
-    expect(
-      getIsWriteAccessConfirmed({ ...cloud, isDevFeaturesEnabled: false, scopes: undefined })
-    ).toBe(true);
+    expect(getIsWriteAccessConfirmed({ isCloud: false, scopes: undefined })).toBe(true);
   });
 });

@@ -174,14 +174,7 @@ describe('create tools', () => {
 });
 
 describe('enabledLogtoMcpTools', () => {
-  it('hides the create tools while dev features are disabled', () => {
-    const names = enabledLogtoMcpTools(false).map(({ name }) => name);
-
-    expect(names).toContain('list_applications');
-    expect(names.some((name) => name.startsWith('create_'))).toBe(false);
-  });
-
-  it('lists the create tools when dev features are enabled', () => {
+  it('lists the create tools', () => {
     const names = enabledLogtoMcpTools(true).map(({ name }) => name);
 
     expect(names).toContain('create_application');
@@ -228,7 +221,7 @@ describe('get_sign_in_experience', () => {
     expect(String(url)).toBe(`${apiBase}/sign-in-exp`);
     expect(result.isError).toBe(false);
 
-    const text = (result.content[0] as { text: string }).text;
+    const { text } = result.content[0] as { text: string };
     expect(JSON.parse(text)).toEqual({
       signInMode: 'SignInAndRegister',
       signIn: { methods: [] },

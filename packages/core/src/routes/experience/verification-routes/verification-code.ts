@@ -11,7 +11,6 @@ import {
 import type Router from 'koa-router';
 import { z } from 'zod';
 
-import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
@@ -80,12 +79,8 @@ export default function verificationCodeRoutes<T extends ExperienceInteractionRo
     identifier: subjectVerificationCodeIdentifierGuard,
     interactionEvent: z.literal(InteractionEvent.SignIn),
   });
-  const bodyGuard = EnvSet.values.isDevFeaturesEnabled
-    ? z.union([stableBodyGuard, subjectBodyGuard])
-    : stableBodyGuard;
-  const verifyIdentifierGuard = EnvSet.values.isDevFeaturesEnabled
-    ? verificationCodeIdentifierPayloadGuard
-    : verificationCodeIdentifierGuard;
+  const bodyGuard = z.union([stableBodyGuard, subjectBodyGuard]);
+  const verifyIdentifierGuard = verificationCodeIdentifierPayloadGuard;
 
   router.post(
     `${experienceRoutes.verification}/verification-code`,

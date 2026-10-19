@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 
-import { isDevFeaturesEnabled } from '@/consts/env';
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
 import useMatchTenantPath from '@/hooks/use-tenant-pathname';
 
@@ -25,10 +24,7 @@ function Sidebar() {
   return (
     <div className={styles.sidebar}>
       {/* Like foundation-frontend's sidebar: the nav still scrolls, but no scrollbar is drawn. */}
-      <OverlayScrollbar
-        className={styles.menu}
-        options={{ scrollbars: { visibility: 'hidden' } }}
-      >
+      <OverlayScrollbar className={styles.menu} options={{ scrollbars: { visibility: 'hidden' } }}>
         <div className={styles.menuContent}>
           {sections.map(({ title, items }) => (
             <Section key={title} title={t(title)}>
@@ -48,7 +44,6 @@ function Sidebar() {
               )}
             </Section>
           ))}
-          {isDevFeaturesEnabled && <div aria-hidden className={styles.devStatusSpacer} />}
           <OssCloudCard />
         </div>
       </OverlayScrollbar>

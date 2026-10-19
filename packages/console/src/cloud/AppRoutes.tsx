@@ -4,7 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import DelayedSuspenseFallback from '@/components/DelayedSuspenseFallback';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
 import { EnterpriseSubscriptionTabs } from '@/consts';
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import ProtectedRoutes from '@/containers/ProtectedRoutes';
 import { GlobalAnonymousRoute, GlobalRoute } from '@/contexts/TenantsProvider';
 import { OnboardingApp } from '@/onboarding';
@@ -54,11 +54,9 @@ function AppRoutes() {
               />
             )}
             {/* Landing page CMS editor for the marketing site; dev feature, admin tenant only in practice. */}
-            {isCloud && isDevFeaturesEnabled && (
-              <Route path={GlobalRoute.LandingPage} element={<LandingPageEditor />} />
-            )}
+            {isCloud && <Route path={GlobalRoute.LandingPage} element={<LandingPageEditor />} />}
             {/* Console SSO */}
-            {isCloud && isDevFeaturesEnabled && (
+            {isCloud && (
               <>
                 <Route path={GlobalRoute.ConsoleSso} element={<ConsoleSso />} />
                 <Route

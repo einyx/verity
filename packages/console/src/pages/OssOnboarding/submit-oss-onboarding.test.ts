@@ -87,7 +87,7 @@ describe('submitOssOnboarding', () => {
   beforeEach(() => {
     mockKyPost.mockResolvedValue({ ok: true });
     resetMockEnv();
-    mockEnv({ isDevFeaturesEnabled: true, ossSurveyEndpoint: 'https://survey.example.com' });
+    mockEnv({ ossSurveyEndpoint: 'https://survey.example.com' });
   });
 
   it('configures the OSS survey client with ky retry options', () => {
@@ -295,24 +295,6 @@ describe('submitOssOnboarding', () => {
     });
 
     expect(mockKyPost).toHaveBeenCalledTimes(2);
-    expect(navigate).toHaveBeenCalledWith('/get-started', { replace: true });
-  });
-
-  it('does not report when isDevFeaturesEnabled is false', async () => {
-    const submitOssOnboarding = await getSubmitOssOnboarding();
-    const update = jest.fn<Promise<void>, [Partial<OssUserOnboardingData>]>();
-    const navigate = jest.fn<void, [string, { replace: boolean }]>();
-
-    mockEnv({ isDevFeaturesEnabled: false });
-    update.mockResolvedValue();
-
-    await submitOssOnboarding({
-      formData: mockFormData,
-      navigate,
-      update,
-    });
-
-    expect(mockKyPost).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith('/get-started', { replace: true });
   });
 

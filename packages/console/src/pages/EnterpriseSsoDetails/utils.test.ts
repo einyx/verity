@@ -3,22 +3,10 @@ import { SsoProviderType } from '@logto/schemas';
 import { shouldShowIdpInitiatedAuthTab, shouldShowIdpInitiatedAuthUpsell } from './utils';
 
 describe('shouldShowIdpInitiatedAuthTab', () => {
-  it('returns false for entitled Cloud SAML connectors when dev features are disabled', () => {
+  it('returns true for entitled Cloud SAML connectors', () => {
     expect(
       shouldShowIdpInitiatedAuthTab({
         isCloud: true,
-        isDevFeaturesEnabled: false,
-        providerType: SsoProviderType.SAML,
-        isIdpInitiatedSsoEnabled: true,
-      })
-    ).toBe(false);
-  });
-
-  it('returns true for entitled Cloud SAML connectors when dev features are enabled', () => {
-    expect(
-      shouldShowIdpInitiatedAuthTab({
-        isCloud: true,
-        isDevFeaturesEnabled: true,
         providerType: SsoProviderType.SAML,
         isIdpInitiatedSsoEnabled: true,
       })
@@ -29,29 +17,16 @@ describe('shouldShowIdpInitiatedAuthTab', () => {
     expect(
       shouldShowIdpInitiatedAuthTab({
         isCloud: true,
-        isDevFeaturesEnabled: true,
         providerType: SsoProviderType.SAML,
         isIdpInitiatedSsoEnabled: false,
       })
     ).toBe(false);
   });
 
-  it('returns false for OSS SAML connectors when dev features are disabled', () => {
+  it('returns true for OSS SAML connectors', () => {
     expect(
       shouldShowIdpInitiatedAuthTab({
         isCloud: false,
-        isDevFeaturesEnabled: false,
-        providerType: SsoProviderType.SAML,
-        isIdpInitiatedSsoEnabled: false,
-      })
-    ).toBe(false);
-  });
-
-  it('returns true for OSS SAML connectors when dev features are enabled', () => {
-    expect(
-      shouldShowIdpInitiatedAuthTab({
-        isCloud: false,
-        isDevFeaturesEnabled: true,
         providerType: SsoProviderType.SAML,
         isIdpInitiatedSsoEnabled: false,
       })
@@ -62,7 +37,6 @@ describe('shouldShowIdpInitiatedAuthTab', () => {
     expect(
       shouldShowIdpInitiatedAuthTab({
         isCloud: false,
-        isDevFeaturesEnabled: true,
         providerType: SsoProviderType.OIDC,
         isIdpInitiatedSsoEnabled: false,
       })

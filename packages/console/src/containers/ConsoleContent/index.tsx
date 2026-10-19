@@ -9,7 +9,6 @@ import OssTenantMfaBanner from '@/components/OssTenantMfaBanner';
 import ReadOnlyAccessNotification from '@/components/ReadOnlyAccessNotification';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
-import Tag from '@/ds-components/Tag';
 import { useConsoleRoutes } from '@/hooks/use-console-routes';
 import { usePlausiblePageview } from '@/hooks/use-plausible-pageview';
 
@@ -48,9 +47,6 @@ function ConsoleContent() {
           <Suspense fallback={<DelayedSuspenseFallback />}>{routes}</Suspense>
         </div>
       </OverlayScrollbar>
-      <Tag type="state" status="success" variant="plain" className={styles.devStatus}>
-        Dev features enabled
-      </Tag>
     </div>
   );
 }

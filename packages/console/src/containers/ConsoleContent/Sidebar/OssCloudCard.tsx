@@ -64,7 +64,7 @@ function OssCloudCard() {
   };
 
   return (
-    <div className={classNames(styles.wrapper, styles.withDevStatusOffset)}>
+    <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.icon}>

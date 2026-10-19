@@ -1,5 +1,4 @@
 @use '@/scss/underscore' as _;
-@use '../dev-status-spacing' as devStatusSpacing;
 
 .sidebar {
   // Matches the foundation-frontend sidebar: w-70 (280px), surface-layer-cp fill, border-r.
@@ -26,12 +25,6 @@
   flex-direction: column;
   padding: _.unit(6);
   box-sizing: border-box;
-}
-
-.devStatusSpacer {
-  // Keep the last sidebar item clear of the floating "Dev features enabled" status badge.
-  height: devStatusSpacing.$dev-status-reserved-space;
-  pointer-events: none;
 }
 
 .skeleton {

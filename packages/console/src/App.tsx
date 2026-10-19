@@ -114,6 +114,7 @@ function Providers() {
           cloudApi.scopes.CreateTenant,
           cloudApi.scopes.ManageTenantSelf,
           cloudApi.scopes.ManageAccountSelf,
+          cloudApi.scopes.ManageLandingPage,
         ]
       ),
     ],

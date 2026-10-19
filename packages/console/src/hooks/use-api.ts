@@ -235,8 +235,8 @@ const useApi = (props: Omit<StaticApiProps, 'prefixUrl' | 'resourceIndicator'> =
       useCloudProxy
         ? {
             prefixUrl: appendPath(new URL(window.location.origin), 'm', currentTenantId),
-            // The admin tenant is reached with its own Management API token. Its organization token is
-            // not accepted by its API, so the other tenants keep the organization token.
+            // The admin tenant is reached with its own Management API token. Its organization token has the
+            // organization as audience, which its API does not accept. Other tenants keep the organization token.
             resourceIndicator:
               currentTenantId === adminTenantId
                 ? getManagementApiResourceIndicator(currentTenantId)

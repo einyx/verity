@@ -29,3 +29,8 @@ dialog button[data-dialog-close], dialog button[data-help-close] { margin-top: 8
   color: inherit;
   white-space: nowrap;
 }
+
+/* The wordmark follows the text color, which is dark on the dark theme. Keep it white there. */
+html.dark svg[aria-label="meshX"] path[fill="currentColor"] {
+  fill: #fff;
+}

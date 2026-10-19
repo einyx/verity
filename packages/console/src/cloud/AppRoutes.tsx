@@ -5,7 +5,7 @@ import DelayedSuspenseFallback from '@/components/DelayedSuspenseFallback';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
 import { EnterpriseSubscriptionTabs } from '@/consts';
 import { adminTenantId } from '@logto/schemas';
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import ProtectedRoutes from '@/containers/ProtectedRoutes';
 import { GlobalAnonymousRoute, GlobalRoute } from '@/contexts/TenantsProvider';
 import { OnboardingApp } from '@/onboarding';
@@ -54,14 +54,14 @@ function AppRoutes() {
               />
             )}
             {/* Landing page CMS editor for the marketing site; dev feature, admin tenant only in practice. */}
-            {isCloud && isDevFeaturesEnabled && (
+            {isCloud && (
               <Route
                 path={GlobalRoute.LandingPage}
                 element={<Navigate replace to={`/${adminTenantId}${GlobalRoute.LandingPage}`} />}
               />
             )}
             {/* Console SSO */}
-            {isCloud && isDevFeaturesEnabled && (
+            {isCloud && (
               <>
                 <Route path={GlobalRoute.ConsoleSso} element={<ConsoleSso />} />
                 <Route

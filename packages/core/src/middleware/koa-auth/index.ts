@@ -137,8 +137,7 @@ export default function koaAuth<StateT, ContextT extends IRouterParamContext, Re
     // An organization token for the tenant's admin is authorized by the membership check instead of the
     // `all` scope, which organization tokens do not carry.
     const organizationAudience = buildOrganizationUrn(getTenantOrganizationId(envSet.tenantId));
-    const isOrganizationToken =
-      envSet.tenantId !== adminTenantId && [tokenAudience].flat().includes(organizationAudience);
+    const isOrganizationToken = [tokenAudience].flat().includes(organizationAudience);
 
     if (isOrganizationToken) {
       await assertTenantAdminMembership(envSet.tenantId, sub);

@@ -13,3 +13,24 @@ dialog button[data-dialog-close], dialog button[data-help-close] { margin-top: 8
 [data-locale-button] svg, [data-help-open] svg {
   pointer-events: none;
 }
+
+.beta-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.375rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  white-space: nowrap;
+}
+
+/* The wordmark follows the text color, which is dark on the dark theme. Keep it white there. */
+html.dark svg[aria-label="meshX"] path[fill="currentColor"] {
+  fill: #fff;
+}

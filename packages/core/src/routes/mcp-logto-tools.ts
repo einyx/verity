@@ -53,7 +53,7 @@ const descriptionProperty: ToolProperty = {
 
 const applicationTypes = ['SPA', 'Traditional', 'Native', 'MachineToMachine'] as const;
 
-const signInExperienceFields = [
+const signInExperienceFields = new Set([
   'color',
   'branding',
   'hideLogtoBranding',
@@ -64,7 +64,7 @@ const signInExperienceFields = [
   'signIn',
   'signUp',
   'signInMode',
-];
+]);
 
 /** Keeps the allowlisted sign-in fields and drops everything else, so unlisted settings never reach the model. */
 const pickSignInExperience = (body: unknown): unknown => {
@@ -73,7 +73,7 @@ const pickSignInExperience = (body: unknown): unknown => {
   }
 
   return Object.fromEntries(
-    Object.entries(body).filter(([key]) => signInExperienceFields.includes(key))
+    Object.entries(body).filter(([key]) => signInExperienceFields.has(key))
   );
 };
 
@@ -209,13 +209,11 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
 ];
 
 /**
- * The tools a caller can see. Write tools are an in-development surface, so they are only listed
- * and callable while dev features are enabled. Read tools are always available.
+ * The tools a caller can see and call. Write tools are always available; a tool marked `devFeature`
+ * is still in development and is only offered while dev features are enabled.
  */
 export const enabledLogtoMcpTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] =>
-  logtoMcpTools.filter(
-    ({ method, devFeature }) => (method !== 'POST' && !devFeature) || isDevFeaturesEnabled
-  );
+  logtoMcpTools.filter(({ devFeature }) => !devFeature || isDevFeaturesEnabled);
 
 /** The paging parameters a list tool passes on to the Management API as query parameters. */
 const queryKeys = ['page', 'page_size'] as const;

@@ -89,7 +89,6 @@ const propose = async (
     userId: owner,
     tenantId,
     now,
-    isDevFeaturesEnabled: true,
     newId: () => 'action-1',
     ...overrides,
   });
@@ -104,7 +103,6 @@ const confirm = async (
     tenantId,
     userId: owner,
     now,
-    isDevFeaturesEnabled: true,
     execute: jest.fn(async () => okResult),
     ...overrides,
   });
@@ -128,15 +126,6 @@ describe('proposePendingAction', () => {
     await propose(store);
 
     expect(rows.get('action-1')?.expiresAt.getTime()).toBe(now.getTime() + pendingActionTtlMs);
-  });
-
-  it('refuses every proposal while dev features are disabled', async () => {
-    const { store, rows } = createFakeStore();
-
-    const result = await propose(store, { isDevFeaturesEnabled: false });
-
-    expect(result).toEqual({ ok: false, code: 'disabled' });
-    expect(rows.size).toBe(0);
   });
 
   it('refuses a read tool, which is not a write', async () => {
@@ -223,18 +212,6 @@ describe('confirmPendingAction', () => {
     expect(result).toEqual({ ok: false, code: 'expired' });
     expect(execute).not.toHaveBeenCalled();
     expect(rows.get('action-1')?.state).toBe('expired');
-  });
-
-  it('refuses everything while dev features are disabled, and changes no state', async () => {
-    const { store, rows } = createFakeStore();
-    await propose(store);
-    const execute = jest.fn(async () => okResult);
-
-    const result = await confirm(store, { isDevFeaturesEnabled: false, execute });
-
-    expect(result).toEqual({ ok: false, code: 'disabled' });
-    expect(execute).not.toHaveBeenCalled();
-    expect(rows.get('action-1')?.state).toBe('pending');
   });
 
   it('refuses a stored body that no longer matches its hash', async () => {

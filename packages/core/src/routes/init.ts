@@ -1,9 +1,5 @@
 import { buildOrganizationUrn } from '@logto/core-kit';
-import {
-  adminTenantId,
-  getManagementApiResourceIndicator,
-  getTenantOrganizationId,
-} from '@logto/schemas';
+import { getManagementApiResourceIndicator, getTenantOrganizationId } from '@logto/schemas';
 import Koa from 'koa';
 import Router from 'koa-router';
 
@@ -88,7 +84,7 @@ const createRouters = (tenant: TenantContext) => {
   managementRouter.use(
     koaAuth(
       tenant.envSet,
-      EnvSet.values.isCloud && tenant.id !== adminTenantId
+      EnvSet.values.isCloud
         ? [...managementAudience, buildOrganizationUrn(getTenantOrganizationId(tenant.id))]
         : managementAudience
     )

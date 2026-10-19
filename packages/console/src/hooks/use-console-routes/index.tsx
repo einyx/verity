@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Navigate, useParams, type RouteObject } from 'react-router-dom';
 import { safeLazy } from 'react-safe-lazy';
 
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 import NotFound from '@/pages/NotFound';
 
@@ -61,7 +61,7 @@ export const useConsoleRoutes = () => {
         mcpPortalDetails,
         webhooks,
         ...(isActionsEnabled ? [actions] : []),
-        ...(isCloud && isDevFeaturesEnabled ? [landingPage] : []),
+        ...(isCloud ? [landingPage] : []),
         users,
         auditLogs,
         roles,

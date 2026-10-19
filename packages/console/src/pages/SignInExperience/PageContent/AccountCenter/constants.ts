@@ -1,7 +1,4 @@
 import type { AdminConsoleKey } from '@logto/phrases';
-import { conditionalArray } from '@silverhand/essentials';
-
-import { isDevFeaturesEnabled } from '@/consts/env';
 
 import type { AccountCenterFieldKey } from '../../types';
 
@@ -68,21 +65,19 @@ export const accountCenterSections: AccountCenterFieldSection[] = [
           },
         ],
       },
-      // DEV: Self-service personal access tokens
-      ...conditionalArray<AccountCenterFieldGroup>(
-        isDevFeaturesEnabled && {
-          key: 'developerSettings',
-          title:
-            'sign_in_exp.account_center.sections.account_security.groups.developer_settings.title',
-          items: [
-            {
-              key: 'personalAccessToken',
-              title: 'sign_in_exp.account_center.fields.personal_access_tokens',
-              description: 'sign_in_exp.account_center.fields.personal_access_tokens_description',
-            },
-          ],
-        }
-      ),
+      // Self-service personal access tokens
+      {
+        key: 'developerSettings',
+        title:
+          'sign_in_exp.account_center.sections.account_security.groups.developer_settings.title',
+        items: [
+          {
+            key: 'personalAccessToken',
+            title: 'sign_in_exp.account_center.fields.personal_access_tokens',
+            description: 'sign_in_exp.account_center.fields.personal_access_tokens_description',
+          },
+        ],
+      },
     ],
   },
   {

@@ -70,7 +70,7 @@ type CreateTenant = {
 
 /**
  * Mounts the marketing site proxy at the root when `LANDING_UPSTREAM` names the site's server.
- * Part of the landing page CMS feature, so it stays behind the dev-feature flag until it ships.
+ * Part of the landing page CMS feature.
  */
 const mountLandingSite = (app: Koa) => {
   const upstream = process.env.LANDING_UPSTREAM?.trim();

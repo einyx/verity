@@ -9,12 +9,12 @@ import {
  * Note:
  * - Not allowed customized phrases groups should be added here. Currently only the `development_tenant` group is not allowed.
  *
- * - Unreleased feature phrase group keys should be added here and controlled by the `isDevFeaturesEnabled` flag.
+ * - Unreleased feature phrase group keys should be added here while the feature is not yet released.
  * @example
  * ```ts
  * export const hiddenLocalePhraseGroups: readonly LocalePhraseGroupKey[] = [
  *  'development_tenant',
- *  ...conditionalArray(!isDevFeaturesEnabled && 'mfa'),
+ *  ...conditionalArray(!isUnreleasedFeatureEnabled && 'mfa'),
  * ];
  * ```
  */
@@ -24,12 +24,12 @@ export const hiddenLocalePhraseGroups: readonly LocalePhraseGroupKey[] = ['devel
  * List of locale phrase key that should be hidden from the experience UI language editor.
  *
  * Note:
- * Unreleased feature phrase keys should be added here and controlled by the `isDevFeaturesEnabled` flag.
+ * Unreleased feature phrase keys should be added here while the feature is not yet released.
  * @example
  * ```ts
  * export const hiddenLocalePhrases: readonly LocalePhraseKey[] = [
  * ...conditionalArray(
- *    !isDevFeaturesEnabled &&
+ *    !isUnreleasedFeatureEnabled &&
  *      ([
  *        'action.copy',
  *        'action.verify_via_passkey',

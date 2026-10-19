@@ -9,7 +9,7 @@
     "prepare": "if test \"$NODE_ENV\" != \"production\" && test \"$CI\" != \"true\" ; then husky ; fi",
     "prepack": "pnpm -r prepack",
     "dev": "pnpm -r prepack && pnpm start:dev",
-    "dev:cloud": "IS_CLOUD=1 CONSOLE_PUBLIC_URL=/console pnpm dev",
+    "dev:cloud": "IS_CLOUD=1 CONSOLE_PUBLIC_URL=/console ./scripts/dev-cloud.sh",
     "start:dev": "pnpm -r --parallel --filter=!@logto/root --filter=!@logto/integration-tests --filter \"!./packages/connectors/connector-*\" dev",
     "start": "cd packages/core && npm start",
     "cli": "logto",

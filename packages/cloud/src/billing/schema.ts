@@ -24,6 +24,15 @@ export const billingSchemaSql = sql`
 
   alter table billing_skus add column if not exists stripe_product_id text;
 
+  -- The Pro plan that production tenants start on. Subscriptions reference it by id, so the row must exist
+  -- before a subscription is read. The quota is complete, because the SKU reader requires every field.
+  insert into billing_skus (id, type, name, quota)
+  values (
+    'pro-202509', 'Basic', 'Pro',
+    '{"mauLimit":1000,"hooksLimit":1,"mfaEnabled":true,"tokenLimit":1000000,"actionsEnabled":false,"resourcesLimit":3,"userRolesLimit":10,"customJwtEnabled":false,"hostedEmailLimit":100,"applicationsLimit":20,"bringYourUiEnabled":false,"customDomainsLimit":1,"enterpriseSsoLimit":0,"organizationsLimit":3,"scopesPerRoleLimit":10,"tenantMembersLimit":10,"subjectTokenEnabled":false,"organizationsEnabled":true,"passkeySignInEnabled":false,"hostedEmailDailyLimit":10,"machineToMachineLimit":5,"samlApplicationsLimit":0,"socialConnectorsLimit":3,"auditLogsRetentionDays":7,"idpInitiatedSsoEnabled":false,"scopesPerResourceLimit":10,"securityFeaturesEnabled":false,"consoleSsoConnectorLimit":0,"collectUserProfileEnabled":false,"machineToMachineRolesLimit":10,"thirdPartyApplicationsLimit":1}'::jsonb
+  )
+  on conflict (id) do nothing;
+
   create table if not exists billing_subscriptions (
     tenant_id varchar(21) not null,
     plan_id varchar(64) not null,

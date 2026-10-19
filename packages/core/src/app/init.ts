@@ -4,7 +4,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { appInsights } from '@logto/app-insights/node';
-import { ossConsolePath } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
 import { toTitle, trySafe } from '@silverhand/essentials';
 import chalk from 'chalk';
@@ -43,6 +42,8 @@ const readLandingPage = async (): Promise<string | undefined> => {
   ];
 
   for (const file of candidates) {
+    // Candidates are tried in order and the first readable file wins, so each read must finish before the next.
+    // eslint-disable-next-line no-await-in-loop
     const content = await trySafe(fs.readFile(file, 'utf8'));
 
     if (content) {

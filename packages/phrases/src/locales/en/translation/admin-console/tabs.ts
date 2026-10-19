@@ -10,6 +10,7 @@ const tabs = {
   webhooks: 'Webhooks',
   stacks: 'Workspaces',
   mcp_servers: 'MCP servers',
+  landing_page: 'Landing page',
   run_bootstrap: 'Run bootstrap',
   capacity: 'Capacity map',
   agent: 'Agent',

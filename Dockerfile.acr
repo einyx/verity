@@ -127,7 +127,7 @@ ENV LOGTO_OSS_SURVEY_ENDPOINT=${logto_oss_survey_endpoint}
 # rest of the image build.
 ENV pnpm_config_verify_deps_before_run=false
 # Cloud console build: the flag is used for this build step only and is not kept in the runtime environment.
-ARG is_cloud=
+ARG is_cloud=1
 RUN IS_CLOUD=${is_cloud} pnpm -r --filter "@logto/core..." --filter "@meshx/cloud..." --filter "./packages/connectors/connector-*" build
 
 ### Add official connectors ###

@@ -2,6 +2,7 @@ import { UserScope } from '@logto/core-kit';
 import { LogtoProvider, Prompt, useLogto } from '@logto/react';
 import {
   adminConsoleApplicationId,
+  adminTenantId,
   defaultTenantId,
   ossConsolePath,
   PredefinedScope,
@@ -92,7 +93,7 @@ function Providers() {
   const resources = useMemo(
     () =>
       isCloud
-        ? [cloudApi.indicator, meApi.indicator]
+        ? [cloudApi.indicator, meApi.indicator, getManagementApi(adminTenantId).indicator]
         : [getManagementApi(defaultTenantId).indicator, meApi.indicator],
     []
   );

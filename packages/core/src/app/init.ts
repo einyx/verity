@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { appInsights } from '@logto/app-insights/node';
+import { ossConsolePath } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
 import { toTitle, trySafe } from '@silverhand/essentials';
 import chalk from 'chalk';
@@ -112,6 +113,7 @@ export default async function initApp(app: Koa): Promise<void> {
 
   app.use(serveLandingAsset);
 
+  // eslint-disable-next-line complexity -- the root path has three cases (health probe, signed-in redirect, landing page); splitting them would scatter one decision.
   app.use(async (ctx, next) => {
     // The root answers 204 for health probes. A browser asking for the root gets the landing page instead.
     const isProbe = ['/status', '/'].includes(ctx.URL.pathname);
@@ -123,6 +125,12 @@ export default async function initApp(app: Koa): Promise<void> {
         EnvSet.values.isCloud &&
         ctx.get('accept').includes('text/html')
       ) {
+        // A signed-in browser goes to the console, not the marketing page, so signing in never lands on the site.
+        if (ctx.cookies.get('_session')) {
+          ctx.redirect(ossConsolePath);
+          return;
+        }
+
         const landing = await readLandingPage();
 
         if (landing) {

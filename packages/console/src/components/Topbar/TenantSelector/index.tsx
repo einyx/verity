@@ -1,4 +1,4 @@
-import { OrganizationInvitationStatus } from '@logto/schemas';
+import { adminTenantId, OrganizationInvitationStatus } from '@logto/schemas';
 import { useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,10 @@ import TenantDropdownItem from './TenantDropdownItem';
 import TenantInvitationDropdownItem from './TenantInvitationDropdownItem';
 import styles from './index.module.scss';
 
+// The admin tenant is the console's own tenant, so it is shown as "Admin" instead of its stored name.
+const getTenantLabel = (tenant: TenantResponse) =>
+  tenant.id === adminTenantId ? 'Admin' : tenant.name;
+
 export default function TenantSelector() {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const {
@@ -40,6 +44,10 @@ export default function TenantSelector() {
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const { updateDefaultTenantId } = useUserDefaultTenantId();
 
+  // The admin tenant is listed after the customer tenants, separated by a divider.
+  const adminTenant = tenants.find((tenant) => tenant.id === adminTenantId);
+  const customerTenants = tenants.filter((tenant) => tenant.id !== adminTenantId);
+
   if (tenants.length === 0 || !currentTenantInfo) {
     return null;
   }
@@ -58,7 +66,7 @@ export default function TenantSelector() {
           setShowDropdown(true);
         }}
       >
-        <div className={styles.name}>{currentTenantInfo.name}</div>
+        <div className={styles.name}>{getTenantLabel(currentTenantInfo)}</div>
         <TenantEnvTag tag={currentTenantInfo.tag} />
         {isReadOnly && (
           <Tag size="small" className={styles.viewOnlyTag}>
@@ -79,10 +87,10 @@ export default function TenantSelector() {
         }}
       >
         <OverlayScrollbar className={styles.scrollableContent}>
-          {tenants.map((tenantData) => (
+          {customerTenants.map((tenantData) => (
             <TenantDropdownItem
               key={tenantData.id}
-              tenantData={tenantData}
+              tenantData={{ ...tenantData, name: getTenantLabel(tenantData) }}
               isSelected={tenantData.id === currentTenantId}
               onClick={() => {
                 navigateTenant(tenantData.id);
@@ -91,6 +99,21 @@ export default function TenantSelector() {
               }}
             />
           ))}
+          {adminTenant && (
+            <>
+              <Divider />
+              <TenantDropdownItem
+                key={adminTenant.id}
+                tenantData={{ ...adminTenant, name: getTenantLabel(adminTenant) }}
+                isSelected={adminTenant.id === currentTenantId}
+                onClick={() => {
+                  navigateTenant(adminTenant.id);
+                  void updateDefaultTenantId(adminTenant.id);
+                  setShowDropdown(false);
+                }}
+              />
+            </>
+          )}
           {pendingInvitations?.map((invitation) => (
             <TenantInvitationDropdownItem key={invitation.id} data={invitation} />
           ))}

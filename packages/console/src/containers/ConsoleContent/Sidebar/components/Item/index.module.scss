@@ -1,8 +1,10 @@
 @use '@/scss/underscore' as _;
 
+
 .row {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   margin: 0;
   // Foundation sidebar item: p-2 (8px), rounded-md (6px), gap-2.5 (10px).
   padding: _.unit(2);
@@ -41,6 +43,9 @@
   .title {
     font: var(--font-label-2);
     font-weight: normal;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   // Foundation sidebar states: hover tints the row blue, the active row gets a neutral wash.

@@ -2,6 +2,7 @@ import { UserScope } from '@logto/core-kit';
 import { LogtoProvider, Prompt, useLogto } from '@logto/react';
 import {
   adminConsoleApplicationId,
+  adminTenantId,
   defaultTenantId,
   ossConsolePath,
   PredefinedScope,
@@ -24,7 +25,7 @@ import 'react-day-picker/dist/style.css';
 
 import CloudAppRoutes from '@/cloud/AppRoutes';
 import AppLoading from '@/components/AppLoading';
-import { isCloud } from '@/consts/env';
+import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
 import { cloudApi, getManagementApi, meApi } from '@/consts/resources';
 import { ConsoleRoutes } from '@/containers/ConsoleRoutes';
 
@@ -92,7 +93,7 @@ function Providers() {
   const resources = useMemo(
     () =>
       isCloud
-        ? [cloudApi.indicator, meApi.indicator]
+        ? [cloudApi.indicator, meApi.indicator, getManagementApi(adminTenantId).indicator]
         : [getManagementApi(defaultTenantId).indicator, meApi.indicator],
     []
   );
@@ -115,6 +116,8 @@ function Providers() {
           cloudApi.scopes.ManageAccountSelf,
         ]
       ),
+      // Landing page CMS. Requested only with dev features, matching its editor route.
+      ...conditionalArray(isCloud && isDevFeaturesEnabled && [cloudApi.scopes.ManageLandingPage]),
     ],
     []
   );

@@ -75,7 +75,7 @@ function CreateTenant() {
     [t]
   );
 
-  const { isAuthenticated, getOrganizationToken } = useLogto();
+  const { isAuthenticated, getAccessToken, getOrganizationToken } = useLogto();
   const cloudApi = useCloudApi();
   const { currentTenant } = useContext(TenantsContext);
   const { regions, regionsError } = useAvailableRegions();
@@ -97,6 +97,7 @@ function CreateTenant() {
       const tenantCloudApi = createTenantApi({
         hideErrorToast: true,
         isAuthenticated,
+        getAccessToken,
         getOrganizationToken,
         tenantId: newTenant.id,
         language: i18n.language,

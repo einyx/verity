@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
 import BarGraphIcon from '@/assets/icons/bar-graph.svg?react';
@@ -12,6 +11,7 @@ import FormCardLayout from '@/components/FormCard/FormCardLayout';
 import Button from '@/ds-components/Button';
 import Select from '@/ds-components/Select';
 import useApi, { type RequestError } from '@/hooks/use-api';
+import useTenantPathname from '@/hooks/use-tenant-pathname';
 
 import ChoiceItem from './ChoiceItem';
 import { StepIntro } from './StepIntro';
@@ -85,7 +85,8 @@ function previewUrl(
 
 function KuboWizard() {
   const api = useApi();
-  const navigate = useNavigate();
+  // Tenant-aware navigate, so the redirect stays under /<tenant>/console instead of the marketing root.
+  const { navigate } = useTenantPathname();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selected, setSelected] = useState<StackOption>();
   const [tenant, setTenant] = useState('');

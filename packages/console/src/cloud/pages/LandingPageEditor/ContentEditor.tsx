@@ -21,6 +21,31 @@ const isStringList = (value: unknown): value is string[] =>
 
 const humanize = (key: string) => key.replaceAll(/([A-Z])/g, ' $1').toLowerCase();
 
+// Plain names for the field keys the schema uses most, with a hint where the meaning is not obvious.
+const fieldLabels: Record<string, string> = {
+  headline: 'Headline',
+  lede: 'Intro text',
+  primaryCta: 'Main button',
+  secondaryCta: 'Second button',
+  label: 'Button text',
+  href: 'Where the button goes',
+  heading: 'Heading',
+  body: 'Text',
+  kicker: 'Small label above the heading',
+  proofLabel: 'Trust line above the logos',
+};
+
+const fieldHints: Record<string, string> = {
+  Headline: 'Each line is one row of the headline. Keep each line short.',
+  'Intro text': 'One or two sentences under the headline.',
+  'Where the button goes': 'A page on this site (starts with /), or a full web address (starts with https://).',
+  'Button text': 'The words on the button.',
+};
+
+const hintFor = (label: string) => fieldHints[label];
+
+const labelFor = (key: string) => fieldLabels[key] ?? humanize(key);
+
 type LinesProps = {
   readonly label: string;
   readonly value: string[];
@@ -33,7 +58,8 @@ function LinesField({ label, value, onChange }: LinesProps) {
 
   return (
     <label className={styles.field}>
-      <span>{label} (one line each)</span>
+      <span>{label}</span>
+      <small className={styles.hint}>One line per row. Empty lines are ignored.</small>
       <textarea
         value={text}
         onChange={(event) => {
@@ -55,12 +81,24 @@ function ContentEditor({ label, value, onChange }: Props) {
     return (
       <label className={styles.field}>
         <span>{label}</span>
-        <input
-          value={value}
-          onChange={(event) => {
-            onChange(event.target.value);
-          }}
-        />
+        {hintFor(label) ? <small className={styles.hint}>{hintFor(label)}</small> : undefined}
+        {value.length > 60 ? (
+          <textarea
+            className={styles.longText}
+            value={value}
+            onChange={(event) => {
+              onChange(event.target.value);
+            }}
+          />
+        ) : (
+          <input
+            className={/href$/i.test(label) ? styles.mono : undefined}
+            value={value}
+            onChange={(event) => {
+              onChange(event.target.value);
+            }}
+          />
+        )}
       </label>
     );
   }
@@ -72,7 +110,7 @@ function ContentEditor({ label, value, onChange }: Props) {
   if (Array.isArray(value)) {
     return (
       <fieldset className={styles.group}>
-        <legend>{label}</legend>
+        <legend className={styles.groupTitle}>{label}</legend>
         {value.map((item: unknown, index) => (
           <ContentEditor
             // Items are fixed in count and order, so the position is a stable identity here.
@@ -96,11 +134,11 @@ function ContentEditor({ label, value, onChange }: Props) {
   if (isRecord(value)) {
     return (
       <fieldset className={styles.group}>
-        {label ? <legend>{label}</legend> : undefined}
+        {label ? <legend className={styles.groupTitle}>{label}</legend> : undefined}
         {Object.entries(value).map(([key, child]) => (
           <ContentEditor
             key={key}
-            label={humanize(key)}
+            label={labelFor(key)}
             value={child}
             onChange={(next) => {
               onChange({ ...value, [key]: next });

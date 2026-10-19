@@ -26,6 +26,9 @@ const sign_in_exp = {
   },
   color: {
     title: 'COLOR',
+    template: 'Template',
+    template_default: 'Default',
+    template_meshx_dark: 'MeshX Dark',
     primary_color: 'Brand color',
     dark_primary_color: 'Brand color (dark)',
     dark_mode: 'Enable dark mode',

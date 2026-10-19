@@ -1,8 +1,28 @@
+import { ossConsolePath } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
 import { type Path } from 'react-router-dom';
 import { z } from 'zod';
 
 import { storageKeys } from '@/consts';
+import { isCloud } from '@/consts/env';
+
+/**
+ * The router's basename is `/console` on cloud (see `App.tsx`). The saved path must be relative to
+ * it, or the router adds the prefix again on return and `/console/admin` becomes tenant `console`.
+ */
+const toRouterPath = (pathname: string) => {
+  if (!isCloud) {
+    return pathname;
+  }
+
+  if (pathname === ossConsolePath) {
+    return '/';
+  }
+
+  return pathname.startsWith(`${ossConsolePath}/`)
+    ? pathname.slice(ossConsolePath.length)
+    : pathname;
+};
 
 /** Save the current url to session storage so that we can redirect to it after sign in. */
 export const saveRedirect = (target?: URL) => {
@@ -10,7 +30,7 @@ export const saveRedirect = (target?: URL) => {
   const { pathname, search, hash } = isValidTarget ? target : window.location;
   sessionStorage.setItem(
     storageKeys.redirectAfterSignIn,
-    JSON.stringify({ pathname, search, hash })
+    JSON.stringify({ pathname: toRouterPath(pathname), search, hash })
   );
 };
 

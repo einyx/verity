@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import DelayedSuspenseFallback from '@/components/DelayedSuspenseFallback';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
 import { EnterpriseSubscriptionTabs } from '@/consts';
+import { adminTenantId } from '@logto/schemas';
 import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
 import ProtectedRoutes from '@/containers/ProtectedRoutes';
 import { GlobalAnonymousRoute, GlobalRoute } from '@/contexts/TenantsProvider';
@@ -21,7 +22,6 @@ import DeleteAccount from './pages/DeleteAccount';
 import EnterpriseSubscription from './pages/EnterpriseSubscription';
 import BillingHistory from './pages/EnterpriseSubscription/BillingHistory';
 import Subscription from './pages/EnterpriseSubscription/Subscription';
-import LandingPageEditor from './pages/LandingPageEditor';
 import Main from './pages/Main';
 import SelfHostedLicenses from './pages/SelfHostedLicenses';
 import SocialDemoCallback from './pages/SocialDemoCallback';
@@ -55,7 +55,10 @@ function AppRoutes() {
             )}
             {/* Landing page CMS editor for the marketing site; dev feature, admin tenant only in practice. */}
             {isCloud && isDevFeaturesEnabled && (
-              <Route path={GlobalRoute.LandingPage} element={<LandingPageEditor />} />
+              <Route
+                path={GlobalRoute.LandingPage}
+                element={<Navigate replace to={`/${adminTenantId}${GlobalRoute.LandingPage}`} />}
+              />
             )}
             {/* Console SSO */}
             {isCloud && isDevFeaturesEnabled && (

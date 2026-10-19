@@ -123,11 +123,22 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     koaGuard({ status: [200, 304, 401, 403] }),
     async (ctx, next) => {
       const pool = await EnvSet.sharedPool;
+      const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
+
+      // The admin tenant is the instance's own console. Only its operator, who holds the admin role there,
+      // sees it in the list. Every other user, including Cloud customers, sees customer tenants only.
+      const operator = await pool.maybeOne<{ userId: string }>(sql`
+        select ur.user_id as "userId"
+        from users_roles ur
+        join roles r on r.id = ur.role_id
+        where ur.tenant_id = ${adminTenantId} and ur.user_id = ${userId} and r.name = 'admin'
+        limit 1
+      `);
 
       const rows = await pool.any<TenantRow>(sql`
         select id, name, tag, region_name as "regionName", created_at as "createdAt"
         from tenants
-        where id <> ${adminTenantId}
+        where id <> ${adminTenantId} or ${Boolean(operator)}
         order by created_at
       `);
       ctx.body = rows.map((row) => toTenantResponse(row));

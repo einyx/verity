@@ -1,12 +1,14 @@
+import { adminTenantId } from '@logto/schemas';
 import { type Optional } from '@silverhand/essentials';
 import type { TFuncKey } from 'i18next';
+import { useContext } from 'react';
 import type { FC, ReactNode } from 'react';
 
-import Cube from '@/assets/icons/cube.svg?react';
-import Sparkles from '@/assets/icons/sparkles.svg?react';
+import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { TenantsContext } from '@/contexts/TenantsProvider';
+import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 
 import { menuIcons } from './menu-icons';
-import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 
 type SidebarItem = {
   Icon: FC;
@@ -38,6 +40,7 @@ export const useSidebarMenuItems = (): {
   firstItem: Optional<SidebarItem>;
 } => {
   const isActionsEnabled = useIsActionsEnabled();
+  const { currentTenantId } = useContext(TenantsContext);
   const allSections: SidebarSection[] = [
     {
       title: 'overview',
@@ -171,6 +174,13 @@ export const useSidebarMenuItems = (): {
       title: 'tenant',
       items: [
         {
+          Icon: menuIcons.get_started,
+          title: 'landing_page',
+          path: 'landing-page',
+          // Landing page CMS for the marketing site. Dev feature, Cloud only, admin tenant only.
+          isHidden: !(isCloud && isDevFeaturesEnabled && currentTenantId === adminTenantId),
+        },
+        {
           Icon: menuIcons.tenant_settings,
           title: 'tenant_settings',
         },
@@ -178,7 +188,19 @@ export const useSidebarMenuItems = (): {
     },
   ];
 
-  const enabledSections = allSections.filter((section) => !section.isHidden);
+  // The admin tenant is the instance's own console, not a Foundation workspace. Its sidebar leaves out
+  // the Foundation and authorization sections and the items that do not apply to it.
+  const isAdminTenant = currentTenantId === adminTenantId;
+  const adminHiddenItems = new Set(['get_started', 'webhooks', 'customize_jwt', 'organizations']);
+  const adminHiddenSections = new Set(['infrastructure', 'authorization']);
+  const enabledSections = allSections
+    .filter((section) => !section.isHidden)
+    .filter((section) => !(isAdminTenant && adminHiddenSections.has(section.title)))
+    .map((section) =>
+      isAdminTenant && (section.title === 'overview' || section.title === 'developer')
+        ? { ...section, items: section.items.filter((item) => !adminHiddenItems.has(item.title)) }
+        : section
+    );
 
   return { sections: enabledSections, firstItem: findFirstItem(enabledSections) };
 };

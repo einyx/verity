@@ -37,7 +37,7 @@ export default function DeleteAccount() {
     keyPrefix: 'admin_console.profile.delete_account',
   });
   const { tenants, removeTenant } = useContext(TenantsContext);
-  const { getIdTokenClaims, isAuthenticated, getOrganizationToken } = useLogto();
+  const { getIdTokenClaims, isAuthenticated, getAccessToken } = useLogto();
   const { signOut } = useSignOut();
   const postSignOutRedirectUri = useRedirectUri('signOut');
   const cloudApi = useCloudApi();
@@ -121,8 +121,7 @@ export default function DeleteAccount() {
       for (const tenant of tenantsToQuit) {
         const tenantApi = createTenantApi({
           isAuthenticated,
-          getOrganizationToken,
-          tenantId: tenant.id,
+          getAccessToken,
           language: i18n.language,
         });
         // eslint-disable-next-line no-await-in-loop

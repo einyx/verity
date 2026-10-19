@@ -1,16 +1,21 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 
+import ConnectionIcon from '@/assets/icons/connection.svg?react';
+import KeyIcon from '@/assets/icons/key.svg?react';
+import ShieldIcon from '@/assets/icons/shield.svg?react';
 import uploadSecurityImage from '@/assets/images/wizard/upload-security-pixel.png';
-import FormCardLayout from '@/components/FormCard/FormCardLayout';
 import Button from '@/ds-components/Button';
+import Card from '@/ds-components/Card';
 import TextInput from '@/ds-components/TextInput';
 import useApi from '@/hooks/use-api';
+import getStartedStyles from '@/pages/GetStarted/index.module.scss';
 
 import styles from '../index.module.scss';
 
-// Air-gapped bundle upload, as a three-step wizard like the workspace wizard:
-// choose the file, name it, then review and upload. The file goes through Logto core to the Kubo portal.
+// Air-gapped bundle upload, as a three-step wizard. Its layout follows the get-started page: a
+// header, stat cards, step cards with artwork, and the form in a card. The file goes through Logto
+// core to the Kubo portal.
 const namePattern = /^[\da-z]([\d.a-z-]{0,61}[\da-z])?$/;
 
 const formatSize = (bytes: number) =>
@@ -22,14 +27,17 @@ const steps = [
   {
     title: 'Choose a bundle file',
     text: 'Pick the offline bundle (.tar) to upload for air-gapped installs.',
+    Icon: ConnectionIcon,
   },
   {
     title: 'Name the bundle',
     text: 'Use lowercase letters, digits, dots and hyphens.',
+    Icon: KeyIcon,
   },
   {
     title: 'Review and upload',
     text: 'Check the file and name, then upload to the Kubo portal.',
+    Icon: ShieldIcon,
   },
 ];
 
@@ -79,59 +87,75 @@ function Bundle() {
     }
   };
 
-  const introduction = useMemo(
-    () => (
-      <>
-        <img className={styles.stepImage} src={uploadSecurityImage} alt="" />
-        <ol className={styles.stepper} aria-label={`Step ${step} of 3`}>
-          {steps.map((item, index) => {
+  return (
+    <div className={getStartedStyles.container}>
+      <Helmet title="MeshX · Bundle" />
+      <div className={getStartedStyles.pageHeader}>
+        <div className={getStartedStyles.header}>
+          <div className={getStartedStyles.title}>Upload an offline bundle</div>
+          <div className={getStartedStyles.subtitle}>
+            Air-gapped installs: choose the bundle, name it, then upload it to the Kubo portal.
+          </div>
+        </div>
+      </div>
+
+      <div className={getStartedStyles.statGrid}>
+        <div className={getStartedStyles.statCard}>
+          <div className={getStartedStyles.statLabel}>Step</div>
+          <div className={getStartedStyles.statValue}>{step} of 3</div>
+        </div>
+        <div className={getStartedStyles.statCard}>
+          <div className={getStartedStyles.statLabel}>File size</div>
+          <div className={getStartedStyles.statValue}>{file ? formatSize(file.size) : '—'}</div>
+        </div>
+      </div>
+
+      <div className={getStartedStyles.resources}>
+        <div className={getStartedStyles.sectionTitle}>Steps</div>
+        <ol className={getStartedStyles.modelGrid} aria-label={`Step ${step} of 3`}>
+          {steps.map(({ title, text, Icon }, index) => {
             const number = index + 1;
             const isActive = number === step;
             const isDone = number < step;
             return (
               <li
-                key={item.title}
-                className={styles.stepItem}
+                key={title}
+                className={getStartedStyles.modelCard}
                 aria-current={isActive ? 'step' : undefined}
               >
-                <button
-                  type="button"
-                  className={styles.stepButton}
-                  disabled={number > step}
-                  onClick={() => {
-                    setStep(toStep(number));
-                  }}
-                >
-                  <span
-                    className={`${styles.stepBubble} ${isActive ? styles.stepBubbleActive : ''} ${isDone ? styles.stepBubbleDone : ''}`}
-                  >
-                    {number}
-                  </span>
-                  <span className={styles.stepText}>
-                    <span className={isActive ? styles.stepTitleActive : styles.stepTitle}>
-                      {item.title}
-                    </span>
-                    {isActive && <span className={styles.stepDescription}>{item.text}</span>}
-                  </span>
-                </button>
+                <div className={getStartedStyles.modelBand}>
+                  <img className={styles.stepImage} src={uploadSecurityImage} alt="" />
+                </div>
+                <div className={getStartedStyles.modelBody}>
+                  <div className={getStartedStyles.resourceHeader}>
+                    <div className={getStartedStyles.resourceIcon}>
+                      <Icon />
+                    </div>
+                    <div className={getStartedStyles.resourceTitle}>
+                      {number}. {title}
+                    </div>
+                  </div>
+                  <div className={getStartedStyles.resourceDescription}>{text}</div>
+                  {isDone && <span className={styles.muted}>Done</span>}
+                  {isActive && <span className={styles.muted}>In progress</span>}
+                  {number < step && (
+                    <Button
+                      title="general.back"
+                      type="outline"
+                      onClick={() => {
+                        setStep(toStep(number));
+                      }}
+                    />
+                  )}
+                </div>
               </li>
             );
           })}
         </ol>
-      </>
-    ),
-    [step]
-  );
+      </div>
 
-  return (
-    <>
-      <Helmet title="MeshX · Bundle" />
-      <FormCardLayout introduction={introduction}>
-        <div className={styles.progress} aria-label={`Step ${step} of 3`}>
-          {[1, 2, 3].map((index) => (
-            <span key={index} className={index <= step ? styles.progressOn : undefined} />
-          ))}
-        </div>
+      <Card className={getStartedStyles.card}>
+        <div className={getStartedStyles.title}>{steps[step - 1]?.title}</div>
 
         {step === 1 && (
           <div className={styles.form}>
@@ -226,8 +250,8 @@ function Bundle() {
             />
           )}
         </div>
-      </FormCardLayout>
-    </>
+      </Card>
+    </div>
   );
 }
 

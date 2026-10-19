@@ -1,5 +1,5 @@
 import { Prompt, useLogto } from '@logto/react';
-import { getTenantOrganizationId } from '@logto/schemas';
+import { adminTenantId, getTenantOrganizationId } from '@logto/schemas';
 import { useContext, useEffect, useState } from 'react';
 
 import { isCloud } from '@/consts/env';
@@ -28,7 +28,9 @@ const useTenantScopeListener = () => {
     // The claims only feed the Cloud scope sync below. In OSS, requesting a tenant organization
     // token would fail once the organization requires MFA the user has not set up, and end the
     // session.
-    if (!isCloud) {
+    // The admin tenant is reached with its Management API token, so its organization token scopes
+    // are not compared. An empty organization scope there would force a re-consent sign-in.
+    if (!isCloud || currentTenantId === adminTenantId) {
       return;
     }
 

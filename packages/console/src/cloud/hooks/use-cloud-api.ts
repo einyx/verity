@@ -7,7 +7,7 @@ import {
   type userStripeCustomersRouter,
 } from '@logto/cloud/routes';
 import { useLogto } from '@logto/react';
-import { getTenantOrganizationId } from '@logto/schemas';
+import { adminTenantId, getTenantOrganizationId } from '@logto/schemas';
 import { conditional, trySafe } from '@silverhand/essentials';
 import Client, { ResponseError } from '@withtyped/client';
 import { useContext, useMemo } from 'react';
@@ -87,7 +87,10 @@ export const useCloudApi = <R extends ConsoleCloudRouter = typeof router>({
 };
 
 type CreateTenantOptions = UseCloudApiProps &
-  Pick<ReturnType<typeof useLogto>, 'isAuthenticated' | 'getOrganizationToken'> & {
+  Pick<
+    ReturnType<typeof useLogto>,
+    'isAuthenticated' | 'getAccessToken' | 'getOrganizationToken'
+  > & {
     tenantId: string;
     language: string;
   };
@@ -95,6 +98,7 @@ type CreateTenantOptions = UseCloudApiProps &
 export const createTenantApi = ({
   hideErrorToast = false,
   isAuthenticated,
+  getAccessToken,
   getOrganizationToken,
   tenantId,
   language,
@@ -103,10 +107,15 @@ export const createTenantApi = ({
     baseUrl: window.location.origin,
     headers: async () => {
       if (isAuthenticated) {
+        // The admin tenant's members are checked with the Cloud API token. Its organization token
+        // has the organization as audience, which the Cloud API does not accept.
+        const token =
+          tenantId === adminTenantId
+            ? await getAccessToken(cloudApi.indicator)
+            : await getOrganizationToken(getTenantOrganizationId(tenantId));
+
         return {
-          Authorization: `Bearer ${
-            (await getOrganizationToken(getTenantOrganizationId(tenantId))) ?? ''
-          }`,
+          Authorization: `Bearer ${token ?? ''}`,
           'Accept-Language': language,
         };
       }
@@ -124,17 +133,25 @@ export const useAuthedCloudApi = ({ hideErrorToast = false }: UseCloudApiProps =
 > => {
   const { i18n } = useTranslation();
   const { currentTenantId } = useContext(TenantsContext);
-  const { isAuthenticated, getOrganizationToken } = useLogto();
+  const { isAuthenticated, getAccessToken, getOrganizationToken } = useLogto();
   const api = useMemo(
     () =>
       createTenantApi({
         hideErrorToast,
         isAuthenticated,
+        getAccessToken,
         getOrganizationToken,
         tenantId: currentTenantId,
         language: i18n.language,
       }),
-    [currentTenantId, getOrganizationToken, hideErrorToast, isAuthenticated, i18n.language]
+    [
+      currentTenantId,
+      getAccessToken,
+      getOrganizationToken,
+      hideErrorToast,
+      isAuthenticated,
+      i18n.language,
+    ]
   );
 
   return api;

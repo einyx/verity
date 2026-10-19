@@ -16,9 +16,10 @@ type Props = {
   readonly modal?: (isOpen: boolean, onCancel: () => void) => ReactNode;
   readonly externalLink?: string;
   readonly path?: string;
+  readonly collapsed?: boolean;
 };
 
-function Item({ icon, titleKey, modal, externalLink, path, isActive = false }: Props) {
+function Item({ icon, titleKey, modal, externalLink, path, isActive = false, collapsed = false }: Props) {
   const { t } = useTranslation(undefined, {
     keyPrefix: 'admin_console.tabs',
   });
@@ -27,11 +28,15 @@ function Item({ icon, titleKey, modal, externalLink, path, isActive = false }: P
   const content = useMemo(
     () => (
       <>
-        {icon && <div className={styles.icon}>{icon}</div>}
-        <div className={styles.title}>{t(titleKey)}</div>
+        {icon && (
+          <div className={styles.icon} title={collapsed ? t(titleKey) : undefined}>
+            {icon}
+          </div>
+        )}
+        {!collapsed && <div className={styles.title}>{t(titleKey)}</div>}
       </>
     ),
-    [icon, t, titleKey]
+    [collapsed, icon, t, titleKey]
   );
 
   if (modal) {
@@ -54,7 +59,12 @@ function Item({ icon, titleKey, modal, externalLink, path, isActive = false }: P
 
   if (externalLink) {
     return (
-      <a href={externalLink} target="_blank" className={styles.row} rel="noopener">
+      <a
+        href={externalLink}
+        target="_blank"
+        className={styles.row}
+        rel="noopener"
+      >
         {content}
       </a>
     );

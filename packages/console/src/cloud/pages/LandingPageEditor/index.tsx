@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
-import Topbar from '@/components/Topbar';
-import AppBoundary from '@/containers/AppBoundary';
-import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
 
 import ContentEditor, { isRecord } from './ContentEditor';
+import LivePreview from './Preview';
 import styles from './index.module.scss';
+import NavArtwork from './NavArtwork';
 
 // Editor for the marketing site's copy. Changes save to the draft; nothing reaches the site until it
 // is published. Section order and layout live in the site's code, so only the copy is edited here.
@@ -29,6 +29,21 @@ const sectionLabels: Record<string, string> = {
   closingCta: 'Closing call to action',
 };
 
+// One plain sentence per section, so the editor explains itself without a manual.
+const sectionHints: Record<string, string> = {
+  hero: 'The first thing visitors see: the big headline, intro text and the two main buttons.',
+  fomo: 'The "missing layer" block that explains what teams lose without meshX.',
+  howItWorks: 'The short "how it works" explanation with its button.',
+  agents: 'The six example questions people can ask the AI agents.',
+  platform: 'The section that describes the platform.',
+  products: 'The product cards, each with a button.',
+  industries: 'The two industry cards, each with a button.',
+  stories: 'The customer story and its key facts.',
+  why: 'Why teams choose meshX, with the comparison rows.',
+  trust: 'The four commitments about security and control.',
+  closingCta: 'The last call to action at the bottom of the page.',
+};
+
 function LandingPageEditorContent() {
   const { data, error, saveDraft, publish, rollback, listVersions } = useLandingPage();
   const [draft, setDraft] = useState<unknown>();
@@ -36,6 +51,7 @@ function LandingPageEditorContent() {
   const [message, setMessage] = useState<string | undefined>();
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
+  const [activeKey, setActiveKey] = useState<string>();
 
   useEffect(() => {
     if (data && draft === undefined) {
@@ -99,90 +115,156 @@ function LandingPageEditorContent() {
 
   const currentDraft = draft;
 
+  const publishLabel = pending?.kind === 'publish' ? 'Click again to confirm' : 'Publish to website';
+  const sectionEntries = isRecord(currentDraft) ? Object.entries(currentDraft) : [];
+  const selectedKey = sectionEntries.some(([key]) => key === activeKey)
+    ? activeKey
+    : sectionEntries[0]?.[0];
+  const selected = sectionEntries.find(([key]) => key === selectedKey);
+
   return (
-    <div className={styles.editor}>
-      <div className={styles.toolbar}>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            void run(async () => saveDraft(currentDraft), 'Draft saved.');
-          }}
-        >
-          Save draft
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            confirmOrRun(
-              { kind: 'publish' },
-              async () => {
-                await saveDraft(currentDraft);
-                await publish();
-              },
-              'Published.'
-            );
-          }}
-        >
-          {pending?.kind === 'publish' ? 'Click again to publish' : 'Publish'}
-        </button>
-        {data?.publishedVersion && <span>Live: version {data.publishedVersion}</span>}
-        {message && <span role="status">{message}</span>}
+    <div className={styles.shell}>
+      <nav className={styles.nav} aria-label="Sections">
+        <div className={styles.navHeading}>Sections</div>
+        {sectionEntries.map(([key]) => (
+          <button
+            key={key}
+            type="button"
+            className={styles.navItem}
+            aria-current={key === selectedKey ? 'true' : undefined}
+            onClick={() => {
+              setActiveKey(key);
+            }}
+          >
+            {sectionLabels[key] ?? key}
+          </button>
+        ))}
+        <div className={styles.navArtwork} aria-hidden="true">
+          <NavArtwork />
+        </div>
+      </nav>
+
+      <div className={styles.main}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>Landing page</h1>
+          <p className={styles.subtitle}>
+            Edit the words on the marketing site. Save draft keeps your changes private. Publish puts
+            them on the site.
+          </p>
+        </header>
+
+        {selected && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionName}>{sectionLabels[selected[0]] ?? selected[0]}</h2>
+              <p className={styles.sectionHint}>{sectionHints[selected[0]]}</p>
+            </div>
+            <div className={styles.sectionBody}>
+              <div className={styles.sectionColumns}>
+                <ContentEditor
+                  label=""
+                  value={selected[1]}
+                  onChange={(next) => {
+                    setDraft({ ...currentDraft, [selected[0]]: next });
+                  }}
+                />
+                <LivePreview name={selected[0]} value={selected[1]} />
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
-      {(isRecord(currentDraft) ? Object.entries(currentDraft) : []).map(([key, section]) => (
-        <section key={key} className={styles.section}>
-          <h3>{sectionLabels[key] ?? key}</h3>
-          <ContentEditor
-            label=""
-            value={section}
-            onChange={(next) => {
-              setDraft({ ...currentDraft, [key]: next });
-            }}
-          />
-        </section>
-      ))}
-
-      <h3>Published versions</h3>
-      {versions.length === 0 && <p>No published versions yet.</p>}
-      <ul className={styles.versions}>
-        {versions.map((item) => (
-          <li key={item.version}>
-            Version {item.version} by {item.publishedBy} at {item.createdAt}
-            {item.version !== data?.publishedVersion && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  confirmOrRun(
-                    { kind: 'rollback', version: item.version },
-                    async () => rollback(item.version),
-                    `Version ${item.version} is live.`
-                  );
-                }}
-              >
-                {pending?.kind === 'rollback' && pending.version === item.version
-                  ? 'Click again to make live'
-                  : 'Make live'}
-              </button>
+      <aside className={styles.side}>
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>Publish</h2>
+          <div className={styles.statusRow}>
+            {data?.publishedVersion ? (
+              <span className={styles.liveBadge}>Live: version {data.publishedVersion}</span>
+            ) : (
+              <span className={styles.draftBadge}>Not published yet</span>
             )}
-          </li>
-        ))}
-      </ul>
+            {message && (
+              <span role="status" className={styles.message}>
+                {message}
+              </span>
+            )}
+          </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              disabled={busy}
+              onClick={() => {
+                void run(async () => saveDraft(currentDraft), 'Draft saved.');
+              }}
+            >
+              Save draft
+            </button>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              disabled={busy}
+              onClick={() => {
+                confirmOrRun(
+                  { kind: 'publish' },
+                  async () => {
+                    await saveDraft(currentDraft);
+                    await publish();
+                  },
+                  'Published.'
+                );
+              }}
+            >
+              {publishLabel}
+            </button>
+          </div>
+        </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>Earlier versions</h2>
+          <p className={styles.sectionHint}>Each publish is kept. You can make an earlier one live again.</p>
+          {versions.length === 0 && <p className={styles.sectionHint}>No published versions yet.</p>}
+          <ul className={styles.versions}>
+            {versions.map((item) => (
+              <li key={item.version} className={styles.versionRow}>
+                <span>
+                  Version {item.version} by {item.publishedBy}
+                </span>
+                <span className={styles.sectionHint}>{item.createdAt}</span>
+                {item.version !== data?.publishedVersion && (
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    disabled={busy}
+                    onClick={() => {
+                      confirmOrRun(
+                        { kind: 'rollback', version: item.version },
+                        async () => rollback(item.version),
+                        `Version ${item.version} is live.`
+                      );
+                    }}
+                  >
+                    {pending?.kind === 'rollback' && pending.version === item.version
+                      ? 'Click again to make live'
+                      : 'Make live'}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </aside>
     </div>
   );
 }
 
+// Rendered inside the console shell, which provides the sidebar, topbar, error boundary and scrolling.
 function LandingPageEditor() {
   return (
     <>
-      <Topbar />
-      <AppBoundary>
-        <OverlayScrollbar>
-          <LandingPageEditorContent />
-        </OverlayScrollbar>
-      </AppBoundary>
+      <Helmet title="Landing page" />
+      <LandingPageEditorContent />
     </>
   );
 }

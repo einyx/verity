@@ -9,6 +9,7 @@ import Button from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
 import ColorPicker from '@/ds-components/ColorPicker';
 import FormField from '@/ds-components/FormField';
+import Select from '@/ds-components/Select';
 import Switch from '@/ds-components/Switch';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
 
@@ -18,6 +19,8 @@ import FormSectionTitle from '../../components/FormSectionTitle';
 
 import HideLogtoBrandingField from './HideLogtoBrandingField';
 import styles from './index.module.scss';
+import type { BrandingTemplateId } from './templates';
+import { brandingTemplates } from './templates';
 
 function BrandingForm() {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
@@ -37,10 +40,29 @@ function BrandingForm() {
   const isDarkModeEnabled = watch('color.isDarkModeEnabled');
   const primaryColor = watch('color.primaryColor');
   const darkPrimaryColor = watch('color.darkPrimaryColor');
+  // Show the template that matches the current values, so the dropdown reflects what is saved.
+  const selectedTemplate: BrandingTemplateId =
+    isDarkModeEnabled &&
+    primaryColor.toLowerCase() === brandingTemplates['meshx-dark'].primaryColor.toLowerCase()
+      ? 'meshx-dark'
+      : 'default';
 
   const calculatedDarkPrimaryColor = useMemo(() => {
     return generateDarkColor(primaryColor);
   }, [primaryColor]);
+
+  const handleSelectTemplate = useCallback(
+    (templateId?: BrandingTemplateId) => {
+      if (!templateId) {
+        return;
+      }
+      const template = brandingTemplates[templateId];
+      setValue('color.primaryColor', template.primaryColor, { shouldDirty: true });
+      setValue('color.isDarkModeEnabled', template.isDarkModeEnabled, { shouldDirty: true });
+      setValue('color.darkPrimaryColor', template.darkPrimaryColor, { shouldDirty: true });
+    },
+    [setValue]
+  );
 
   const handleResetColor = useCallback(() => {
     setValue('color.darkPrimaryColor', calculatedDarkPrimaryColor, { shouldDirty: true });
@@ -66,6 +88,17 @@ function BrandingForm() {
   return (
     <Card>
       <FormSectionTitle title="branding.title" />
+      <FormField title="sign_in_exp.color.template">
+        <Select<BrandingTemplateId>
+          value={selectedTemplate}
+          isReadOnly={isReadOnly}
+          options={[
+            { value: 'default', title: t('sign_in_exp.color.template_default') },
+            { value: 'meshx-dark', title: t('sign_in_exp.color.template_meshx_dark') },
+          ]}
+          onChange={handleSelectTemplate}
+        />
+      </FormField>
       <FormField title="sign_in_exp.color.primary_color">
         <Controller
           name="color.primaryColor"

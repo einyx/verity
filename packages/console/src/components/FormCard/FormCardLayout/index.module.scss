@@ -25,7 +25,14 @@ $column-width: calc((100% - 23 * $gutter-width) / 24);
     width: calc($column-width * 16 + $gutter-width * 15);
   }
 
-  @container (max-width: 800px) {
+  // Stack intro above form only when the card is genuinely narrow.
+  @container (max-width: 600px) {
+    .container {
+      padding: _.unit(4);
+    }
+  }
+
+  @container (max-width: 760px) {
     .container {
       flex-direction: column;
       justify-content: unset;

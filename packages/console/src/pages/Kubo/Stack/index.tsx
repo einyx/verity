@@ -17,6 +17,7 @@ import Table from '@/ds-components/Table';
 import Tag from '@/ds-components/Tag';
 import TextInput from '@/ds-components/TextInput';
 import useApi, { type RequestError } from '@/hooks/use-api';
+import useTenantPathname from '@/hooks/use-tenant-pathname';
 
 import styles from '../index.module.scss';
 
@@ -183,7 +184,8 @@ function KeyValueTable({ rows }: { readonly rows: KeyValueRow[] }) {
 
 function Stack() {
   const { namespace = '', name = '' } = useParams();
-  const navigate = useNavigate();
+  // Tenant-aware navigate, so the redirect stays under /<tenant>/console instead of the marketing root.
+  const { navigate } = useTenantPathname();
   const api = useApi();
   const { data, error, isLoading, mutate } = useSWR<KuboStackDetail, RequestError>(
     namespace && name ? `api/kubo/stacks/${namespace}/${name}` : null

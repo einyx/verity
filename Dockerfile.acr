@@ -24,6 +24,7 @@ COPY packages/api/package.json packages/api/package.json
 COPY packages/app-insights/package.json packages/app-insights/package.json
 COPY packages/cli/package.json packages/cli/package.json
 COPY packages/tenant-seed/package.json packages/tenant-seed/package.json
+COPY packages/cloud/package.json packages/cloud/package.json
 COPY packages/connectors/connector-acs-email/package.json packages/connectors/connector-acs-email/package.json
 COPY packages/connectors/connector-alipay-native/package.json packages/connectors/connector-alipay-native/package.json
 COPY packages/connectors/connector-alipay-web/package.json packages/connectors/connector-alipay-web/package.json

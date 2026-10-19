@@ -85,26 +85,37 @@
 .wordmark .name { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; }
 .wordmark .tag { font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
 
-.controls { display: flex; gap: 12px; flex-wrap: wrap; }
+/* The toolbar shares the page gutter (20px) with the banners, tiles and grid, so its tabs line up with them. */
+.kshows .kshows-toolbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 16px 20px 0;
+}
+.controls { display: flex; gap: 12px; flex-wrap: wrap; min-width: 0; }
 
 /* Filter toggles share the namespace chips' outline style: white buttons on a 1px line, 6px radius. */
+/* Underline tabs, matching the console's TabNav: label-weight text, a 2px accent rule under the
+   active tab, and a hairline across the group. Groups scroll sideways instead of wrapping. */
 .kshows .seg {
-  display: inline-flex; gap: 6px; flex-wrap: wrap;
+  display: flex; gap: 14px; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
 }
+.kshows .seg::-webkit-scrollbar { display: none; }
 .kshows .seg button {
-  display: inline-flex; align-items: center; height: 28px; padding: 0 10px;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  position: relative; flex: none;
+  padding: 6px 0 8px;
   font-family: var(--sans); font-size: 13px; font-weight: 500; line-height: 1;
   white-space: nowrap; color: var(--ink-2);
-  transition: background-color 150ms, color 150ms, border-color 150ms;
+  transition: color 150ms, background-color 150ms;
 }
 .kshows .seg button:hover:not(:disabled) { color: var(--ink); background: var(--surface-2); }
-.kshows .seg button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 50%, transparent); outline-offset: 0; }
-.kshows .seg button[aria-pressed="true"] {
-  color: var(--ink); border-color: var(--ink-2);
-  box-shadow: inset 0 0 0 1px var(--ink-2);
+.kshows .seg button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.kshows .seg button[aria-pressed="true"] { color: var(--color-text-link, var(--brand)); }
+.kshows .seg button[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px;
+  border-top: 2px solid var(--color-text-link, var(--brand)); border-radius: 2px 2px 0 0;
 }
-.kshows .seg button:disabled { opacity: 0.5; pointer-events: none; }
+.kshows .seg button:disabled { opacity: 0.45; pointer-events: none; }
 
 .spacer { flex: 1; }
 
@@ -115,24 +126,28 @@
 
 /* ---------- banners ---------- */
 
-.banners { display: grid; gap: 1px; }
+.banners { display: grid; gap: 8px; padding: 14px 20px 0; }
 .banner {
-  padding: 8px 20px; font-size: 13px; color: var(--ink-2);
-  background: color-mix(in srgb, var(--warn) 7%, var(--bg));
-  border-left: 3px solid var(--warn);
+  padding: 10px 14px; font-size: 13px; line-height: 1.5; color: var(--ink-2);
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  border-radius: 8px;
 }
 .banner strong { color: var(--ink); font-weight: 600; }
 
 /* ---------- summary strip ---------- */
 
+/* Up to five tiles on one row; fewer tiles (no cost, no disk) still fill the row. */
 .summary {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px; padding: 16px 20px 4px;
 }
 .stat {
+  display: flex; flex-direction: column; min-width: 0;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-  padding: 10px 14px 12px;
+  padding: 12px 14px;
 }
+.stat .sub { margin-top: auto; padding-top: 6px; overflow-wrap: anywhere; }
 .stat .k {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ink-3);
@@ -352,7 +367,11 @@
 
 @media (max-width: 640px) {
   .topbar { gap: 10px; }
-  .summary { grid-template-columns: repeat(2, 1fr); }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kshows .kshows-toolbar { padding: 12px 16px 0; }
+  .controls { flex-direction: column; gap: 4px; width: 100%; }
+  .banners, .summary, .legend { padding-left: 16px; padding-right: 16px; }
+  .grid { padding-left: 16px; padding-right: 16px; }
   .grid { grid-template-columns: 1fr; }
 }
 

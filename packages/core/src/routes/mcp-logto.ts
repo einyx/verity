@@ -11,6 +11,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
+import { EnvSet } from '#src/env-set/index.js';
+
 import { callLogtoTool, enabledLogtoMcpTools } from './mcp-logto-tools.js';
 import type { AnonymousRouter, RouterInitArgs } from './types.js';
 
@@ -28,7 +30,7 @@ const createLogtoMcpServer = (token: string, apiBase: string): Server => {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const tools: Tool[] = enabledLogtoMcpTools().map((tool) => ({
+    const tools: Tool[] = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).map((tool) => ({
       name: tool.name,
       description: tool.description,
       inputSchema: {
@@ -42,7 +44,9 @@ const createLogtoMcpServer = (token: string, apiBase: string): Server => {
   });
 
   server.setRequestHandler(CallToolRequestSchema, async ({ params }): Promise<CallToolResult> => {
-    const tool = enabledLogtoMcpTools().find(({ name }) => name === params.name);
+    const tool = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+      ({ name }) => name === params.name
+    );
 
     if (!tool) {
       return { content: [{ type: 'text', text: `Unknown tool "${params.name}"` }], isError: true };
@@ -85,13 +89,13 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
     ctx.body = {
       enabled: true,
       authMode: 'bearer token',
-      tools: enabledLogtoMcpTools().map(({ name }) => name),
+      tools: enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).map(({ name }) => name),
     };
   });
 
   router.get('/mcp/tools', async (ctx) => {
     ctx.body = {
-      tools: enabledLogtoMcpTools().map((tool) => ({
+      tools: enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).map((tool) => ({
         name: tool.name,
         description: tool.description,
         inputSchema: {
@@ -115,7 +119,9 @@ export default function mcpLogtoRoutes<T extends AnonymousRouter>(
     const raw = await text(ctx.req);
     const parsed = callBody.safeParse(raw ? JSON.parse(raw) : {});
     const body = parsed.success ? parsed.data : {};
-    const tool = enabledLogtoMcpTools().find(({ name }) => name === body.name);
+    const tool = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+      ({ name }) => name === body.name
+    );
 
     if (!tool) {
       ctx.status = 400;

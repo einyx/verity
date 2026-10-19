@@ -450,10 +450,14 @@ export class ProvisionLibrary {
       (invitation) => invitation.status === OrganizationInvitationStatus.Pending
     );
 
+    // The first user of the admin tenant is its admin, on Cloud too. Part of the landing page CMS feature.
+    const isFirstAdminTenantUser =
+      isAdminTenant && EnvSet.values.isDevFeaturesEnabled && !(await hasActiveUsers());
     const initialUserRoles = this.getInitialUserRoles(
       isAdminTenant,
       isCreatingFirstAdminUser,
-      isCloud
+      isCloud,
+      isFirstAdminTenantUser
     );
 
     // Skip onboarding flow if the new user has pending Cloud invitations
@@ -537,10 +541,12 @@ export class ProvisionLibrary {
   private readonly getInitialUserRoles = (
     isInAdminTenant: boolean,
     isCreatingFirstAdminUser: boolean,
-    isCloud: boolean
+    isCloud: boolean,
+    isFirstAdminTenantUser: boolean
   ) =>
     conditionalArray<string>(
       isInAdminTenant && AdminTenantRole.User,
+      isFirstAdminTenantUser && AdminTenantRole.Admin,
       isCreatingFirstAdminUser && !isCloud && defaultManagementApiAdminName // OSS uses the legacy Management API user role
     );
 

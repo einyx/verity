@@ -4,6 +4,8 @@ import { generateStandardId } from '@logto/shared';
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 
+import { EnvSet } from '#src/env-set/index.js';
+
 import { enabledLogtoMcpTools, type LogtoMcpTool } from './mcp-logto-tools.js';
 
 // Ask AI writes go through a pending action. The server stores the exact request body when the
@@ -92,7 +94,9 @@ export const proposePendingAction = async ({
   now: Date;
   newId?: () => string;
 }): Promise<ProposeResult> => {
-  const found = enabledLogtoMcpTools().find(({ name }) => name === tool);
+  const found = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+    ({ name }) => name === tool
+  );
 
   if (!found || found.method !== 'POST') {
     return { ok: false, code: 'unknown_tool' };
@@ -166,7 +170,9 @@ export const confirmPendingAction = async ({
     return { ok: false, code: 'not_pending' };
   }
 
-  const tool = enabledLogtoMcpTools().find(({ name }) => name === claimed.tool);
+  const tool = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+    ({ name }) => name === claimed.tool
+  );
 
   if (!tool) {
     await store.setOutcome(id, 'cancelled', { reason: 'unknown_tool' });

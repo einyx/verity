@@ -131,7 +131,6 @@ describe('submit action', () => {
 
       await submitInteraction(interaction, ctx, tenant);
       expect(generateUserId).toBeCalled();
-      expect(hasActiveUsers).not.toBeCalled();
 
       expect(insertUser).toBeCalledWith(
         {
@@ -161,7 +160,6 @@ describe('submit action', () => {
 
       await submitInteraction(interaction, ctx, tenant);
       expect(generateUserId).not.toBeCalled();
-      expect(hasActiveUsers).not.toBeCalled();
 
       expect(insertUser).toBeCalledWith(
         {
@@ -189,7 +187,6 @@ describe('submit action', () => {
 
       await submitInteraction(interaction, ctx, tenant);
       expect(generateUserId).toBeCalled();
-      expect(hasActiveUsers).not.toBeCalled();
 
       expect(insertUser).toBeCalledWith(
         {

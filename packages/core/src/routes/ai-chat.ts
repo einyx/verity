@@ -2,6 +2,7 @@ import { extractBearerToken } from '@logto/mcp-portal';
 import { got, HTTPError } from 'got';
 import { array, object, string, z } from 'zod';
 
+import { EnvSet } from '#src/env-set/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 
 import {
@@ -142,7 +143,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
 
       const { messages } = ctx.guard.body;
       // Writes are offered as tools too, but they only become pending actions that the user confirms.
-      const tools = enabledLogtoMcpTools();
+      const tools = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled);
       const prompt = buildSystemPrompt(tools);
       const token = bearer(ctx);
       const store = createPendingActionStore(tenant.envSet.pool);

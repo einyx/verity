@@ -31,7 +31,7 @@ const { enabledLogtoMcpTools } = await import('./mcp-logto-tools.js');
 
 describe('buildSystemPrompt', () => {
   it('names each tool the server will run, with its description', () => {
-    const tools = enabledLogtoMcpTools();
+    const tools = enabledLogtoMcpTools(true);
     const prompt = buildSystemPrompt(tools);
 
     for (const { name, description } of tools) {

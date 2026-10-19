@@ -78,10 +78,12 @@ const parseBindMfas = ({
 const getInitialUserRoles = (
   isInAdminTenant: boolean,
   isCreatingFirstAdminUser: boolean,
-  isCloud: boolean
+  isCloud: boolean,
+  isFirstAdminTenantUser: boolean
 ) =>
   conditionalArray<string>(
     isInAdminTenant && AdminTenantRole.User,
+    isFirstAdminTenantUser && AdminTenantRole.Admin,
     isCreatingFirstAdminUser && !isCloud && defaultManagementApiAdminName // OSS uses the legacy Management API user role
   );
 
@@ -122,6 +124,9 @@ async function handleSubmitRegister(
     isInAdminTenant &&
     String(client_id) === adminConsoleApplicationId &&
     !(await hasActiveUsers());
+  // The first user of the admin tenant is its admin, on Cloud too. Part of the landing page CMS feature.
+  const isFirstAdminTenantUser =
+    isInAdminTenant && EnvSet.values.isDevFeaturesEnabled && !(await hasActiveUsers());
 
   // If it's Logto Cloud, Check if the new user has any pending invitations, if yes, skip onboarding flow.
   const invitations =
@@ -164,7 +169,12 @@ async function handleSubmitRegister(
       ),
     },
     {
-      roleNames: getInitialUserRoles(isInAdminTenant, isCreatingFirstAdminUser, isCloud),
+      roleNames: getInitialUserRoles(
+        isInAdminTenant,
+        isCreatingFirstAdminUser,
+        isCloud,
+        isFirstAdminTenantUser
+      ),
       isInteractive: true,
     }
   );

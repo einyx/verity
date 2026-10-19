@@ -11,15 +11,14 @@ import Logo from '@/assets/images/logo.svg?react';
 import MeshxMark from '@/assets/images/meshx-mark.svg?react';
 import { githubReleasesLink } from '@/consts';
 import { isCloud } from '@/consts/env';
-import DynamicT from '@/ds-components/DynamicT';
 import Spacer from '@/ds-components/Spacer';
 import TextLink from '@/ds-components/TextLink';
 import useDocumentationUrl from '@/hooks/use-documentation-url';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 import { onKeyDownHandler } from '@/utils/a11y';
 
-import ContactModal from './ContactModal';
 import AiChat from './AiChat';
+import ContactModal from './ContactModal';
 import EnterpriseSubscriptions from './EnterpriseSubscriptions';
 import TenantSelector from './TenantSelector';
 import UserInfo from './UserInfo';
@@ -79,19 +78,21 @@ export default Topbar;
 
 function DocumentButton() {
   const { documentationSiteUrl } = useDocumentationUrl();
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   return (
     <TextLink
       href={documentationSiteUrl}
       targetBlank="noopener"
       className={styles.button}
+      aria-label={t('topbar.docs')}
+      title={t('topbar.docs')}
       icon={<DocumentIcon className={styles.icon} />}
-    >
-      <DynamicT forKey="topbar.docs" />
-    </TextLink>
+    />
   );
 }
 
 function HelpButton() {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const [isContactOpen, setIsContactOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +103,8 @@ function HelpButton() {
         tabIndex={0}
         className={styles.button}
         role="button"
+        aria-label={t('topbar.help')}
+        title={t('topbar.help')}
         onKeyDown={onKeyDownHandler(() => {
           setIsContactOpen(true);
         })}
@@ -110,9 +113,6 @@ function HelpButton() {
         }}
       >
         <ContactIcon className={styles.icon} />
-        <span>
-          <DynamicT forKey="topbar.help" />
-        </span>
       </div>
       <ContactModal
         isOpen={isContactOpen}

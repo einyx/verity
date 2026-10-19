@@ -23,7 +23,7 @@ export const seedProductionSubscription = async (
       tenant_id, plan_id, status, is_enterprise_plan, is_dev_plan, has_billing_customer,
       current_period_start, current_period_end, quota, system_limit
     ) values (
-      ${tenantId}, 'pro-202509', 'active', false, false, false,
+      ${tenantId}, 'pro', 'active', false, false, false,
       now(), now() + interval '1 year', ${quota}::jsonb, ${quota}::jsonb
     )
   `);

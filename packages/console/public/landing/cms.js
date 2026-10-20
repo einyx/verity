@@ -34,7 +34,8 @@
     }
   };
 
-  const isPreview = new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
+  const isPreview =
+    new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
 
   if (!isPreview) {
     fetch('/api/landing-page', { headers: { accept: 'application/json' } })
@@ -65,7 +66,14 @@
 
   // Text marked for the CMS is editable in place. Links and buttons are not navigated to in preview.
   for (const el of document.querySelectorAll('[data-cms]')) {
-    el.setAttribute('contenteditable', 'plaintext-only');
+    // plaintext-only is not supported by every browser, so plain editing is used and pasting is
+    // limited to plain text, which keeps the stored copy free of formatting.
+    el.setAttribute('contenteditable', 'true');
+    el.addEventListener('paste', (event) => {
+      event.preventDefault();
+      const text = event.clipboardData?.getData('text/plain') ?? '';
+      document.execCommand('insertText', false, text);
+    });
     el.addEventListener('input', () => {
       window.parent.postMessage(
         { type: 'meshx-cms-edit', path: el.dataset.cms, value: el.textContent },

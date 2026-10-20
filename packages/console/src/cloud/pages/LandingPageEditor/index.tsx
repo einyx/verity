@@ -265,21 +265,21 @@ function LandingPageEditorContent() {
           <div className={styles.viewToggle} role="group" aria-label="Preview">
             <button
               type="button"
-              aria-pressed={!showWholePage}
-              onClick={() => {
-                setShowWholePage(false);
-              }}
-            >
-              Edit one section
-            </button>
-            <button
-              type="button"
               aria-pressed={showWholePage}
               onClick={() => {
                 setShowWholePage(true);
               }}
             >
               Preview whole page
+            </button>
+            <button
+              type="button"
+              aria-pressed={!showWholePage}
+              onClick={() => {
+                setShowWholePage(false);
+              }}
+            >
+              Edit one section
             </button>
           </div>
 

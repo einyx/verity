@@ -1,5 +1,5 @@
 import {
-  buildDocsQuery,
+  buildDocumentsQuery,
   chunkSection,
   createDocsSearch,
   formatDocsContext,
@@ -24,10 +24,10 @@ const transcripts = {
   ],
 } as const;
 
-describe('buildDocsQuery over a conversation', () => {
+describe('buildDocumentsQuery over a conversation', () => {
   it('keeps the topic when the visitor answers with a short reply', () => {
     const { shortRepliesOnTopic } = transcripts;
-    const query = buildDocsQuery(shortRepliesOnTopic.slice(0, 2), 'ok');
+    const query = buildDocumentsQuery(shortRepliesOnTopic.slice(0, 2), 'ok');
 
     expect(query).toContain('Dashboards.AI pinned tiles');
     expect(query).toContain('ok');
@@ -35,7 +35,7 @@ describe('buildDocsQuery over a conversation', () => {
 
   it('never sends an email address or phone number for embedding', () => {
     const { topicSwitchIntoLeadCapture } = transcripts;
-    const query = buildDocsQuery(
+    const query = buildDocumentsQuery(
       topicSwitchIntoLeadCapture.slice(0, -1),
       "I'm Dana Reyes at Acme, dana@acme.com, call +44 7700 900123"
     );
@@ -46,8 +46,8 @@ describe('buildDocsQuery over a conversation', () => {
   });
 
   it('returns nothing when a turn holds only contact details', () => {
-    expect(buildDocsQuery([], 'dana@acme.com')).toBe('');
-    expect(buildDocsQuery([], '+44 7700 900123')).toBe('');
+    expect(buildDocumentsQuery([], 'dana@acme.com')).toBe('');
+    expect(buildDocumentsQuery([], '+44 7700 900123')).toBe('');
   });
 
   it('uses only the last three visitor messages', () => {
@@ -57,7 +57,7 @@ describe('buildDocsQuery over a conversation', () => {
       { role: 'user', content: 'second topic' },
       { role: 'user', content: 'third topic' },
     ];
-    const query = buildDocsQuery(history, 'fourth topic');
+    const query = buildDocumentsQuery(history, 'fourth topic');
 
     expect(query).not.toContain('first topic');
     expect(query.split('\n')).toEqual(['second topic', 'third topic', 'fourth topic']);

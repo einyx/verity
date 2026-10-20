@@ -26,18 +26,21 @@ type FetchText = (url: string) => Promise<string>;
 
 /** Splits the full export into sections at each top-level heading. */
 export const parseSections = (fullText: string): Array<{ title: string; body: string }> =>
-  fullText.split(/^# /m).slice(1).flatMap((section) => {
-    const newline = section.indexOf('\n');
-    const title = (newline === -1 ? section : section.slice(0, newline)).trim();
-    const body = newline === -1 ? '' : section.slice(newline + 1).trim();
+  fullText
+    .split(/^# /m)
+    .slice(1)
+    .flatMap((section) => {
+      const newline = section.indexOf('\n');
+      const title = (newline === -1 ? section : section.slice(0, newline)).trim();
+      const body = newline === -1 ? '' : section.slice(newline + 1).trim();
 
-    return skippedSections.has(title) || !body ? [] : [{ title, body }];
-  });
+      return skippedSections.has(title) || !body ? [] : [{ title, body }];
+    });
 
 /** Maps each section title to its page URL, from the index's `- [Title](https://…/page.md)` lines. */
 export const parseIndexUrls = (indexText: string): Map<string, string> =>
   new Map(
-    [...indexText.matchAll(/^- \[([^\]]+)\]\((https:\/\/docs\.meshx\.io\/[^)\s]+?)\.md\)/gm)].map(
+    [...indexText.matchAll(/^- \[([^\]]+)]\((https:\/\/docs\.meshx\.io\/[^\s)]+?)\.md\)/gm)].map(
       ([, title, url]) => [title ?? '', url ?? docsOrigin]
     )
   );
@@ -175,7 +178,7 @@ const redactContactDetails = (text: string) =>
     .replaceAll(/\s+/g, ' ')
     .trim();
 
-export const buildDocsQuery = (
+export const buildDocumentsQuery = (
   history: ReadonlyArray<{ readonly role: string; readonly content: string }>,
   message: string
 ): string =>
@@ -220,7 +223,7 @@ const fetchText: FetchText = async (url) => {
 };
 
 /** Production search. Uses the same OpenAI settings as the chat; without a key it finds nothing. */
-export const createProductionDocsSearch = () => {
+export const createProductionDocumentsSearch = () => {
   const embed: Embed = async (inputs) => {
     const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
     const response = await fetch(`${endpoint}/embeddings`, {

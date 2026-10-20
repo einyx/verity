@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import classNames from 'classnames';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
@@ -80,6 +87,7 @@ function Sidebar() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref mirrors the latest width so the pointer handler reads it without re-binding
     widthRef.current = width;
   }, [width]);
 
@@ -124,18 +132,15 @@ function Sidebar() {
       style={{ width: displayWidth, transition: isDragging ? 'none' : 'width 200ms ease-out' }}
     >
       {/* Like foundation-frontend's sidebar: the nav still scrolls, but no scrollbar is drawn. */}
-      <OverlayScrollbar
-        className={styles.menu}
-        options={{ scrollbars: { visibility: 'hidden' } }}
-      >
+      <OverlayScrollbar className={styles.menu} options={{ scrollbars: { visibility: 'hidden' } }}>
         <div className={classNames(styles.menuContent, isCollapsed && styles.menuContentCollapsed)}>
           <div className={classNames(styles.toggleRow, isCollapsed && styles.toggleRowCollapsed)}>
             <button
               type="button"
               className={styles.toggle}
-              onClick={toggleCollapsed}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-expanded={!isCollapsed}
+              onClick={toggleCollapsed}
             >
               {isCollapsed ? '›' : '‹'}
             </button>
@@ -149,7 +154,7 @@ function Sidebar() {
                       key={title}
                       titleKey={title}
                       icon={<Icon />}
-                      isActive={match('/' + (path ?? getPath(title)))}
+                      isActive={match('/' + (path ?? getPath(title)), true)}
                       modal={modal}
                       externalLink={externalLink}
                       path={path}
@@ -163,18 +168,20 @@ function Sidebar() {
         </div>
       </OverlayScrollbar>
       {!isCollapsed && (
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize sidebar"
-        aria-valuemin={collapsedWidth}
-        aria-valuemax={maxWidth}
-        aria-valuenow={displayWidth}
-        tabIndex={0}
-        className={styles.resizeHandle}
-        onPointerDown={handlePointerDown}
-        onKeyDown={handleKeyDown}
-      />
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a focusable separator is the ARIA window-splitter pattern and needs pointer and keyboard handling
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          aria-valuemin={collapsedWidth}
+          aria-valuemax={maxWidth}
+          aria-valuenow={displayWidth}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the separator must be focusable so keyboard users can resize, per the ARIA window-splitter pattern
+          tabIndex={0}
+          className={styles.resizeHandle}
+          onPointerDown={handlePointerDown}
+          onKeyDown={handleKeyDown}
+        />
       )}
     </div>
   );

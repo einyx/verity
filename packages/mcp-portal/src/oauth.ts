@@ -93,7 +93,7 @@ export const buildAuthorizationUrl = (
   }
 ) => {
   const url = new URL(metadata.authorization_endpoint);
-  url.search = new URLSearchParams({
+  const search = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -103,7 +103,7 @@ export const buildAuthorizationUrl = (
     resource,
   }).toString();
 
-  return url.toString();
+  return `${url.toString()}${url.search ? '&' : '?'}${search}`;
 };
 
 const tokenResponse = z.object({
@@ -163,7 +163,7 @@ const postToken = async (metadata: AuthorizationServerMetadata, params: Record<s
     headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
     body: new URLSearchParams(params).toString(),
   });
-  const body: unknown = await response.json().catch(() => undefined);
+  const body: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
     throw new TokenRequestError(response.status);

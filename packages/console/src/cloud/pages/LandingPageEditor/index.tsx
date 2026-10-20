@@ -5,7 +5,7 @@ import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landi
 
 import ContentEditor, { isRecord } from './ContentEditor';
 import NavArtwork from './NavArtwork';
-import LivePreview from './Preview';
+import Preview from './Preview';
 import styles from './index.module.scss';
 
 // Editor for the marketing site's copy. Changes save to the draft; nothing reaches the site until it
@@ -131,8 +131,8 @@ function LandingPageEditorContent() {
   const selected = sectionEntries.find(([key]) => key === selectedKey);
 
   return (
-    // `full-width-page` opts this page out of the console's centred width cap.
-    <div className={`${styles.shell} full-width-page`}>
+    // `fullWidthPage` opts this page out of the console's centred width cap.
+    <div className={`${styles.shell} fullWidthPage`}>
       <nav className={styles.nav} aria-label="Sections">
         <div className={styles.navHeading}>Sections</div>
         {sectionEntries.map(([key]) => (
@@ -283,7 +283,7 @@ function LandingPageEditorContent() {
                 <div className={styles.sectionHeader}>
                   <h2 className={styles.sectionName}>{sectionLabels[key] ?? key}</h2>
                 </div>
-                <LivePreview name={key} value={value} onSendChat={sendChat} />
+                <Preview name={key} value={value} onSendChat={sendChat} />
               </section>
             ))}
 
@@ -302,7 +302,7 @@ function LandingPageEditorContent() {
                       setDraft({ ...currentDraft, [selected[0]]: next });
                     }}
                   />
-                  <LivePreview name={selected[0]} value={selected[1]} onSendChat={sendChat} />
+                  <Preview name={selected[0]} value={selected[1]} onSendChat={sendChat} />
                 </div>
               </div>
             </section>

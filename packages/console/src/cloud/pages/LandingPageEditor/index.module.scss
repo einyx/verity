@@ -56,7 +56,7 @@
   align-items: center;
   width: 100%;
   padding: 8px 12px;
-  border: 0;
+  border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--color-text);
@@ -91,7 +91,7 @@
 .title {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-text);
 }
 
@@ -153,10 +153,6 @@
   align-items: start;
 }
 
-.main {
-  min-width: 0;
-}
-
 .card {
   display: flex;
   flex-direction: column;
@@ -191,7 +187,7 @@
   white-space: nowrap;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 50%;
     cursor: not-allowed;
   }
 }
@@ -208,14 +204,14 @@
   font-weight: 600;
   cursor: pointer;
 
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+
   &:hover:not(:disabled) {
     background: var(--color-primary-pressed);
     border-color: var(--color-primary-pressed);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 }
 
@@ -231,13 +227,13 @@
   font-weight: 600;
   cursor: pointer;
 
-  &:hover:not(:disabled) {
-    background: var(--color-layer-2);
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  &:hover:not(:disabled) {
+    background: var(--color-layer-2);
   }
 }
 
@@ -381,7 +377,7 @@
   gap: 6px;
 
   /* The field name reads as a label; the hint sits under it, muted. */
-  & > span {
+  > span {
     font-size: 14px;
     font-weight: 600;
     color: var(--color-text);
@@ -409,6 +405,12 @@
   }
 }
 
+.hint {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
 /* A checkbox with its label and hint, for on/off switches in the content. */
 .checkField {
   display: flex;
@@ -425,12 +427,6 @@
   .hint {
     flex-basis: 100%;
   }
-}
-
-.hint {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--color-text-secondary);
 }
 
 .longText {
@@ -472,40 +468,43 @@
   align-items: start;
 }
 
+/* The live preview: one card styled like the marketing site, with its fonts, warm neutrals and brand red. */
 .preview {
   position: sticky;
   top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px;
-  border: 1px dashed var(--color-border);
-  border-radius: 12px;
-  background: var(--color-layer-2);
+  gap: 20px;
+  padding: 32px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 16px;
+  background: oklch(98.232% 0.003 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
 }
 
 .previewLabel {
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
+  letter-spacing: 0.08em;
+  color: oklch(48.449% 0.009 99.035deg);
 }
 
 .previewStack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .previewHeading {
   margin: 0;
   font-family: 'Stack Sans Headline', system-ui, sans-serif;
-  font-size: 30px;
+  font-size: 48px;
   font-weight: 300;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: oklch(21.2518% 0.004762 17.533);
+  line-height: 48px;
+  letter-spacing: -0.031rem;
+  color: oklch(21.252% 0.005 17.533deg);
 }
 
 .previewText {
@@ -513,18 +512,22 @@
   font-family: 'Stack Sans Text', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: oklch(48.4486% 0.009487 99.035);
+  color: oklch(48.449% 0.009 99.035deg);
 }
 
 .previewButton {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
   font-family: 'Stack Sans Text', system-ui, sans-serif;
-  padding: 12px 22px;
-  border-radius: 999px;
-  background: oklch(57.5781% 0.212322 32.209);
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: oklch(57.578% 0.212 32.209deg);
   color: oklch(100% 0 none);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 @media (max-width: 1280px) {
@@ -541,6 +544,7 @@
 @font-face {
   font-family: 'Stack Sans Headline';
   src: url('/console/landing/_astro/stack-sans-headline-latin-wght-normal.CFGVyMar.woff2') format('woff2');
+  font-style: normal;
   font-weight: 200 800;
   font-display: swap;
 }
@@ -548,59 +552,9 @@
 @font-face {
   font-family: 'Stack Sans Text';
   src: url('/console/landing/_astro/stack-sans-text-latin-wght-normal.cHS98N20.woff2') format('woff2');
+  font-style: normal;
   font-weight: 200 800;
   font-display: swap;
-}
-
-.preview {
-  background: oklch(98.2324% 0.002858 84.559);
-  border: 1px solid oklch(88.5464% 0.007127 88.648);
-  border-radius: 16px;
-  color: oklch(21.2518% 0.004762 17.533);
-  padding: 32px;
-  gap: 20px;
-}
-
-.previewLabel {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: oklch(48.4486% 0.009487 99.035);
-}
-
-.previewStack {
-  gap: 14px;
-}
-
-.previewHeading {
-  font-family: 'Stack Sans Headline', system-ui, sans-serif;
-  font-size: 48px;
-  font-weight: 300;
-  line-height: 48px;
-  letter-spacing: -0.03125rem;
-  color: oklch(21.2518% 0.004762 17.533);
-}
-
-.previewText {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  color: oklch(48.4486% 0.009487 99.035);
-}
-
-.previewButton {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 24px;
-  border-radius: 6px;
-  background: oklch(57.5781% 0.212322 32.209);
-  color: oklch(100% 0 none);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
 }
 
 .previewActions {
@@ -616,7 +570,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  border: 1px solid oklch(88.5464% 0.007127 88.648);
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
   border-radius: 12px;
   background: oklch(100% 0 none);
   font-family: 'Stack Sans Text', system-ui, sans-serif;
@@ -634,21 +588,21 @@
 
 .chatBubbleAssistant {
   align-self: flex-start;
-  background: oklch(96% 0.004 84.559);
-  color: oklch(21.2518% 0.004762 17.533);
+  background: oklch(96% 0.004 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
 }
 
 .chatBubbleUser {
   align-self: flex-end;
-  background: oklch(57.5781% 0.212322 32.209);
+  background: oklch(57.578% 0.212 32.209deg);
   color: oklch(100% 0 none);
 }
 
 .chatBubbleMuted {
   align-self: stretch;
   max-width: none;
-  color: oklch(48.4486% 0.009487 99.035);
-  background: oklch(96% 0.004 84.559);
+  color: oklch(48.449% 0.009 99.035deg);
+  background: oklch(96% 0.004 84.559deg);
 }
 
 .chatInput {
@@ -657,15 +611,15 @@
   justify-content: space-between;
   height: 40px;
   padding: 0 6px 0 14px;
-  border: 1px solid oklch(88.5464% 0.007127 88.648);
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
   border-radius: 999px;
-  color: oklch(48.4486% 0.009487 99.035);
+  color: oklch(48.449% 0.009 99.035deg);
 }
 
 .chatField {
   flex: 1;
   min-width: 0;
-  border: 0;
+  border: none;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -673,22 +627,21 @@
 }
 
 .chatSend {
-  border: 0;
+  border: none;
   cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: oklch(57.5781% 0.212322 32.209);
+  background: oklch(57.578% 0.212 32.209deg);
   color: oklch(100% 0 none);
+
+  &:disabled {
+    opacity: 40%;
+    cursor: not-allowed;
+  }
 }
 
 .viewToggle {
@@ -702,7 +655,7 @@
 
   button {
     padding: 6px 12px;
-    border: 0;
+    border: none;
     border-radius: 7px;
     background: transparent;
     font: inherit;

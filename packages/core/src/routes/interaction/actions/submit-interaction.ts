@@ -197,6 +197,18 @@ async function handleSubmitRegister(
     });
   }
 
+  // The admin console's token is issued for the admin tenant's organization, which only carries scopes
+  // for members with an organization role. Part of the landing page CMS feature.
+  if (isFirstAdminTenantUser) {
+    const adminOrganizationId = getTenantOrganizationId(adminTenantId);
+    await organizations.relations.users.insert({ organizationId: adminOrganizationId, userId: id });
+    await organizations.relations.usersRoles.insert({
+      organizationId: adminOrganizationId,
+      organizationRoleId: getTenantRole(TenantRole.Admin).id,
+      userId: id,
+    });
+  }
+
   await assignInteractionResults(ctx, provider, { login: { accountId: id } });
 
   ctx.assignReleaseOnSuccessInteractionHookResult({ userId: id });

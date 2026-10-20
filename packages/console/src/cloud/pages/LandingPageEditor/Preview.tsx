@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { isRecord } from './ContentEditor';
 import styles from './index.module.scss';
@@ -37,6 +37,7 @@ function PreviewNode({ name, value }: NodeProps) {
     return (
       <div className={styles.previewStack}>
         {value.map((item: unknown, index) => (
+          // eslint-disable-next-line react/no-array-index-key -- list items are static draft copy, so the index is stable
           <PreviewNode key={`${name}-${index}`} name={name} value={item} />
         ))}
       </div>
@@ -45,28 +46,25 @@ function PreviewNode({ name, value }: NodeProps) {
 
   if (isRecord(value)) {
     // Consecutive links sit in one row, as the site lays out its button pairs.
-    const rows: ReactNode[] = [];
-    let links: ReactNode[] = [];
-    const flush = () => {
-      if (links.length > 0) {
-        rows.push(
-          <div key={`actions-${rows.length}`} className={styles.previewActions}>
-            {links}
-          </div>
-        );
-        links = [];
+    type Segment = { readonly isLinks: boolean; readonly items: Array<[string, unknown]> };
+    const segments = Object.entries(value).reduce<Segment[]>((previous, [key, child]) => {
+      const last = previous.at(-1);
+      if (isLink(child) && last?.isLinks) {
+        return [...previous.slice(0, -1), { isLinks: true, items: [...last.items, [key, child]] }];
       }
-    };
+      return [...previous, { isLinks: isLink(child), items: [[key, child]] }];
+    }, []);
 
-    for (const [key, child] of Object.entries(value)) {
-      if (isLink(child)) {
-        links.push(<PreviewNode key={key} name={key} value={child} />);
-      } else {
-        flush();
-        rows.push(<PreviewNode key={key} name={key} value={child} />);
-      }
-    }
-    flush();
+    const rows = segments.map(({ isLinks, items }) => {
+      const nodes = items.map(([key, child]) => <PreviewNode key={key} name={key} value={child} />);
+      return isLinks ? (
+        <div key={`actions-${items[0]?.[0]}`} className={styles.previewActions}>
+          {nodes}
+        </div>
+      ) : (
+        nodes
+      );
+    });
 
     return <div className={styles.previewStack}>{rows}</div>;
   }
@@ -179,7 +177,7 @@ type Props = {
   readonly onSendChat: (sessionId: string, message: string) => Promise<{ reply: string }>;
 };
 
-function LivePreview({ name, value, onSendChat }: Props) {
+function Preview({ name, value, onSendChat }: Props) {
   const isDemoChat = name === 'demoChat' && isRecord(value);
 
   return (
@@ -194,4 +192,4 @@ function LivePreview({ name, value, onSendChat }: Props) {
   );
 }
 
-export default LivePreview;
+export default Preview;

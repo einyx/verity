@@ -119,12 +119,7 @@ const closingCtaGuard = z.object({
   secondaryLabel: text(80),
 });
 
-// Editor switch for the demo chat. Off keeps the static request form on the site. It lives in the
-// document, not an environment variable, so editors can turn it off without a deploy.
-const demoChatGuard = z.object({ enabled: z.boolean() });
-
 export const landingPageDocumentGuard = z.object({
-  demoChat: demoChatGuard,
   hero: heroGuard,
   fomo: fomoGuard,
   howItWorks: howItWorksGuard,

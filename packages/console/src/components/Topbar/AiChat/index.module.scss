@@ -97,10 +97,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .modal {
-    transition: none;
-  }
-
   .messages {
     animation: none;
   }
@@ -708,19 +704,14 @@
   font: var(--font-label-2);
 }
 
-/* Demo chat design: warm light surface, serif welcome, bubbles for the user, open Markdown replies. */
+// The shell, surface, and colors come from `.demo-chat-dialog` in demo-chat.css, shared with the
+// landing page demo dialog. This only sets the layout that is specific to the console panel.
 .demoModal {
-  --chat-surface: #faf9f6;
-  --chat-text: #1f1e1c;
-  --chat-muted: #6f6c66;
-  --chat-line: #e7e4de;
-  --chat-accent: #c4291c;
   display: flex;
   flex-direction: column;
+  gap: 12px;
   height: min(680px, calc(100vh - 64px));
   overflow-x: hidden;
-  background: var(--chat-surface);
-  color: var(--chat-text);
 }
 
 .demoThread {

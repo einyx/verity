@@ -114,7 +114,7 @@ function AiChat({ className }: Props) {
         isOpen={isModalOpen}
         ariaHideApp={false}
         contentLabel={t('inkeep_ai_bot.ask_ai_label')}
-        className={classNames(styles.modal, styles.demoModal)}
+        className={classNames('demo-chat-dialog', styles.demoModal)}
         overlayClassName={styles.overlay}
         onRequestClose={closeModal}
       >

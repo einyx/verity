@@ -45,6 +45,10 @@ const document = {
     },
     '/api/kubo/stacks': {
       get: { operationId: 'ListKuboStacks' },
+      post: { operationId: 'CreateKuboStack' },
+    },
+    '/api/kubo/stacks/{namespace}/{name}': {
+      delete: { operationId: 'DeleteKuboStack' },
     },
   },
 } as unknown as OpenAPIV3.Document;
@@ -83,8 +87,13 @@ describe('buildManagementToolManifest', () => {
     expect(byName.get('list_roles')?.query).toEqual(['page']);
   });
 
-  it('leaves out the experience flows, the own-account API, and the Kubo portal', () => {
+  it('leaves out the experience flows and the own-account API', () => {
     expect(byName.has('update_my_account')).toBe(false);
-    expect(byName.has('list_kubo_stacks')).toBe(false);
+  });
+
+  it('offers the Kubo stack operations, with writes and deletes guarded by tier', () => {
+    expect(byName.get('list_kubo_stacks')).toMatchObject({ method: 'GET', tier: 1 });
+    expect(byName.get('create_kubo_stack')).toMatchObject({ method: 'POST', tier: 2 });
+    expect(byName.get('delete_kubo_stack')).toMatchObject({ method: 'DELETE', tier: 3 });
   });
 });

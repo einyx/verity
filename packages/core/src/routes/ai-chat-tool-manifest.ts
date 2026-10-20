@@ -46,7 +46,6 @@ const excludedPrefixes = Object.freeze([
   '/api/verifications',
   '/api/verification-codes',
   '/api/ai-chat',
-  '/api/kubo',
   '/api/mcp-portal/oauth',
   '/api/user-assets',
   '/api/subject-tokens',

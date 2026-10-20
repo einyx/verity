@@ -157,6 +157,25 @@ describe('tenant invitation creation', () => {
     }
   );
 
+  it('sends an address still typed in the input when Invite is clicked without blurring', async () => {
+    await renderMembers('members');
+    const button = screen.getAllByRole('button', {
+      name: 'admin_console.tenant_members.invite_members',
+    })[0];
+    assert(button, new Error('Missing invite button'));
+    fireEvent.click(button);
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByRole('textbox');
+    fireEvent.change(input, { target: { value: invitation.invitee } });
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'admin_console.tenant_members.invite_members' })
+    );
+
+    await waitFor(() => {
+      expect(mockInvite).toHaveBeenCalledWith([invitation.invitee], expect.anything());
+    });
+  });
+
   it('does not let a slow pre-create read hide the invitation created from Members', async () => {
     // eslint-disable-next-line @silverhand/fp/no-let -- Resolve the pre-create request after the fresh data is displayed.
     let resolveInitialRead: (value: TenantInvitationResponse[]) => void = noop;

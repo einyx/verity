@@ -46,4 +46,5 @@ export const listKeyFor = (portalId: string) =>
   `${portalsKey}/${encodeURIComponent(portalId)}/upstreams`;
 
 /** The organizations the signed-in admin can grant to portals and servers. */
-export const organizationsKey = 'api/organizations?page_size=100';
+/** Includes `page` so the SWR fetcher returns the `[organizations, total]` tuple the consumers destructure. */
+export const organizationsKey = 'api/organizations?page=1&page_size=100';

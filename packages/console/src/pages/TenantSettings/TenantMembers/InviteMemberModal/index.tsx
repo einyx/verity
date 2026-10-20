@@ -1,6 +1,6 @@
 import { TenantRole } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { Trans, useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ import useUserPreferences from '@/hooks/use-user-preferences';
 import modalStyles from '@/scss/modal.module.scss';
 import { isPaidPlan } from '@/utils/subscription';
 
-import InviteEmailsInput from '../InviteEmailsInput';
+import InviteEmailsInput, { type InviteEmailsInputHandle } from '../InviteEmailsInput';
 import useEmailInputUtils from '../InviteEmailsInput/hooks';
 import styles from '../index.module.scss';
 import { type InviteMemberForm } from '../types';
@@ -38,6 +38,7 @@ function InviteMemberModal({ isOpen, onClose }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
   const [isLoading, setIsLoading] = useState(false);
+  const emailsInputRef = useRef<InviteEmailsInputHandle>();
   const { invite } = useTenantMembersApi();
   const { parseEmailOptions } = useEmailInputUtils();
   const { show } = useConfirmModal();
@@ -77,7 +78,7 @@ function InviteMemberModal({ isOpen, onClose }: Props) {
 
   const hasTenantMembersReachedLimit = hasReachedSubscriptionQuotaLimit('tenantMembersLimit');
 
-  const onSubmit = handleSubmit(async ({ emails, role }) => {
+  const submitForm = handleSubmit(async ({ emails, role }) => {
     if (isCloud && role === TenantRole.Admin) {
       const [result] = await show({
         ModalContent: () => (
@@ -108,6 +109,12 @@ function InviteMemberModal({ isOpen, onClose }: Props) {
       }
     }
   });
+
+  // Commit text still typed in the input first, so it is validated and sent with the rest.
+  const onSubmit = async () => {
+    emailsInputRef.current?.commitPending();
+    await submitForm();
+  };
 
   return (
     <ReactModal
@@ -184,6 +191,7 @@ function InviteMemberModal({ isOpen, onClose }: Props) {
               }}
               render={({ field: { onChange, value } }) => (
                 <InviteEmailsInput
+                  commitRef={emailsInputRef}
                   values={value}
                   error={errors.emails?.message}
                   placeholder={t('tenant_members.invite_modal.email_input_placeholder')}

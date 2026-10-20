@@ -2,7 +2,7 @@ import { emailRegEx } from '@logto/core-kit';
 import { generateStandardShortId } from '@logto/shared/universal';
 import { conditional, type Nullable } from '@silverhand/essentials';
 import classNames from 'classnames';
-import { useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import Close from '@/assets/icons/close.svg?react';
@@ -29,6 +29,8 @@ type Props = {
     values: InviteeEmailItem[];
     errorMessage?: string;
   };
+  /** Receives a `commitPending` method that turns any text still typed into an email tag. */
+  readonly commitRef?: MutableRefObject<InviteEmailsInputHandle | undefined>;
 };
 
 /**
@@ -37,6 +39,11 @@ type Props = {
  */
 const fontBody2 =
   '400 14px / 20px -apple-system, system-ui, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif, Apple Color Emoji';
+
+export type InviteEmailsInputHandle = {
+  /** Turns any text still typed in the input into an email tag, so it is part of the form value. */
+  commitPending: () => void;
+};
 
 // TODO: @Charles refactor me, use `<MultiOptionInput />` instead.
 function InviteEmailsInput({
@@ -47,6 +54,7 @@ function InviteEmailsInput({
   error,
   placeholder,
   parseEmailOptions,
+  commitRef,
 }: Props) {
   const ref = useRef<HTMLInputElement>(null);
   const [focusedValueId, setFocusedValueId] = useState<Nullable<string>>(null);
@@ -96,6 +104,20 @@ function InviteEmailsInput({
   const handleDelete = (option: InviteeEmailItem) => {
     onChange(values.filter(({ id }) => id !== option.id));
   };
+
+  useEffect(() => {
+    if (!commitRef) {
+      return;
+    }
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Writing ref.current is how React hands an imperative handle to the parent.
+    commitRef.current = {
+      commitPending: () => {
+        if (currentValue !== '') {
+          handleAdd(currentValue);
+        }
+      },
+    };
+  });
 
   return (
     <>

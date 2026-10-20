@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 
 import Plus from '@/assets/icons/plus.svg?react';
@@ -40,14 +40,24 @@ function PortalServers({
   // Shown after a just-added server does not answer. Cleared on reload, since the list does not track it.
   const [notice, setNotice] = useState<string>();
   const [unreachable, setUnreachable] = useState<string[]>([]);
+  // Tools and settings open independently, so the sign-in controls are never hidden behind the tool list.
   const [openTools, setOpenTools] = useState<string>();
+  const [openSettings, setOpenSettings] = useState<string>();
+  const detailsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (openTools ?? openSettings) {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [openTools, openSettings]);
 
   if (error) {
     return <RequestDataError error={error} />;
   }
 
   const upstreams = data?.upstreams ?? [];
-  const openUpstream = upstreams.find((upstream) => upstream.name === openTools);
+  const openToolsUpstream = upstreams.find((upstream) => upstream.name === openTools);
+  const openSettingsUpstream = upstreams.find((upstream) => upstream.name === openSettings);
 
   const setUpstreamEnabled = async (upstream: Upstream, enabled: boolean) => {
     setFormError(undefined);
@@ -68,6 +78,9 @@ function PortalServers({
       await mutate();
       if (openTools === upstream.name) {
         setOpenTools(undefined);
+      }
+      if (openSettings === upstream.name) {
+        setOpenSettings(undefined);
       }
     } catch {
       setFormError(`Could not remove "${upstream.name}". Try again.`);
@@ -204,6 +217,18 @@ function PortalServers({
                     <button
                       type="button"
                       className={styles.remove}
+                      aria-expanded={openSettings === upstream.name}
+                      onClick={() => {
+                        setOpenSettings((current) =>
+                          current === upstream.name ? undefined : upstream.name
+                        );
+                      }}
+                    >
+                      {openSettings === upstream.name ? 'Hide settings' : 'Settings'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.remove}
                       onClick={() => {
                         void removeUpstream(upstream);
                       }}
@@ -220,13 +245,31 @@ function PortalServers({
             onRetry={async () => mutate(undefined, true)}
           />
 
-          {openUpstream && (
-            <section className={styles.serverBody} aria-label={`${openUpstream.name} details`}>
-              <UpstreamTools listKey={listKey} upstream={openUpstream} onChanged={mutate} />
-              <ServerAccess listKey={listKey} upstream={openUpstream} onSaved={mutate} />
-              <ServerCredential listKey={listKey} upstream={openUpstream} onSaved={mutate} />
-            </section>
-          )}
+          {/* The panels open below the list, so scroll them into view or they stay off screen. */}
+          <div ref={detailsRef}>
+            {openToolsUpstream && (
+              <section className={styles.serverBody} aria-label={`${openToolsUpstream.name} tools`}>
+                <h3 className={styles.sectionTitle}>Tools</h3>
+                <UpstreamTools listKey={listKey} upstream={openToolsUpstream} onChanged={mutate} />
+              </section>
+            )}
+
+            {openSettingsUpstream && (
+              <section
+                className={styles.serverBody}
+                aria-label={`${openSettingsUpstream.name} settings`}
+              >
+                <h3 className={styles.sectionTitle}>Who can use it</h3>
+                <ServerAccess listKey={listKey} upstream={openSettingsUpstream} onSaved={mutate} />
+                <h3 className={styles.sectionTitle}>Sign-in</h3>
+                <ServerCredential
+                  listKey={listKey}
+                  upstream={openSettingsUpstream}
+                  onSaved={mutate}
+                />
+              </section>
+            )}
+          </div>
         </div>
       </div>
 

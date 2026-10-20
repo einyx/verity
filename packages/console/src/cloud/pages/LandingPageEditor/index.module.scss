@@ -1,9 +1,8 @@
 /* Three panes: section list, the active section's form, and status with version history. */
 .shell {
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  display: flex;
   gap: 24px;
-  align-items: start;
+  align-items: flex-start;
   width: 100%;
   padding: 24px 24px 24px 16px;
   box-sizing: border-box;
@@ -16,6 +15,7 @@
 }
 
 .nav {
+  flex: 0 0 240px;
   position: sticky;
   top: 24px;
   display: flex;
@@ -56,7 +56,7 @@
   align-items: center;
   width: 100%;
   padding: 8px 12px;
-  border: 0;
+  border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--color-text);
@@ -91,7 +91,7 @@
 .title {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: bold;
   color: var(--color-text);
 }
 
@@ -138,13 +138,21 @@
   gap: 20px;
 }
 
-.side {
-  position: sticky;
-  top: 24px;
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
+
+.side {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
 
 .card {
   display: flex;
@@ -180,7 +188,7 @@
   white-space: nowrap;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 50%;
     cursor: not-allowed;
   }
 }
@@ -197,14 +205,14 @@
   font-weight: 600;
   cursor: pointer;
 
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+
   &:hover:not(:disabled) {
     background: var(--color-primary-pressed);
     border-color: var(--color-primary-pressed);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 }
 
@@ -220,13 +228,13 @@
   font-weight: 600;
   cursor: pointer;
 
-  &:hover:not(:disabled) {
-    background: var(--color-layer-2);
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  &:hover:not(:disabled) {
+    background: var(--color-layer-2);
   }
 }
 
@@ -260,31 +268,99 @@
   color: var(--color-text-secondary);
 }
 
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
 .versions {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
 
 .versionRow {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
   font-size: 13px;
   color: var(--color-text);
 }
 
 .group {
-  border: 0;
   margin: 0;
-  padding: 0 0 0 16px;
-  border-left: 2px solid var(--color-border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+}
+
+/* One list item per card: closed rows show only the number and heading. */
+.item {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+}
+
+.itemSummary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::after {
+    content: '+';
+    margin-left: auto;
+    color: var(--color-text-secondary);
+  }
+}
+
+.item[open] > .itemSummary::after {
+  content: '\2212';
+}
+
+.itemIndex {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.itemName {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemBody {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
 }
 
 .groupTitle {
@@ -300,6 +376,34 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  /* The field name reads as a label; the hint sits under it, muted. */
+  > span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* One input style for every copy field, so each one looks editable. */
+  input,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-text-secondary);
+  }
 }
 
 .hint {
@@ -308,11 +412,30 @@
   color: var(--color-text-secondary);
 }
 
+/* A checkbox with its label and hint, for on/off switches in the content. */
+.checkField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--color-text);
+
+  input {
+    margin: 0;
+  }
+
+  .hint {
+    flex-basis: 100%;
+  }
+}
+
 .longText {
   min-height: 120px;
   resize: vertical;
 }
 
+/* URLs and other technical values read best in monospace; copy uses the site's typeface. */
 .mono {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 13px;
@@ -325,12 +448,17 @@
 
 @media (max-width: 1024px) {
   .shell {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
-  .nav,
-  .side {
+  .nav {
     position: static;
+    flex: none;
+    width: 100%;
+  }
+
+  .side {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -346,35 +474,37 @@
   top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px;
-  border: 1px dashed var(--color-border);
-  border-radius: 12px;
-  background: var(--color-layer-2);
+  gap: 20px;
+  padding: 32px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 16px;
+  background: oklch(98.232% 0.003 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
 }
 
 .previewLabel {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
+  letter-spacing: 0.08em;
+  color: oklch(48.449% 0.009 99.035deg);
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
 }
 
 .previewStack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .previewHeading {
   margin: 0;
   font-family: 'Stack Sans Headline', system-ui, sans-serif;
-  font-size: 30px;
+  font-size: 48px;
   font-weight: 300;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: oklch(21.2518% 0.004762 17.533);
+  line-height: 48px;
+  letter-spacing: -0.031rem;
+  color: oklch(21.252% 0.005 17.533deg);
 }
 
 .previewText {
@@ -382,18 +512,22 @@
   font-family: 'Stack Sans Text', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: oklch(48.4486% 0.009487 99.035);
+  color: oklch(48.449% 0.009 99.035deg);
 }
 
 .previewButton {
   align-self: flex-start;
   font-family: 'Stack Sans Text', system-ui, sans-serif;
-  padding: 12px 22px;
-  border-radius: 999px;
-  background: oklch(57.5781% 0.212322 32.209);
+  padding: 0 24px;
+  border-radius: 6px;
+  background: oklch(57.578% 0.212 32.209deg);
   color: oklch(100% 0 none);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  white-space: nowrap;
 }
 
 @media (max-width: 1280px) {
@@ -411,6 +545,7 @@
   font-family: 'Stack Sans Headline';
   src: url('/console/landing/_astro/stack-sans-headline-latin-wght-normal.CFGVyMar.woff2') format('woff2');
   font-weight: 200 800;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -418,63 +553,94 @@
   font-family: 'Stack Sans Text';
   src: url('/console/landing/_astro/stack-sans-text-latin-wght-normal.cHS98N20.woff2') format('woff2');
   font-weight: 200 800;
+  font-style: normal;
   font-display: swap;
 }
 
-.preview {
-  background: oklch(98.2324% 0.002858 84.559);
-  border: 1px solid oklch(88.5464% 0.007127 88.648);
-  border-radius: 16px;
-  color: oklch(21.2518% 0.004762 17.533);
-  padding: 32px;
-  gap: 20px;
-}
-
-.previewLabel {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: oklch(48.4486% 0.009487 99.035);
-}
-
-.previewStack {
-  gap: 14px;
-}
-
-.previewHeading {
-  font-family: 'Stack Sans Headline', system-ui, sans-serif;
-  font-size: 48px;
-  font-weight: 300;
-  line-height: 48px;
-  letter-spacing: -0.03125rem;
-  color: oklch(21.2518% 0.004762 17.533);
-}
-
-.previewText {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  color: oklch(48.4486% 0.009487 99.035);
-}
-
-.previewButton {
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 24px;
-  border-radius: 6px;
-  background: oklch(57.5781% 0.212322 32.209);
-  color: oklch(100% 0 none);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
 
 .previewActions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+
+/* Static mock of the demo chat in the live preview. */
+.chatMock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 12px;
+  background: oklch(100% 0 none);
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chatBubbleAssistant,
+.chatBubbleUser,
+.chatBubbleMuted {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.chatBubbleAssistant {
+  align-self: flex-start;
+  background: oklch(96% 0.004 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
+}
+
+.chatBubbleUser {
+  align-self: flex-end;
+  background: oklch(57.578% 0.212 32.209deg);
+  color: oklch(100% 0 none);
+}
+
+.chatBubbleMuted {
+  align-self: stretch;
+  max-width: none;
+  color: oklch(48.449% 0.009 99.035deg);
+  background: oklch(96% 0.004 84.559deg);
+}
+
+.chatInput {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 999px;
+  color: oklch(48.449% 0.009 99.035deg);
+}
+
+.chatField {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.chatSend {
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: oklch(57.578% 0.212 32.209deg);
+  color: oklch(100% 0 none);
+
+  &:disabled {
+    opacity: 40%;
+    cursor: not-allowed;
+  }
 }

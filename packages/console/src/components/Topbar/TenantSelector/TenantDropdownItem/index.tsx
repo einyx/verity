@@ -1,4 +1,4 @@
-import { TenantTag } from '@logto/schemas';
+import { adminTenantId, TenantTag } from '@logto/schemas';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
@@ -38,7 +38,10 @@ function TenantDropdownItem({ tenantData, isSelected, onClick }: Props) {
             <RegionFlag regionName={regionName} width={12} />
             <span>{regionName}</span>
           </div>
-          <span>{t(`tenants.full_env_tag.${tag}`)}</span>
+          {/* The admin tenant is not a dev or prod environment, so it is labeled by its role instead. */}
+          <span>
+            {tenantData.id === adminTenantId ? 'Admin' : t(`tenants.full_env_tag.${tag}`)}
+          </span>
           {tag !== TenantTag.Development && <SkuName skuId={planId} />}
         </div>
       </div>

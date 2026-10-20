@@ -136,7 +136,7 @@ export class ProvisionLibrary {
       );
     }
 
-    const { isCreatingFirstAdminUser, initialUserRoles, customData } =
+    const { isCreatingFirstAdminUser, isFirstAdminTenantUser, initialUserRoles, customData } =
       await this.getUserProvisionContext(profile);
     const customDataForInsert = shouldMergeCustomData
       ? mergeCreateUserCustomData(customData, profile.customData)
@@ -167,9 +167,10 @@ export class ProvisionLibrary {
       await this.addSsoIdentityToUser(user.id, enterpriseSsoIdentity);
     }
 
-    if (isCreatingFirstAdminUser) {
-      await this.provisionForFirstAdminUser(user);
-    }
+    await this.provisionForFirstAdminUsers(user, {
+      isCreatingFirstAdminUser,
+      isFirstAdminTenantUser,
+    });
 
     if (socialConnectorTokenSetSecret) {
       // Upsert token set secret should not break the normal social authentication and link flow
@@ -396,6 +397,8 @@ export class ProvisionLibrary {
   private async getUserProvisionContext(profile: InteractionProfile): Promise<{
     /** Admin user provisioning flag */
     isCreatingFirstAdminUser: boolean;
+    /** The first user of the admin tenant, who also joins the admin tenant's organization */
+    isFirstAdminTenantUser: boolean;
     /** Initial user roles for admin tenant users */
     initialUserRoles: string[];
     /** Skip onboarding flow if the new user has pending Cloud invitations */
@@ -471,6 +474,7 @@ export class ProvisionLibrary {
 
     return {
       isCreatingFirstAdminUser,
+      isFirstAdminTenantUser,
       initialUserRoles,
       customData,
     };
@@ -530,6 +534,42 @@ export class ProvisionLibrary {
     });
 
     const organizationId = getTenantOrganizationId(defaultTenantId);
+    await organizations.relations.users.insert({ organizationId, userId: id });
+    await organizations.relations.usersRoles.insert({
+      organizationId,
+      userId: id,
+      organizationRoleId: getTenantRole(TenantRole.Admin).id,
+    });
+  }
+
+  private async provisionForFirstAdminUsers(
+    user: User,
+    {
+      isCreatingFirstAdminUser,
+      isFirstAdminTenantUser,
+    }: { isCreatingFirstAdminUser: boolean; isFirstAdminTenantUser: boolean }
+  ) {
+    if (isCreatingFirstAdminUser) {
+      await this.provisionForFirstAdminUser(user);
+    }
+
+    if (isFirstAdminTenantUser) {
+      await this.provisionForFirstAdminTenantUser(user);
+    }
+  }
+
+  /**
+   * First admin tenant user provision
+   *
+   * - Add the user to the admin tenant's organization with the admin role. The admin console's token is
+   *   issued for that organization, and it only carries scopes for members with an organization role.
+   */
+  private async provisionForFirstAdminTenantUser({ id }: User) {
+    const {
+      queries: { organizations },
+    } = this.tenantContext;
+
+    const organizationId = getTenantOrganizationId(adminTenantId);
     await organizations.relations.users.insert({ organizationId, userId: id });
     await organizations.relations.usersRoles.insert({
       organizationId,

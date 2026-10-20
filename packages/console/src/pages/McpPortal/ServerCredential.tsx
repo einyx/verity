@@ -88,9 +88,22 @@ function ServerCredential({
   return (
     <div className={styles.serverAccess}>
       <div className={styles.muted}>
-        Token: {upstream.hasCredential ? 'set' : 'not set'}. Use OAuth if this server supports it,
-        or paste a bearer token. Either way it is stored encrypted and cannot be read back.
+        {upstream.hasCredential
+          ? 'A sign-in is saved for this server. It is stored encrypted and cannot be read back.'
+          : 'No sign-in yet. Sign in with OAuth if this server supports it. Otherwise paste a bearer token below. Either way it is stored encrypted.'}
       </div>
+      <div className={styles.copyRow}>
+        <button
+          type="button"
+          disabled={isSaving}
+          onClick={() => {
+            void authenticate();
+          }}
+        >
+          {upstream.hasCredential ? 'Sign in again with OAuth' : 'Sign in with OAuth'}
+        </button>
+      </div>
+      <div className={styles.muted}>Or use a bearer token instead:</div>
       <div className={styles.copyRow}>
         <input
           type="password"
@@ -102,18 +115,23 @@ function ServerCredential({
             setToken(event.target.value);
           }}
         />
-        <button type="button" disabled={isSaving || token.length === 0} onClick={() => void save()}>
+        <button
+          type="button"
+          disabled={isSaving || token.length === 0}
+          onClick={() => {
+            void save();
+          }}
+        >
           {upstream.hasCredential ? 'Replace token' : 'Save token'}
-        </button>
-        <button type="button" disabled={isSaving} onClick={() => void authenticate()}>
-          Sign in with OAuth
         </button>
         {upstream.hasCredential && (
           <button
             type="button"
             className={styles.remove}
             disabled={isSaving}
-            onClick={() => void remove()}
+            onClick={() => {
+              void remove();
+            }}
           >
             Remove token
           </button>

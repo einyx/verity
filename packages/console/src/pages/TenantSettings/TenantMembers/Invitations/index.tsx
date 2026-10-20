@@ -143,8 +143,9 @@ function Invitations() {
               dataIndex: 'roles',
               colSpan: 2,
               title: t('roles'),
-              render: ({ organizationRoles }: TenantInvitationResponse) => {
-                if (organizationRoles.length === 0) {
+              render: ({ organizationRoles }: Partial<TenantInvitationResponse>) => {
+                // The cloud service does not send organization roles with an invitation, so they can be missing.
+                if (!organizationRoles || organizationRoles.length === 0) {
                   return '-';
                 }
 
@@ -176,7 +177,8 @@ function Invitations() {
             dataIndex: 'expiresAt',
             colSpan: 2,
             title: t('expiration_date'),
-            render: ({ expiresAt }) => <span>{format(expiresAt, 'MMM do, yyyy')}</span>,
+            // The cloud service sends dates as JSON strings, which `format` does not accept.
+            render: ({ expiresAt }) => <span>{format(new Date(expiresAt), 'MMM do, yyyy')}</span>,
           },
           ...condArray(
             (canInviteMember || canRemoveMember) && [

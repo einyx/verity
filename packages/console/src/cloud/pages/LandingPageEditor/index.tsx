@@ -4,9 +4,9 @@ import { Helmet } from 'react-helmet';
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
 
 import ContentEditor, { isRecord } from './ContentEditor';
+import NavArtwork from './NavArtwork';
 import LivePreview from './Preview';
 import styles from './index.module.scss';
-import NavArtwork from './NavArtwork';
 
 // Editor for the marketing site's copy. Changes save to the draft; nothing reaches the site until it
 // is published. Section order and layout live in the site's code, so only the copy is edited here.
@@ -27,6 +27,7 @@ const sectionLabels: Record<string, string> = {
   why: 'Why meshX',
   trust: 'Security',
   closingCta: 'Closing call to action',
+  demoChat: 'Demo chat',
 };
 
 // One plain sentence per section, so the editor explains itself without a manual.
@@ -42,12 +43,14 @@ const sectionHints: Record<string, string> = {
   why: 'Why teams choose meshX, with the comparison rows.',
   trust: 'The four commitments about security and control.',
   closingCta: 'The last call to action at the bottom of the page.',
+  demoChat: 'Turn the demo chat on or off. Off keeps the static request form on the site.',
 };
 
 function LandingPageEditorContent() {
-  const { data, error, saveDraft, publish, rollback, listVersions } = useLandingPage();
+  const { data, error, saveDraft, publish, rollback, listVersions, sendChat } = useLandingPage();
   const [draft, setDraft] = useState<unknown>();
   const [versions, setVersions] = useState<LandingPageVersion[]>([]);
+  const [versionsError, setVersionsError] = useState(false);
   const [message, setMessage] = useState<string | undefined>();
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
@@ -63,8 +66,10 @@ function LandingPageEditorContent() {
     const load = async () => {
       try {
         setVersions(await listVersions());
+        setVersionsError(false);
       } catch {
         setVersions([]);
+        setVersionsError(true);
       }
     };
     void load();
@@ -115,7 +120,8 @@ function LandingPageEditorContent() {
 
   const currentDraft = draft;
 
-  const publishLabel = pending?.kind === 'publish' ? 'Click again to confirm' : 'Publish to website';
+  const publishLabel =
+    pending?.kind === 'publish' ? 'Click again to confirm' : 'Publish to website';
   const sectionEntries = isRecord(currentDraft) ? Object.entries(currentDraft) : [];
   const selectedKey = sectionEntries.some(([key]) => key === activeKey)
     ? activeKey
@@ -123,7 +129,8 @@ function LandingPageEditorContent() {
   const selected = sectionEntries.find(([key]) => key === selectedKey);
 
   return (
-    <div className={styles.shell}>
+    // `fullWidthPage` opts this page out of the console's centred width cap.
+    <div className={`${styles.shell} fullWidthPage`}>
       <nav className={styles.nav} aria-label="Sections">
         <div className={styles.navHeading}>Sections</div>
         {sectionEntries.map(([key]) => (
@@ -144,117 +151,131 @@ function LandingPageEditorContent() {
         </div>
       </nav>
 
-      <div className={styles.main}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Landing page</h1>
-          <p className={styles.subtitle}>
-            Edit the words on the marketing site. Save draft keeps your changes private. Publish puts
-            them on the site.
-          </p>
-        </header>
-
-        {selected && (
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionName}>{sectionLabels[selected[0]] ?? selected[0]}</h2>
-              <p className={styles.sectionHint}>{sectionHints[selected[0]]}</p>
+      <div className={styles.content}>
+        <aside className={styles.side}>
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>Publish</h2>
+            <div className={styles.statusRow}>
+              {data?.publishedVersion ? (
+                <span className={styles.liveBadge}>Live: version {data.publishedVersion}</span>
+              ) : (
+                <span className={styles.draftBadge}>Not published yet</span>
+              )}
+              {message && (
+                <span role="status" className={styles.message}>
+                  {message}
+                </span>
+              )}
             </div>
-            <div className={styles.sectionBody}>
-              <div className={styles.sectionColumns}>
-                <ContentEditor
-                  label=""
-                  value={selected[1]}
-                  onChange={(next) => {
-                    setDraft({ ...currentDraft, [selected[0]]: next });
-                  }}
-                />
-                <LivePreview name={selected[0]} value={selected[1]} />
-              </div>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                disabled={busy}
+                onClick={() => {
+                  void run(async () => saveDraft(currentDraft), 'Draft saved.');
+                }}
+              >
+                Save draft
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                disabled={busy}
+                onClick={() => {
+                  confirmOrRun(
+                    { kind: 'publish' },
+                    async () => {
+                      await saveDraft(currentDraft);
+                      await publish();
+                    },
+                    'Published.'
+                  );
+                }}
+              >
+                {publishLabel}
+              </button>
             </div>
           </section>
-        )}
-      </div>
 
-      <aside className={styles.side}>
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>Publish</h2>
-          <div className={styles.statusRow}>
-            {data?.publishedVersion ? (
-              <span className={styles.liveBadge}>Live: version {data.publishedVersion}</span>
-            ) : (
-              <span className={styles.draftBadge}>Not published yet</span>
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>Earlier versions</h2>
+            <p className={styles.sectionHint}>
+              Each publish is kept. You can make an earlier one live again.
+            </p>
+            {versionsError && (
+              <p role="alert" className={styles.error}>
+                Could not load earlier versions. Reload the page to try again.
+              </p>
             )}
-            {message && (
-              <span role="status" className={styles.message}>
-                {message}
-              </span>
+            {!versionsError && versions.length === 0 && (
+              <p className={styles.sectionHint}>
+                {data?.publishedVersion
+                  ? 'Loading earlier versions…'
+                  : 'Nothing is published yet. Publish a draft to create the first version.'}
+              </p>
             )}
-          </div>
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              disabled={busy}
-              onClick={() => {
-                void run(async () => saveDraft(currentDraft), 'Draft saved.');
-              }}
-            >
-              Save draft
-            </button>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              disabled={busy}
-              onClick={() => {
-                confirmOrRun(
-                  { kind: 'publish' },
-                  async () => {
-                    await saveDraft(currentDraft);
-                    await publish();
-                  },
-                  'Published.'
-                );
-              }}
-            >
-              {publishLabel}
-            </button>
-          </div>
-        </section>
+            <ul className={styles.versions}>
+              {versions.map((item) => (
+                <li key={item.version} className={styles.versionRow}>
+                  <span>
+                    Version {item.version} by {item.publishedBy}
+                  </span>
+                  <span className={styles.sectionHint}>{item.createdAt}</span>
+                  {item.version !== data?.publishedVersion && (
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      disabled={busy}
+                      onClick={() => {
+                        confirmOrRun(
+                          { kind: 'rollback', version: item.version },
+                          async () => rollback(item.version),
+                          `Version ${item.version} is live.`
+                        );
+                      }}
+                    >
+                      {pending?.kind === 'rollback' && pending.version === item.version
+                        ? 'Click again to make live'
+                        : 'Make live'}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+        <div className={styles.main}>
+          <header className={styles.header}>
+            <h1 className={styles.title}>Landing page</h1>
+            <p className={styles.subtitle}>
+              Edit the words on the marketing site. Save draft keeps your changes private. Publish
+              puts them on the site.
+            </p>
+          </header>
 
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>Earlier versions</h2>
-          <p className={styles.sectionHint}>Each publish is kept. You can make an earlier one live again.</p>
-          {versions.length === 0 && <p className={styles.sectionHint}>No published versions yet.</p>}
-          <ul className={styles.versions}>
-            {versions.map((item) => (
-              <li key={item.version} className={styles.versionRow}>
-                <span>
-                  Version {item.version} by {item.publishedBy}
-                </span>
-                <span className={styles.sectionHint}>{item.createdAt}</span>
-                {item.version !== data?.publishedVersion && (
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    disabled={busy}
-                    onClick={() => {
-                      confirmOrRun(
-                        { kind: 'rollback', version: item.version },
-                        async () => rollback(item.version),
-                        `Version ${item.version} is live.`
-                      );
+          {selected && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionName}>{sectionLabels[selected[0]] ?? selected[0]}</h2>
+                <p className={styles.sectionHint}>{sectionHints[selected[0]]}</p>
+              </div>
+              <div className={styles.sectionBody}>
+                <div className={styles.sectionColumns}>
+                  <ContentEditor
+                    label=""
+                    value={selected[1]}
+                    onChange={(next) => {
+                      setDraft({ ...currentDraft, [selected[0]]: next });
                     }}
-                  >
-                    {pending?.kind === 'rollback' && pending.version === item.version
-                      ? 'Click again to make live'
-                      : 'Make live'}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </aside>
+                  />
+                  <LivePreview name={selected[0]} value={selected[1]} onSendChat={sendChat} />
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

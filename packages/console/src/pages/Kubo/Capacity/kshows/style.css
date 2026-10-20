@@ -280,6 +280,12 @@
 }
 .disk-fill { transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
 
+/* A resize re-lays out every tile at the new width. Animating that change makes tiles slide across
+   their neighbours, so geometry transitions are off while the re-layout happens (see app.js). */
+.kshows.is-relayout .tile, .kshows.is-relayout .freeblock,
+.kshows.is-relayout .tile rect, .kshows.is-relayout .freeblock rect,
+.kshows.is-relayout .disk-fill { transition: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .tile, .freeblock, .tile rect, .freeblock rect, .disk-fill, .card { transition: none; }
 }

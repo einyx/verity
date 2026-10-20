@@ -93,7 +93,7 @@ export const buildAuthorizationUrl = (
   }
 ) => {
   const url = new URL(metadata.authorization_endpoint);
-  url.search = new URLSearchParams({
+  const search = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -103,7 +103,7 @@ export const buildAuthorizationUrl = (
     resource,
   }).toString();
 
-  return url.toString();
+  return `${url.toString()}${url.search ? '&' : '?'}${search}`;
 };
 
 const tokenResponse = z.object({
@@ -118,7 +118,13 @@ export type TokenSet = z.infer<typeof tokenResponse> & { obtainedAt: number };
 /** Exchanges the authorization code for tokens, proving possession with the PKCE verifier. */
 export const exchangeCode = async (
   metadata: AuthorizationServerMetadata,
-  { clientId, redirectUri, code, verifier, resource }: {
+  {
+    clientId,
+    redirectUri,
+    code,
+    verifier,
+    resource,
+  }: {
     clientId: string;
     redirectUri: string;
     code: string;
@@ -157,14 +163,30 @@ const postToken = async (metadata: AuthorizationServerMetadata, params: Record<s
     headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
     body: new URLSearchParams(params).toString(),
   });
-  const body: unknown = await response.json().catch(() => undefined);
+  const body: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(`Token request failed with status ${response.status}.`);
+    throw new TokenRequestError(response.status);
   }
 
   return { ...tokenResponse.parse(body), obtainedAt: Date.now() };
 };
+
+/**
+ * The authorization server turned the token request down (for example `invalid_grant` on a revoked
+ * or expired refresh token). Unlike a network failure, retrying does not help: the admin must sign in
+ * again. Server errors (5xx) are not rejections, so they stay a plain `Error`.
+ */
+export class TokenRequestError extends Error {
+  constructor(readonly status: number) {
+    super(`Token request failed with status ${status}.`);
+    this.name = 'TokenRequestError';
+  }
+
+  get isRejected() {
+    return this.status === 400 || this.status === 401;
+  }
+}
 
 const getJson = async (url: URL): Promise<unknown> => {
   const response = await guardedFetch(url, { headers: { accept: 'application/json' } });

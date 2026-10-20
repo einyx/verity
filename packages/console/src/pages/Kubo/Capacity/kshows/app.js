@@ -594,8 +594,8 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
     fg.style.opacity = 1;
     fg.style.transform = `translate(${free.x + 1}px, ${free.y + 1}px)`;
     const rect = fg.querySelector('rect');
-    rect.style.width = `${Math.max(0, free.w - 2)}px`;
-    rect.style.height = `${Math.max(0, free.h - 2)}px`;
+    rect.setAttribute('width', Math.max(0, free.w - 2));
+    rect.setAttribute('height', Math.max(0, free.h - 2));
     const label = fg.querySelector('text');
     if (free.w > 74 && free.h > 26) {
       label.textContent = `FREE ${fmtPct(freeFrac)}`;
@@ -671,11 +671,12 @@ function placeTile(g, r, dim, metric, rich) {
   g.style.transform = `translate(${x}px, ${y}px)`;
 
   const [slack, fill, rsv] = [g.children[0], g.children[1], g.children[2]];
+  // SVG attributes, not CSS geometry: Safari does not reliably apply CSS x/y/width/height to SVG rects.
   const setRect = (el, rx, ry, rw, rh) => {
-    el.style.x = `${rx}px`;
-    el.style.y = `${ry}px`;
-    el.style.width = `${Math.max(0, rw)}px`;
-    el.style.height = `${Math.max(0, rh)}px`;
+    el.setAttribute('x', rx);
+    el.setAttribute('y', ry);
+    el.setAttribute('width', Math.max(0, rw));
+    el.setAttribute('height', Math.max(0, rh));
   };
 
   slack.setAttribute('fill', color);
@@ -1020,10 +1021,15 @@ document.addEventListener('keydown', (e) => {
 
 let resizeTimer;
 addEventListener('resize', () => {
+  // Suspend geometry transitions for the re-layout, so tiles snap to the new widths instead of
+  // sliding across each other. The class is removed once the new layout has been applied.
+  const root = document.querySelector('.kshows');
+  root?.classList.add('is-relayout');
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     renderedMode = ''; // force full rebuild at the new width
     render();
+    requestAnimationFrame(() => root?.classList.remove('is-relayout'));
   }, 150);
 });
 

@@ -16,7 +16,8 @@
   padding-block: 0;
   padding-inline: _.unit(2) _.unit(6);
 
-  > :not(svg) {
+  // Pages that opt out with the `fullWidthPage` class use the whole pane instead.
+  > :not(svg):not(:global(.fullWidthPage)) {
     @include _.main-content-width;
   }
 

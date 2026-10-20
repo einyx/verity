@@ -31,6 +31,14 @@ type PageRow = {
   publishedVersion: Nullable<number>;
 };
 
+// Documents saved before the demo chat switch have no `demoChat` key. They read as switched off.
+const withDemoChatDefault = (
+  document: Omit<LandingPageDocument, 'demoChat'> & Partial<Pick<LandingPageDocument, 'demoChat'>>
+): LandingPageDocument => ({
+  ...document,
+  demoChat: document.demoChat ?? { enabled: false },
+});
+
 type VersionRow = {
   version: number;
   document: LandingPageDocument;
@@ -74,7 +82,15 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       where tenant_id = ${adminTenantId}
     `);
 
-    return row ?? { draft: defaultLandingPageContent, published: null, publishedVersion: null };
+    if (!row) {
+      return { draft: defaultLandingPageContent, published: null, publishedVersion: null };
+    }
+
+    return {
+      draft: withDemoChatDefault(row.draft),
+      published: row.published && withDemoChatDefault(row.published),
+      publishedVersion: row.publishedVersion,
+    };
   };
 
   // Public read for the marketing site. Only the published document is exposed, never the draft.

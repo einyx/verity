@@ -7,8 +7,8 @@ type Props = {
   verticalAlign: VerticalAlignment;
   horizontalAlign: HorizontalAlignment;
   offset: Offset;
-  anchorRef: RefObject<Element>;
-  overlayRef: RefObject<Element>;
+  anchorRef: RefObject<Element | null>;
+  overlayRef: RefObject<Element | null>;
 };
 
 // Leave space for box-shadow effect.

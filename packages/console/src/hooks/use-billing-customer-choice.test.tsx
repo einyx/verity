@@ -1,5 +1,6 @@
 import { render, renderHook } from '@testing-library/react';
 import type * as React from 'react';
+import type { JSX } from 'react';
 
 import { type BillingCustomer } from '@/cloud/types/router';
 

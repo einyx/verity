@@ -15,6 +15,7 @@ import {
   useRef,
   useEffect,
   Children,
+  type JSX,
 } from 'react';
 
 import type { Props as TabItemProps } from '../TabItem';
@@ -38,7 +39,12 @@ type Props = {
 // A very rough duck type, but good enough to guard against mistakes while
 // allowing customization
 function isTabItem(comp: ReactElement): comp is ReactElement<TabItemProps> {
-  return comp.props.value !== undefined;
+  // `props` is `unknown` in React 19 types. A rendered element always has an object `props`,
+  // so the narrowing below is equivalent to the previous property access.
+  const { props } = comp;
+  return (
+    typeof props === 'object' && props !== null && 'value' in props && props.value !== undefined
+  );
 }
 
 function Tabs({ className, groupId, children }: Props): JSX.Element {

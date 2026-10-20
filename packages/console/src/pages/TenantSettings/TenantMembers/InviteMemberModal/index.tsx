@@ -38,7 +38,7 @@ function InviteMemberModal({ isOpen, onClose }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
   const [isLoading, setIsLoading] = useState(false);
-  const emailsInputRef = useRef<InviteEmailsInputHandle>();
+  const emailsInputRef = useRef<InviteEmailsInputHandle | undefined>(undefined);
   const { invite } = useTenantMembersApi();
   const { parseEmailOptions } = useEmailInputUtils();
   const { show } = useConfirmModal();

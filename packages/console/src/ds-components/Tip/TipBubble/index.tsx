@@ -12,7 +12,7 @@ export type TipBubblePlacement = 'top' | 'right' | 'bottom' | 'left';
 type Props = HTMLProps<HTMLDivElement> & {
   readonly children: ReactNode;
   readonly position?: Position;
-  readonly anchorRef: RefObject<Element>;
+  readonly anchorRef: RefObject<Element | null>;
   readonly placement?: TipBubblePlacement;
   readonly horizontalAlignment?: HorizontalAlignment;
   readonly className?: string;

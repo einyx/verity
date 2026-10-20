@@ -1,5 +1,6 @@
 import type { Nullable } from '@silverhand/essentials';
 import { noop } from '@silverhand/essentials';
+import type { JSX } from 'react';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ConfirmModalProps } from '@/ds-components/ConfirmModal';
@@ -44,7 +45,9 @@ const defaultModalState: ConfirmModalState = {
 function AppConfirmModalProvider({ children }: Props) {
   const [modalState, setModalState] = useState<ConfirmModalState>(defaultModalState);
 
-  const resolver = useRef<(value: [result: boolean, data?: unknown]) => void>();
+  const resolver = useRef<((value: [result: boolean, data?: unknown]) => void) | undefined>(
+    undefined
+  );
 
   const handleShow = useCallback(async ({ type = 'confirm', ...props }: ShowConfirmModalProps) => {
     resolver.current?.([false]);

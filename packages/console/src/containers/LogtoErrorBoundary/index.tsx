@@ -1,5 +1,5 @@
 import { useLogto } from '@logto/react';
-import { useEffect } from 'react';
+import { type JSX, useEffect } from 'react';
 
 /**
  * This component keep children as is, but throw error if there is any error from Logto

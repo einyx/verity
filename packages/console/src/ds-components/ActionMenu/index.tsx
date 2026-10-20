@@ -48,7 +48,7 @@ function ActionMenu(props: Props) {
     isDropdownFullWidth = false,
   } = props;
   const [isOpen, setIsOpen] = useState(false);
-  const anchorReference = useRef(null);
+  const anchorReference = useRef<HTMLButtonElement>(null);
   const hasButtonProps = 'buttonProps' in props;
 
   return (

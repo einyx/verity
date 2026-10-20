@@ -33,18 +33,35 @@ const fieldLabels: Record<string, string> = {
   body: 'Text',
   kicker: 'Small label above the heading',
   proofLabel: 'Trust line above the logos',
+  enabled: 'Demo chat on the site',
 };
 
 const fieldHints: Record<string, string> = {
   Headline: 'Each line is one row of the headline. Keep each line short.',
   'Intro text': 'One or two sentences under the headline.',
-  'Where the button goes': 'A page on this site (starts with /), or a full web address (starts with https://).',
+  'Where the button goes':
+    'A page on this site (starts with /), or a full web address (starts with https://).',
   'Button text': 'The words on the button.',
+  'Demo chat on the site':
+    'Off keeps the static request form on the site. Changes reach the site when you publish.',
 };
 
 const hintFor = (label: string) => fieldHints[label];
 
 const labelFor = (key: string) => fieldLabels[key] ?? humanize(key);
+
+// The name shown on a collapsed list item: its heading if it has one, otherwise its first text.
+const summaryFor = (item: Record<string, unknown>): string => {
+  if (typeof item.heading === 'string' && item.heading) {
+    return item.heading;
+  }
+
+  return (
+    Object.values(item).find(
+      (child): child is string => typeof child === 'string' && child.length > 0
+    ) ?? ''
+  );
+};
 
 type LinesProps = {
   readonly label: string;
@@ -103,6 +120,22 @@ function ContentEditor({ label, value, onChange }: Props) {
     );
   }
 
+  if (typeof value === 'boolean') {
+    return (
+      <label className={styles.checkField}>
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(event) => {
+            onChange(event.target.checked);
+          }}
+        />
+        <span>{label}</span>
+        {hintFor(label) ? <small className={styles.hint}>{hintFor(label)}</small> : undefined}
+      </label>
+    );
+  }
+
   if (isStringList(value)) {
     return <LinesField label={label} value={value} onChange={onChange} />;
   }
@@ -111,22 +144,48 @@ function ContentEditor({ label, value, onChange }: Props) {
     return (
       <fieldset className={styles.group}>
         <legend className={styles.groupTitle}>{label}</legend>
-        {value.map((item: unknown, index) => (
-          <ContentEditor
-            // Items are fixed in count and order, so the position is a stable identity here.
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
-            label={`${label} ${index + 1}`}
-            value={item}
-            onChange={(next) => {
-              onChange(
-                value.map((existing: unknown, position: number): unknown =>
-                  position === index ? next : existing
-                )
-              );
-            }}
-          />
-        ))}
+        {value.map((item: unknown, index) => {
+          const itemLabel = `${label} ${index + 1}`;
+          const onItemChange = (next: unknown) => {
+            onChange(
+              value.map((existing: unknown, position: number): unknown =>
+                position === index ? next : existing
+              )
+            );
+          };
+
+          if (!isRecord(item)) {
+            return (
+              <ContentEditor
+                // Items are fixed in count and order, so the position is a stable identity here.
+                // eslint-disable-next-line react/no-array-index-key
+                key={index}
+                label={itemLabel}
+                value={item}
+                onChange={onItemChange}
+              />
+            );
+          }
+
+          // Object items fold into one row each, so a long list reads as a list until one is opened.
+          return (
+            <details
+              // Items are fixed in count and order, so the position is a stable identity here.
+              // eslint-disable-next-line react/no-array-index-key
+              key={index}
+              className={styles.item}
+              open={index === 0}
+            >
+              <summary className={styles.itemSummary}>
+                <span className={styles.itemIndex}>{itemLabel}</span>
+                <span className={styles.itemName}>{summaryFor(item)}</span>
+              </summary>
+              <div className={styles.itemBody}>
+                <ContentEditor label="" value={item} onChange={onItemChange} />
+              </div>
+            </details>
+          );
+        })}
       </fieldset>
     );
   }

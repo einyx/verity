@@ -159,7 +159,7 @@ export const routes: ReadonlyArray<readonly [RegExp, Handler]> = [
   [/^\/api\/tenants\/[^/]+\/subscription\/add-on-skus$/, () => []],
   [/^\/api\/tenants\/[^/]+\/available-skus$/, () => [sku(), proSku()]],
   [/^\/api\/tenants\/[^/]+\/invoices$/, () => []],
-  [/^\/api\/tenants\/[^/]+\/invitations$/, () => []],
+  [/^\/api\/tenants\/[^/]+\/invitations$/, () => ({ invitations: [] })],
   // The console removes a tenant from its list when the member has no scopes, so the local member
   // is granted every tenant scope.
   [

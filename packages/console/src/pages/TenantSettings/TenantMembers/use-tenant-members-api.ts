@@ -26,6 +26,18 @@ type TenantMembersApi = {
   deleteInvitation: (invitationId: string) => Promise<void>;
 };
 
+/** A bare array of invitations, the shape the published client type describes. */
+const isInvitationList = (body: unknown): body is TenantInvitationResponse[] => Array.isArray(body);
+
+/** The `{ invitations }` wrapper the billing service returns for the invitation list. */
+const isInvitationListEnvelope = (
+  body: unknown
+): body is { invitations: TenantInvitationResponse[] } =>
+  typeof body === 'object' &&
+  body !== null &&
+  'invitations' in body &&
+  isInvitationList(body.invitations);
+
 /** Logto Cloud holds the members and invitations of every Cloud tenant. */
 export const useCloudTenantMembersApi = (): TenantMembersApi & {
   updateMemberRole: (userId: string, roleName: TenantRole) => Promise<void>;
@@ -50,8 +62,23 @@ export const useCloudTenantMembersApi = (): TenantMembersApi & {
           body: { roleName },
         });
       },
-      getInvitations: async () =>
-        cloudApi.get('/api/tenants/:tenantId/invitations', { params: { tenantId } }),
+      getInvitations: async (): Promise<TenantInvitationResponse[]> => {
+        // The billing service wraps the list as `{ invitations }`. The published client type only
+        // describes a bare array, so accept both shapes until the client types are updated.
+        const body: unknown = await cloudApi.get('/api/tenants/:tenantId/invitations', {
+          params: { tenantId },
+        });
+
+        if (isInvitationList(body)) {
+          return body;
+        }
+
+        if (isInvitationListEnvelope(body)) {
+          return body.invitations;
+        }
+
+        throw new Error('Unexpected invitations response from the cloud service.');
+      },
       invite: async (invitee, roleName) => {
         await cloudApi.post('/api/tenants/:tenantId/invitations', {
           params: { tenantId },

@@ -8,6 +8,7 @@ import {
   defaultApplicationSecretName,
   hasSecrets,
   InternalRole,
+  internalPrefix,
   isBuiltInApplicationId,
   applicationResponseGuard,
 } from '@logto/schemas';
@@ -199,7 +200,17 @@ export default function applicationRoutes<T extends ManagementApiRouter>(
     }),
     // eslint-disable-next-line complexity
     async (ctx, next) => {
-      const { oidcClientMetadata, protectedAppMetadata, ...rest } = ctx.guard.body;
+      const { oidcClientMetadata, protectedAppMetadata, id, secretValue, ...rest } = ctx.guard.body;
+
+      // An operator may supply the client ID and secret so the credentials exist before the app
+      // does. The internal prefix stays reserved for Logto's own legacy secret.
+      assertThat(
+        !secretValue?.startsWith(internalPrefix),
+        new RequestError({
+          code: 'request.invalid_input',
+          details: 'The secret value must not start with the internal prefix.',
+        })
+      );
 
       if (rest.type === ApplicationType.SAML) {
         throw new RequestError('application.saml.use_saml_app_api');
@@ -239,7 +250,7 @@ export default function applicationRoutes<T extends ManagementApiRouter>(
       }
 
       const application = await queries.applications.insertApplication({
-        id: generateStandardId(),
+        id: id ?? generateStandardId(),
         secret: generateInternalSecret(),
         oidcClientMetadata: buildOidcClientMetadata(oidcClientMetadata),
         ...conditional(
@@ -254,7 +265,7 @@ export default function applicationRoutes<T extends ManagementApiRouter>(
         await queries.applicationSecrets.insert({
           name: defaultApplicationSecretName,
           applicationId: application.id,
-          value: generateStandardSecret(),
+          value: secretValue ?? generateStandardSecret(),
         });
       }
 

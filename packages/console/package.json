@@ -11,13 +11,15 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "pnpm generate",
+    "prepack": "pnpm generate && pnpm build:landing-chat && node scripts/sync-landing.mjs --copy",
     "generate": "./generate.sh",
     "precommit": "lint-staged",
     "start": "vite",
     "dev": "vite",
     "check": "tsc --noEmit",
-    "build": "pnpm generate && vite build",
+    "build": "pnpm generate && pnpm build:landing-chat && node scripts/sync-landing.mjs && vite build",
+    "build:landing-chat": "vite build -c vite.landing-chat.config.ts",
+    "sync:landing": "node scripts/sync-landing.mjs --copy",
     "lint": "eslint --ext .ts --ext .tsx src",
     "lint:report": "pnpm lint --format json --output-file report.json",
     "stylelint": "stylelint \"src/**/*.scss\"",
@@ -135,5 +137,9 @@
   "stylelint": {
     "extends": "@silverhand/eslint-config-react/.stylelintrc"
   },
-  "prettier": "@silverhand/eslint-config/.prettierrc"
+  "prettier": "@silverhand/eslint-config/.prettierrc",
+  "dependencies": {
+    "@assistant-ui/react": "0.15.30",
+    "@assistant-ui/react-markdown": "0.14.23"
+  }
 }

@@ -34,6 +34,9 @@ export const isDemoChatEnabled = (published?: unknown): boolean => {
  * The lead the chat may submit. Required fields are the same as the static form. The consent must be
  * `true`, and any unknown key is rejected so the model cannot add data the team never asked for.
  */
+/** The ways a visitor can ask to be contacted, offered as the last question in the chat. */
+export const demoContactMethods = ['email', 'whatsapp', 'phone', 'linkedin'] as const;
+
 const demoLeadGuard = z
   .object({
     firstName: z.string().trim().min(1).max(80),
@@ -44,6 +47,10 @@ const demoLeadGuard = z
     industry: z.string().trim().max(80).optional(),
     interests: z.array(z.string().trim().max(60)).max(10).optional(),
     decision: z.string().trim().max(200).optional(),
+    /** How the visitor wants to be contacted. Email uses the work email above. */
+    contactMethod: z.enum(demoContactMethods).optional(),
+    /** The phone number or LinkedIn profile, when the method is not email. */
+    contactDetail: z.string().trim().max(200).optional(),
     consent: z.literal(true),
   })
   .strict();

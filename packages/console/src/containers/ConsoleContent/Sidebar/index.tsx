@@ -87,7 +87,7 @@ function Sidebar() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref must hold the latest width for pointer handlers that outlive a render
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref mirrors the latest width so the pointer handler reads it without re-binding
     widthRef.current = width;
   }, [width]);
 
@@ -168,13 +168,15 @@ function Sidebar() {
         </div>
       </OverlayScrollbar>
       {!isCollapsed && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a focusable separator is the ARIA window-splitter pattern and needs pointer and keyboard handling
         <div
-          role="slider"
+          role="separator"
           aria-orientation="vertical"
           aria-label="Resize sidebar"
           aria-valuemin={collapsedWidth}
           aria-valuemax={maxWidth}
           aria-valuenow={displayWidth}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the separator must be focusable so keyboard users can resize, per the ARIA window-splitter pattern
           tabIndex={0}
           className={styles.resizeHandle}
           onPointerDown={handlePointerDown}

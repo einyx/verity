@@ -153,7 +153,6 @@
   align-items: start;
 }
 
-
 .card {
   display: flex;
   flex-direction: column;
@@ -469,6 +468,7 @@
   align-items: start;
 }
 
+/* The live preview: one card styled like the marketing site, with its fonts, warm neutrals and brand red. */
 .preview {
   position: sticky;
   top: 24px;
@@ -483,12 +483,12 @@
 }
 
 .previewLabel {
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: oklch(48.449% 0.009 99.035deg);
-  font-family: 'Stack Sans Text', system-ui, sans-serif;
 }
 
 .previewStack {
@@ -517,16 +517,16 @@
 
 .previewButton {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
   font-family: 'Stack Sans Text', system-ui, sans-serif;
+  height: 40px;
   padding: 0 24px;
   border-radius: 6px;
   background: oklch(57.578% 0.212 32.209deg);
   color: oklch(100% 0 none);
   font-size: 14px;
   font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
   white-space: nowrap;
 }
 
@@ -544,19 +544,18 @@
 @font-face {
   font-family: 'Stack Sans Headline';
   src: url('/console/landing/_astro/stack-sans-headline-latin-wght-normal.CFGVyMar.woff2') format('woff2');
-  font-weight: 200 800;
   font-style: normal;
+  font-weight: 200 800;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Stack Sans Text';
   src: url('/console/landing/_astro/stack-sans-text-latin-wght-normal.cHS98N20.woff2') format('woff2');
-  font-weight: 200 800;
   font-style: normal;
+  font-weight: 200 800;
   font-display: swap;
 }
-
 
 .previewActions {
   display: flex;
@@ -642,5 +641,31 @@
   &:disabled {
     opacity: 40%;
     cursor: not-allowed;
+  }
+}
+
+.viewToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+  align-self: flex-start;
+
+  button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: var(--color-text);
+      color: var(--color-layer-1);
+    }
   }
 }

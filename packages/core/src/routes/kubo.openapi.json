@@ -20,7 +20,8 @@
           "404": {
             "description": "The resource was not found."
           }
-        }
+        },
+        "operationId": "listKuboStacks"
       },
       "post": {
         "summary": "Create a Kubo stack",
@@ -34,6 +35,17 @@
           },
           "404": {
             "description": "The resource was not found."
+          }
+        },
+        "operationId": "createKuboStack",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KuboCreateStackBody"
+              }
+            }
           }
         }
       }
@@ -103,7 +115,8 @@
           "404": {
             "description": "The resource was not found."
           }
-        }
+        },
+        "operationId": "listKuboTemplates"
       }
     },
     "/api/kubo/kshows": {
@@ -155,7 +168,8 @@
           "404": {
             "description": "The resource was not found."
           }
-        }
+        },
+        "operationId": "getKuboStack"
       },
       "delete": {
         "summary": "Delete a Kubo stack",
@@ -176,6 +190,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "purge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Also delete the tenant namespace."
           }
         ],
         "responses": {
@@ -188,7 +211,8 @@
           "404": {
             "description": "The resource was not found."
           }
-        }
+        },
+        "operationId": "deleteKuboStack"
       },
       "patch": {
         "summary": "Update a Kubo stack",
@@ -220,6 +244,17 @@
           },
           "404": {
             "description": "The resource was not found."
+          }
+        },
+        "operationId": "updateKuboStack",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KuboPatchStackBody"
+              }
+            }
           }
         }
       }
@@ -256,7 +291,8 @@
           "404": {
             "description": "The resource was not found."
           }
-        }
+        },
+        "operationId": "bootstrapKuboStack"
       }
     },
     "/api/kubo/agentfw/products": {
@@ -340,6 +376,116 @@
           },
           "404": {
             "description": "The resource was not found."
+          }
+        },
+        "operationId": "renderKuboTemplate"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "KuboCreateStackBody": {
+        "type": "object",
+        "required": [
+          "template",
+          "tenant",
+          "mode",
+          "exclude",
+          "operators"
+        ],
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "The stack template to render, for example 'full'."
+          },
+          "tenant": {
+            "type": "string",
+            "description": "Lowercase RFC-1123 tenant slug (a-z, 0-9, '-')."
+          },
+          "mode": {
+            "type": "string",
+            "description": "The install mode from the template."
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Components to leave out."
+          },
+          "bootstrapM2M": {
+            "type": "boolean",
+            "description": "Create the tenant's non-interactive Auth0 client. Defaults to true."
+          },
+          "bundleVersion": {
+            "type": "string",
+            "description": "Pin this tenant's foundation bundle."
+          },
+          "authProvider": {
+            "type": "string",
+            "enum": [
+              "auth0",
+              "logto"
+            ],
+            "description": "Identity provider. Defaults to auth0."
+          },
+          "operators": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Operators to enable or disable."
+          }
+        }
+      },
+      "KuboPatchStackBody": {
+        "type": "object",
+        "description": "Partial update. Only the fields present are applied.",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "bundle": {
+            "type": "string",
+            "description": "Send an empty string to clear the bundle."
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operators": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "componentValues": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Per-component Helm overrides. null removes one."
+          },
+          "featureFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
+          },
+          "imageTags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
+          },
+          "chartVersions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
           }
         }
       }

@@ -24,16 +24,9 @@ type Props = {
   readonly onSubmit: () => void;
   readonly onFilesSelected: (files: File[]) => void;
   readonly onRemoveAttachment: (id: string) => void;
-  /** Fills the prompt with a ready-made question, as the quick-action toolbar does. */
-  readonly onQuickAction: (prompt: string) => void;
 };
 
-const quickActions = [
-  { label: 'Explain', prompt: 'Explain this in simple terms: ' },
-  { label: 'Summarize', prompt: 'Summarize the key points of: ' },
-  { label: 'Next steps', prompt: 'What are the next steps for: ' },
-] as const;
-
+/** The composer card from the landing page demo chat: a textarea, then a row with the hint and Send. */
 function Composer({
   value,
   attachments,
@@ -44,7 +37,6 @@ function Composer({
   onSubmit,
   onFilesSelected,
   onRemoveAttachment,
-  onQuickAction,
 }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -69,7 +61,7 @@ function Composer({
   };
 
   return (
-    <form className={styles.demoComposer} onSubmit={handleSubmit}>
+    <form className="demo-chat-form" onSubmit={handleSubmit}>
       {attachments.length > 0 && (
         <ul className={styles.attachments} aria-label={t('inkeep_ai_bot.attached_files_label')}>
           {attachments.map((attachment) => (
@@ -93,7 +85,7 @@ function Composer({
       <textarea
         ref={textareaRef}
         rows={1}
-        className={styles.demoInput}
+        className="demo-chat-input"
         value={value}
         placeholder={t('inkeep_ai_bot.chat_placeholder')}
         aria-label={t('inkeep_ai_bot.chat_placeholder')}
@@ -104,54 +96,35 @@ function Composer({
         }}
       />
       {attachmentError && <div className={styles.error}>{attachmentError}</div>}
-      <div className={styles.demoComposerFooter}>
-        <div className={styles.demoFooterLeft}>
-          <button
-            type="button"
-            className={styles.attachButton}
-            aria-label={t('inkeep_ai_bot.attach_file')}
-            disabled={isLoading}
-            onClick={() => {
-              fileInputRef.current?.click();
-            }}
-          >
-            <PlusIcon aria-hidden />
-          </button>
-          <input
-            ref={fileInputRef}
-            multiple
-            type="file"
-            className={styles.fileInput}
-            accept=".txt,.md,.csv,.json,.yaml,.yml,.sql,.sh,.ts,.tsx,.js,.jsx,text/*"
-            onChange={(event) => {
-              onFilesSelected(Array.from(event.currentTarget.files ?? []));
-              // Clearing the value lets the same file be picked again; the input holds no state we keep.
-              // eslint-disable-next-line @silverhand/fp/no-mutation
-              event.currentTarget.value = '';
-            }}
-          />
-          <div className={styles.demoQuickActions} role="toolbar" aria-label="Quick prompts">
-            {quickActions.map(({ label, prompt }) => (
-              <button
-                key={label}
-                type="button"
-                className={styles.demoQuickAction}
-                disabled={isLoading}
-                onClick={() => {
-                  onQuickAction(prompt);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.demoFooterRight}>
-          <span className={styles.demoHint}>{t('inkeep_ai_bot.enter_to_send')}</span>
-          <button type="submit" className={styles.demoSend} disabled={!hasContent || isLoading}>
-            {t('inkeep_ai_bot.send')}
-          </button>
-        </div>
+      <div className="demo-chat-toolbar">
+        <button
+          type="button"
+          className={styles.attachButton}
+          aria-label={t('inkeep_ai_bot.attach_file')}
+          disabled={isLoading}
+          onClick={() => {
+            fileInputRef.current?.click();
+          }}
+        >
+          <PlusIcon aria-hidden />
+        </button>
+        <input
+          ref={fileInputRef}
+          multiple
+          type="file"
+          className={styles.fileInput}
+          accept=".txt,.md,.csv,.json,.yaml,.yml,.sql,.sh,.ts,.tsx,.js,.jsx,text/*"
+          onChange={(event) => {
+            onFilesSelected(Array.from(event.currentTarget.files ?? []));
+            // Clearing the value lets the same file be picked again; the input holds no state we keep.
+            // eslint-disable-next-line @silverhand/fp/no-mutation -- The file input holds no state we keep, so clearing it is safe.
+            event.currentTarget.value = '';
+          }}
+        />
+        <span className="demo-chat-hint">{t('inkeep_ai_bot.enter_to_send')}</span>
+        <button type="submit" className="demo-chat-send" disabled={!hasContent || isLoading}>
+          {t('inkeep_ai_bot.send')}
+        </button>
       </div>
     </form>
   );

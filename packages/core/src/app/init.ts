@@ -113,6 +113,23 @@ export default async function initApp(app: Koa): Promise<void> {
 
   app.use(serveLandingAsset);
 
+  // The landing page's demo request lives on the root as a modal. Old demo links point at /demo, so a
+  // browser visit is sent to the root with the modal's anchor, which the landing page opens on load.
+  // Guarded as part of the landing page demo chat feature.
+  app.use(async (ctx, next) => {
+    if (
+      EnvSet.values.isDevFeaturesEnabled &&
+      ctx.method === 'GET' &&
+      ctx.URL.pathname === '/demo' &&
+      ctx.get('accept').includes('text/html')
+    ) {
+      ctx.redirect('/#demo-chat');
+      return;
+    }
+
+    return next();
+  });
+
   // eslint-disable-next-line complexity -- the root path has three cases (health probe, signed-in redirect, landing page); splitting them would scatter one decision.
   app.use(async (ctx, next) => {
     // The root answers 204 for health probes. A browser asking for the root gets the landing page instead.

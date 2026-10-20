@@ -52,6 +52,22 @@ describe('toSingleLine', () => {
 });
 
 describe('buildLeadBody', () => {
+  it('defaults the preferred contact to the work email', () => {
+    const body = buildLeadBody(lead);
+    expect(body).toContain('Preferred contact: Email');
+    expect(body).toContain(`Contact detail: ${lead.email}`);
+  });
+
+  it('shows the chosen contact method and its detail', () => {
+    const body = buildLeadBody({
+      ...lead,
+      contactMethod: 'phone',
+      contactDetail: '+44 7700 900123',
+    });
+    expect(body).toContain('Preferred contact: Phone call');
+    expect(body).toContain('Contact detail: +44 7700 900123');
+  });
+
   it('lists the lead fields on their own lines', () => {
     const body = buildLeadBody(lead);
 

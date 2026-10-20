@@ -50,6 +50,13 @@ export const toSingleLine = (value?: string): string =>
     .replaceAll(/ {2,}/g, ' ')
     .trim();
 
+const contactLabels: Record<NonNullable<DemoLead['contactMethod']>, string> = {
+  email: 'Email',
+  whatsapp: 'WhatsApp',
+  phone: 'Phone call',
+  linkedin: 'LinkedIn',
+};
+
 /** The plain-text body for one lead. Only the validated lead fields are included. */
 export const buildLeadBody = (lead: DemoLead): string =>
   [
@@ -62,6 +69,8 @@ export const buildLeadBody = (lead: DemoLead): string =>
     `Industry: ${toSingleLine(lead.industry)}`,
     `Interests: ${toSingleLine((lead.interests ?? []).join(', '))}`,
     `Decision: ${toSingleLine(lead.decision)}`,
+    `Preferred contact: ${toSingleLine(contactLabels[lead.contactMethod ?? 'email'])}`,
+    `Contact detail: ${toSingleLine(lead.contactDetail ?? lead.email)}`,
     '',
     'The visitor agreed to be contacted.',
   ].join('\n');

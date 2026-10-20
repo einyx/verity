@@ -1,6 +1,6 @@
 import { Theme } from '@logto/schemas';
 import classNames from 'classnames';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from 'react-modal';
 
@@ -8,30 +8,18 @@ import CopyIcon from '@/assets/icons/copy.svg?react';
 import AskAiIconDark from '@/assets/icons/logto-ai-bot-dark.svg?react';
 import AskAiIcon from '@/assets/icons/logto-ai-bot.svg?react';
 import Button from '@/ds-components/Button';
-import useApi from '@/hooks/use-api';
 import useTheme from '@/hooks/use-theme';
 import { onKeyDownHandler } from '@/utils/a11y';
 
 import Composer, { type Attachment } from './Composer';
-import MessageBubble from './MessageBubble';
-import ProposedActionCard, { type ProposedAction } from './ProposedActionCard';
+import Conversation, { type ConversationApi } from './Conversation';
 import SetupBanner from './SetupBanner';
+import Thread from './Thread';
 import { readAttachments } from './attachments';
 import styles from './index.module.scss';
 
 type Props = {
   readonly className?: string;
-};
-
-type ChatMessage = {
-  readonly role: 'user' | 'assistant';
-  readonly content: string;
-  readonly actions?: ProposedAction[];
-};
-
-type ChatResponse = {
-  readonly content?: string;
-  readonly actions?: Array<Omit<ProposedAction, 'status'>>;
 };
 
 const iconMap = Object.freeze({
@@ -42,15 +30,15 @@ const iconMap = Object.freeze({
 function AiChat({ className }: Props) {
   const theme = useTheme();
   const Icon = iconMap[theme];
-  const api = useApi();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [session, setSession] = useState(0);
+  const [conversation, setConversation] = useState<ConversationApi>();
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentError, setAttachmentError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  const [hasMessages, setHasMessages] = useState(false);
+  const [transcript, setTranscript] = useState('');
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
   // The send button is enabled once there is text or an attachment.
@@ -59,10 +47,6 @@ function AiChat({ className }: Props) {
   const exampleQuestions = t('inkeep_ai_bot.example_questions', {
     returnObjects: true,
   });
-
-  useEffect(() => {
-    scrollAnchorRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages.length, isLoading, hasError]);
 
   // Cloudflare-style shortcut: ⌘K (Ctrl+K on Windows/Linux) opens the assistant from anywhere.
   useEffect(() => {
@@ -92,10 +76,10 @@ function AiChat({ className }: Props) {
     setAttachments((current) => [...current, ...added]);
   };
 
-  const sendMessage = async (question?: string) => {
+  const sendMessage = (question?: string) => {
     const typed = (question ?? input).trim();
 
-    if ((!typed && attachments.length === 0) || isLoading) {
+    if ((!typed && attachments.length === 0) || isLoading || !conversation) {
       return;
     }
 
@@ -103,96 +87,29 @@ function AiChat({ className }: Props) {
     const fileBlocks = attachments.map(
       ({ name, text }) => `${t('inkeep_ai_bot.file_label', { name })}\n\`\`\`\n${text}\n\`\`\``
     );
-    const content = [...fileBlocks, typed].filter(Boolean).join('\n\n');
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }];
 
-    setMessages(nextMessages);
+    conversation.send([...fileBlocks, typed].filter(Boolean).join('\n\n'));
+    setHasMessages(true);
     setInput('');
     setAttachments([]);
     setAttachmentError(undefined);
-    setHasError(false);
-    setIsLoading(true);
-
-    try {
-      const response = await api
-        .post('api/ai-chat/completions', {
-          // Only role and content go to the server; proposed actions stay on the client.
-          json: {
-            messages: nextMessages.map(({ role, content: text }) => ({ role, content: text })),
-          },
-        })
-        .json<ChatResponse>();
-
-      setMessages([
-        ...nextMessages,
-        {
-          role: 'assistant',
-          content: response.content ?? '',
-          actions: (response.actions ?? []).map((action) => ({ ...action, status: 'pending' })),
-        },
-      ]);
-    } catch {
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const patchAction = (messageIndex: number, actionId: string, patch: Partial<ProposedAction>) => {
-    setMessages((current) =>
-      current.map((message, index) =>
-        index === messageIndex
-          ? {
-              ...message,
-              actions: message.actions?.map((action) =>
-                action.id === actionId ? { ...action, ...patch } : action
-              ),
-            }
-          : message
-      )
-    );
-  };
-
-  // The server runs the body it stored when the write was proposed, so nothing is sent from here.
-  const confirmAction = async (messageIndex: number, actionId: string) => {
-    patchAction(messageIndex, actionId, { status: 'running' });
-
-    try {
-      await api.post(`api/ai-chat/actions/${actionId}/confirm`).json();
-      patchAction(messageIndex, actionId, { status: 'done' });
-    } catch {
-      patchAction(messageIndex, actionId, {
-        status: 'failed',
-        message: t('inkeep_ai_bot.action_failed_detail'),
-      });
-    }
-  };
-
-  const cancelAction = async (messageIndex: number, actionId: string) => {
-    try {
-      await api.post(`api/ai-chat/actions/${actionId}/cancel`).json();
-    } catch {
-      // If the cancel did not reach the server, the proposal expires on its own.
-    }
-
-    patchAction(messageIndex, actionId, { status: 'cancelled' });
-  };
-
+  // Clearing remounts the runtime through `key`, which drops the old messages with it.
   const startOver = () => {
-    setMessages([]);
+    setSession((current) => current + 1);
+    setConversation(undefined);
+    setHasMessages(false);
+    setIsLoading(false);
+    setTranscript('');
     setInput('');
     setAttachments([]);
     setAttachmentError(undefined);
-    setHasError(false);
   };
 
   const copyChat = async () => {
-    const text = messages
-      .map(({ role, content }) => `${role === 'user' ? 'You' : 'MeshX AI'}: ${content}`)
-      .join('\n\n');
-
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(transcript);
     } catch {
       // Clipboard access can be blocked by the browser. The copy button just stays inactive.
     }
@@ -203,7 +120,15 @@ function AiChat({ className }: Props) {
   };
 
   return (
-    <>
+    <Conversation
+      key={session}
+      onReady={setConversation}
+      onRunStateChange={setIsLoading}
+      onTranscript={(text) => {
+        setTranscript(text);
+        setHasMessages(true);
+      }}
+    >
       <div
         tabIndex={0}
         aria-label={t('inkeep_ai_bot.ask_ai_label')}
@@ -231,61 +156,24 @@ function AiChat({ className }: Props) {
         onRequestClose={closeModal}
       >
         <SetupBanner icon={Icon} />
-        <div className={styles.messages}>
-          <MessageBubble sender="assistant" content={t('inkeep_ai_bot.intro_message')} />
-          {messages.length === 0 && Array.isArray(exampleQuestions) && (
-            <div className={styles.examples}>
-              <div className={styles.examplesLabel}>
-                {t('inkeep_ai_bot.example_questions_label')}
-              </div>
-              {exampleQuestions.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  className={styles.exampleQuestion}
-                  onClick={() => {
-                    void sendMessage(question);
-                  }}
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          )}
-          {messages.map((message, index) => (
-            // Messages are only appended, never reordered, so the index is a stable key.
-            // eslint-disable-next-line react/no-array-index-key
-            <div key={index}>
-              <MessageBubble sender={message.role} content={message.content} />
-              {message.actions?.map((action) => (
-                <ProposedActionCard
-                  key={action.id}
-                  action={action}
-                  onConfirm={() => {
-                    void confirmAction(index, action.id);
-                  }}
-                  onCancel={() => {
-                    void cancelAction(index, action.id);
-                  }}
-                />
-              ))}
-            </div>
-          ))}
-          {isLoading && (
-            <div className={styles.working}>
-              <span aria-hidden className={styles.assistantMark}>
-                ●
-              </span>
-              <span className={styles.typing} aria-label="…">
-                <span />
-                <span />
-                <span />
-              </span>
-            </div>
-          )}
-          {hasError && <div className={styles.error}>{t('inkeep_ai_bot.unavailable')}</div>}
-          <div ref={scrollAnchorRef} />
-        </div>
+        <Thread />
+        {!hasMessages && Array.isArray(exampleQuestions) && (
+          <div className={styles.examples}>
+            <div className={styles.examplesLabel}>{t('inkeep_ai_bot.example_questions_label')}</div>
+            {exampleQuestions.map((question) => (
+              <button
+                key={question}
+                type="button"
+                className={styles.exampleQuestion}
+                onClick={() => {
+                  sendMessage(question);
+                }}
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        )}
         <Composer
           value={input}
           attachments={attachments}
@@ -294,7 +182,7 @@ function AiChat({ className }: Props) {
           hasContent={hasContent}
           onChange={setInput}
           onSubmit={() => {
-            void sendMessage();
+            sendMessage();
           }}
           onFilesSelected={(files) => {
             void addFiles(files);
@@ -312,7 +200,7 @@ function AiChat({ className }: Props) {
               size="small"
               type="text"
               title="inkeep_ai_bot.clear"
-              disabled={messages.length === 0 && !hasError}
+              disabled={!hasMessages}
               onClick={startOver}
             />
             <Button
@@ -320,7 +208,7 @@ function AiChat({ className }: Props) {
               type="text"
               title="inkeep_ai_bot.copy_chat"
               icon={<CopyIcon />}
-              disabled={messages.length === 0}
+              disabled={!hasMessages}
               onClick={() => {
                 void copyChat();
               }}
@@ -331,7 +219,7 @@ function AiChat({ className }: Props) {
           </span>
         </div>
       </Modal>
-    </>
+    </Conversation>
   );
 }
 

@@ -19,8 +19,9 @@ const validLead = {
 };
 
 describe('isDemoChatEnabled', () => {
-  it('is off for the shipped default copy', () => {
-    expect(isDemoChatEnabled(defaultLandingPageContent)).toBe(false);
+  // The shipped default turns the demo chat on (see landing-page-defaults.ts).
+  it('is on for the shipped default copy', () => {
+    expect(isDemoChatEnabled(defaultLandingPageContent)).toBe(true);
   });
 
   it('is on only when the published flag is exactly true', () => {
@@ -39,6 +40,15 @@ describe('isDemoChatEnabled', () => {
 describe('parseDemoLead', () => {
   it('accepts a lead with the required fields and consent', () => {
     expect(parseDemoLead(validLead)).toEqual(validLead);
+  });
+
+  it('accepts a preferred contact method with its detail', () => {
+    const lead = { ...validLead, contactMethod: 'whatsapp', contactDetail: '+44 7700 900123' };
+    expect(parseDemoLead(lead)).toEqual(lead);
+  });
+
+  it('rejects an unknown contact method', () => {
+    expect(parseDemoLead({ ...validLead, contactMethod: 'fax' })).toBeUndefined();
   });
 
   it('rejects a lead without consent', () => {

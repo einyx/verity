@@ -11,6 +11,7 @@ import {
   proposePendingAction,
   type ConfirmResult,
 } from './ai-chat-actions.js';
+import { runToolLoopWithGraph } from './ai-chat-graph.js';
 import {
   maxProposalsPerRequest,
   maxToolOutputLength,
@@ -244,7 +245,9 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
           .slice(0, maxToolOutputLength);
       };
 
-      const outcome = await runToolLoop({ messages, callModel, executeTool });
+      // The LangGraph loop is in-development: it is used only when dev features are enabled.
+      const runLoop = EnvSet.values.isDevFeaturesEnabled ? runToolLoopWithGraph : runToolLoop;
+      const outcome = await runLoop({ messages, callModel, executeTool });
 
       if (!outcome.ok) {
         ctx.status = 503;

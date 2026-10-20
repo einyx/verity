@@ -79,11 +79,16 @@ export const useCloudTenantMembersApi = (): TenantMembersApi & {
 
         throw new Error('Unexpected invitations response from the cloud service.');
       },
-      invite: async (invitee, roleName) => {
-        await cloudApi.post('/api/tenants/:tenantId/invitations', {
-          params: { tenantId },
-          body: { invitee, roleName },
-        });
+      invite: async (invitees, roleName) => {
+        // The billing service takes one invitee per request.
+        await Promise.all(
+          invitees.map(async (invitee) =>
+            cloudApi.post('/api/tenants/:tenantId/invitations', {
+              params: { tenantId },
+              body: { invitee, roleName },
+            })
+          )
+        );
       },
       resendInvitation: async (invitationId) => {
         await cloudApi.post('/api/tenants/:tenantId/invitations/:invitationId/message', {

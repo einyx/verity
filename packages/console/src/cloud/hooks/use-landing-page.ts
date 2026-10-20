@@ -24,6 +24,8 @@ const landingPageVersionsGuard = z.array(
 
 export type LandingPageVersion = z.infer<typeof landingPageVersionsGuard>[number];
 
+const landingPageChatReplyGuard = z.object({ reply: z.string(), submitted: z.boolean() });
+
 const landingPageBase = '/api/landing-page';
 
 const request = async (
@@ -96,6 +98,16 @@ export const useLandingPage = () => {
     [getToken]
   );
 
+  // Talks to the demo chat the way a visitor would on the site. Messages are sent for real, so a
+  // valid lead in the conversation is delivered.
+  const sendChat = useCallback(
+    async (sessionId: string, message: string) =>
+      landingPageChatReplyGuard.parse(
+        await request(getToken, '/chat', { method: 'POST', body: { sessionId, message } })
+      ),
+    [getToken]
+  );
+
   return useMemo(
     () => ({
       data,
@@ -105,7 +117,8 @@ export const useLandingPage = () => {
       publish,
       rollback,
       listVersions,
+      sendChat,
     }),
-    [data, error, isLoading, saveDraft, publish, rollback, listVersions]
+    [data, error, isLoading, saveDraft, publish, rollback, listVersions, sendChat]
   );
 };

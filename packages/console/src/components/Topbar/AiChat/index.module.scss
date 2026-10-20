@@ -710,11 +710,17 @@
 
 /* Demo chat design: warm light surface, serif welcome, bubbles for the user, open Markdown replies. */
 .demoModal {
+  --chat-surface: #faf9f6;
+  --chat-text: #1f1e1c;
+  --chat-muted: #6f6c66;
+  --chat-line: #e7e4de;
+  --chat-accent: #c4291c;
   display: flex;
   flex-direction: column;
   height: min(680px, calc(100vh - 64px));
-  background: #faf9f6;
-  color: #1f1e1c;
+  overflow-x: hidden;
+  background: var(--chat-surface);
+  color: var(--chat-text);
 }
 
 .demoThread {

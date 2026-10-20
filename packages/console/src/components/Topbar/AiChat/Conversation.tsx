@@ -58,15 +58,13 @@ type ConversationProps = {
   readonly children: ReactNode;
   readonly onReady: (api: ConversationApi) => void;
   readonly onRunStateChange: (isLoading: boolean) => void;
-  readonly onTranscript: (transcript: string) => void;
 };
 
 /**
- * One assistant-ui runtime per conversation. Clearing the chat remounts it (via `key`), so the
- * runtime never holds stale messages. It stays mounted outside the modal, so the transcript
- * survives closing the modal.
+ * One assistant-ui runtime for the whole session. It stays mounted outside the modal, so the
+ * conversation survives closing the modal.
  */
-function Conversation({ children, onReady, onRunStateChange, onTranscript }: ConversationProps) {
+function Conversation({ children, onReady, onRunStateChange }: ConversationProps) {
   const api = useApi();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const [statuses, setStatuses] = useState<Record<string, ActionStatus | undefined>>({});
@@ -91,15 +89,6 @@ function Conversation({ children, onReady, onRunStateChange, onTranscript }: Con
             .json<ChatResponse>();
 
           const content = response.content ?? '';
-          onTranscript(
-            [
-              ...messages.map(
-                (message) =>
-                  `${message.role === 'user' ? 'You' : 'MeshX AI'}: ${textOf(message.content)}`
-              ),
-              `MeshX AI: ${content}`,
-            ].join('\n\n')
-          );
 
           return {
             content: [{ type: 'text', text: content }],
@@ -110,7 +99,7 @@ function Conversation({ children, onReady, onRunStateChange, onTranscript }: Con
         }
       },
     }),
-    [api, onRunStateChange, onTranscript]
+    [api, onRunStateChange]
   );
 
   const runtime = useLocalRuntime(adapter);

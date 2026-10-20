@@ -4,7 +4,7 @@ const demo = '/demo?intent=demo';
 
 /** The copy the site ships with. Used until a document is published, and as the first draft. */
 export const defaultLandingPageContent: LandingPageDocument = {
-  demoChat: { enabled: false },
+  demoChat: { enabled: true },
   hero: {
     headline: ['Enterprise', 'intelligence', 'that compounds.'],
     lede: 'The intelligence layer sits between your data and your AI. It captures the context, expertise and decisions your people create every day, so every answer, app and agent gets smarter the more your business uses it.',

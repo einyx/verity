@@ -8,6 +8,12 @@ allowBuilds:
   core-js: true
   esbuild: true
   puppeteer: true
+minimumReleaseAgeExclude:
+  - '@assistant-ui/core@0.3.30'
+  - '@assistant-ui/react@0.15.30'
+  - '@assistant-ui/store@0.3.22'
+  - '@assistant-ui/tap@0.9.24'
+  - assistant-stream@0.3.53
 overrides:
   "@babel/core@<=7.29.0": "^7.29.6"
   "@opentelemetry/core@<2.8.0": "^2.8.0"

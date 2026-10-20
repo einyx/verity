@@ -120,7 +120,7 @@ function Table<
           <table
             className={classNames(
               styles.headerTable,
-              filter && styles.hideTopBorderRadius,
+              !!filter && styles.hideTopBorderRadius,
               headerTableClassName
             )}
           >

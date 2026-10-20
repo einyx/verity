@@ -14,7 +14,7 @@ const target = path.join(root, 'dist/landing');
 
 // Files that reference the assets, and the assets in the order they must be stamped.
 const referencing = ['index.html', 'demo-chat.js'];
-const assets = ['demo-chat-app.js', 'demo-chat.css', 'demo-chat.js'];
+const assets = ['demo-chat-app.js', 'demo-chat.css', 'demo-chat.js', 'cms.js'];
 
 const stampAsset = async (asset) => {
   const hash = createHash('sha256')

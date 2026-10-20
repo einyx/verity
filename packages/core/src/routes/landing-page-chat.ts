@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { EnvSet } from '#src/env-set/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 
+import { checkVisitorMessage, productionModerator } from './landing-page-abuse.js';
 import {
   createIpLimiter,
   createWindowLimiter,
@@ -23,6 +24,7 @@ import {
   recordTurnSafely,
   type RecordedChatTurn,
 } from './landing-page-chat-store.js';
+import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-page-docs.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
 
 // Public demo chat on the landing page. Anonymous and model-backed, so the server enforces every limit:
@@ -33,8 +35,12 @@ type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
 export type LandingPageChatDeps = {
   readPublished: () => Promise<unknown>;
-  callModel: (messages: ChatMessage[]) => Promise<ModelReply>;
+  callModel: (messages: ChatMessage[], context?: string) => Promise<ModelReply>;
   sendLead: (lead: DemoLead) => Promise<void>;
+  /** Whether a visitor message breaks the rules (abuse, harassment). Missing means no check. */
+  moderate?: (text: string) => Promise<boolean>;
+  /** Reference text from the meshX docs for one visitor question, if any. */
+  searchDocs?: (question: string) => Promise<string | undefined>;
   /** Saves the conversation in the admin tenant. Optional, so the chat works without a store. */
   recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
 };
@@ -144,12 +150,24 @@ const openSession = (
 };
 
 /** Calls the model. A failed call returns undefined so the visitor gets a clean error, not a stack trace. */
+const findDocumentsContext = async (deps: LandingPageChatDeps, question: string) => {
+  // A message that held only contact details leaves nothing to search for, so no search runs.
+  if (!question) {
+    return;
+  }
+
+  try {
+    return await deps.searchDocs?.(question);
+  } catch {}
+};
+
 const askModel = async (
   deps: LandingPageChatDeps,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  context?: string
 ): Promise<ModelReply | undefined> => {
   try {
-    return await deps.callModel(messages);
+    return await deps.callModel(messages, context);
   } catch {}
 };
 
@@ -253,8 +271,44 @@ export const handleChatTurn = async (
 
   const message = input.message.trim();
 
-  // Only the server's own transcript is sent to the model, never a client-supplied history.
-  const reply = await askModel(deps, [...session.messages, { role: 'user', content: message }]);
+  if (deps.moderate) {
+    const verdict = await checkVisitorMessage(input.sessionId, message, deps.moderate);
+
+    if (verdict === 'unavailable') {
+      // The check must run before the model sees a message, so when it cannot, the chat stays closed.
+      return error(
+        502,
+        'landing_page.chat_unavailable',
+        'The assistant is unavailable. Please try again or use the request form.'
+      );
+    }
+
+    if (verdict === 'closed') {
+      return error(
+        429,
+        'landing_page.chat_closed_for_abuse',
+        'This conversation has been closed. Please use the request form instead.'
+      );
+    }
+
+    if (verdict === 'warned') {
+      return {
+        status: 200,
+        body: {
+          reply:
+            'Let’s keep this about meshX and your team’s data. What would you like to see in a demo?',
+          submitted: false,
+        },
+      };
+    }
+  }
+
+  const context = await findDocumentsContext(deps, buildDocumentsQuery(session.messages, message));
+  const reply = await askModel(
+    deps,
+    [...session.messages, { role: 'user', content: message }],
+    context
+  );
 
   if (!reply) {
     return error(
@@ -302,7 +356,7 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     return row?.published;
   },
-  callModel: async (messages) => {
+  callModel: async (messages, context) => {
     const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
     const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
@@ -313,7 +367,11 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL_NAME ?? 'gpt-4.1',
         max_tokens: 400,
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...(context ? [{ role: 'system', content: context }] : []),
+          ...messages,
+        ],
         tools: [submitLeadTool],
       }),
     });
@@ -324,6 +382,8 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     return readModelReply(await response.json());
   },
+  moderate: productionModerator,
+  searchDocs: createProductionDocumentsSearch(),
   sendLead: async (lead) => {
     // Fail closed: without both variables the lead is refused, and the visitor is told so.
     const connection = process.env.ACS_CONNECTION_STRING;

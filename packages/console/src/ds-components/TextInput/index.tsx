@@ -1,4 +1,3 @@
-import { type Nullable } from '@silverhand/essentials';
 import classNames from 'classnames';
 import {
   type HTMLProps,
@@ -50,7 +49,7 @@ function TextInput(
     description,
     ...rest
   }: Props,
-  reference: Ref<Nullable<HTMLInputElement>>
+  reference: Ref<HTMLInputElement | null>
 ) {
   const innerRef = useRef<HTMLInputElement>(null);
   const [isContentHidden, setIsContentHidden] = useState(true);

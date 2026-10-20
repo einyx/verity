@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import CodeEditor from '@/ds-components/CodeEditor';
 
 import Mermaid from '../Mermaid';

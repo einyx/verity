@@ -1,5 +1,5 @@
 import { ExtraParamsKey, SignInIdentifier } from '@logto/schemas';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import * as reactRouterDom from 'react-router-dom';
 
 import useIdentifierParams from './use-identifier-params';

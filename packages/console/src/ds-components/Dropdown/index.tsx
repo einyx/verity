@@ -24,7 +24,7 @@ type Props = {
   readonly title?: ReactNode;
   readonly isOpen: boolean;
   readonly onClose?: () => void;
-  readonly anchorRef: RefObject<HTMLElement>;
+  readonly anchorRef: RefObject<HTMLElement | null>;
   readonly isFullWidth?: boolean;
   readonly className?: string;
   readonly titleClassName?: string;

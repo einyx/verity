@@ -21,7 +21,7 @@ export const SignInExperienceContext = createContext<SignInExperienceContextType
 
 function SignInExperienceContextProvider({ children }: Props) {
   const [isUploading, setIsUploading] = useState(false);
-  const cancelUploadRef = useRef<() => void>();
+  const cancelUploadRef = useRef<(() => void) | undefined>(undefined);
 
   const handleSetCancelUpload = (cancelFunction?: () => void) => {
     // eslint-disable-next-line @silverhand/fp/no-mutation

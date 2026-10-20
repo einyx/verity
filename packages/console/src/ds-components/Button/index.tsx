@@ -62,7 +62,7 @@ function Button(
   buttonRef: ForwardedRef<HTMLButtonElement>
 ) {
   const [showSpinner, setShowSpinner] = useState(false);
-  const timerRef = useRef<number>();
+  const timerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     // Delay showing the spinner after 'loadingDelay' milliseconds
@@ -86,7 +86,7 @@ function Button(
         styles.button,
         styles[type],
         styles[size],
-        icon && styles.withIcon,
+        !!icon && styles.withIcon,
         isLoading && styles.loading,
         className
       )}

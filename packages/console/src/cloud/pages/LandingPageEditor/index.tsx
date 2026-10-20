@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
 
 import ContentEditor, { isRecord } from './ContentEditor';
+import LandingPreviewFrame, { setAtPath } from './LandingPreviewFrame';
 import NavArtwork from './NavArtwork';
 import Preview from './Preview';
 import styles from './index.module.scss';
@@ -129,6 +130,11 @@ function LandingPageEditorContent() {
     ? activeKey
     : sectionEntries[0]?.[0];
   const selected = sectionEntries.find(([key]) => key === selectedKey);
+
+  // Writes one edited field of the draft, by its dotted path from the draft root.
+  const editField = (path: string, value: string) => {
+    setDraft((current: unknown) => setAtPath(current, path, value));
+  };
 
   return (
     // `fullWidthPage` opts this page out of the console's centred width cap.
@@ -259,15 +265,6 @@ function LandingPageEditorContent() {
           <div className={styles.viewToggle} role="group" aria-label="Preview">
             <button
               type="button"
-              aria-pressed={!showWholePage}
-              onClick={() => {
-                setShowWholePage(false);
-              }}
-            >
-              Edit one section
-            </button>
-            <button
-              type="button"
               aria-pressed={showWholePage}
               onClick={() => {
                 setShowWholePage(true);
@@ -275,17 +272,18 @@ function LandingPageEditorContent() {
             >
               Preview whole page
             </button>
+            <button
+              type="button"
+              aria-pressed={!showWholePage}
+              onClick={() => {
+                setShowWholePage(false);
+              }}
+            >
+              Edit one section
+            </button>
           </div>
 
-          {showWholePage &&
-            sectionEntries.map(([key, value]) => (
-              <section key={key} className={styles.section}>
-                <div className={styles.sectionHeader}>
-                  <h2 className={styles.sectionName}>{sectionLabels[key] ?? key}</h2>
-                </div>
-                <Preview name={key} value={value} onSendChat={sendChat} />
-              </section>
-            ))}
+          {showWholePage && <LandingPreviewFrame draft={draft} onEdit={editField} />}
 
           {!showWholePage && selected && (
             <section className={styles.section}>
@@ -302,7 +300,12 @@ function LandingPageEditorContent() {
                       setDraft({ ...currentDraft, [selected[0]]: next });
                     }}
                   />
-                  <Preview name={selected[0]} value={selected[1]} onSendChat={sendChat} />
+                  <Preview
+                    name={selected[0]}
+                    value={selected[1]}
+                    onSendChat={sendChat}
+                    onEdit={editField}
+                  />
                 </div>
               </div>
             </section>

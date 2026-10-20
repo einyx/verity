@@ -8,7 +8,7 @@ import useTheme from '@/hooks/use-theme';
 
 type Props = {
   readonly containerClassName?: string;
-  readonly fallbackElement?: ReactElement;
+  readonly fallbackElement?: ReactElement<{ className?: string }>;
 } & ImgHTMLAttributes<HTMLImageElement>;
 
 function ImageWithErrorFallback({

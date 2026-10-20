@@ -5,6 +5,7 @@ import {
   type ComponentType,
   type LazyExoticComponent,
   type SVGProps,
+  type JSX,
   Suspense,
   createContext,
   useContext,

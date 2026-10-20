@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 const defaultDelay = 500;
 
 const useDebounce = (delay: number = defaultDelay) => {
-  const timerRef = useRef<number>();
+  const timerRef = useRef<number | undefined>(undefined);
 
   const clearTimer = () => {
     if (timerRef.current) {

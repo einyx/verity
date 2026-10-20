@@ -124,9 +124,41 @@ function UserMessage() {
   );
 }
 
+// Links the assistant may show. The model can be steered by visitor text, so only our own HTTPS pages
+// become links; anything else is shown as plain text.
+const allowedLinkHosts = new Set(['meshx.io', 'www.meshx.io', 'docs.meshx.io']);
+
+const isAllowedLink = (href: string | undefined): href is string => {
+  if (!href) {
+    return false;
+  }
+
+  try {
+    const url = new URL(href);
+
+    return url.protocol === 'https:' && allowedLinkHosts.has(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 // Assistant replies use light Markdown (paragraphs, bold, short lists), rendered by assistant-ui.
 function MarkdownText() {
-  return <MarkdownTextPrimitive className="demo-chat-md" />;
+  return (
+    <MarkdownTextPrimitive
+      className="demo-chat-md"
+      components={{
+        a: ({ href, children }) =>
+          isAllowedLink(href) ? (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              {children}
+            </a>
+          ) : (
+            <span>{children}</span>
+          ),
+      }}
+    />
+  );
 }
 
 function AssistantMessage() {
@@ -166,6 +198,37 @@ class ChatErrorBoundary extends Component<{ readonly children: ReactNode }, Boun
 
     return this.props.children;
   }
+}
+
+// Status lines shown while the assistant replies. They cycle so the wait feels like progress.
+const thinkingSteps = [
+  'Thinking…',
+  'Reading your message…',
+  'Calculating your preferences…',
+  'Finding the right meshX answer…',
+];
+
+function ThinkingStatus() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStep((current) => (current + 1) % thinkingSteps.length);
+    }, 1800);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return (
+    <div className="demo-chat-thinking" role="status" aria-live="polite">
+      <span className="demo-chat-thinking-dot" aria-hidden="true" />
+      <span key={step} className="demo-chat-thinking-text">
+        {thinkingSteps[step]}
+      </span>
+    </div>
+  );
 }
 
 function DemoChat() {
@@ -218,11 +281,7 @@ function DemoChat() {
           </ThreadPrimitive.Empty>
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
           <ThreadPrimitive.If running>
-            <div className="demo-chat-typing" role="status" aria-label="meshX is replying">
-              <span />
-              <span />
-              <span />
-            </div>
+            <ThinkingStatus />
           </ThreadPrimitive.If>
         </ThreadPrimitive.Viewport>
         {submitted ? (

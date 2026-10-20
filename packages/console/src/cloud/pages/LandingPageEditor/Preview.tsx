@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { isRecord } from './ContentEditor';
 import styles from './index.module.scss';
@@ -11,21 +11,59 @@ const headingKeys = new Set(['headline', 'heading', 'title', 'customer']);
 const isLink = (value: unknown): value is { label: string; href: string } =>
   isRecord(value) && typeof value.label === 'string' && typeof value.href === 'string';
 
-type NodeProps = {
+type EditProps = { readonly path: string; readonly onEdit: (path: string, value: string) => void };
+
+type NodeProps = EditProps & {
   readonly name: string;
   readonly value: unknown;
 };
 
-function PreviewNode({ name, value }: NodeProps) {
+/**
+ * Text that is edited where it is shown. The text is set by hand, not through React's children, so the
+ * caret stays put while typing; the draft is only written back to when the text changes.
+ */
+type EditableTextProps = EditProps & {
+  readonly value: string;
+  readonly className?: string;
+};
+
+function EditableText({ path, value, className, onEdit }: EditableTextProps) {
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    // The text is written straight to the element, so typing is never interrupted by a re-render.
+    if (ref.current && ref.current.textContent !== value) {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- a DOM property, not app state.
+      ref.current.textContent = value;
+    }
+  }, [value]);
+
+  return (
+    <p
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      className={className}
+      onInput={(event) => {
+        onEdit(path, event.currentTarget.textContent ?? '');
+      }}
+    />
+  );
+}
+
+function PreviewNode({ name, value, path, onEdit }: NodeProps) {
   if (typeof value === 'string') {
     if (!value.trim()) {
       return null;
     }
 
-    return headingKeys.has(name) ? (
-      <p className={styles.previewHeading}>{value}</p>
-    ) : (
-      <p className={styles.previewText}>{value}</p>
+    return (
+      <EditableText
+        path={path}
+        value={value}
+        className={headingKeys.has(name) ? styles.previewHeading : styles.previewText}
+        onEdit={onEdit}
+      />
     );
   }
 
@@ -37,8 +75,14 @@ function PreviewNode({ name, value }: NodeProps) {
     return (
       <div className={styles.previewStack}>
         {value.map((item: unknown, index) => (
-          // eslint-disable-next-line react/no-array-index-key -- list items are static draft copy, so the index is stable
-          <PreviewNode key={`${name}-${index}`} name={name} value={item} />
+          <PreviewNode
+            // eslint-disable-next-line react/no-array-index-key -- list items are static draft copy, so the index is stable
+            key={`${name}-${index}`}
+            name={name}
+            value={item}
+            path={`${path}.${index}`}
+            onEdit={onEdit}
+          />
         ))}
       </div>
     );
@@ -56,7 +100,9 @@ function PreviewNode({ name, value }: NodeProps) {
     }, []);
 
     const rows = segments.map(({ isLinks, items }) => {
-      const nodes = items.map(([key, child]) => <PreviewNode key={key} name={key} value={child} />);
+      const nodes = items.map(([key, child]) => (
+        <PreviewNode key={key} name={key} value={child} path={`${path}.${key}`} onEdit={onEdit} />
+      ));
       return isLinks ? (
         <div key={`actions-${items[0]?.[0]}`} className={styles.previewActions}>
           {nodes}
@@ -175,9 +221,11 @@ type Props = {
   readonly name: string;
   readonly value: unknown;
   readonly onSendChat: (sessionId: string, message: string) => Promise<{ reply: string }>;
+  /** Writes an edited field back to the draft, by its dotted path from the draft root. */
+  readonly onEdit: (path: string, value: string) => void;
 };
 
-function Preview({ name, value, onSendChat }: Props) {
+function Preview({ name, value, onSendChat, onEdit }: Props) {
   const isDemoChat = name === 'demoChat' && isRecord(value);
 
   return (
@@ -186,7 +234,7 @@ function Preview({ name, value, onSendChat }: Props) {
       {isDemoChat ? (
         <DemoChatPreview isEnabled={value.enabled === true} onSend={onSendChat} />
       ) : (
-        <PreviewNode name={name} value={value} />
+        <PreviewNode name={name} value={value} path={name} onEdit={onEdit} />
       )}
     </aside>
   );

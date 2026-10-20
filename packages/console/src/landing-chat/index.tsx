@@ -200,6 +200,37 @@ class ChatErrorBoundary extends Component<{ readonly children: ReactNode }, Boun
   }
 }
 
+// Status lines shown while the assistant replies. They cycle so the wait feels like progress.
+const thinkingSteps = [
+  'Thinking…',
+  'Reading your message…',
+  'Calculating your preferences…',
+  'Finding the right meshX answer…',
+];
+
+function ThinkingStatus() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStep((current) => (current + 1) % thinkingSteps.length);
+    }, 1800);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return (
+    <div className="demo-chat-thinking" role="status" aria-live="polite">
+      <span className="demo-chat-thinking-dot" aria-hidden="true" />
+      <span key={step} className="demo-chat-thinking-text">
+        {thinkingSteps[step]}
+      </span>
+    </div>
+  );
+}
+
 function DemoChat() {
   const sessionId = useMemo(() => crypto.randomUUID(), []);
   const [submitted, setSubmitted] = useState(false);
@@ -250,11 +281,7 @@ function DemoChat() {
           </ThreadPrimitive.Empty>
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
           <ThreadPrimitive.If running>
-            <div className="demo-chat-typing" role="status" aria-label="meshX is replying">
-              <span />
-              <span />
-              <span />
-            </div>
+            <ThinkingStatus />
           </ThreadPrimitive.If>
         </ThreadPrimitive.Viewport>
         {submitted ? (

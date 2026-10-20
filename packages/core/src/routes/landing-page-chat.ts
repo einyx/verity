@@ -16,6 +16,7 @@ import {
   parseDemoLead,
   type DemoLead,
 } from './landing-page-chat-guard.js';
+import { buildDocsQuery, createProductionDocsSearch } from './landing-page-docs.js';
 import { systemPrompt } from './landing-page-chat-prompt.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
 
@@ -29,8 +30,10 @@ type ModelReply = { content?: string; lead?: unknown };
 
 export type LandingPageChatDeps = {
   readPublished: () => Promise<unknown>;
-  callModel: (messages: ChatMessage[]) => Promise<ModelReply>;
+  callModel: (messages: ChatMessage[], context?: string) => Promise<ModelReply>;
   sendLead: (lead: DemoLead) => Promise<void>;
+  /** Reference text from the meshX docs for one visitor question, if any. */
+  searchDocs?: (question: string) => Promise<string | undefined>;
 };
 
 type Session = {
@@ -138,12 +141,26 @@ const openSession = (
 };
 
 /** Calls the model. A failed call returns undefined so the visitor gets a clean error, not a stack trace. */
+const findDocsContext = async (deps: LandingPageChatDeps, question: string) => {
+  // A message that held only contact details leaves nothing to search for, so no search runs.
+  if (!question) {
+    return undefined;
+  }
+
+  try {
+    return await deps.searchDocs?.(question);
+  } catch {
+    return undefined;
+  }
+};
+
 const askModel = async (
   deps: LandingPageChatDeps,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  context?: string
 ): Promise<ModelReply | undefined> => {
   try {
-    return await deps.callModel(messages);
+    return await deps.callModel(messages, context);
   } catch {}
 };
 
@@ -227,7 +244,12 @@ export const handleChatTurn = async (
   const message = input.message.trim();
 
   // Only the server's own transcript is sent to the model, never a client-supplied history.
-  const reply = await askModel(deps, [...session.messages, { role: 'user', content: message }]);
+  const context = await findDocsContext(deps, buildDocsQuery(session.messages, message));
+  const reply = await askModel(
+    deps,
+    [...session.messages, { role: 'user', content: message }],
+    context
+  );
 
   if (!reply) {
     return error(
@@ -319,7 +341,7 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     return row?.published;
   },
-  callModel: async (messages) => {
+  callModel: async (messages, context) => {
     const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
     const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
@@ -330,7 +352,11 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL_NAME ?? 'gpt-4.1',
         max_tokens: 400,
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...(context ? [{ role: 'system', content: context }] : []),
+          ...messages,
+        ],
         tools: [submitLeadTool],
       }),
     });
@@ -341,6 +367,7 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     return readModelReply(await response.json());
   },
+  searchDocs: createProductionDocsSearch(),
   sendLead: async (lead) => {
     // Fail closed: without both variables the lead is refused, and the visitor is told so.
     const connection = process.env.ACS_CONNECTION_STRING;

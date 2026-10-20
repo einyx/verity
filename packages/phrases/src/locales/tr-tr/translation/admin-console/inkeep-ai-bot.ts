@@ -35,6 +35,12 @@ const inkeep_ai_bot = {
   copy_assistant: 'MeshX AI',
   file_label: 'Dosya: {{name}}',
   enter_to_send: 'Göndermek için Enter',
+  thinking_steps: [
+    'Düşünüyorum…',
+    'Mesajınız okunuyor…',
+    'Tercihleriniz hesaplanıyor…',
+    'Doğru meshX yanıtı aranıyor…',
+  ],
 };
 
 export default Object.freeze(inkeep_ai_bot);

@@ -1,6 +1,6 @@
 import { MessagePrimitive, ThreadPrimitive, useAuiState } from '@assistant-ui/react';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionContext } from './Conversation';
@@ -91,6 +91,33 @@ function AssistantMessage() {
   );
 }
 
+// Status lines shown while the assistant replies. They cycle so the wait feels like progress.
+function ThinkingStatus() {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const steps = t('inkeep_ai_bot.thinking_steps', { returnObjects: true });
+  const [step, setStep] = useState(0);
+  const count = Array.isArray(steps) ? steps.length : 0;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStep((current) => (count ? (current + 1) % count : 0));
+    }, 1800);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [count]);
+
+  return (
+    <div className="demo-chat-thinking" role="status" aria-live="polite">
+      <span className="demo-chat-thinking-dot" aria-hidden="true" />
+      <span key={step} className="demo-chat-thinking-text">
+        {Array.isArray(steps) ? steps[step] : undefined}
+      </span>
+    </div>
+  );
+}
+
 /**
  * The transcript, laid out as on the landing page demo chat: a centred welcome before the first
  * message, the example questions as idea rows, then the conversation with the typing dots while a
@@ -122,15 +149,7 @@ function Thread() {
         </ThreadPrimitive.Empty>
         <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
         <ThreadPrimitive.If running>
-          <div
-            className="demo-chat-typing"
-            role="status"
-            aria-label={t('inkeep_ai_bot.ask_ai_label')}
-          >
-            <span />
-            <span />
-            <span />
-          </div>
+          <ThinkingStatus />
         </ThreadPrimitive.If>
       </ThreadPrimitive.Viewport>
       <ThreadPrimitive.Empty>

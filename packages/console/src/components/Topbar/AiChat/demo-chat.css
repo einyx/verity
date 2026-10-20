@@ -825,3 +825,55 @@
 .demo-chat-message[data-role='assistant'] {
   white-space: normal;
 }
+
+/* Thinking status: a pulsing dot and a line that cycles through what the assistant is doing. */
+.demo-chat-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--chat-muted, #6f6c66);
+  font-size: 0.9rem;
+}
+
+.demo-chat-thinking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.demo-chat-thinking-text {
+  animation: demo-chat-fade-in 300ms ease-out;
+}
+
+@keyframes demo-chat-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-chat-thinking-dot,
+  .demo-chat-thinking-text {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-thinking-dot {
+    animation: demo-chat-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes demo-chat-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

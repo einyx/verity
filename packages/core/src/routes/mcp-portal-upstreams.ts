@@ -11,7 +11,7 @@ import { array, boolean, object, string } from 'zod';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 
-import { credentialKey, unlockFor } from './mcp-portal-credentials.js';
+import { credentialKey, ReauthRequiredError, unlockFor } from './mcp-portal-credentials.js';
 import {
   audit,
   invalidName,
@@ -154,8 +154,20 @@ export const registerUpstreamRoutes = <T extends ManagementApiRouter>(
           enabled: !upstream.disabledTools.includes(tool.name),
         })),
       };
-    } catch {
+    } catch (error: unknown) {
       await upstreamPool.invalidate(upstream);
+
+      if (error instanceof ReauthRequiredError) {
+        // The stored sign-in is dead; retrying the upstream will not help until the admin signs in again.
+        ctx.status = 409;
+        ctx.body = {
+          code: 'mcp_portal.upstream_reauth_required',
+          message: `Sign in to "${name}" again.`,
+        };
+
+        return next();
+      }
+
       ctx.status = 503;
       ctx.body = {
         code: 'mcp_portal.upstream_unavailable',

@@ -50,6 +50,7 @@ export {
   exchangeCode,
   refreshTokens,
   registerClient,
+  TokenRequestError,
   type AuthorizationServerMetadata,
   type TokenSet,
 } from './oauth.js';

@@ -9476,20 +9476,6 @@ packages:
       ai:
         optional: true
 
-  assistant-stream@0.3.52:
-    resolution: {integrity: sha512-OeJbTF9QeBur6lw4UhgqfCqbpufXgS2uYjvpde6ss3cnWaiG52hymeRiQ4Z15aqqmg1C4zj0kIr2vkb8wTsNaw==}
-    peerDependencies:
-      ai: ^6.0.0 || ^7.0.0
-      ioredis: ^5.10.1 || ^6.0.0
-      redis: ^5.12.1
-    peerDependenciesMeta:
-      ai:
-        optional: true
-      ioredis:
-        optional: true
-      redis:
-        optional: true
-
   assistant-stream@0.3.53:
     resolution: {integrity: sha512-H04PNl8n76Cu+2EiWXwRvb1k+oT6HRA7/gnlJ7Yp4VAI+nBbg92w88V0T3qVF+pzR01gaEr+x18noMCPNd9j9g==}
     peerDependencies:
@@ -21938,17 +21924,10 @@ snapshots:
 
   assistant-cloud@0.2.7:
     dependencies:
-      assistant-stream: 0.3.52
+      assistant-stream: 0.3.53
     transitivePeerDependencies:
       - ioredis
       - redis
-
-  assistant-stream@0.3.52:
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@types/json-schema': 7.0.15
-      nanoid: 6.0.2
-      secure-json-parse: 4.1.1
 
   assistant-stream@0.3.53:
     dependencies:
@@ -22430,7 +22409,7 @@ snapshots:
     dependencies:
       devtools-protocol: 0.0.1425554
       mitt: 3.0.1
-      zod: 3.24.3
+      zod: 3.25.76
 
   ci-info@3.8.0: {}
 

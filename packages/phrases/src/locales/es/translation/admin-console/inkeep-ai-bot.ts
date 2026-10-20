@@ -35,6 +35,7 @@ const inkeep_ai_bot = {
   copy_you: 'Tú',
   copy_assistant: 'MeshX AI',
   file_label: 'Archivo: {{name}}',
+  enter_to_send: 'Enter para enviar',
 };
 
 export default Object.freeze(inkeep_ai_bot);

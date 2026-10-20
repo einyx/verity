@@ -156,15 +156,17 @@ function AiChat({ className }: Props) {
         onRequestClose={closeModal}
       >
         <SetupBanner icon={Icon} />
-        <Thread />
+        <Thread icon={Icon} />
         {!hasMessages && Array.isArray(exampleQuestions) && (
-          <div className={styles.examples}>
-            <div className={styles.examplesLabel}>{t('inkeep_ai_bot.example_questions_label')}</div>
+          <div className={styles.demoIdeas}>
+            <div className={styles.demoIdeasLabel}>
+              {t('inkeep_ai_bot.example_questions_label')}
+            </div>
             {exampleQuestions.map((question) => (
               <button
                 key={question}
                 type="button"
-                className={styles.exampleQuestion}
+                className={styles.demoIdea}
                 onClick={() => {
                   sendMessage(question);
                 }}

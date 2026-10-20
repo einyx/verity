@@ -1,7 +1,6 @@
 import { type FormEvent, type KeyboardEvent, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ArrowUpIcon from '@/assets/icons/arrow-up.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
 import FileIcon from '@/assets/icons/file.svg?react';
 import PlusIcon from '@/assets/icons/plus.svg?react';
@@ -70,7 +69,7 @@ function Composer({
   };
 
   return (
-    <form className={styles.composer} onSubmit={handleSubmit}>
+    <form className={styles.demoComposer} onSubmit={handleSubmit}>
       {attachments.length > 0 && (
         <ul className={styles.attachments} aria-label={t('inkeep_ai_bot.attached_files_label')}>
           {attachments.map((attachment) => (
@@ -94,7 +93,7 @@ function Composer({
       <textarea
         ref={textareaRef}
         rows={1}
-        className={styles.input}
+        className={styles.demoInput}
         value={value}
         placeholder={t('inkeep_ai_bot.chat_placeholder')}
         aria-label={t('inkeep_ai_bot.chat_placeholder')}
@@ -105,54 +104,54 @@ function Composer({
         }}
       />
       {attachmentError && <div className={styles.error}>{attachmentError}</div>}
-      <div className={styles.quickActions} role="toolbar" aria-label="Quick prompts">
-        {quickActions.map(({ label, prompt }) => (
+      <div className={styles.demoComposerFooter}>
+        <div className={styles.demoFooterLeft}>
           <button
-            key={label}
             type="button"
-            className={styles.quickAction}
+            className={styles.attachButton}
+            aria-label={t('inkeep_ai_bot.attach_file')}
             disabled={isLoading}
             onClick={() => {
-              onQuickAction(prompt);
+              fileInputRef.current?.click();
             }}
           >
-            {label}
+            <PlusIcon aria-hidden />
           </button>
-        ))}
-      </div>
-      <div className={styles.composerFooter}>
-        <button
-          type="button"
-          className={styles.attachButton}
-          aria-label={t('inkeep_ai_bot.attach_file')}
-          disabled={isLoading}
-          onClick={() => {
-            fileInputRef.current?.click();
-          }}
-        >
-          <PlusIcon aria-hidden />
-        </button>
-        <input
-          ref={fileInputRef}
-          multiple
-          type="file"
-          className={styles.fileInput}
-          accept=".txt,.md,.csv,.json,.yaml,.yml,.sql,.sh,.ts,.tsx,.js,.jsx,text/*"
-          onChange={(event) => {
-            onFilesSelected(Array.from(event.currentTarget.files ?? []));
-            // Clearing the value lets the same file be picked again; the input holds no state we keep.
-            // eslint-disable-next-line @silverhand/fp/no-mutation
-            event.currentTarget.value = '';
-          }}
-        />
-        <button
-          type="submit"
-          className={styles.sendButton}
-          aria-label={t('inkeep_ai_bot.send')}
-          disabled={!hasContent || isLoading}
-        >
-          <ArrowUpIcon />
-        </button>
+          <input
+            ref={fileInputRef}
+            multiple
+            type="file"
+            className={styles.fileInput}
+            accept=".txt,.md,.csv,.json,.yaml,.yml,.sql,.sh,.ts,.tsx,.js,.jsx,text/*"
+            onChange={(event) => {
+              onFilesSelected(Array.from(event.currentTarget.files ?? []));
+              // Clearing the value lets the same file be picked again; the input holds no state we keep.
+              // eslint-disable-next-line @silverhand/fp/no-mutation
+              event.currentTarget.value = '';
+            }}
+          />
+          <div className={styles.demoQuickActions} role="toolbar" aria-label="Quick prompts">
+            {quickActions.map(({ label, prompt }) => (
+              <button
+                key={label}
+                type="button"
+                className={styles.demoQuickAction}
+                disabled={isLoading}
+                onClick={() => {
+                  onQuickAction(prompt);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.demoFooterRight}>
+          <span className={styles.demoHint}>{t('inkeep_ai_bot.enter_to_send')}</span>
+          <button type="submit" className={styles.demoSend} disabled={!hasContent || isLoading}>
+            {t('inkeep_ai_bot.send')}
+          </button>
+        </div>
       </div>
     </form>
   );

@@ -928,4 +928,63 @@
 <button type="button" data-dialog-close>Close</button>
 </div></div>
 <link rel="stylesheet" href="/console/landing/locale.css">
-<script src="/console/landing/demo-chat.js?v=662d733a4d" defer></script><script src="/console/landing/cms.js?v=2f73649519" defer></script></body></html>
+<script src="/console/landing/demo-chat.js?v=77bf284bba" defer></script><script src="/console/landing/cms.js?v=2f73649519" defer></script><style>
+/* Try popover: a card that fades in under a Try button on hover or focus, with a small looping illustration. */
+.try-popover{position:fixed;z-index:60;width:264px;padding:14px;border-radius:14px;border:1px solid #e7e4de;background:#fff;color:#1f1e1c;box-shadow:0 12px 32px rgba(0,0,0,.16);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top left;pointer-events:none;transition:opacity .2s ease,transform .25s cubic-bezier(.2,.8,.2,1)}
+.try-popover.is-open{opacity:1;transform:none;pointer-events:auto}
+.try-popover h3{margin:10px 0 4px;font-size:.95rem;font-weight:600}
+.try-popover p{margin:0;font-size:.85rem;line-height:1.45;color:#6f6c66}
+.try-art{display:block;width:100%;height:96px}
+.try-art .cursor{animation:try-bob 2.6s ease-in-out infinite}
+.try-art .orbit{transform-origin:200px 48px;animation:try-orbit 7s linear infinite}
+.try-art .spark{transform-origin:center;transform-box:fill-box;animation:try-twinkle 2.2s ease-in-out infinite}
+@keyframes try-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes try-orbit{to{transform:rotate(360deg)}}
+@keyframes try-twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+@media (prefers-color-scheme: dark){.try-popover{background:#2a2926;color:#f4f2ee;border-color:#3a3834}.try-popover p{color:#a9a59c}}
+@media (prefers-reduced-motion: reduce){.try-popover{transition:none}.try-art *{animation:none!important}}
+</style>
+<div id="try-popover" class="try-popover" role="tooltip">
+  <svg class="try-art" viewBox="0 0 264 96" aria-hidden="true">
+    <rect x="16" y="14" width="96" height="68" rx="8" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1.5"/>
+    <rect x="16" y="14" width="96" height="14" rx="8" fill="currentColor" fill-opacity=".12"/>
+    <rect x="28" y="40" width="48" height="6" rx="3" fill="currentColor" fill-opacity=".25"/>
+    <rect x="28" y="52" width="72" height="6" rx="3" fill="currentColor" fill-opacity=".15"/>
+    <rect x="28" y="64" width="36" height="6" rx="3" fill="#c4291c" fill-opacity=".85"/>
+    <g class="cursor"><path d="M92 50l0 18 5-4 3 7 3-1-3-7 6 0z" fill="currentColor"/></g>
+    <g class="orbit"><circle cx="200" cy="18" r="4" fill="#c4291c"/></g>
+    <circle class="spark" cx="236" cy="62" r="3" fill="currentColor"/>
+    <circle class="spark" cx="150" cy="30" r="2" fill="currentColor" style="animation-delay:.8s"/>
+  </svg>
+  <h3>Try MeshX live</h3>
+  <p>Explore Foundation AI and Dashboards AI in a public sandbox before you talk to sales.</p>
+</div>
+<script>
+(() => {
+  const links = [...document.querySelectorAll('a[href="https://try.meshx.foundation"]')];
+  const pop = document.getElementById('try-popover');
+  if (!links.length || !pop) return;
+  let timer;
+  const show = (link) => {
+    clearTimeout(timer);
+    const r = link.getBoundingClientRect();
+    pop.style.left = Math.max(16, Math.min(r.left, window.innerWidth - 280)) + 'px';
+    pop.style.top = r.bottom + 10 + 'px';
+    pop.classList.add('is-open');
+  };
+  const hide = () => {
+    timer = setTimeout(() => pop.classList.remove('is-open'), 120);
+  };
+  links.forEach((link) => {
+    link.setAttribute('aria-describedby', 'try-popover');
+    link.addEventListener('mouseenter', () => show(link));
+    link.addEventListener('mouseleave', hide);
+    link.addEventListener('focus', () => show(link));
+    link.addEventListener('blur', hide);
+  });
+  pop.addEventListener('mouseenter', () => clearTimeout(timer));
+  pop.addEventListener('mouseleave', hide);
+  window.addEventListener('scroll', hide, { passive: true });
+})();
+</script>
+</body></html>

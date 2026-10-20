@@ -1,4 +1,5 @@
 import { type SsrData } from '@logto/schemas';
+import type { JSX as ReactJsx } from 'react';
 
 type LogtoNativeSdkInfo = {
   platform: 'ios' | 'android';
@@ -22,12 +23,21 @@ type CapWidgetAttributes = React.DetailedHTMLProps<
   'data-cap-lang'?: string;
 };
 
+// React 19 reads its intrinsic element map from the `react` module, not the global JSX namespace.
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'cap-widget': CapWidgetAttributes;
+    }
+  }
+}
+
 declare global {
   const logtoNativeSdk: LogtoNativeSdkInfo | undefined;
   const logtoSsr: LogtoSsr;
 
   namespace JSX {
-    interface IntrinsicElements {
+    interface IntrinsicElements extends ReactJsx.IntrinsicElements {
       'cap-widget': CapWidgetAttributes;
     }
   }

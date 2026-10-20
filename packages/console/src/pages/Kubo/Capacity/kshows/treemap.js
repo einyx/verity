@@ -2,59 +2,76 @@
 // the renderer behind app.js consumes plain rects, so a Canvas renderer can
 // replace the SVG one later without touching this file.
 
+// Lay out a row of entries along the shorter side of `rect`. Returns the
+// placed rects and the remaining free rect.
+const layoutRow = (row, rect) => {
+  const rowArea = row.reduce((sum, entry) => sum + entry.area, 0);
+  const horizontal = rect.w < rect.h; // Row runs along the shorter side.
+  const side = horizontal ? rect.w : rect.h;
+  const thickness = rowArea / side;
+  const { placed } = row.reduce(
+    ({ offset, placed: accumulated }, entry) => {
+      const length = entry.area / thickness;
+      const rectangle = horizontal
+        ? { x: rect.x + offset, y: rect.y, w: length, h: thickness, item: entry.item }
+        : { x: rect.x, y: rect.y + offset, w: thickness, h: length, item: entry.item };
+      return { offset: offset + length, placed: [...accumulated, rectangle] };
+    },
+    { offset: 0, placed: [] }
+  );
+  const remaining = horizontal
+    ? { x: rect.x, y: rect.y + thickness, w: rect.w, h: rect.h - thickness }
+    : { x: rect.x + thickness, y: rect.y, w: rect.w - thickness, h: rect.h };
+  return { rects: placed, rect: remaining };
+};
+
+// Worst aspect ratio of a candidate row laid out against the free `rect`.
+const worst = (candidate, rect) => {
+  const areas = candidate.map((entry) => entry.area);
+  const sum = areas.reduce((accumulator, area) => accumulator + area, 0);
+  const side = Math.min(rect.w, rect.h);
+  const sumSquared = sum * sum;
+  const max = Math.max(...areas);
+  const min = Math.min(...areas);
+  return Math.max((side * side * max) / sumSquared, sumSquared / (side * side * min));
+};
+
 /**
  * Lay out items inside (x, y, w, h). Items must have a positive `value`.
  * Returns [{x, y, w, h, item}] in the same order the algorithm placed them.
  */
 export function squarify(items, x, y, w, h) {
-  const total = items.reduce((s, it) => s + it.value, 0);
-  if (total <= 0 || w <= 0 || h <= 0) return [];
-  // Work on a copy sorted descending — squarify's quality guarantee needs it.
-  const sorted = [...items].sort((a, b) => b.value - a.value);
-  const scale = (w * h) / total;
-  const scaled = sorted.map((it) => ({ item: it, area: it.value * scale }));
-
-  const rects = [];
-  let rx = x, ry = y, rw = w, rh = h;
-  let row = [];
-
-  const layoutRow = (finalize) => {
-    const rowArea = row.reduce((s, e) => s + e.area, 0);
-    const horizontal = rw < rh; // row runs along the shorter side
-    const side = horizontal ? rw : rh;
-    const thickness = rowArea / side;
-    let offset = 0;
-    for (const e of row) {
-      const len = e.area / thickness;
-      rects.push(horizontal
-        ? { x: rx + offset, y: ry, w: len, h: thickness, item: e.item }
-        : { x: rx, y: ry + offset, w: thickness, h: len, item: e.item });
-      offset += len;
-    }
-    if (horizontal) { ry += thickness; rh -= thickness; }
-    else { rx += thickness; rw -= thickness; }
-    row = [];
-    if (finalize) return;
-  };
-
-  const worst = (candidate) => {
-    const areas = candidate.map((e) => e.area);
-    const sum = areas.reduce((s, a) => s + a, 0);
-    const side = Math.min(rw, rh);
-    const s2 = sum * sum;
-    const max = Math.max(...areas);
-    const min = Math.min(...areas);
-    return Math.max((side * side * max) / s2, s2 / (side * side * min));
-  };
-
-  for (const e of scaled) {
-    if (e.area <= 0) continue;
-    if (row.length === 0) { row.push(e); continue; }
-    if (worst([...row, e]) <= worst(row)) row.push(e);
-    else { layoutRow(false); row = [e]; }
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  if (total <= 0 || w <= 0 || h <= 0) {
+    return [];
   }
-  if (row.length) layoutRow(true);
-  return rects;
+  // Work on a copy sorted descending — squarify's quality guarantee needs it.
+  const sorted = items.slice().sort((a, b) => b.value - a.value);
+  const scale = (w * h) / total;
+  const scaled = sorted.map((item) => ({ item, area: item.value * scale }));
+
+  const state = scaled.reduce(
+    (current, entry) => {
+      if (entry.area <= 0) {
+        return current;
+      }
+      if (current.row.length === 0) {
+        return { ...current, row: [entry] };
+      }
+      const extended = [...current.row, entry];
+      if (worst(extended, current.rect) <= worst(current.row, current.rect)) {
+        return { ...current, row: extended };
+      }
+      const laid = layoutRow(current.row, current.rect);
+      return { rects: [...current.rects, ...laid.rects], row: [entry], rect: laid.rect };
+    },
+    { rects: [], row: [], rect: { x, y, w, h } }
+  );
+
+  if (state.row.length > 0) {
+    return [...state.rects, ...layoutRow(state.row, state.rect).rects];
+  }
+  return state.rects;
 }
 
 /**
@@ -63,8 +80,12 @@ export function squarify(items, x, y, w, h) {
  * { packed: rect, free: rect | null }.
  */
 export function splitFree(x, y, w, h, freeFrac) {
-  if (freeFrac <= 0.005) return { packed: { x, y, w, h }, free: null };
-  if (freeFrac >= 0.995) return { packed: null, free: { x, y, w, h } };
+  if (freeFrac <= 0.005) {
+    return { packed: { x, y, w, h }, free: null };
+  }
+  if (freeFrac >= 0.995) {
+    return { packed: null, free: { x, y, w, h } };
+  }
   if (w >= h) {
     const pw = w * (1 - freeFrac);
     return {

@@ -24,7 +24,7 @@ export type Props = Omit<HTMLProps<HTMLInputElement>, 'prefix'> & {
   readonly isDanger?: boolean;
   readonly prefix?: ReactElement;
   readonly isPrefixVisible?: boolean;
-  readonly suffix?: ReactElement;
+  readonly suffix?: ReactElement<{ className?: string }>;
   readonly isSuffixFocusVisible?: boolean;
   readonly label?: ReactElement | string;
   readonly description?: Nullable<string>;
@@ -54,7 +54,11 @@ const InputField = (
   const { t, i18n } = useTranslation();
   const innerRef = useRef<HTMLInputElement>(null);
 
-  useImperativeHandle(reference, () => innerRef.current);
+  // Explicit type args: inference from the callback-form Ref would otherwise drop `null` from T.
+  useImperativeHandle<Nullable<HTMLInputElement>, Nullable<HTMLInputElement>>(
+    reference,
+    () => innerRef.current
+  );
 
   const errorMessages = errorMessage?.split('\n');
 

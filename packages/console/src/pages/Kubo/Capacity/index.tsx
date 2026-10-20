@@ -29,7 +29,8 @@ function Capacity() {
   const containerRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   useEffect(() => {
-    host.dataset.theme = theme === Theme.Dark ? "dark" : "light";
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- the original kshows script reads the theme from the host node's dataset.
+    host.dataset.theme = theme === Theme.Dark ? 'dark' : 'light';
   }, [theme]);
 
   useEffect(() => {
@@ -37,14 +38,14 @@ function Capacity() {
     if (!container) {
       return;
     }
+    const kshowsWindow: KshowsWindow = window;
     /* eslint-disable-next-line @silverhand/fp/no-mutation -- the original script reads its data source from window. */
-    (window as KshowsWindow).kshowsSnapshot = async () => api.get('api/kubo/kshows').json();
+    kshowsWindow.kshowsSnapshot = async () => api.get('api/kubo/kshows').json();
     container.append(host);
 
     if (!booted) {
       /* eslint-disable-next-line @silverhand/fp/no-mutation */
       booted = true;
-      /* eslint-disable-next-line no-restricted-syntax -- the original script attaches to the DOM it finds at load. */
       void import('./kshows/app.js');
     }
 

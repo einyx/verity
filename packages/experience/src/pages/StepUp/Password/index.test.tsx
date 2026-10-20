@@ -27,7 +27,8 @@ jest.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: { dir: () => 'ltr' },
   }),
-  Trans: ({ children }: { readonly children: React.ReactNode }) => children,
+  // eslint-disable-next-line react/jsx-no-useless-fragment -- Trans must return an element; ReactNode may be a promise, so a fragment keeps the return type concrete.
+  Trans: ({ children }: { readonly children: React.ReactNode }) => <>{children}</>,
 }));
 
 jest.mock('@/hooks/use-navigate-with-preserved-search-params', () => ({

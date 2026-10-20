@@ -36,10 +36,15 @@ type Options = {
  */
 const useAvatarCropUpload = ({ upload, onChange, onBlur }: Options) => {
   const { t: tAvatar } = useTranslation(undefined, { keyPrefix: 'profile.avatar_upload' });
-  const abortControllerRef = useRef<AbortController>();
-  const cropImageSourceRef = useRef<string>();
-  const pendingFileNameRef = useRef<string>();
-  const uploadedUrlRef = useRef<string>();
+  // React 19 requires an initial argument for `useRef`; `undefined` keeps each ref empty.
+  // eslint-disable-next-line unicorn/no-useless-undefined
+  const abortControllerRef = useRef<AbortController | undefined>(undefined);
+  // eslint-disable-next-line unicorn/no-useless-undefined
+  const cropImageSourceRef = useRef<string | undefined>(undefined);
+  // eslint-disable-next-line unicorn/no-useless-undefined
+  const pendingFileNameRef = useRef<string | undefined>(undefined);
+  // eslint-disable-next-line unicorn/no-useless-undefined
+  const uploadedUrlRef = useRef<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string>();
   const [fileInputKey, setFileInputKey] = useState(0);

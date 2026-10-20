@@ -1,3 +1,4 @@
+import type { Nullable } from '@silverhand/essentials';
 import classNames from 'classnames';
 import type {
   DetailedHTMLProps,
@@ -24,7 +25,7 @@ type Props = {
   readonly title?: ReactNode;
   readonly isOpen: boolean;
   readonly onClose?: () => void;
-  readonly anchorRef: RefObject<HTMLElement | null>;
+  readonly anchorRef: RefObject<Nullable<HTMLElement>>;
   readonly isFullWidth?: boolean;
   readonly className?: string;
   readonly titleClassName?: string;

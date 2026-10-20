@@ -15,7 +15,11 @@ const PasswordInputField = (props: Props, forwardRef: Ref<Nullable<HTMLInputElem
   const [showPassword, setShowPassword] = useState(false);
   const innerRef = useRef<HTMLInputElement>(null);
 
-  useImperativeHandle(forwardRef, () => innerRef.current);
+  // Explicit type args: inference from the callback-form Ref would otherwise drop `null` from T.
+  useImperativeHandle<Nullable<HTMLInputElement>, Nullable<HTMLInputElement>>(
+    forwardRef,
+    () => innerRef.current
+  );
 
   return (
     <InputField

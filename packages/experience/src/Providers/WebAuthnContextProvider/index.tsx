@@ -32,7 +32,7 @@ const WebAuthnContextProvider = ({ children }: { readonly children: ReactNode })
   const shouldFetch =
     !!passkeySignIn?.enabled && !isPreview && (!authenticationOptions || isConsumed);
 
-  const conditionalUIAbortControllerRef = useRef<AbortController>();
+  const conditionalUIAbortControllerRef = useRef<AbortController | undefined>(undefined);
 
   const markAuthenticationOptionsConsumed = useCallback(() => {
     setAuthenticationOptions(undefined);

@@ -33,7 +33,11 @@ const SmartInputField = (
   ref: Ref<Nullable<HTMLInputElement>>
 ) => {
   const innerRef = useRef<HTMLInputElement>(null);
-  useImperativeHandle(ref, () => innerRef.current);
+  // Explicit type args: inference from the callback-form Ref would otherwise drop `null` from T.
+  useImperativeHandle<Nullable<HTMLInputElement>, Nullable<HTMLInputElement>>(
+    ref,
+    () => innerRef.current
+  );
   const isInputEditable = !rest.readOnly && !rest.disabled;
 
   const {

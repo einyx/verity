@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The wizard's steps and resource cards live in one screen; split it into step components before lowering this limit. */
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useSWR from 'swr';
@@ -339,3 +340,4 @@ function KuboWizard() {
 }
 
 export default KuboWizard;
+/* eslint-enable max-lines */

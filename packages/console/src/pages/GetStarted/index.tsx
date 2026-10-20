@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The get-started page is one dashboard of cards; split the cards into their own components before lowering this limit. */
 import { ApplicationType, Theme, type Application, type Resource } from '@logto/schemas';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
@@ -414,3 +415,4 @@ function GetStarted() {
 }
 
 export default GetStarted;
+/* eslint-enable max-lines */

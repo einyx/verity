@@ -52,6 +52,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   public state: State = {};
 
+  // eslint-disable-next-line @typescript-eslint/promise-function-async -- Class render must return children as-is (ReactNode); wrapping in a fragment would be a no-op change.
   render() {
     const { children, t } = this.props;
     const { error } = this.state;

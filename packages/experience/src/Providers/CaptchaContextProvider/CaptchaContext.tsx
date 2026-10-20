@@ -1,3 +1,4 @@
+import type { Nullable } from '@silverhand/essentials';
 import { createContext } from 'react';
 
 import { type SignInExperienceResponse } from '@/types';
@@ -8,7 +9,7 @@ export type CaptchaContextType = {
   executeCaptcha: () => Promise<string | undefined>;
   // Some captcha providers need to render a widget (checkbox, etc.) to the page
   // and this is the ref to the widget
-  widgetRef: React.RefObject<HTMLDivElement> | undefined;
+  widgetRef: React.RefObject<Nullable<HTMLDivElement>> | undefined;
 };
 
 export default createContext<CaptchaContextType>({

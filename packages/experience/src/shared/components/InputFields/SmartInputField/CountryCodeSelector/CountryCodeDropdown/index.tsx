@@ -1,3 +1,4 @@
+import type { Nullable } from '@silverhand/essentials';
 import { conditional } from '@silverhand/essentials';
 import classNames from 'classnames';
 import type { KeyboardEventHandler } from 'react';
@@ -20,7 +21,7 @@ type Props = {
   readonly isOpen: boolean;
   readonly countryCode: string;
   readonly countryList: CountryMetaData[];
-  readonly inputRef?: React.RefObject<HTMLInputElement | undefined>;
+  readonly inputRef?: React.RefObject<Nullable<HTMLInputElement> | undefined>;
   readonly onClose: () => void;
   readonly onChange?: (value: string) => void;
 };

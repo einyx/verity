@@ -27,7 +27,9 @@ import usersSrc from '@/assets/images/menu/users.png';
 import webhooksSrc from '@/assets/images/menu/webhooks.png';
 
 const menuIcon = (src: string): FC => {
-  const MenuIcon = () => <img src={src} alt="" width={32} height={32} className="pixel-menu-icon" />;
+  function MenuIcon() {
+    return <img src={src} alt="" width={32} height={32} className="pixel-menu-icon" />;
+  }
   return MenuIcon;
 };
 

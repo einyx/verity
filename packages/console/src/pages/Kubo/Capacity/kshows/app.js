@@ -1,9 +1,13 @@
-// kshows UI. Layout math lives in treemap.js; this file owns state, the SVG
+/* global document, window, localStorage, location, getComputedStyle, EventSource, innerWidth, innerHeight, addEventListener, requestAnimationFrame */
+/* eslint-disable max-lines -- single-module renderer; splitting it needs files outside this change */
+/* eslint-disable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods -- imperative DOM renderer: element properties, SVG nodes and cached per-element state are updated in place by design */
+
+// The kshows UI. Layout math lives in treemap.js; this file owns state, the SVG
 // renderer, and interactions. Tiles are keyed by pod UID so SSE updates
 // animate blocks instead of repainting them.
 
-import { squarify, splitFree } from './treemap.js';
 import { fmtCPU, fmtBytes, fmtUSD, fmtValue, fmtPct, fmtClock } from './format.js';
+import { squarify, splitFree } from './treemap.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -18,8 +22,9 @@ const NS_COLORS = [
   'var(--ns-8)',
 ];
 const OTHER = 'var(--ns-other)';
-const NODE_H = 300; // treemap height per node card, px
-const MAX_TILES = 40; // beyond this, small pods fold into one "+N more" tile
+const NODE_H = 300; // Treemap height per node card, px
+const MAX_TILES = 40; // Beyond this, small pods fold into one "+N more" tile
+const STALE_MS = 45_000; // No stream event for this long means the view is stale
 
 // View state: URL params (shareable links) win over the sticky localStorage
 // choice. ?dim=cpu|mem|disk|cost &metric=requests|limits|actual &node=<name>
@@ -42,9 +47,9 @@ const state = {
   lastEventAt: 0,
 };
 
-const nsSlots = new Map(); // namespace -> slot index, first-seen, session-stable
+const nsSlots = new Map(); // Namespace -> slot index, first-seen, session-stable
 const podIndex = new Map(); // "node￿uid" -> pod (for tooltips)
-const cards = new Map(); // node name -> { card, svg, els }
+const cards = new Map(); // Node name -> { card, svg, els }
 let renderedMode = ''; // `${dimension}|${metric}` — mode switch = full rebuild
 let hatchSeq = 0;
 
@@ -54,11 +59,15 @@ const $ = (sel) => document.querySelector(sel);
 // interpolated into innerHTML sinks — escape them, even though today's
 // DNS-1123 validation makes them tame.
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
+const esc = (s) => String(s).replaceAll(/["&'<>]/g, (c) => ESC[c]);
 
 function nsColor(ns) {
-  if (ns === '__more') return OTHER;
-  if (!nsSlots.has(ns)) nsSlots.set(ns, nsSlots.size);
+  if (ns === '__more') {
+    return OTHER;
+  }
+  if (!nsSlots.has(ns)) {
+    nsSlots.set(ns, nsSlots.size);
+  }
   const slot = nsSlots.get(ns);
   return slot < NS_COLORS.length ? NS_COLORS[slot] : OTHER;
 }
@@ -70,11 +79,13 @@ function labelInk(color) {
   const hex = ref
     ? getComputedStyle(document.documentElement).getPropertyValue(ref[1]).trim()
     : color;
-  const m = /^#([0-9a-f]{6})$/i.exec(hex);
-  if (!m) return '#ffffff';
+  const m = /^#([\da-f]{6})$/i.exec(hex);
+  if (!m) {
+    return '#ffffff';
+  }
   const lin = [0, 2, 4].map((i) => {
-    const c = parseInt(m[1].slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    const c = Number.parseInt(m[1].slice(i, i + 2), 16) / 255;
+    return c <= 0.039_28 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
   const lum = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
   const onWhite = 1.05 / (lum + 0.05);
@@ -89,26 +100,35 @@ const dimKey = (dim) => (dim === 'cpu' ? 'cpuMillis' : 'memBytes');
 // Raw CPU or memory value of one pod for a metric. Actual is never below the
 // reservation: an unreserved pod still occupies what it uses.
 function rawValue(pod, k, metric) {
-  if (metric === 'requests') return pod.requests[k];
-  if (metric === 'limits') return pod.limits[k];
+  if (metric === 'requests') {
+    return pod.requests[k];
+  }
+  if (metric === 'limits') {
+    return pod.limits[k];
+  }
   return Math.max(pod.requests[k], pod.hasUsage ? pod.usage[k] : 0);
 }
 
 function podValue(pod, dim, metric) {
-  if (dim === 'cost') return pod.cost?.[metric] ?? 0;
+  if (dim === 'cost') {
+    return pod.cost?.[metric] ?? 0;
+  }
   return rawValue(pod, dimKey(dim), metric);
 }
 
 function nodeAlloc(node, dim) {
-  if (dim === 'cost') return node.hourlyUSD || 0;
+  if (dim === 'cost') {
+    return node.hourlyUSD || 0;
+  }
   return dim === 'cpu' ? node.allocatable.cpuMillis : node.allocatable.memBytes;
 }
 
 // A pod's list price per hour is its node's rate, split by how much of the
 // node's CPU and memory the pod takes (the mean of the two shares).
+const share = (v, cap) => (cap > 0 ? v / cap : 0);
+
 function annotateCosts(node) {
   const a = node.allocatable;
-  const share = (v, cap) => (cap > 0 ? v / cap : 0);
   for (const p of node.pods) {
     p.cost = {};
     for (const metric of ['requests', 'limits', 'actual']) {
@@ -130,24 +150,28 @@ async function bootstrap() {
     try {
       apply(await window.kshowsSnapshot());
     } catch {
-      /* keep the last snapshot */
+      /* Keep the last snapshot */
     }
     updateStatus();
   };
   await poll().catch(() => {});
   if ('EventSource' in window && window.kshowsStreamUrl) {
-    const es = new EventSource(window.kshowsStreamUrl);
-    es.addEventListener('snapshot', (e) => apply(JSON.parse(e.data)));
-    es.onerror = () => updateStatus();
+    const source = new EventSource(window.kshowsStreamUrl);
+    source.addEventListener('snapshot', (event) => apply(JSON.parse(event.data)));
+    source.addEventListener('error', () => updateStatus());
   }
   setInterval(() => {
     updateStatus();
-    if (Date.now() - state.lastEventAt > 45000) poll();
-  }, 10000);
+    if (Date.now() - state.lastEventAt > STALE_MS) {
+      poll();
+    }
+  }, 10_000);
 }
 
 function apply(snapshot) {
-  for (const n of snapshot.nodes) annotateCosts(n);
+  for (const n of snapshot.nodes) {
+    annotateCosts(n);
+  }
   state.snapshot = snapshot;
   state.lastEventAt = Date.now();
 
@@ -155,43 +179,67 @@ function apply(snapshot) {
   // tenants get the leading palette slots. First-seen order is kept forever
   // after that — color follows the namespace, not its current rank.
   const totals = new Map();
-  for (const n of snapshot.nodes)
-    for (const p of n.pods)
+  for (const n of snapshot.nodes) {
+    for (const p of n.pods) {
       totals.set(p.namespace, (totals.get(p.namespace) || 0) + p.requests.cpuMillis);
-  [...totals.entries()].sort((a, b) => b[1] - a[1]).forEach(([ns]) => nsColor(ns));
+    }
+  }
+  for (const [ns] of [...totals.entries()].slice().sort((a, b) => b[1] - a[1])) {
+    nsColor(ns);
+  }
 
   podIndex.clear();
-  for (const n of snapshot.nodes)
-    for (const p of n.pods) podIndex.set(n.name + '￿' + p.uid, { pod: p, node: n });
+  for (const n of snapshot.nodes) {
+    for (const p of n.pods) {
+      podIndex.set(n.name + '￿' + p.uid, { pod: p, node: n });
+    }
+  }
 
   render();
 }
 
 function updateStatus() {
-  const el = $('#status');
-  if (!el) return;
-  const stale = Date.now() - state.lastEventAt > 45000;
-  el.classList.toggle('stale', stale);
-  if (state.snapshot) $('#clock').textContent = fmtClock(state.snapshot.generatedAt);
+  const element = $('#status');
+  if (!element) {
+    return;
+  }
+  const stale = Date.now() - state.lastEventAt > STALE_MS;
+  element.classList.toggle('stale', stale);
+  if (state.snapshot) {
+    $('#clock').textContent = fmtClock(state.snapshot.generatedAt);
+  }
 }
 
 // ---------- top-level render ----------
 
 function render() {
   const snap = state.snapshot;
-  if (!snap) return;
+  if (!snap) {
+    return;
+  }
   const splash = $('#splash');
   // Polls keep running after the page unmounts and the markup is detached; skip rendering then.
-  if (!splash) return;
+  if (!splash) {
+    return;
+  }
   splash.hidden = true;
 
   const caps = snap.capabilities;
 
   // If actual usage is unavailable, fall back to the requests view.
-  if (!caps.metrics && state.metric === 'actual') state.metric = 'requests';
-  if (!caps.disk && state.dimension === 'disk' && !snap.nodes.some((n) => n.disk.capacityBytes > 0))
+  if (!caps.metrics && state.metric === 'actual') {
+    state.metric = 'requests';
+  }
+  if (
+    !caps.disk &&
+    state.dimension === 'disk' &&
+    !snap.nodes.some((n) => n.disk.capacityBytes > 0)
+  ) {
     state.dimension = 'cpu';
-  if (state.dimension === 'cost' && !priced(snap)) state.dimension = 'cpu';
+  }
+  if (state.dimension === 'cost' && !priced(snap)) {
+    state.dimension = 'cpu';
+  }
 
   renderControls(caps);
   renderBanners(caps);
@@ -210,34 +258,36 @@ function render() {
 const priced = (snap) => snap.nodes.some((n) => n.hourlyUSD > 0);
 
 function renderControls(caps) {
-  for (const btn of document.querySelectorAll('[data-dim]')) {
-    btn.setAttribute('aria-pressed', btn.dataset.dim === state.dimension);
-    if (btn.dataset.dim === 'disk') {
+  for (const button of document.querySelectorAll('[data-dim]')) {
+    button.setAttribute('aria-pressed', button.dataset.dim === state.dimension);
+    if (button.dataset.dim === 'disk') {
       const dead = !caps.disk && !state.snapshot.nodes.some((n) => n.disk.capacityBytes > 0);
-      btn.disabled = dead;
-      btn.title = dead ? 'No disk signal available on this cluster' : '';
+      button.disabled = dead;
+      button.title = dead ? 'No disk signal available on this cluster' : '';
     }
-    if (btn.dataset.dim === 'cost') {
-      btn.disabled = !priced(state.snapshot);
-      btn.title = btn.disabled
+    if (button.dataset.dim === 'cost') {
+      button.disabled = !priced(state.snapshot);
+      button.title = button.disabled
         ? 'No node rates known — set KUBO_COST_AZURE_NODE_HOURLY_USD'
         : 'Estimated list price per hour';
     }
   }
-  for (const btn of document.querySelectorAll('[data-metric]')) {
-    btn.setAttribute('aria-pressed', btn.dataset.metric === state.metric);
+  for (const button of document.querySelectorAll('[data-metric]')) {
+    button.setAttribute('aria-pressed', button.dataset.metric === state.metric);
     const inDisk = state.dimension === 'disk';
-    if (btn.dataset.metric === 'actual') {
-      btn.disabled = inDisk || !caps.metrics;
-      btn.title = !caps.metrics
-        ? caps.metricsReason === 'disabled'
+    if (button.dataset.metric === 'actual') {
+      button.disabled = inDisk || !caps.metrics;
+      button.title = caps.metrics
+        ? ''
+        : caps.metricsReason === 'disabled'
           ? 'Live usage is switched off'
-          : 'Metrics Server not detected'
-        : '';
+          : 'Metrics Server not detected';
     } else {
-      btn.disabled = inDisk;
+      button.disabled = inDisk;
     }
-    if (inDisk) btn.title = 'Disk is node-level in v1 — no per-pod metric';
+    if (inDisk) {
+      button.title = 'Disk is node-level in v1 — no per-pod metric';
+    }
   }
 }
 
@@ -262,52 +312,41 @@ const DISK_BANNER_DEFAULT =
   '<strong>Live disk stats unavailable.</strong> The kubelet Summary API could not be reached — disk shows capacity only.';
 
 function renderBanners(caps) {
-  const banners = [];
-  if (!caps.metrics) banners.push(METRICS_BANNERS[caps.metricsReason] ?? METRICS_BANNER_DEFAULT);
-  if (!caps.disk) banners.push(DISK_BANNERS[caps.diskReason] ?? DISK_BANNER_DEFAULT);
+  const banners = [
+    ...(caps.metrics ? [] : [METRICS_BANNERS[caps.metricsReason] ?? METRICS_BANNER_DEFAULT]),
+    ...(caps.disk ? [] : [DISK_BANNERS[caps.diskReason] ?? DISK_BANNER_DEFAULT]),
+  ];
   $('#banners').innerHTML = banners.map((b) => `<div class="banner">${b}</div>`).join('');
 }
 
-function renderSummary(snap) {
-  let cpuA = 0,
-    cpuR = 0,
-    cpuU = 0,
-    memA = 0,
-    memR = 0,
-    memU = 0;
-  let dskA = 0,
-    dskU = 0,
-    pods = 0,
-    ready = 0,
-    anyUsage = false,
-    anyDisk = false;
-  for (const n of snap.nodes) {
-    cpuA += n.allocatable.cpuMillis;
-    memA += n.allocatable.memBytes;
-    dskA += n.disk.capacityBytes;
-    if (n.disk.live) {
-      dskU += n.disk.usedBytes;
-      anyDisk = true;
-    }
-    if (n.ready) ready++;
-    if (n.hasUsage) {
-      cpuU += n.usage.cpuMillis;
-      memU += n.usage.memBytes;
-      anyUsage = true;
-    }
-    pods += n.pods.length;
-    for (const p of n.pods) {
-      cpuR += p.requests.cpuMillis;
-      memR += p.requests.memBytes;
-    }
-  }
-  const tile = (k, v, sub, frac) => `
+// One summary tile: label, headline value, optional fill bar, and a sub line.
+const statTile = (k, v, sub, frac) => `
     <div class="stat">
       <div class="k">${k}</div>
       <div class="v">${v}</div>
-      ${frac != null ? `<div class="bar"><i style="width:${Math.min(100, frac * 100).toFixed(1)}%"></i></div>` : ''}
+      ${frac !== null && frac !== undefined ? `<div class="bar"><i style="width:${Math.min(100, frac * 100).toFixed(1)}%"></i></div>` : ''}
       <div class="sub">${sub}</div>
     </div>`;
+
+const sumOf = (items, pickValue) => items.reduce((total, item) => total + pickValue(item), 0);
+
+function renderSummary(snap) {
+  const cpuA = sumOf(snap.nodes, (n) => n.allocatable.cpuMillis);
+  const memA = sumOf(snap.nodes, (n) => n.allocatable.memBytes);
+  const dskA = sumOf(snap.nodes, (n) => n.disk.capacityBytes);
+  const liveDisk = snap.nodes.filter((n) => n.disk.live);
+  const dskU = sumOf(liveDisk, (n) => n.disk.usedBytes);
+  const anyDisk = liveDisk.length > 0;
+  const ready = snap.nodes.filter((n) => n.ready).length;
+  const withUsage = snap.nodes.filter((n) => n.hasUsage);
+  const cpuU = sumOf(withUsage, (n) => n.usage.cpuMillis);
+  const memU = sumOf(withUsage, (n) => n.usage.memBytes);
+  const anyUsage = withUsage.length > 0;
+  const allPods = snap.nodes.flatMap((n) => n.pods);
+  const pods = allPods.length;
+  const cpuR = sumOf(allPods, (p) => p.requests.cpuMillis);
+  const memR = sumOf(allPods, (p) => p.requests.memBytes);
+
   const usedSub = (u, r, a, fmt) =>
     anyUsage ? `used ${fmt(u)} · reserved ${fmt(r)}` : `reserved ${fmt(r)} of ${fmt(a)}`;
   const listPerHour = snap.nodes.reduce((s, n) => s + (n.hourlyUSD || 0), 0);
@@ -316,29 +355,29 @@ function renderSummary(snap) {
     0
   );
   $('#summary').innerHTML =
-    tile('Nodes', `${snap.nodes.length} <small>${ready} ready</small>`, '&nbsp;', null) +
-    tile('Pods', `${pods}`, '&nbsp;', null) +
+    statTile('Nodes', `${snap.nodes.length} <small>${ready} ready</small>`, '&nbsp;', null) +
+    statTile('Pods', `${pods}`, '&nbsp;', null) +
     (priced(snap)
-      ? tile(
+      ? statTile(
           'Cost',
           fmtUSD(listPerHour),
           `reserved ${fmtUSD(reservedPerHour)} · ≈ $${Math.round(listPerHour * 730).toLocaleString()}/mo`,
           listPerHour > 0 ? reservedPerHour / listPerHour : 0
         )
       : '') +
-    tile(
+    statTile(
       'CPU',
       anyUsage ? fmtPct(cpuU / cpuA) : fmtPct(cpuR / cpuA),
       usedSub(cpuU, cpuR, cpuA, fmtCPU),
       (anyUsage ? cpuU : cpuR) / cpuA
     ) +
-    tile(
+    statTile(
       'Memory',
       anyUsage ? fmtPct(memU / memA) : fmtPct(memR / memA),
       usedSub(memU, memR, memA, fmtBytes),
       (anyUsage ? memU : memR) / memA
     ) +
-    tile(
+    statTile(
       'Disk',
       anyDisk ? fmtPct(dskU / dskA) : '—',
       anyDisk
@@ -350,18 +389,26 @@ function renderSummary(snap) {
 
 function renderLegend(snap) {
   const seen = new Map();
-  for (const n of snap.nodes)
-    for (const p of n.pods) seen.set(p.namespace, (seen.get(p.namespace) || 0) + 1);
+  for (const n of snap.nodes) {
+    for (const p of n.pods) {
+      seen.set(p.namespace, (seen.get(p.namespace) || 0) + 1);
+    }
+  }
   const named = [...seen.keys()]
     .filter((ns) => nsSlots.get(ns) < NS_COLORS.length)
     .sort((a, b) => nsSlots.get(a) - nsSlots.get(b));
   const overflow = [...seen.keys()].filter((ns) => nsSlots.get(ns) >= NS_COLORS.length);
-  let html = `<span class="cap">Namespaces</span>`;
-  for (const ns of named)
-    html += `<button class="chip" data-ns="${esc(ns)}"><span class="sw" style="background:${nsColor(ns)}"></span>${esc(ns)}</button>`;
-  if (overflow.length)
-    html += `<button class="chip" data-ns="__other"><span class="sw" style="background:${OTHER}"></span>other (${overflow.length})</button>`;
-  $('#legend').innerHTML = html;
+  const chips = named
+    .map(
+      (ns) =>
+        `<button class="chip" data-ns="${esc(ns)}"><span class="sw" style="background:${nsColor(ns)}"></span>${esc(ns)}</button>`
+    )
+    .join('');
+  const overflowChip =
+    overflow.length > 0
+      ? `<button class="chip" data-ns="__other"><span class="sw" style="background:${OTHER}"></span>other (${overflow.length})</button>`
+      : '';
+  $('#legend').innerHTML = `<span class="cap">Namespaces</span>${chips}${overflowChip}`;
 }
 
 // ---------- pending pods ----------
@@ -378,24 +425,25 @@ function renderPending(pods) {
   section.hidden = pods.length === 0;
 
   const live = new Set(pods.map((p) => p.uid));
-  for (const [uid, chip] of pendingChips)
+  for (const [uid, chip] of pendingChips) {
     if (!live.has(uid)) {
       chip.remove();
       pendingChips.delete(uid);
     }
+  }
 
   // Chips are inserted once, in server order, and never moved: re-inserting a
   // node restarts its CSS animation.
-  let prev = null;
+  let previous = null;
   for (const pod of pods) {
     let chip = pendingChips.get(pod.uid);
     if (!chip) {
       chip = buildPendingChip(pod);
       pendingChips.set(pod.uid, chip);
-      list.insertBefore(chip, prev ? prev.nextSibling : list.firstChild);
+      list.insertBefore(chip, previous ? previous.nextSibling : list.firstChild);
     }
     chip.querySelector('.pending-reason').textContent = pod.reason || 'Waiting for a node';
-    prev = chip;
+    previous = chip;
   }
 }
 
@@ -403,15 +451,15 @@ function buildPendingChip(pod) {
   const chip = document.createElement('div');
   chip.className = 'pchip is-pending';
   chip.title = `${pod.namespace}/${pod.name}`;
-  const sw = document.createElement('span');
-  sw.className = 'sw';
-  sw.style.background = nsColor(pod.namespace);
+  const swatch = document.createElement('span');
+  swatch.className = 'sw';
+  swatch.style.background = nsColor(pod.namespace);
   const name = document.createElement('span');
   name.className = 'pending-name';
   name.textContent = pod.name;
   const reason = document.createElement('span');
   reason.className = 'pending-reason';
-  chip.append(sw, name, reason);
+  chip.append(swatch, name, reason);
   return chip;
 }
 
@@ -427,18 +475,19 @@ function renderGrid(snap) {
   }
 
   const liveNames = new Set(snap.nodes.map((n) => n.name));
-  for (const [name, entry] of cards)
+  for (const [name, entry] of cards) {
     if (!liveNames.has(name)) {
       entry.card.remove();
       cards.delete(name);
     }
+  }
 
   for (const node of snap.nodes) {
     let entry = cards.get(node.name);
     if (!entry) {
       entry = buildCard(node);
       cards.set(node.name, entry);
-      grid.appendChild(entry.card);
+      grid.append(entry.card);
     }
     updateCard(entry, node);
   }
@@ -452,15 +501,15 @@ function buildCard(node) {
 
   const head = document.createElement('div');
   head.className = 'card-head';
-  card.appendChild(head);
+  card.append(head);
 
   const svg = document.createElementNS(SVG, 'svg');
   svg.setAttribute('height', String(NODE_H));
-  card.appendChild(svg);
+  card.append(svg);
 
   const foot = document.createElement('div');
   foot.className = 'card-foot';
-  card.appendChild(foot);
+  card.append(foot);
 
   return { card, svg, head, foot };
 }
@@ -470,8 +519,12 @@ function updateCard(entry, node) {
   const dim = state.dimension;
 
   let headHTML = `<span class="nname">${esc(node.name)}</span>`;
-  for (const r of node.roles || []) headHTML += `<span class="role">${esc(r)}</span>`;
-  if (!node.ready) headHTML += `<span class="notready">✕ NotReady</span>`;
+  for (const r of node.roles || []) {
+    headHTML += `<span class="role">${esc(r)}</span>`;
+  }
+  if (!node.ready) {
+    headHTML += `<span class="notready">✕ NotReady</span>`;
+  }
 
   if (dim === 'disk') {
     // The bar carries the number; the header stays quiet.
@@ -482,27 +535,28 @@ function updateCard(entry, node) {
   }
 
   const alloc = nodeAlloc(node, dim);
-  const sumVal = node.pods.reduce((s, p) => s + podValue(p, dim, state.metric), 0);
-  const over = alloc > 0 ? sumVal / alloc : 0;
+  const sumValue = node.pods.reduce((s, p) => s + podValue(p, dim, state.metric), 0);
+  const over = alloc > 0 ? sumValue / alloc : 0;
   const k = dimKey(dim);
   const usedSum = node.pods.reduce((s, p) => s + (p.hasUsage ? p.usage[k] : 0), 0);
 
-  if (state.metric === 'actual' && node.hasUsage && dim !== 'cost') {
-    headHTML += `<span class="pct">${fmtPct((node.usage[k] || usedSum) / alloc)}<small> used · ${fmtPct(node.pods.reduce((s, p) => s + p.requests[k], 0) / alloc)} res</small></span>`;
-  } else {
-    headHTML += `<span class="pct">${fmtPct(sumVal / alloc)}<small> ${state.metric === 'limits' ? 'limit' : 'reserved'}</small></span>`;
+  headHTML +=
+    state.metric === 'actual' && node.hasUsage && dim !== 'cost'
+      ? `<span class="pct">${fmtPct((node.usage[k] || usedSum) / alloc)}<small> used · ${fmtPct(node.pods.reduce((s, p) => s + p.requests[k], 0) / alloc)} res</small></span>`
+      : `<span class="pct">${fmtPct(sumValue / alloc)}<small> ${state.metric === 'limits' ? 'limit' : 'reserved'}</small></span>`;
+  if (over > 1.001) {
+    headHTML += `<span class="over">over ×${over.toFixed(1)}</span>`;
   }
-  if (over > 1.001) headHTML += `<span class="over">over ×${over.toFixed(1)}</span>`;
   head.innerHTML = headHTML;
 
-  const noReq =
-    state.metric !== 'actual'
-      ? node.pods.filter((p) => podValue(p, dim, state.metric) <= 0).length
-      : 0;
+  const noRequest =
+    state.metric === 'actual'
+      ? 0
+      : node.pods.filter((p) => podValue(p, dim, state.metric) <= 0).length;
   foot.innerHTML =
     `<span>${node.pods.length} pods</span>` +
     `<span>alloc ${fmtValue(dim, alloc)}</span>` +
-    (noReq ? `<span>${noReq} without ${state.metric}</span>` : '');
+    (noRequest ? `<span>${noRequest} without ${state.metric}</span>` : '');
 
   renderTreemapSVG(svg, node, svgWidth(svg), NODE_H);
 }
@@ -515,7 +569,9 @@ function svgWidth(svg) {
 // ---------- treemap rendering (SVG renderer) ----------
 
 function ensureHatch(svg) {
-  if (svg._hatch) return svg._hatch;
+  if (svg._hatch) {
+    return svg._hatch;
+  }
   const id = `hatch-${hatchSeq++}`;
   const defs = document.createElementNS(SVG, 'defs');
   defs.innerHTML =
@@ -523,7 +579,7 @@ function ensureHatch(svg) {
     `<rect width="7" height="7" style="fill: var(--surface-2)"/>` +
     `<line x1="0" y1="0" x2="0" y2="7" style="stroke: var(--surface-3)" stroke-width="1.6"/>` +
     `</pattern>`;
-  svg.appendChild(defs);
+  svg.append(defs);
   svg._hatch = id;
   return id;
 }
@@ -533,10 +589,9 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
   svg.setAttribute('width', W);
   svg.setAttribute('height', H);
   const hatch = ensureHatch(svg);
-  if (!svg._tiles) svg._tiles = new Map();
+  svg._tiles ||= new Map();
 
-  const dim = state.dimension,
-    metric = state.metric;
+  const { dimension: dim, metric } = state;
   const alloc = nodeAlloc(node, dim);
 
   // Fold the long tail so tiles stay clickable (PRD §9.6).
@@ -565,7 +620,7 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
   if (packed && sum > 0) {
     const rects = squarify(items, packed.x, packed.y, packed.w, packed.h);
     for (const r of rects) {
-      const uid = r.item.pod.uid;
+      const { uid } = r.item.pod;
       wanted.add(uid);
       let g = svg._tiles.get(uid);
       if (!g) {
@@ -573,7 +628,7 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
         svg._tiles.set(uid, g);
       }
       noteTileChange(g, r.item.pod, svg._seeded);
-      placeTile(g, r, dim, metric, rich);
+      placeTile(g, r, { dim, metric, rich });
     }
   }
 
@@ -587,7 +642,7 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
     rect.setAttribute('fill', `url(#${hatch})`);
     const label = document.createElementNS(SVG, 'text');
     fg.append(rect, label);
-    svg.appendChild(fg);
+    svg.append(fg);
     svg._tiles.set('__free', fg);
   }
   if (free) {
@@ -602,16 +657,19 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
       label.setAttribute('x', (free.w - 2) / 2);
       label.setAttribute('y', (free.h - 2) / 2 + 4);
       label.setAttribute('text-anchor', 'middle');
-    } else label.textContent = '';
+    } else {
+      label.textContent = '';
+    }
   } else {
     fg.style.opacity = 0;
   }
 
-  for (const [uid, g] of svg._tiles)
+  for (const [uid, g] of svg._tiles) {
     if (!wanted.has(uid)) {
       g.remove();
       svg._tiles.delete(uid);
     }
+  }
   svg._seeded = true;
 }
 
@@ -620,19 +678,27 @@ function renderTreemapSVG(svg, node, W, H, rich = false) {
 // flash every pod.
 function noteTileChange(g, pod, seeded) {
   const sig = `${pod.phase}|${pod.ready}|${pod.restarts}`;
-  const prevSig = g.dataset.sig;
-  const prevRestarts = Number(g.dataset.restarts || 0);
+  const previousSig = g.dataset.sig;
+  const previousRestarts = Number(g.dataset.restarts || 0);
   g.dataset.sig = sig;
   g.dataset.restarts = pod.restarts;
-  if (!seeded) return;
-  if (prevSig === undefined) return flashTile(g, 'is-new');
-  if (prevSig === sig) return;
-  flashTile(g, pod.restarts > prevRestarts ? 'is-restart' : 'is-changed');
+  if (!seeded) {
+    return;
+  }
+  if (previousSig === undefined) {
+    flashTile(g, 'is-new');
+    return;
+  }
+  if (previousSig === sig) {
+    return;
+  }
+  flashTile(g, pod.restarts > previousRestarts ? 'is-restart' : 'is-changed');
 }
 
 function flashTile(g, kind) {
   g.classList.remove('is-new', 'is-restart', 'is-changed');
-  void g.getBoundingClientRect();
+  // Reading layout forces a reflow so the class change below restarts the animation.
+  g.getBoundingClientRect();
   g.classList.add(kind);
   clearTimeout(g._flashTimer);
   g._flashTimer = setTimeout(() => g.classList.remove(kind), 2600);
@@ -652,32 +718,33 @@ function buildTile(svg, pod, nodeName) {
   rsv.classList.add('rsv');
   const lbl = document.createElementNS(SVG, 'text');
   lbl.classList.add('lbl');
-  const val = document.createElementNS(SVG, 'text');
-  val.classList.add('val');
-  g.append(slack, fill, rsv, lbl, val);
-  svg.appendChild(g);
+  const value = document.createElementNS(SVG, 'text');
+  value.classList.add('value');
+  g.append(slack, fill, rsv, lbl, value);
+  svg.append(g);
   return g;
 }
 
-function placeTile(g, r, dim, metric, rich) {
-  const pod = r.item.pod;
+// SVG attributes, not CSS geometry: Safari does not reliably apply CSS x/y/width/height to SVG rects.
+const setRect = (element, rx, ry, rw, rh) => {
+  element.setAttribute('x', rx);
+  element.setAttribute('y', ry);
+  element.setAttribute('width', Math.max(0, rw));
+  element.setAttribute('height', Math.max(0, rh));
+};
+
+function placeTile(g, r, { dim, metric, rich }) {
+  const { pod } = r.item;
   const color = nsColor(pod.namespace);
   const pad = 1; // 2px visual gap between neighbours (1px each side)
-  const x = r.x + pad,
-    y = r.y + pad;
-  const w = Math.max(0, r.w - pad * 2),
-    h = Math.max(0, r.h - pad * 2);
+  const x = r.x + pad;
+  const y = r.y + pad;
+  const w = Math.max(0, r.w - pad * 2);
+  const h = Math.max(0, r.h - pad * 2);
 
   g.style.transform = `translate(${x}px, ${y}px)`;
 
   const [slack, fill, rsv] = [g.children[0], g.children[1], g.children[2]];
-  // SVG attributes, not CSS geometry: Safari does not reliably apply CSS x/y/width/height to SVG rects.
-  const setRect = (el, rx, ry, rw, rh) => {
-    el.setAttribute('x', rx);
-    el.setAttribute('y', ry);
-    el.setAttribute('width', Math.max(0, rw));
-    el.setAttribute('height', Math.max(0, rh));
-  };
 
   slack.setAttribute('fill', color);
   fill.setAttribute('fill', color);
@@ -699,16 +766,16 @@ function placeTile(g, r, dim, metric, rich) {
     // dashed outline = the reservation; solid inner block = actual usage,
     // anchored bottom-left so tiles read as "filling up".
     rsv.style.display = '';
-    const req = pod.requests?.[k] ?? 0;
+    const request = pod.requests?.[k] ?? 0;
     const usage = pod.hasUsage ? pod.usage[k] : 0;
-    const tileVal = Math.max(req, usage, 1);
-    const uf = Math.sqrt(usage / tileVal);
-    const uw = w * uf,
-      uh = h * uf;
+    const tileValue = Math.max(request, usage, 1);
+    const uf = Math.sqrt(usage / tileValue);
+    const uw = w * uf;
+    const uh = h * uf;
     setRect(slack, 0, 0, w, h);
     setRect(fill, 0, h - uh, uw, uh);
-    if (usage > req && req > 0) {
-      const rf = Math.sqrt(req / tileVal);
+    if (usage > request && request > 0) {
+      const rf = Math.sqrt(request / tileValue);
       setRect(rsv, 0.6, h - h * rf + 0.6, w * rf - 1.2, h * rf - 1.2);
       g.classList.add('overreq');
     } else {
@@ -717,25 +784,30 @@ function placeTile(g, r, dim, metric, rich) {
     showValue = usage;
   }
 
-  const [lbl, val] = [g.children[3], g.children[4]];
+  const [lbl, value] = [g.children[3], g.children[4]];
   // Solid tiles sit on a saturated namespace fill, so their label takes black
   // or white by contrast. Washed tiles keep the theme ink with a surface halo.
   const solid = metric !== 'actual' || pod.uid === '__more';
   const labelFill = solid ? labelInk(color) : null;
-  lbl.style.fill = val.style.fill = labelFill ?? '';
+  lbl.style.fill = labelFill ?? '';
+  value.style.fill = labelFill ?? '';
   lbl.style.stroke = solid ? 'none' : '';
-  const minW = rich ? 54 : 62,
-    minH = rich ? 22 : 26;
+  const minW = rich ? 54 : 62;
+  const minH = rich ? 22 : 26;
   if (w > minW && h > minH) {
     lbl.textContent = truncate(pod.name, w / 6.2);
     lbl.setAttribute('x', 5);
     lbl.setAttribute('y', 14);
-  } else lbl.textContent = '';
-  if (w > minW && h > minH + 16 && showValue != null) {
-    val.textContent = fmtValue(dim, showValue);
-    val.setAttribute('x', 5);
-    val.setAttribute('y', 27);
-  } else val.textContent = '';
+  } else {
+    lbl.textContent = '';
+  }
+  if (w > minW && h > minH + 16 && showValue !== null && showValue !== undefined) {
+    value.textContent = fmtValue(dim, showValue);
+    value.setAttribute('x', 5);
+    value.setAttribute('y', 27);
+  } else {
+    value.textContent = '';
+  }
 }
 
 function truncate(s, chars) {
@@ -755,29 +827,38 @@ function renderDiskSVG(svg, node, W, H) {
 
   const g = document.createElementNS(SVG, 'g');
   g.classList.add('diskbar');
-  svg.appendChild(g);
+  svg.append(g);
 
   const { capacityBytes: cap, usedBytes: used, live } = node.disk;
   const frac = live && cap > 0 ? used / cap : 0;
-  if (frac >= 0.9) g.classList.add('crit');
-  else if (frac >= 0.75) g.classList.add('warn');
+  if (frac >= 0.9) {
+    g.classList.add('crit');
+  } else if (frac >= 0.75) {
+    g.classList.add('warn');
+  }
 
-  const barY = H * 0.46,
-    barH = 30,
-    barX = 10,
-    barW = W - 20;
-  const mk = (name, attrs, text) => {
-    const el = document.createElementNS(SVG, name);
-    for (const [a, v] of Object.entries(attrs)) el.setAttribute(a, v);
-    if (text != null) el.textContent = text;
-    g.appendChild(el);
-    return el;
+  const barY = H * 0.46;
+  const barH = 30;
+  const barX = 10;
+  const barW = W - 20;
+  const mk = (name, attributes, text) => {
+    const element = document.createElementNS(SVG, name);
+    for (const [a, v] of Object.entries(attributes)) {
+      element.setAttribute(a, v);
+    }
+    if (text !== undefined && text !== null) {
+      element.textContent = text;
+    }
+    g.append(element);
+    return element;
   };
 
   mk('text', { class: 'bigpct', x: barX, y: 36 }, live && cap > 0 ? fmtPct(frac) : '—');
-  if (frac >= 0.9)
+  if (frac >= 0.9) {
     mk('text', { class: 'alerttxt', x: barX + 78, y: 36 }, '⚠ critically low space');
-  else if (frac >= 0.75) mk('text', { class: 'alerttxt', x: barX + 78, y: 36 }, '⚠ filling up');
+  } else if (frac >= 0.75) {
+    mk('text', { class: 'alerttxt', x: barX + 78, y: 36 }, '⚠ filling up');
+  }
 
   mk('rect', { class: 'track', x: barX, y: barY, width: barW, height: barH, rx: 6 });
   mk('rect', {
@@ -789,7 +870,7 @@ function renderDiskSVG(svg, node, W, H) {
     fill: `url(#${hatch})`,
     opacity: 0.5,
   });
-  if (live && cap > 0)
+  if (live && cap > 0) {
     mk('rect', {
       class: 'used disk-fill',
       x: barX,
@@ -798,6 +879,7 @@ function renderDiskSVG(svg, node, W, H) {
       height: barH,
       rx: 6,
     });
+  }
 
   if (live && cap > 0) {
     mk(
@@ -825,11 +907,13 @@ function renderDiskSVG(svg, node, W, H) {
 
 const tooltip = () => $('#tooltip');
 
-document.addEventListener('mousemove', (e) => {
-  const tile = e.target.closest?.('.tile');
+document.addEventListener('mousemove', (event) => {
+  const tile = event.target.closest?.('.tile');
   const tip = tooltip();
   // The markup is detached while the page is unmounted; this listener is global, so it must no-op.
-  if (!tip) return;
+  if (!tip) {
+    return;
+  }
   if (!tile) {
     tip.classList.remove('show');
     return;
@@ -840,14 +924,20 @@ document.addEventListener('mousemove', (e) => {
     tip.innerHTML = `<div class="t-name">smaller pods</div><div class="t-ns">folded to keep tiles readable — open the node for the full list</div>`;
   } else if (hit) {
     tip.innerHTML = tooltipHTML(hit.pod);
-  } else return;
+  } else {
+    return;
+  }
   tip.classList.add('show');
   const pad = 14;
-  let x = e.clientX + pad,
-    y = e.clientY + pad;
+  let x = event.clientX + pad;
+  let y = event.clientY + pad;
   const r = tip.getBoundingClientRect();
-  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
-  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+  if (x + r.width > innerWidth - 8) {
+    x = event.clientX - r.width - pad;
+  }
+  if (y + r.height > innerHeight - 8) {
+    y = event.clientY - r.height - pad;
+  }
   tip.style.left = `${x}px`;
   tip.style.top = `${y}px`;
 });
@@ -861,7 +951,9 @@ function tooltipHTML(pod) {
         pod.limits.cpuMillis > 0 || pod.limits.memBytes > 0 ? fmtUSD(pod.cost.limits) : 'none',
       ],
     ];
-    if (pod.hasUsage) rows.push(['actual', fmtUSD(pod.cost.actual)]);
+    if (pod.hasUsage) {
+      rows.push(['actual', fmtUSD(pod.cost.actual)]);
+    }
     return (
       `<div class="t-name">${esc(pod.name)}</div>` +
       `<div class="t-ns"><span class="sw" style="background:${nsColor(pod.namespace)}"></span>${esc(pod.namespace)}</div>` +
@@ -876,7 +968,9 @@ function tooltipHTML(pod) {
   ];
   if (pod.hasUsage) {
     rows.push(['actual', fmtValue(dim, pod.usage[k])]);
-    if (pod.requests[k] > 0) rows.push(['of request', fmtPct(pod.usage[k] / pod.requests[k])]);
+    if (pod.requests[k] > 0) {
+      rows.push(['of request', fmtPct(pod.usage[k] / pod.requests[k])]);
+    }
   }
   return (
     `<div class="t-name">${esc(pod.name)}</div>` +
@@ -886,19 +980,25 @@ function tooltipHTML(pod) {
 }
 
 // Legend hover → spotlight one namespace across every node.
-document.addEventListener('mouseover', (e) => {
-  const chip = e.target.closest?.('.chip');
-  if (!chip) return;
-  const ns = chip.dataset.ns;
+document.addEventListener('mouseover', (event) => {
+  const chip = event.target.closest?.('.chip');
+  if (!chip) {
+    return;
+  }
+  const { ns } = chip.dataset;
   for (const t of document.querySelectorAll('.tile')) {
     const mine =
       ns === '__other' ? nsSlots.get(t.dataset.ns) >= NS_COLORS.length : t.dataset.ns === ns;
     t.classList.toggle('dimmed', !mine);
   }
 });
-document.addEventListener('mouseout', (e) => {
-  if (!e.target.closest?.('.chip')) return;
-  for (const t of document.querySelectorAll('.tile')) t.classList.remove('dimmed');
+document.addEventListener('mouseout', (event) => {
+  if (!event.target.closest?.('.chip')) {
+    return;
+  }
+  for (const t of document.querySelectorAll('.tile')) {
+    t.classList.remove('dimmed');
+  }
 });
 
 // ---------- drill-in ----------
@@ -939,11 +1039,14 @@ function renderDrill() {
     holder.replaceChildren();
     svg = document.createElementNS(SVG, 'svg');
     svg.dataset.mode = renderedMode;
-    holder.appendChild(svg);
+    holder.append(svg);
   }
   const W = Math.max(400, holder.clientWidth || 900);
-  if (dim === 'disk') renderDiskSVG(svg, node, W, 230);
-  else renderTreemapSVG(svg, node, W, 430, true);
+  if (dim === 'disk') {
+    renderDiskSVG(svg, node, W, 230);
+  } else {
+    renderTreemapSVG(svg, node, W, 430, true);
+  }
 
   panel.querySelector('.panel-table').innerHTML = podTableHTML(node);
 }
@@ -955,14 +1058,15 @@ function podTableHTML(node) {
     );
     const rows = byCost
       .map((p) => {
-        const reqPct = p.hasUsage && p.cost.requests > 0 ? p.cost.actual / p.cost.requests : null;
+        const requestPct =
+          p.hasUsage && p.cost.requests > 0 ? p.cost.actual / p.cost.requests : null;
         return `<tr>
       <td class="podname"><span class="sw" style="background:${nsColor(p.namespace)}"></span>${esc(p.name)}</td>
       <td>${esc(p.namespace)}</td>
       <td>${fmtUSD(p.cost.requests)}</td>
       <td>${p.limits.cpuMillis > 0 || p.limits.memBytes > 0 ? fmtUSD(p.cost.limits) : '—'}</td>
       <td>${p.hasUsage ? fmtUSD(p.cost.actual) : '—'}</td>
-      <td class="${reqPct != null && reqPct > 1 ? 'hot' : ''}">${reqPct != null ? fmtPct(reqPct) : '—'}</td>
+      <td class="${requestPct > 1 ? 'hot' : ''}">${requestPct === null ? '—' : fmtPct(requestPct)}</td>
     </tr>`;
       })
       .join('');
@@ -979,14 +1083,14 @@ function podTableHTML(node) {
   );
   const rows = pods
     .map((p) => {
-      const reqPct = p.hasUsage && p.requests[k] > 0 ? p.usage[k] / p.requests[k] : null;
+      const requestPct = p.hasUsage && p.requests[k] > 0 ? p.usage[k] / p.requests[k] : null;
       return `<tr>
       <td class="podname"><span class="sw" style="background:${nsColor(p.namespace)}"></span>${esc(p.name)}</td>
       <td>${esc(p.namespace)}</td>
       <td>${fmtValue(dim, p.requests[k])}</td>
       <td>${p.limits[k] > 0 ? fmtValue(dim, p.limits[k]) : '—'}</td>
       <td>${p.hasUsage ? fmtValue(dim, p.usage[k]) : '—'}</td>
-      <td class="${reqPct != null && reqPct > 1 ? 'hot' : ''}">${reqPct != null ? fmtPct(reqPct) : '—'}</td>
+      <td class="${requestPct > 1 ? 'hot' : ''}">${requestPct === null ? '—' : fmtPct(requestPct)}</td>
     </tr>`;
     })
     .join('');
@@ -999,24 +1103,30 @@ function podTableHTML(node) {
 
 // ---------- controls ----------
 
-for (const btn of document.querySelectorAll('[data-dim]'))
-  btn.addEventListener('click', () => {
-    state.dimension = btn.dataset.dim;
+for (const button of document.querySelectorAll('[data-dim]')) {
+  button.addEventListener('click', () => {
+    state.dimension = button.dataset.dim;
     localStorage.setItem('kshows.dimension', state.dimension);
     render();
   });
-for (const btn of document.querySelectorAll('[data-metric]'))
-  btn.addEventListener('click', () => {
-    state.metric = btn.dataset.metric;
+}
+for (const button of document.querySelectorAll('[data-metric]')) {
+  button.addEventListener('click', () => {
+    state.metric = button.dataset.metric;
     localStorage.setItem('kshows.metric', state.metric);
     render();
   });
+}
 
-$('#overlay').addEventListener('click', (e) => {
-  if (e.target === $('#overlay') || e.target.closest('.close')) closeDrill();
+$('#overlay').addEventListener('click', (event) => {
+  if (event.target === $('#overlay') || event.target.closest('.close')) {
+    closeDrill();
+  }
 });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.drill) closeDrill();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && state.drill) {
+    closeDrill();
+  }
 });
 
 let resizeTimer;
@@ -1027,10 +1137,13 @@ addEventListener('resize', () => {
   root?.classList.add('is-relayout');
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    renderedMode = ''; // force full rebuild at the new width
+    renderedMode = ''; // Force full rebuild at the new width
     render();
     requestAnimationFrame(() => root?.classList.remove('is-relayout'));
   }, 150);
 });
 
-bootstrap();
+await bootstrap();
+
+/* eslint-enable max-lines */
+/* eslint-enable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods */

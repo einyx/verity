@@ -5,6 +5,7 @@ import styles from './index.module.scss';
 type Props = {
   readonly title: string;
   readonly children: ReactNode;
+  // eslint-disable-next-line react/boolean-prop-naming -- Keep the existing `collapsed` prop name; callers outside this change depend on it.
   readonly collapsed?: boolean;
 };
 

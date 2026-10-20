@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 const defaultDelay = 500;
 
 const useDebounce = (delay: number = defaultDelay) => {
+  // eslint-disable-next-line unicorn/no-useless-undefined -- React 19 requires an initial argument for useRef.
   const timerRef = useRef<number | undefined>(undefined);
 
   const clearTimer = () => {

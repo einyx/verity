@@ -1,5 +1,4 @@
 import {
-  adminTenantId,
   getCloudApiIndicator,
   CloudScope,
   getManagementApiResourceIndicator,

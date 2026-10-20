@@ -49,7 +49,7 @@ const AvatarCropModal = ({
   const [zoom, setZoom] = useState(minZoom);
   const [cropError, setCropError] = useState<string>();
   const [isCropping, setIsCropping] = useState(false);
-  const croppedAreaPixelsRef = useRef<CropAreaPixels>();
+  const croppedAreaPixelsRef = useRef<CropAreaPixels | undefined>(undefined);
   const isBusy = isUploading || isCropping;
 
   const handleCropComplete = useCallback(

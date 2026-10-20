@@ -30,6 +30,7 @@ function mockRenderTable({
   }>('react');
   return Children.toArray(
     rowGroups.flatMap(({ data }) =>
+      // eslint-disable-next-line @typescript-eslint/promise-function-async -- Test mock renders synchronously; the Promise member of React 19's ReactNode is not used.
       data.flatMap((record) => columns.map(({ render }) => render(record)))
     )
   );
@@ -58,6 +59,7 @@ jest.mock('@/hooks/use-tenant-pathname', () => ({ __esModule: true, default: jes
 jest.mock('@/scss/modal.module.scss', () => ({}), { virtual: true });
 jest.mock('@/ds-components/FormField', () => ({
   __esModule: true,
+  // eslint-disable-next-line @typescript-eslint/promise-function-async -- Test mock passes children through synchronously; the Promise member of ReactNode is not used.
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock('@/ds-components/Table', () => ({ __esModule: true, default: mockRenderTable }));

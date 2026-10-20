@@ -23,7 +23,7 @@ export type HearAboutUsValue = {
 };
 
 /** Sources where a free-text follow-up helps pinpoint the exact origin. */
-export const sourcesWithDetail: ReadonlySet<HearAboutUsSource> = new Set([
+const sourcesWithDetail: ReadonlySet<HearAboutUsSource> = new Set([
   HearAboutUsSource.ContentSocial,
   HearAboutUsSource.Other,
 ]);

@@ -26,8 +26,8 @@ const App = () => {
   const [accessToken, setAccessToken] = useState('');
   const [error, setError] = useState('');
   const [showDevPanel, setShowDevPanel] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval>>();
-  const expiryTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const expiryTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isDarkMode = useIsDarkMode();
   const params = new URL(window.location.href).searchParams;
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- We need to fall back for empty string

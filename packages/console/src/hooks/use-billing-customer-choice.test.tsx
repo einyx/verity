@@ -1,6 +1,5 @@
 import { render, renderHook } from '@testing-library/react';
 import type * as React from 'react';
-import type { JSX } from 'react';
 
 import { type BillingCustomer } from '@/cloud/types/router';
 
@@ -96,12 +95,14 @@ describe('useBillingCustomerChoice', () => {
 
   it('sends the Customer picked in the dialog', async () => {
     mockGet.mockResolvedValue([customer('cus_default', true), customer('cus_other', false)]);
-    mockShow.mockImplementation(async ({ ModalContent }: { ModalContent: () => JSX.Element }) => {
-      render(<ModalContent />);
-      const [{ onChange }] = mockPicker.mock.lastCall as [{ onChange: (value: string) => void }];
-      onChange('cus_other');
-      return [true];
-    });
+    mockShow.mockImplementation(
+      async ({ ModalContent }: { ModalContent: () => React.JSX.Element }) => {
+        render(<ModalContent />);
+        const [{ onChange }] = mockPicker.mock.lastCall as [{ onChange: (value: string) => void }];
+        onChange('cus_other');
+        return [true];
+      }
+    );
 
     await expect(choose()).resolves.toEqual({ customerId: 'cus_other' });
   });

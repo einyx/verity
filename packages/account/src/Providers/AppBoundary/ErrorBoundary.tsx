@@ -31,6 +31,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   public state: State = {};
 
+  // eslint-disable-next-line @typescript-eslint/promise-function-async -- ReactNode includes Promise in React 19 types; children are passed through unchanged, so async is not applicable
   render() {
     const { children } = this.props;
     const { error } = this.state;

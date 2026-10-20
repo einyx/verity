@@ -1,7 +1,7 @@
 import { onResize, useIsomorphicLayoutEffect } from '@react-spring/shared';
 import { useSpring, animated, config } from '@react-spring/web';
 import type { Nullable } from '@silverhand/essentials';
-import { cloneElement, useCallback, useRef, useState } from 'react';
+import { cloneElement, useCallback, useRef, useState, type JSX } from 'react';
 
 import styles from './index.module.scss';
 
@@ -9,6 +9,9 @@ type Props = {
   readonly children: JSX.Element; // Limit to one element
   readonly isVisible: boolean;
 };
+
+// `animated.div` relies on the global `JSX` namespace, which React 19 types removed; `animated('div')` is the same component.
+const AnimatedDiv = animated('div');
 
 const AnimatedPrefix = ({ children, isVisible }: Props) => {
   const [domReady, setDomReady] = useState(false);
@@ -47,9 +50,9 @@ const AnimatedPrefix = ({ children, isVisible }: Props) => {
   }, [api, getTargetWidth]);
 
   return (
-    <animated.div className={styles.prefix} style={animation} data-testid="prefix">
+    <AnimatedDiv className={styles.prefix} style={animation} data-testid="prefix">
       {cloneElement(children, { ref: elementRef, isVisible })}
-    </animated.div>
+    </AnimatedDiv>
   );
 };
 

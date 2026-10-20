@@ -1,9 +1,9 @@
-import styles from '../index.module.scss';
-
 import inspiredDai from '@/assets/images/wizard/inspired-dai.svg?url';
 import inspiredFai from '@/assets/images/wizard/inspired-fai.svg?url';
 import inspiredFoundation from '@/assets/images/wizard/inspired-foundation.svg?url';
 import inspiredV1 from '@/assets/images/wizard/inspired-v1.svg?url';
+
+import styles from '../index.module.scss';
 
 import { type StackOption } from './options';
 

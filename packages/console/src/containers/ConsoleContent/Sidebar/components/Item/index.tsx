@@ -16,10 +16,19 @@ type Props = {
   readonly modal?: (isOpen: boolean, onCancel: () => void) => ReactNode;
   readonly externalLink?: string;
   readonly path?: string;
+  // eslint-disable-next-line react/boolean-prop-naming -- Keep the existing `collapsed` prop name; callers outside this change depend on it.
   readonly collapsed?: boolean;
 };
 
-function Item({ icon, titleKey, modal, externalLink, path, isActive = false, collapsed = false }: Props) {
+function Item({
+  icon,
+  titleKey,
+  modal,
+  externalLink,
+  path,
+  isActive = false,
+  collapsed = false,
+}: Props) {
   const { t } = useTranslation(undefined, {
     keyPrefix: 'admin_console.tabs',
   });
@@ -59,12 +68,7 @@ function Item({ icon, titleKey, modal, externalLink, path, isActive = false, col
 
   if (externalLink) {
     return (
-      <a
-        href={externalLink}
-        target="_blank"
-        className={styles.row}
-        rel="noopener"
-      >
+      <a href={externalLink} target="_blank" className={styles.row} rel="noopener">
         {content}
       </a>
     );

@@ -24,7 +24,6 @@ const steps = [
   },
 ];
 
-// eslint-disable-next-line import/no-unused-modules -- Kept on purpose until the developer decides whether its uncommitted edits are obsolete.
 export function StepIntro({
   step,
   onStepChange,

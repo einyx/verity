@@ -157,4 +157,5 @@ function ConsoleEmbeddedPricing() {
   );
 }
 
+// eslint-disable-next-line import/no-unused-modules -- The embed has no importer yet; keep it until the pricing page is wired up or removed by the owner.
 export default ConsoleEmbeddedPricing;

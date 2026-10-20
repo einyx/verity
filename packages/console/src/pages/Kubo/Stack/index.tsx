@@ -2,7 +2,7 @@
 import { type AdminConsoleKey } from '@logto/phrases';
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import RequestDataError from '@/components/RequestDataError';

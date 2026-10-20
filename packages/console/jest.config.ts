@@ -23,6 +23,8 @@ const config: Config.InitialOptions = {
   },
   moduleNameMapper: {
     '^@/(.*)\\.svg\\?react$': '<rootDir>/src/$1.svg',
+    // Relative imports of `*.svg?react` (e.g. `./assets/au.svg?react`) resolve like the `@/` alias above.
+    '^(\\.{1,2}/.*)\\.svg\\?react$': '$1.svg',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@logto/shared/(.*)$': '<rootDir>/../shared/lib/$1',
     '\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',

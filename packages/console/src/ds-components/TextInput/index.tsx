@@ -1,3 +1,4 @@
+import type { Nullable } from '@silverhand/essentials';
 import classNames from 'classnames';
 import {
   type HTMLProps,
@@ -49,7 +50,7 @@ function TextInput(
     description,
     ...rest
   }: Props,
-  reference: Ref<HTMLInputElement | null>
+  reference: Ref<Nullable<HTMLInputElement>>
 ) {
   const innerRef = useRef<HTMLInputElement>(null);
   const [isContentHidden, setIsContentHidden] = useState(true);
@@ -69,7 +70,10 @@ function TextInput(
       suffix
     );
 
-  useImperativeHandle(reference, () => innerRef.current);
+  useImperativeHandle<Nullable<HTMLInputElement>, Nullable<HTMLInputElement>>(
+    reference,
+    () => innerRef.current
+  );
 
   useEffect(() => {
     if (type !== 'number') {

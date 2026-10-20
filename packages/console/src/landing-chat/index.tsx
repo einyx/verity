@@ -187,6 +187,7 @@ class ChatErrorBoundary extends Component<{ readonly children: ReactNode }, Boun
 
   state: BoundaryState = { hasError: false };
 
+  // eslint-disable-next-line @typescript-eslint/promise-function-async -- render() must return ReactNode (which the types widen to include Promise); React 18 does not render promises, so it cannot be async.
   render() {
     if (this.state.hasError) {
       return (

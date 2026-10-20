@@ -1,4 +1,4 @@
-import { Theme } from '@logto/schemas';
+import type { Theme } from '@logto/schemas';
 import { useEffect, useRef } from 'react';
 
 import MeshxMark from '@/shared/assets/icons/meshx-mark.svg?react';
@@ -74,12 +74,12 @@ body.mobile [data-logto-signature="secured"][data-logto-signature="secured"] {
 
 type Props = {
   readonly className?: string;
+  // The MeshX mark is the same in both themes, so the theme prop only keeps the call sites unchanged.
+  // eslint-disable-next-line react/no-unused-prop-types -- Kept so existing call sites still type-check.
   readonly theme: Theme;
 };
 
-// The MeshX mark is the same in both themes, so the theme prop only keeps the call sites unchanged.
 const LogtoSignature = ({ className }: Props) => {
-
   const containerRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLAnchorElement>(null);
 

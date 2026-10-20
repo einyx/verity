@@ -1,6 +1,6 @@
 import type { Nullable } from '@silverhand/essentials';
 import { noop } from '@silverhand/essentials';
-import { useState, useRef, useMemo, createContext, useCallback } from 'react';
+import { useState, useRef, useMemo, createContext, useCallback, type JSX } from 'react';
 
 import type { ModalProps } from '@/components/ConfirmModal';
 import { WebModal, MobileModal } from '@/components/ConfirmModal';
@@ -61,7 +61,9 @@ const defaultModalState: ConfirmModalState = {
 const ConfirmModalProvider = ({ children }: Props) => {
   const [modalState, setModalState] = useState<ConfirmModalState>(defaultModalState);
 
-  const resolver = useRef<(value: [result: boolean, data?: unknown]) => void>();
+  const resolver = useRef<((value: [result: boolean, data?: unknown]) => void) | undefined>(
+    undefined
+  );
   const callbackRef = useRef<{
     onConfirm?: () => Promise<void> | void;
     onCancel?: () => Promise<void> | void;

@@ -12,7 +12,7 @@ import styles from './index.module.scss';
 
 export type Props = {
   readonly title: AdminConsoleKey | ReactElement<typeof DangerousRaw>;
-  readonly subtitle?: AdminConsoleKey | ReactElement<typeof DangerousRaw>;
+  readonly subtitle?: AdminConsoleKey | ReactElement;
   readonly size?: 'small' | 'medium' | 'large';
   readonly learnMoreLink?: LearnMoreProps;
   readonly isWordWrapEnabled?: boolean;

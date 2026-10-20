@@ -1,3 +1,4 @@
+import type { Nullable } from '@silverhand/essentials';
 import { useState, useCallback, useLayoutEffect } from 'react';
 import ReactModal from 'react-modal';
 
@@ -10,7 +11,7 @@ import styles from './index.module.scss';
 
 type Props = {
   readonly isOpen: boolean;
-  readonly parentElementRef: React.RefObject<HTMLDivElement>;
+  readonly parentElementRef: React.RefObject<Nullable<HTMLDivElement>>;
   readonly organizations: Organization[];
   readonly selectedOrganization: Organization;
   readonly onSelect: (organization: Organization) => void;

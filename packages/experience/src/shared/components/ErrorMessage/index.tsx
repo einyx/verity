@@ -25,11 +25,7 @@ export type Props = {
 const ErrorMessage = ({ error, className, children }: Props) => {
   const { t } = useTranslation(undefined, { keyPrefix: 'error' });
 
-  const getMessage = () => {
-    if (!error) {
-      return children;
-    }
-
+  const getMessage = (error: ErrorType) => {
     if (typeof error === 'string') {
       return t(error);
     }
@@ -39,7 +35,7 @@ const ErrorMessage = ({ error, className, children }: Props) => {
 
   return (
     <div role="alert" className={classNames(styles.error, className)}>
-      {getMessage()}
+      {error ? getMessage(error) : children}
     </div>
   );
 };

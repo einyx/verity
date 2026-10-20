@@ -17,6 +17,7 @@ import errors from './errors.js';
 import general from './general.js';
 import get_started from './get-started.js';
 import guide from './guide.js';
+import infrastructure from './infrastructure.js';
 import inkeep_ai_bot from './inkeep-ai-bot.js';
 import invitation from './invitation.js';
 import jwt_claims from './jwt-claims.js';
@@ -98,6 +99,7 @@ const admin_console = {
   system_limit,
   upsell,
   guide,
+  infrastructure,
   mfa,
   organizations,
   oss_onboarding,

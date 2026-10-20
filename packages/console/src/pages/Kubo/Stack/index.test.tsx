@@ -1,12 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type ReactNode, useState } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import useSWR from 'swr';
+
+import type { EnvTestUtils } from '@/test-utils/env';
 
 import Stack from '.';
 
 const navigate = jest.fn();
 const deleteRequest = jest.fn();
 
+jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
 jest.mock('swr', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('react-helmet', () => ({ Helmet: () => null }));
 jest.mock('@/components/RequestDataError', () => ({ __esModule: true, default: () => null }));
@@ -124,7 +128,11 @@ const renderStack = () => {
     isLoading: false,
     mutate: jest.fn(),
   } as unknown as ReturnType<typeof useSWR>);
-  return render(<Stack />);
+  return render(
+    <MemoryRouter>
+      <Stack />
+    </MemoryRouter>
+  );
 };
 
 const openDeleteModal = () => {
@@ -151,7 +159,8 @@ describe('Kubo stack deletion', () => {
     await waitFor(() => {
       expect(deleteRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation?purge=false');
     });
-    expect(navigate).toHaveBeenCalledWith('/infrastructure', { replace: true });
+    // The tenant-aware navigate prefixes the OSS console segment.
+    expect(navigate).toHaveBeenCalledWith('/console/infrastructure', { replace: true });
   });
 
   it('keeps the modal open and reports a deletion failure', async () => {

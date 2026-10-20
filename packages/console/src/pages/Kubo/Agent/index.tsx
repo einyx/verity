@@ -36,15 +36,19 @@ type AgentRequestList = { requests: AgentRequest[]; total: number };
 
 const formatUsd = (micro: number) => `$${(micro / 1_000_000).toFixed(2)}`;
 
-const Metric = ({ value, label }: { value: string | number; label: string }) => (
-  <Card className={styles.metric}>
-    <div className={styles.summaryValue}>{value}</div>
-    <div className={styles.summaryLabel}>{label}</div>
-  </Card>
-);
+function Metric({ value, label }: { readonly value: string | number; readonly label: string }) {
+  return (
+    <Card className={styles.metric}>
+      <div className={styles.summaryValue}>{value}</div>
+      <div className={styles.summaryLabel}>{label}</div>
+    </Card>
+  );
+}
 
-const Agent = () => {
-  const stats = useSWR<AgentStats, RequestError>('api/kubo/agentfw/stats', { refreshInterval: 15_000 });
+function Agent() {
+  const stats = useSWR<AgentStats, RequestError>('api/kubo/agentfw/stats', {
+    refreshInterval: 15_000,
+  });
   const requests = useSWR<AgentRequestList, RequestError>('api/kubo/agentfw/requests?limit=50', {
     refreshInterval: 15_000,
   });
@@ -111,7 +115,9 @@ const Agent = () => {
             {
               title: <DynamicT forKey="infrastructure.column.status" />,
               dataIndex: 'status',
-              render: (row: AgentRequest) => <Tag status={row.status < 400 ? 'success' : 'error'}>{row.status}</Tag>,
+              render: (row: AgentRequest) => (
+                <Tag status={row.status < 400 ? 'success' : 'error'}>{row.status}</Tag>
+              ),
             },
             {
               title: <DynamicT forKey="infrastructure.column.action" />,
@@ -124,6 +130,6 @@ const Agent = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default Agent;

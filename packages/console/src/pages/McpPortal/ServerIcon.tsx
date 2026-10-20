@@ -5,7 +5,7 @@ import styles from './index.module.scss';
  * so each one keeps the same icon without loading anything from the server itself.
  */
 function ServerIcon({ name }: { readonly name: string }) {
-  const hue = [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360;
+  const hue = [...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % 360;
 
   return (
     <span

@@ -1,4 +1,4 @@
-import { conditional } from '@silverhand/essentials';
+import { conditional, type Nullable } from '@silverhand/essentials';
 import classNames from 'classnames';
 import { forwardRef } from 'react';
 import type { ForwardedRef, ReactNode, HTMLProps, RefObject } from 'react';
@@ -12,7 +12,7 @@ export type TipBubblePlacement = 'top' | 'right' | 'bottom' | 'left';
 type Props = HTMLProps<HTMLDivElement> & {
   readonly children: ReactNode;
   readonly position?: Position;
-  readonly anchorRef: RefObject<Element | null>;
+  readonly anchorRef: RefObject<Nullable<Element>>;
   readonly placement?: TipBubblePlacement;
   readonly horizontalAlignment?: HorizontalAlignment;
   readonly className?: string;

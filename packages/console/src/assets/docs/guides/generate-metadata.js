@@ -28,9 +28,7 @@ const data = await Promise.all(
     );
 
     const config = existsSync(`${directory}/config.json`)
-      ? await import(`./${directory}/config.json`, { assert: { type: 'json' } }).then(
-          (module) => module.default
-        )
+      ? JSON.parse(await fs.readFile(`${directory}/config.json`, 'utf8'))
       : undefined;
 
     return {
@@ -77,8 +75,12 @@ await fs.appendFile(filename, '\n');
 await fs.appendFile(filename, 'export const guides: Readonly<Guide[]> = Object.freeze([');
 
 const getLogo = ({ name, logo, isDark }) => {
-  if (!logo) return 'undefined';
-  if (logo.endsWith('.svg')) return `safeLazy(async () => import('./${name}/${logo}?react'))`;
+  if (!logo) {
+    return 'undefined';
+  }
+  if (logo.endsWith('.svg')) {
+    return `safeLazy(async () => import('./${name}/${logo}?react'))`;
+  }
   return `({ className }: { readonly className?: string }) => <img src={${camelCase(name)}Logo${
     isDark ? 'Dark' : ''
   }} alt="${name}" className={className} />`;

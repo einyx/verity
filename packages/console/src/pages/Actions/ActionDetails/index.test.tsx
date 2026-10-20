@@ -78,6 +78,7 @@ jest.mock('./PageLoadingSkeleton', () => ({
 
 jest.mock('./CodeEditorLoadingContext', () => ({
   CodeEditorLoadingContext: {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async -- Test mock passes children through synchronously; the Promise member of ReactNode is not used.
     Provider: ({ children }: { readonly children: React.ReactNode }) => children,
   },
 }));

@@ -1,10 +1,10 @@
+import { adminTenantId } from '@logto/schemas';
 import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import DelayedSuspenseFallback from '@/components/DelayedSuspenseFallback';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
 import { EnterpriseSubscriptionTabs } from '@/consts';
-import { adminTenantId } from '@logto/schemas';
 import { isCloud } from '@/consts/env';
 import ProtectedRoutes from '@/containers/ProtectedRoutes';
 import { GlobalAnonymousRoute, GlobalRoute } from '@/contexts/TenantsProvider';

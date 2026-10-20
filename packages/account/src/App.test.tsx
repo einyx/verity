@@ -1,6 +1,6 @@
 import { Prompt, useLogto } from '@logto/react';
 import { AccountCenterControlValue } from '@logto/schemas';
-import { type ReactNode } from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 
 import { Main } from './App';
 import renderWithPageContext, {
@@ -28,7 +28,13 @@ jest.mock('@logto/react', () => ({
     CustomData: 'custom_data',
     Identities: 'identities',
   },
-  LogtoProvider: ({ children }: { readonly children: ReactNode }) => children,
+  LogtoProvider: ({ children }: { readonly children: ReactNode }): ReactElement => {
+    const React = jest.requireActual('react') as unknown as {
+      createElement: (type: unknown, props: undefined, ...children: ReactNode[]) => ReactElement;
+      Fragment: unknown;
+    };
+    return React.createElement(React.Fragment, undefined, children);
+  },
   useLogto: jest.fn(),
   useHandleSignInCallback: jest.fn(() => ({ error: undefined })),
 }));

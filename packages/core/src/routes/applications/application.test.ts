@@ -125,6 +125,36 @@ describe('application route', () => {
     });
   });
 
+  it('POST /applications with a caller-supplied ID and secret', async () => {
+    const id = 'a'.repeat(21);
+    const secretValue = 'b'.repeat(32);
+    const secretInsert = jest.mocked(tenantContext.queries.applicationSecrets.insert);
+
+    const response = await applicationRequest
+      .post('/applications')
+      .send({ name: 'Operator app', type: ApplicationType.Traditional, id, secretValue });
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toMatchObject({ id });
+    expect(secretInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ applicationId: id, value: secretValue })
+    );
+  });
+
+  it('POST /applications should reject a malformed ID or an internal secret', async () => {
+    const badId = await applicationRequest
+      .post('/applications')
+      .send({ name: 'Bad ID', type: ApplicationType.Traditional, id: 'Not-A-Logto-Id' });
+    const internalSecret = await applicationRequest.post('/applications').send({
+      name: 'Internal secret',
+      type: ApplicationType.Traditional,
+      secretValue: `#internal:${'a'.repeat(32)}`,
+    });
+
+    expect(badId.status).toEqual(400);
+    expect(internalSecret.status).toEqual(400);
+  });
+
   it('POST /applications for protected app', async () => {
     const name = 'FooApplication';
     const type = ApplicationType.Protected;

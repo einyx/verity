@@ -9,7 +9,7 @@ import AskAiIcon from '@/assets/icons/logto-ai-bot.svg?react';
 import useTheme from '@/hooks/use-theme';
 import { onKeyDownHandler } from '@/utils/a11y';
 
-import './demo-chat.css';
+import '@/components/LandingChat/demo-chat.css';
 import Composer, { type Attachment } from './Composer';
 import Conversation, { type ConversationApi } from './Conversation';
 import SetupBanner from './SetupBanner';

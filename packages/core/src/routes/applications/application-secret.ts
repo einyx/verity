@@ -80,15 +80,27 @@ export default function applicationSecretRoutes<T extends ManagementApiRouter>(
     '/applications/:id/secrets',
     koaGuard({
       params: z.object({ id: z.string() }),
-      body: ApplicationSecrets.createGuard.pick({ name: true, expiresAt: true }),
+      body: ApplicationSecrets.createGuard
+        .pick({ name: true, expiresAt: true })
+        .extend({ value: z.string().min(32).max(128).optional() }),
       response: ApplicationSecrets.guard,
       status: [201, 400, 500],
     }),
     async (ctx, next) => {
       const {
         params: { id: appId },
-        body,
+        body: { value, ...body },
       } = ctx.guard;
+
+      // A caller-supplied value lets an operator generate the secret on its side and register it,
+      // so the credential exists before the app does. The internal prefix stays reserved.
+      assertThat(
+        !value?.startsWith(internalPrefix),
+        new RequestError({
+          code: 'request.invalid_input',
+          details: 'The secret value must not start with the internal prefix.',
+        })
+      );
 
       assertThat(
         !body.expiresAt || body.expiresAt > Date.now(),
@@ -102,7 +114,7 @@ export default function applicationSecretRoutes<T extends ManagementApiRouter>(
       const createdSecret = await queries.applicationSecrets.insert({
         ...body,
         applicationId: appId,
-        value: generateStandardSecret(),
+        value: value ?? generateStandardSecret(),
       });
       ctx.body = createdSecret;
 

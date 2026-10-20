@@ -20,6 +20,13 @@ export const applicationCreateGuard = originalApplicationCreateGuard
         origin: z.string(),
       })
       .optional(),
+    /** Caller-chosen client ID, in Logto's standard ID format. Generated when omitted. */
+    id: z
+      .string()
+      .regex(/^[\da-z]{21}$/)
+      .optional(),
+    /** Caller-chosen value of the default client secret. Generated when omitted. */
+    secretValue: z.string().min(32).max(128).optional(),
   });
 
 export const applicationPatchGuard = originalApplicationPatchGuard

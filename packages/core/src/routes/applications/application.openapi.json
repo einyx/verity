@@ -64,6 +64,12 @@
                         "description": "The origin of target website, e.g., https://example.com."
                       }
                     }
+                  },
+                  "id": {
+                    "description": "The client ID to use, 21 lowercase letters or digits. If not provided, Logto generates one."
+                  },
+                  "secretValue": {
+                    "description": "The value of the default client secret, 32 to 128 characters. If not provided, Logto generates one."
                   }
                 }
               }

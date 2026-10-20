@@ -34,6 +34,7 @@ const inkeep_ai_bot = {
   copy_you: 'Siz',
   copy_assistant: 'MeshX AI',
   file_label: 'Dosya: {{name}}',
+  enter_to_send: 'Göndermek için Enter',
 };
 
 export default Object.freeze(inkeep_ai_bot);

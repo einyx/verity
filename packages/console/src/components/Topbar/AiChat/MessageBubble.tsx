@@ -13,27 +13,21 @@ type Props = {
 };
 
 /**
- * One turn of the transcript, styled like a coding agent's session: the user's message follows a
- * prompt marker, and the assistant's reply is plain output with a dot marker. Neither is a bubble.
+ * One turn of the transcript, styled like the landing page chat: the user's message is a light
+ * bubble on the right, and the assistant's reply is Markdown on the open surface.
  */
 function MessageBubble({ sender, content }: Props) {
   if (sender === 'user') {
     return (
-      <div className={styles.userTurn}>
-        <span aria-hidden className={styles.promptMark}>
-          ›
-        </span>
-        <div className={styles.userText}>{content}</div>
+      <div className={styles.demoUserTurn}>
+        <div className={styles.demoUserBubble}>{content}</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.assistantTurn}>
-      <span aria-hidden className={styles.assistantMark}>
-        ●
-      </span>
-      <div className={styles.markdown}>
+    <div className={styles.demoAssistantTurn}>
+      <div className={styles.demoMarkdown}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{

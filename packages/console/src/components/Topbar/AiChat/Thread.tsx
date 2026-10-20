@@ -1,5 +1,5 @@
 import { MessagePrimitive, ThreadPrimitive, useAuiState } from '@assistant-ui/react';
-import { useContext } from 'react';
+import { type ReactNode, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionContext } from './Conversation';
@@ -63,15 +63,35 @@ function AssistantMessage() {
   );
 }
 
-/** The transcript: the intro line, then every turn of the conversation. */
-function Thread() {
+type Props = {
+  readonly icon: ReactNode;
+};
+
+/**
+ * The transcript. Before the first message it shows a centred welcome with the Ask AI mark; while a
+ * reply is running, three dots show below the last turn. The viewport scrolls inside the modal.
+ */
+function Thread({ icon }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
   return (
-    <ThreadPrimitive.Root>
-      <ThreadPrimitive.Viewport className={styles.messages}>
-        <MessageBubble sender="assistant" content={t('inkeep_ai_bot.intro_message')} />
+    <ThreadPrimitive.Root className={styles.demoThread}>
+      <ThreadPrimitive.Viewport className={styles.demoViewport}>
+        <ThreadPrimitive.Empty>
+          <div className={styles.demoWelcome}>
+            <div className={styles.demoWelcomeMark}>{icon}</div>
+            <h3 className={styles.demoWelcomeTitle}>{t('inkeep_ai_bot.ask_ai_label')}</h3>
+            <p className={styles.demoWelcomeText}>{t('inkeep_ai_bot.intro_message')}</p>
+          </div>
+        </ThreadPrimitive.Empty>
         <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+        <ThreadPrimitive.If running>
+          <div className={styles.typing} role="status" aria-label="Ask AI is replying">
+            <span />
+            <span />
+            <span />
+          </div>
+        </ThreadPrimitive.If>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   );

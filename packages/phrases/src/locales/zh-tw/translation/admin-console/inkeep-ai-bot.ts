@@ -30,6 +30,7 @@ const inkeep_ai_bot = {
   copy_you: '你',
   copy_assistant: 'MeshX AI',
   file_label: '檔案：{{name}}',
+  enter_to_send: '按 Enter 傳送',
 };
 
 export default Object.freeze(inkeep_ai_bot);

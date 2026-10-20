@@ -13,6 +13,7 @@ const inkeep_ai_bot = {
   stop: 'Stop',
   clear: 'Start over',
   send: 'Send',
+  enter_to_send: 'Enter to send',
   unavailable: 'MeshX AI is unavailable right now. Please try again later.',
   get_help: 'Get help',
   copy_chat: 'Copy',

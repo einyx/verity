@@ -89,6 +89,38 @@ describe('application secret routes', () => {
     expect(updateApplicationById.mock.calls[0]?.[1].secret).toMatch(/^#internal:/);
   });
 
+  it('POST /applications/:id/secrets should store a caller-supplied value', async () => {
+    const value = 'a'.repeat(32);
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Operator secret', value });
+
+    expect(response.status).toEqual(201);
+    expect(insert.mock.calls[0]?.[0]).toMatchObject({ name: 'Operator secret', value });
+  });
+
+  it('POST /applications/:id/secrets should generate a value when none is given', async () => {
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Generated secret' });
+
+    expect(response.status).toEqual(201);
+    expect(insert.mock.calls[0]?.[0].value).toMatch(/^\w{32,}$/);
+  });
+
+  it('POST /applications/:id/secrets should reject short or internal values', async () => {
+    const short = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Short', value: 'too-short' });
+    const internal = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Internal', value: `#internal:${'a'.repeat(32)}` });
+
+    expect(short.status).toEqual(400);
+    expect(internal.status).toEqual(400);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it('POST /applications/:id/secrets should resync protected app configs', async () => {
     const response = await applicationSecretRequest
       .post(`/applications/${mockProtectedApplication.id}/secrets`)

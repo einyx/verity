@@ -690,3 +690,29 @@
   background: oklch(57.5781% 0.212322 32.209);
   color: oklch(100% 0 none);
 }
+
+.viewToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+  align-self: flex-start;
+
+  button {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: var(--color-text);
+      color: var(--color-layer-1);
+    }
+  }
+}

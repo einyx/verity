@@ -177,7 +177,8 @@ function Invitations() {
             dataIndex: 'expiresAt',
             colSpan: 2,
             title: t('expiration_date'),
-            render: ({ expiresAt }) => <span>{format(expiresAt, 'MMM do, yyyy')}</span>,
+            // The cloud service sends dates as JSON strings, which `format` does not accept.
+            render: ({ expiresAt }) => <span>{format(new Date(expiresAt), 'MMM do, yyyy')}</span>,
           },
           ...condArray(
             (canInviteMember || canRemoveMember) && [

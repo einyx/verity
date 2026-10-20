@@ -17,6 +17,12 @@ import {
   type DemoLead,
 } from './landing-page-chat-guard.js';
 import { systemPrompt } from './landing-page-chat-prompt.js';
+import { type ModelReply, readModelReply } from './landing-page-chat-reply.js';
+import {
+  recordLandingChatTurn,
+  recordTurnSafely,
+  type RecordedChatTurn,
+} from './landing-page-chat-store.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
 
 // Public demo chat on the landing page. Anonymous and model-backed, so the server enforces every limit:
@@ -25,12 +31,12 @@ import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-ema
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
-type ModelReply = { content?: string; lead?: unknown };
-
 export type LandingPageChatDeps = {
   readPublished: () => Promise<unknown>;
   callModel: (messages: ChatMessage[]) => Promise<ModelReply>;
   sendLead: (lead: DemoLead) => Promise<void>;
+  /** Saves the conversation in the admin tenant. Optional, so the chat works without a store. */
+  recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
 };
 
 type Session = {
@@ -174,6 +180,17 @@ const applyReply = async (
       submitted: true,
     });
 
+    await recordTurnSafely(deps.recordTurn, {
+      sessionId,
+      messages: [
+        ...session.messages,
+        { role: 'user', content: message },
+        { role: 'assistant', content: thanks },
+      ],
+      lead,
+      submitted: true,
+    });
+
     return { status: 200, body: { reply: thanks, submitted: true } };
   }
 
@@ -187,6 +204,16 @@ const applyReply = async (
       { role: 'assistant', content },
     ],
     userTurns: session.userTurns + 1,
+  });
+
+  await recordTurnSafely(deps.recordTurn, {
+    sessionId,
+    messages: [
+      ...session.messages,
+      { role: 'user', content: message },
+      { role: 'assistant', content },
+    ],
+    submitted: false,
   });
 
   return { status: 200, body: { reply: content, submitted: false } };
@@ -265,50 +292,6 @@ export const landingPageChatRoutes = (deps: LandingPageChatDeps, state = createC
   return router;
 };
 
-/** The shape of the model response this route reads. Anything else is treated as no reply. */
-const modelResponseGuard = z.object({
-  choices: z
-    .array(
-      z.object({
-        message: z.object({
-          content: z.string().nullish(),
-          tool_calls: z
-            .array(
-              z.object({
-                function: z.object({ name: z.string(), arguments: z.string() }),
-              })
-            )
-            .optional(),
-        }),
-      })
-    )
-    .min(1),
-});
-
-const readModelReply = (data: unknown): ModelReply => {
-  const parsed = modelResponseGuard.safeParse(data);
-
-  if (!parsed.success) {
-    return {};
-  }
-
-  const message = parsed.data.choices[0]?.message;
-  const call = message?.tool_calls?.find((item) => item.function.name === 'submit_lead');
-
-  return {
-    content: message?.content ?? undefined,
-    lead: call ? parseArguments(call.function.arguments) : undefined,
-  };
-};
-
-const parseArguments = (text: string): unknown => {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
-};
-
 /** Production wiring. The lead sender fails closed until the ACS transport is configured. */
 export const createProductionChatDeps = (): LandingPageChatDeps => ({
   readPublished: async () => {
@@ -352,5 +335,9 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
     }
 
     await sendLeadEmail(lead, { ...parsed, sender });
+  },
+  recordTurn: async (turn) => {
+    const pool = await EnvSet.sharedPool;
+    await recordLandingChatTurn(pool, turn);
   },
 });

@@ -81,6 +81,8 @@
 
       // A visit to /demo redirects here with the anchor, so open the modal straight away.
       if (enabled && location.hash === '#demo-chat') {
+        // Drop the anchor so a reload does not open the chat again.
+        history.replaceState(null, '', location.pathname + location.search);
         open();
       }
     })

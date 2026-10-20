@@ -215,36 +215,40 @@ function PlanUsageCard({
               forKey={`subscription.usage.${usage ? 'status_active' : 'status_inactive'}`}
             />
           </Tag>
-          {/* Only show the quota notice for enterprise plan with non-shared quota scope */}
-          {quota !== undefined && isEnterprisePlan && quotaScope !== 'shared' && (
-            <div className={styles.usageTip}>
-              {/* Consider the type of quota is number, null or boolean, the following statement covers all cases. */}
-              {(() => {
-                if (quota === null || quota === true) {
-                  return (
-                    <DynamicT forKey="subscription.usage.unlimited_status_quota_description" />
-                  );
-                }
+          {/* Boolean and unlimited quotas show whether the feature is included on every plan. Numeric
+          quota notices only show for enterprise plans with non-shared quota scope. */}
+          {quota !== undefined &&
+            (typeof quota !== 'number' || (isEnterprisePlan && quotaScope !== 'shared')) && (
+              <div className={styles.usageTip}>
+                {/* Consider the type of quota is number, null or boolean, the following statement covers all cases. */}
+                {(() => {
+                  if (quota === null || quota === true) {
+                    return (
+                      <DynamicT forKey="subscription.usage.unlimited_status_quota_description" />
+                    );
+                  }
 
-                if (quota === false || quota === 0) {
-                  return <DynamicT forKey="subscription.usage.disabled_status_quota_description" />;
-                }
+                  if (quota === false || quota === 0) {
+                    return (
+                      <DynamicT forKey="subscription.usage.disabled_status_quota_description" />
+                    );
+                  }
 
-                if (typeof quota === 'number') {
-                  return (
-                    <DynamicT
-                      forKey="subscription.usage.limited_status_quota_description"
-                      interpolation={{
-                        quota: formatQuotaNumber(quota),
-                      }}
-                    />
-                  );
-                }
+                  if (typeof quota === 'number') {
+                    return (
+                      <DynamicT
+                        forKey="subscription.usage.limited_status_quota_description"
+                        interpolation={{
+                          quota: formatQuotaNumber(quota),
+                        }}
+                      />
+                    );
+                  }
 
-                return null;
-              })()}
-            </div>
-          )}
+                  return null;
+                })()}
+              </div>
+            )}
         </div>
       )}
     </div>

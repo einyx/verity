@@ -133,6 +133,16 @@ function LandingPageEditorContent() {
     setDraft((current: unknown) => setAtPath(current, path, value));
   };
 
+  // Saves where an image was dragged to, as its offset in the draft's layout.
+  const moveImage = (id: string, x: number, y: number) => {
+    setDraft((current: unknown) => {
+      const record = isRecord(current) ? current : {};
+      const layout = isRecord(record.layout) ? record.layout : {};
+
+      return { ...record, layout: { ...layout, [id]: { x, y } } };
+    });
+  };
+
   return (
     // `fullWidthPage` opts this page out of the console's centred width cap.
     <div className={`${styles.shell} fullWidthPage`}>
@@ -277,7 +287,7 @@ function LandingPageEditorContent() {
             </section>
           )}
 
-          <LandingPreviewFrame draft={draft} onEdit={editField} />
+          <LandingPreviewFrame draft={draft} onEdit={editField} onMove={moveImage} />
         </div>
       </div>
     </div>

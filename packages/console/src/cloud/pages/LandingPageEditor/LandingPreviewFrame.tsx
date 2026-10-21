@@ -6,6 +6,12 @@ import styles from './index.module.scss';
 // Sets one field of the draft by its dotted path, such as `hero.headline.0`. Objects and arrays along the
 // path are copied, so the draft stays immutable.
 export const setAtPath = (source: unknown, path: string, value: string): unknown => {
+  // `''.split('.')` is `['']`, not `[]`, so the empty path must be checked explicitly. Without this, the
+  // last segment recurses into an empty path forever.
+  if (path === '') {
+    return value;
+  }
+
   const [key, ...rest] = path.split('.');
 
   if (key === undefined) {
@@ -32,9 +38,11 @@ export const setAtPath = (source: unknown, path: string, value: string): unknown
 function LandingPreviewFrame({
   draft,
   onEdit,
+  onMove,
 }: {
   readonly draft: unknown;
   readonly onEdit: (path: string, value: string) => void;
+  readonly onMove: (id: string, x: number, y: number) => void;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
@@ -71,6 +79,18 @@ function LandingPreviewFrame({
       if (data.type === 'meshx-cms-edit' && typeof data.path === 'string') {
         onEdit(data.path, typeof data.value === 'string' ? data.value : '');
       }
+
+      // Offsets are clamped to the range the document schema accepts, so a bad message cannot save an
+      // invalid layout.
+      if (
+        data.type === 'meshx-cms-move' &&
+        typeof data.id === 'string' &&
+        typeof data.x === 'number' &&
+        typeof data.y === 'number'
+      ) {
+        const clamp = (value: number) => Math.min(400, Math.max(-400, Math.round(value)));
+        onMove(data.id, clamp(data.x), clamp(data.y));
+      }
     };
 
     window.addEventListener('message', onMessage);
@@ -78,7 +98,7 @@ function LandingPreviewFrame({
     return () => {
       window.removeEventListener('message', onMessage);
     };
-  }, [onEdit, sendDraft]);
+  }, [onEdit, onMove, sendDraft]);
 
   return (
     <>

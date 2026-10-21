@@ -23,11 +23,18 @@ import { type ModelReply, readModelReply } from './landing-page-chat-reply.js';
 import {
   type LeadRecord,
   recordLandingChatTurn,
+  saveLeadCompanyProfile,
+  saveLeadConversationInsight,
   recordLandingLead,
   recordLeadSafely,
   recordTurnSafely,
   type RecordedChatTurn,
 } from './landing-page-chat-store.js';
+import {
+  analyzeConversation,
+  profileCompany,
+  summarizeCompanyText,
+} from './landing-page-company.js';
 import { createDemoRequest } from './landing-page-demo-request.js';
 import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-page-docs.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
@@ -52,6 +59,12 @@ export type LandingPageChatDeps = {
   recordLead?: (lead: LeadRecord) => Promise<void>;
   /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
   provisionDemo?: (lead: DemoLead) => Promise<void>;
+  /** Researches the lead's company from its public site and saves the profile. Runs in the background. */
+  researchCompany?: (
+    sessionId: string,
+    email: string,
+    messages: ReadonlyArray<{ role: string; content: string }>
+  ) => Promise<void>;
 };
 
 type Session = {
@@ -180,6 +193,27 @@ const askModel = async (
   } catch {}
 };
 
+/** Runs company research for a lead. A failure is logged without the lead's details and changes nothing. */
+const researchLeadCompany = async (
+  research:
+    | ((
+        sessionId: string,
+        email: string,
+        messages: ReadonlyArray<{ role: string; content: string }>
+      ) => Promise<void>)
+    | undefined,
+  sessionId: string,
+  email: string,
+  messages: ReadonlyArray<{ role: string; content: string }>
+): Promise<void> => {
+  try {
+    await research?.(sessionId, email, messages);
+  } catch {
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
+    console.error('Landing page chat: the company profile could not be saved.');
+  }
+};
+
 /** Applies the model's reply: a valid lead is delivered, anything else is text for the visitor. */
 const applyReply = async (
   turn: { sessionId: string; message: string; reply: ModelReply; session: Session },
@@ -210,6 +244,12 @@ const applyReply = async (
 
     try {
       await deps.provisionDemo?.(lead);
+      // Company research runs in the background: the visitor's reply does not wait for the company site.
+      void researchLeadCompany(deps.researchCompany, sessionId, lead.email, [
+        ...session.messages,
+        { role: 'user', content: message },
+        { role: 'assistant', content: thanks },
+      ]);
     } catch {
       // The lead is already saved and emailed, so the team can still follow up. The log names no details.
       // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
@@ -427,6 +467,32 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
   recordLead: async (lead) => {
     const pool = await EnvSet.sharedPool;
     await recordLandingLead(pool, lead);
+  },
+  researchCompany: async (sessionId, email, messages) => {
+    const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
+    const modelOptions = {
+      endpoint,
+      apiKey: process.env.OPENAI_API_KEY ?? '',
+      model: process.env.OPENAI_MODEL_NAME ?? 'gpt-4.1',
+      fetch,
+    };
+    const pool = await EnvSet.sharedPool;
+
+    // The company profile and the conversation insight are independent: one failing does not stop the other.
+    const profile = await profileCompany(email, {
+      fetchPage: async (url, init) => fetch(url, init),
+      summarize: async (text) => summarizeCompanyText(text, modelOptions),
+    }).catch(() => null);
+
+    if (profile) {
+      await saveLeadCompanyProfile(pool, sessionId, profile);
+    }
+
+    const insight = await analyzeConversation(messages, modelOptions).catch(() => null);
+
+    if (insight) {
+      await saveLeadConversationInsight(pool, sessionId, insight);
+    }
   },
   provisionDemo: async (lead) => {
     // Off unless the portal's shared token is configured, which matches the portal's own switch.

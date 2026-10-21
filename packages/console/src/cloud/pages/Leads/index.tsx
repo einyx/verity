@@ -23,6 +23,30 @@ const emailStatusLabel: Record<string, string> = {
   pending: 'Pending',
 };
 
+const readText = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
+const readList = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+/** The company summary and chat insight stored on a lead. Anything that does not match is left out. */
+const readProfile = (lead: LandingLead) => {
+  const profile = lead.companyProfile ?? {};
+  const { conversation } = profile;
+  const insight = typeof conversation === 'object' && conversation !== null ? conversation : {};
+
+  return {
+    summary: readText(profile.summary),
+    sources: readList(profile.sources),
+    tone: readText((insight as Record<string, unknown>).tone),
+    outcomes: readList((insight as Record<string, unknown>).outcomes),
+    nextSteps: readList((insight as Record<string, unknown>).nextSteps),
+  };
+};
+
+const bookingLinkFor = (base: string, email: string) =>
+  `${base}${base.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`;
+
 function EmailStatus({ value }: { readonly value: string }) {
   return (
     <span
@@ -79,7 +103,8 @@ function Transcript({
 }
 
 function Leads() {
-  const { leads, error, isLoading, loadTranscript } = useLandingLeads();
+  const { leads, bookingUrl, error, isLoading, loadTranscript, loadBriefPdf } = useLandingLeads();
+  const [briefFailed, setBriefFailed] = useState(false);
   const [openedId, setOpenedId] = useState<string>();
   const [transcript, setTranscript] = useState<LandingLeadTranscript>();
   const [transcriptFailed, setTranscriptFailed] = useState(false);
@@ -230,6 +255,83 @@ function Leads() {
                   </>
                 )}
               </dl>
+
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className={styles.primary}
+                  onClick={() => {
+                    void loadBriefPdf(opened.sessionId)
+                      .then((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `meeting-brief-${opened.sessionId}.pdf`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        setBriefFailed(false);
+                      })
+                      .catch(() => {
+                        setBriefFailed(true);
+                      });
+                  }}
+                >
+                  Download meeting brief (PDF)
+                </button>
+                {bookingUrl && (
+                  <a
+                    className={styles.secondary}
+                    href={bookingLinkFor(bookingUrl, opened.lead.email)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Book a meeting
+                  </a>
+                )}
+              </div>
+              {briefFailed && <p className={styles.notice}>The brief could not be created.</p>}
+
+              <h2 className={styles.sectionTitle}>Company</h2>
+              {(() => {
+                const profile = readProfile(opened);
+
+                return (
+                  <div className={styles.insight}>
+                    <p>
+                      {profile.summary ??
+                        'No company profile yet. The company website could not be read.'}
+                    </p>
+                    {profile.sources.length > 0 && (
+                      <p className={styles.muted}>Sources: {profile.sources.join(', ')}</p>
+                    )}
+                    <p>
+                      <strong>Tone:</strong> {profile.tone ?? 'not yet analysed'}
+                    </p>
+                    <p>
+                      <strong>Likely outcomes</strong>
+                    </p>
+                    {profile.outcomes.length > 0 ? (
+                      <ul>
+                        {profile.outcomes.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.muted}>Not yet analysed.</p>
+                    )}
+                    <p>
+                      <strong>Cover next</strong>
+                    </p>
+                    {profile.nextSteps.length > 0 && (
+                      <ul>
+                        {profile.nextSteps.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
 
               <h2 className={styles.sectionTitle}>Conversation</h2>
               <Transcript messages={transcript} isFailed={transcriptFailed} />

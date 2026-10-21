@@ -18,6 +18,18 @@
       el.textContent = typeof value === 'string' ? value : '';
     }
 
+    // Extra copy, keyed by its `data-cms-copy` id. Without an override the shipped text stays.
+    for (const el of document.querySelectorAll('[data-cms-copy]')) {
+      if (el === document.activeElement) {
+        continue;
+      }
+
+      const value = doc.copy?.[el.dataset.cmsCopy];
+      if (typeof value === 'string') {
+        el.textContent = value;
+      }
+    }
+
     // The quote marks are part of the design, not the copy, so they are added here.
     for (const el of document.querySelectorAll('[data-cms-quote]')) {
       const value = read(doc, el.dataset.cmsQuote);
@@ -32,7 +44,19 @@
         el.setAttribute('href', value);
       }
     }
+
+    // Images keep their place in the layout and are only shifted by the offset the editor saved.
+    for (const el of document.querySelectorAll('[data-cms-image]')) {
+      const offset = doc.layout?.[el.dataset.cmsImage];
+      if (offset && typeof offset.x === 'number' && typeof offset.y === 'number') {
+        offsets.set(el.dataset.cmsImage, offset);
+        el.style.translate = `${offset.x}px ${offset.y}px`;
+      }
+    }
   };
+
+  // The offset each movable image currently has, keyed by its `data-cms-image` id.
+  const offsets = new Map();
 
   const isPreview =
     new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
@@ -65,7 +89,9 @@
   });
 
   // Text marked for the CMS is editable in place. Links and buttons are not navigated to in preview.
-  for (const el of document.querySelectorAll('[data-cms]')) {
+  for (const el of document.querySelectorAll('[data-cms], [data-cms-copy]')) {
+    // Extra copy is stored under `copy.<id>` in the draft; the main copy uses its own dotted path.
+    const path = el.dataset.cms ?? `copy.${el.dataset.cmsCopy}`;
     // plaintext-only is not supported by every browser, so plain editing is used and pasting is
     // limited to plain text, which keeps the stored copy free of formatting.
     el.setAttribute('contenteditable', 'true');
@@ -76,7 +102,7 @@
     });
     el.addEventListener('input', () => {
       window.parent.postMessage(
-        { type: 'meshx-cms-edit', path: el.dataset.cms, value: el.textContent },
+        { type: 'meshx-cms-edit', path, value: el.textContent },
         location.origin
       );
     });
@@ -91,6 +117,44 @@
     },
     true
   );
+
+  // Images can be dragged to a new position. The offset is sent to the editor when the drag ends.
+  for (const el of document.querySelectorAll('[data-cms-image]')) {
+    const id = el.dataset.cmsImage;
+    el.style.cursor = 'move';
+    el.style.touchAction = 'none';
+    el.addEventListener('pointerdown', (event) => {
+      const start = { x: event.clientX, y: event.clientY, base: offsets.get(id) ?? { x: 0, y: 0 } };
+      el.setPointerCapture(event.pointerId);
+
+      const onMove = (moveEvent) => {
+        // Clamped to the range the document schema accepts, so the preview never shows an offset that
+        // would not save.
+        const clamp = (value) => Math.min(400, Math.max(-400, Math.round(value)));
+        const offset = {
+          x: clamp(start.base.x + moveEvent.clientX - start.x),
+          y: clamp(start.base.y + moveEvent.clientY - start.y),
+        };
+        offsets.set(id, offset);
+        el.style.translate = `${offset.x}px ${offset.y}px`;
+      };
+
+      const onUp = () => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointercancel', onUp);
+        const offset = offsets.get(id) ?? start.base;
+        window.parent.postMessage(
+          { type: 'meshx-cms-move', id, x: offset.x, y: offset.y },
+          location.origin
+        );
+      };
+
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
+    });
+  }
 
   window.parent.postMessage({ type: 'meshx-cms-ready' }, location.origin);
 })();

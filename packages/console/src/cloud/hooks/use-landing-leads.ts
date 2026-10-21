@@ -29,12 +29,16 @@ const landingLeadGuard = z.object({
     .passthrough(),
   emailStatus: z.string(),
   status: z.string(),
+  companyProfile: z.record(z.unknown()).nullable().optional(),
   createdAt: z.union([z.string(), z.number()]),
 });
 
 export type LandingLead = z.infer<typeof landingLeadGuard>;
 
-const leadsResponseGuard = z.object({ leads: z.array(landingLeadGuard) });
+const leadsResponseGuard = z.object({
+  leads: z.array(landingLeadGuard),
+  bookingUrl: z.string().nullable().optional(),
+});
 
 const transcriptResponseGuard = z.object({
   messages: z.array(z.object({ role: z.string(), content: z.string() })),
@@ -59,14 +63,14 @@ export const useLandingLeads = () => {
 
   const getToken = useCallback(async () => getAccessToken(cloudApi.indicator), [getAccessToken]);
 
-  const { data, error, isLoading } = useSWR<LandingLead[], Error>(
-    isAuthenticated ? `${leadsBase}/list` : undefined,
-    async () => {
-      const token = await getToken();
-      const body = await request(token, '');
-      return leadsResponseGuard.parse(body).leads;
-    }
-  );
+  const { data, error, isLoading } = useSWR<
+    { leads: LandingLead[]; bookingUrl?: string | undefined },
+    Error
+  >(isAuthenticated ? `${leadsBase}/list` : undefined, async () => {
+    const token = await getToken();
+    const body = leadsResponseGuard.parse(await request(token, ''));
+    return { leads: body.leads, bookingUrl: body.bookingUrl };
+  });
 
   // Loads one session's transcript, only when the team opens that lead.
   const loadTranscript = useCallback(
@@ -78,5 +82,30 @@ export const useLandingLeads = () => {
     [getToken]
   );
 
-  return { leads: data, error, isLoading, loadTranscript };
+  // The PDF needs the admin token, so it is fetched here and handed to the page as a file.
+  const loadBriefPdf = useCallback(
+    async (sessionId: string): Promise<Blob> => {
+      const token = await getToken();
+      const response = await fetch(
+        `${window.location.origin}${leadsBase}/${encodeURIComponent(sessionId)}/brief.pdf`,
+        { headers: { Authorization: `Bearer ${token ?? ''}` } }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Brief request failed: ${response.status}`);
+      }
+
+      return response.blob();
+    },
+    [getToken]
+  );
+
+  return {
+    leads: data?.leads,
+    bookingUrl: data?.bookingUrl ?? undefined,
+    error,
+    isLoading,
+    loadTranscript,
+    loadBriefPdf,
+  };
 };

@@ -123,7 +123,19 @@ const closingCtaGuard = z.object({
 // document, not an environment variable, so editors can turn it off without a deploy.
 const demoChatGuard = z.object({ enabled: z.boolean() });
 
+// Where an image sits on the page, as an offset in CSS pixels from its place in the layout. Set by
+// dragging the image in the editor's preview. Optional, so documents saved before this field existed
+// still load.
+const imageOffsetGuard = z.object({
+  x: z.number().min(-400).max(400),
+  y: z.number().min(-400).max(400),
+});
+
 export const landingPageDocumentGuard = z.object({
+  layout: z.record(z.string().max(60), imageOffsetGuard).optional(),
+  // Extra text that is editable in place, keyed by a `data-cms-copy` id on the page. Optional, and a
+  // missing id keeps the shipped text.
+  copy: z.record(z.string().max(80), z.string().min(1).max(1000)).optional(),
   demoChat: demoChatGuard,
   hero: heroGuard,
   fomo: fomoGuard,

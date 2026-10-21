@@ -8,6 +8,10 @@ import RequestError from '#src/errors/RequestError/index.js';
 import { verifyBearerTokenFromRequest } from '#src/middleware/koa-auth/index.js';
 import assertThat from '#src/utils/assert-that.js';
 
+import { type BriefInput, buildBriefHtml, renderBriefPdf } from './landing-page-brief.js';
+
+type BriefLead = BriefInput['lead'];
+
 // Leads from the landing demo chat, for the Leads page in the console. Read-only in v1: the list shows
 // the lead fields only, and a session's transcript is loaded on its own. Admin tenant only, behind the
 // dev-feature flag, and only for a Cloud API token carrying the landing page scope. The list never
@@ -22,6 +26,7 @@ type LeadRow = {
   lead: Record<string, unknown>;
   emailStatus: string;
   status: string;
+  companyProfile: Record<string, unknown> | undefined;
   createdAt: string | number | Date;
 };
 
@@ -77,6 +82,7 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
         lead,
         email_status as "emailStatus",
         status,
+        company_profile as "companyProfile",
         created_at as "createdAt"
       from landing_leads
       where tenant_id = ${adminTenantId}
@@ -85,7 +91,8 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
       offset ${offset}
     `);
 
-    ctx.body = { leads };
+    // The scheduling link for "book a meeting" comes from configuration; without it the console hides the button.
+    ctx.body = { leads, bookingUrl: process.env.LANDING_LEAD_BOOKING_URL ?? null };
 
     return next();
   });
@@ -105,6 +112,41 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
 
     assertThat(session, new RequestError({ code: 'entity.not_found', status: 404 }));
     ctx.body = { messages: session.messages };
+
+    return next();
+  });
+
+  router.get('/api/landing-leads/:sessionId/brief.pdf', async (ctx, next) => {
+    assertDevFeature();
+    await authenticateAdmin(ctx);
+
+    const sessionId = typeof ctx.params.sessionId === 'string' ? ctx.params.sessionId : '';
+    const pool = await EnvSet.sharedPool;
+    const row = await pool.maybeOne<{
+      lead: Record<string, unknown>;
+      companyProfile: Record<string, unknown> | undefined;
+    }>(sql`
+      select lead, company_profile as "companyProfile"
+      from landing_leads
+      where tenant_id = ${adminTenantId}
+        and session_id = ${sessionId}
+    `);
+
+    assertThat(row, new RequestError({ code: 'entity.not_found', status: 404 }));
+
+    const html = buildBriefHtml({
+      // The lead's fields were validated when the lead was saved, so they are read as stored.
+      // eslint-disable-next-line no-restricted-syntax -- The stored lead is validated before it is saved.
+      lead: row.lead as unknown as BriefLead,
+      // eslint-disable-next-line no-restricted-syntax -- The stored profile is written by this service only.
+      profile: (row.companyProfile ?? undefined) as BriefInput['profile'],
+      bookingUrl: process.env.LANDING_LEAD_BOOKING_URL,
+    });
+    const pdf = await renderBriefPdf(html);
+
+    ctx.set('content-type', 'application/pdf');
+    ctx.set('content-disposition', `attachment; filename="meeting-brief-${sessionId}.pdf"`);
+    ctx.body = pdf;
 
     return next();
   });

@@ -3,6 +3,7 @@ import { generateStandardId } from '@logto/shared';
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 
 import { type DemoLead } from './landing-page-chat-guard.js';
+import { type CompanyProfile } from './landing-page-company.js';
 
 type RecordedChatMessage = { readonly role: 'user' | 'assistant'; readonly content: string };
 
@@ -72,6 +73,21 @@ export const recordLandingLead = async (
   `);
 };
 
+/** Saves the company profile on the lead of one conversation in the admin tenant. */
+export const saveLeadCompanyProfile = async (
+  pool: CommonQueryMethods,
+  sessionId: string,
+  profile: CompanyProfile
+): Promise<void> => {
+  await pool.query(sql`
+    update landing_leads
+    set company_profile = ${sql.jsonb({ ...profile, sources: [...profile.sources] })},
+      updated_at = now()
+    where tenant_id = ${adminTenantId}
+      and session_id = ${sessionId}
+  `);
+};
+
 /** Saves a lead without letting a failed save change the visitor's reply. The log names no contact details. */
 export const recordLeadSafely = async (
   record: ((lead: LeadRecord) => Promise<void>) | undefined,
@@ -99,4 +115,19 @@ export const recordTurnSafely = async (
     // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no conversation text.
     console.error('Landing page chat: a conversation turn could not be recorded.');
   }
+};
+
+/** Merges the conversation insight into the lead's stored profile in the admin tenant. */
+export const saveLeadConversationInsight = async (
+  pool: CommonQueryMethods,
+  sessionId: string,
+  insight: { tone: string; outcomes: string[]; nextSteps: string[] }
+): Promise<void> => {
+  await pool.query(sql`
+    update landing_leads
+    set company_profile = coalesce(company_profile, '{}'::jsonb) || ${sql.jsonb({ conversation: insight })},
+      updated_at = now()
+    where tenant_id = ${adminTenantId}
+      and session_id = ${sessionId}
+  `);
 };

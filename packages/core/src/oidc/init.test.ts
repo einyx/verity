@@ -3,6 +3,7 @@ import assert from 'node:assert';
 
 import { defaultTenantId, GrantType, logtoCookieKey, type Scope } from '@logto/schemas';
 import { errors, type KoaContextWithOIDC } from 'oidc-provider';
+import Sinon from 'sinon';
 
 import { mockResource, mockUser } from '#src/__mocks__/index.js';
 import { EnvSet } from '#src/env-set/index.js';
@@ -139,7 +140,35 @@ const createContext = (
   });
 };
 
+const stubDevFeatures = (isDevFeaturesEnabled: boolean) =>
+  Sinon.stub(EnvSet, 'values').value({ ...EnvSet.values, isDevFeaturesEnabled });
+
 describe('oidc provider init', () => {
+  it('advertises ML-DSA-65 signing only when dev features are enabled', () => {
+    const { id, queries, libraries, logtoConfigs, subscription } = new MockTenant();
+
+    const enabledWithDevFeatures = stubDevFeatures(true);
+    try {
+      const provider = initOidc(id, mockEnvSet, queries, libraries, logtoConfigs, subscription);
+      const { enabledJWA } = getProviderConfiguration(provider);
+
+      expect(enabledJWA.idTokenSigningAlgValues).toContain('ML-DSA-65');
+      expect(enabledJWA.authorizationSigningAlgValues).toContain('ML-DSA-65');
+    } finally {
+      enabledWithDevFeatures.restore();
+    }
+
+    const disabledWithDevFeatures = stubDevFeatures(false);
+    try {
+      const provider = initOidc(id, mockEnvSet, queries, libraries, logtoConfigs, subscription);
+      const { enabledJWA } = getProviderConfiguration(provider);
+
+      expect(enabledJWA.idTokenSigningAlgValues).not.toContain('ML-DSA-65');
+    } finally {
+      disabledWithDevFeatures.restore();
+    }
+  });
+
   it('init should not throw', async () => {
     const { id, queries, libraries, logtoConfigs, subscription } = new MockTenant();
 

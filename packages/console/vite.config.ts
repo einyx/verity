@@ -65,11 +65,12 @@ const buildConfig = (mode: string): UserConfig => ({
       output: {
         // Tip: You can use `pnpx vite-bundle-visualizer` to analyze the bundle size
         manualChunks: (id, meta) => {
-          // @assistant-ui classes extend base classes from the same package. If the package is split across
-          // chunks, and one of them imports react, the base class can be read before its chunk has run,
-          // which blanks the console with "The superclass is not a constructor".
+          // Packages that call React APIs at module load (@assistant-ui, Radix and Inkeep's forwardRef wrappers)
+          // must share the react chunk. Split out on their own, they import react while it is still loading,
+          // which blanks the console with "Cannot read properties of undefined (reading 'forwardRef')" or
+          // "The superclass is not a constructor".
           if (id.includes('/node_modules/@assistant-ui/')) {
-            return 'assistant-ui';
+            return 'react';
           }
 
           if (/\/node_modules\/(cose-base|layout-base|cytoscape|cytoscape-[^/]*)\//.test(id)) {
@@ -77,7 +78,7 @@ const buildConfig = (mode: string): UserConfig => ({
           }
 
           if (/\/node_modules\/(|@inkeep|@radix-ui|prism-react-renderer)\//.test(id)) {
-            return '@inkeep';
+            return 'react';
           }
 
           // When this dependency is introduced by @inkeep/cxkit-react, it will cause runtime errors

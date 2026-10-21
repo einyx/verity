@@ -117,6 +117,28 @@ export const recordTurnSafely = async (
   }
 };
 
+/** Days a visitor's transcript and any lead that never reached the sales inbox are kept. */
+export const chatRecordRetentionDays = 90;
+
+/**
+ * Deletes transcripts and unsent leads older than the retention period. A lead whose email was sent
+ * stays, since the sales inbox holds it as the handoff record. Runs from the chat's turn recording, a
+ * fraction of the time, so the cost stays small and the tables still shrink over time.
+ */
+export const pruneLandingChatRecords = async (pool: CommonQueryMethods): Promise<void> => {
+  await pool.query(sql`
+    delete from landing_chat_sessions
+    where tenant_id = ${adminTenantId}
+      and updated_at < now() - make_interval(days => ${chatRecordRetentionDays})
+  `);
+  await pool.query(sql`
+    delete from landing_leads
+    where tenant_id = ${adminTenantId}
+      and email_status <> 'sent'
+      and updated_at < now() - make_interval(days => ${chatRecordRetentionDays})
+  `);
+};
+
 /** Merges the conversation insight into the lead's stored profile in the admin tenant. */
 export const saveLeadConversationInsight = async (
   pool: CommonQueryMethods,

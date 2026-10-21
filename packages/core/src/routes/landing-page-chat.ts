@@ -26,6 +26,7 @@ import { type ModelReply, readModelReply } from './landing-page-chat-reply.js';
 import { replyShapeProblems, shapeCorrection } from './landing-page-chat-shape.js';
 import {
   type LeadRecord,
+  pruneLandingChatRecords,
   recordLandingChatTurn,
   saveLeadCompanyProfile,
   saveLeadConversationInsight,
@@ -794,6 +795,11 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
   recordTurn: async (turn) => {
     const pool = await EnvSet.sharedPool;
     await recordLandingChatTurn(pool, turn);
+
+    // Pruning runs on about one turn in a hundred. A failed prune is ignored, since the turn is saved.
+    if (Math.random() < 0.01) {
+      await pruneLandingChatRecords(pool).catch(() => null);
+    }
   },
   loadSession: async (sessionId) => {
     const pool = await EnvSet.sharedPool;

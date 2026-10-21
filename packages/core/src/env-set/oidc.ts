@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import type { CimdConfig, LogtoOidcConfigType } from '@logto/schemas';
 import {
   LogtoOidcConfigKey,
+  OidcSigningKeyStatus,
   getCurrentOidcPrivateKey,
   getOidcProviderPrivateKeys,
 } from '@logto/schemas';
@@ -70,11 +71,18 @@ const loadOidcValues = async (
   const providerPrivateKeyConfigs = isDevFeaturesEnabled
     ? configs[LogtoOidcConfigKey.PrivateKeys]
     : await excludeMlDsaKeys(configs[LogtoOidcConfigKey.PrivateKeys]);
-  const privateKeys = getOidcProviderPrivateKeys(providerPrivateKeyConfigs).map(({ value }) =>
-    crypto.createPrivateKey(value)
-  );
   const session = configs[LogtoOidcConfigKey.Session];
-  const privateJwks = await Promise.all(privateKeys.map(async (key) => exportJWK(key)));
+  const privateJwks = await Promise.all(
+    getOidcProviderPrivateKeys(providerPrivateKeyConfigs).map(async ({ value, status }) => {
+      const jwk = await exportJWK(crypto.createPrivateKey(value));
+
+      // Dev feature: a non-current ML-DSA key still verifies tokens it issued, but must never sign.
+      // The keystore's signing lookup honors key_ops, so restricting it to "verify" is enough.
+      return jwk.kty === 'AKP' && status !== OidcSigningKeyStatus.Current
+        ? { ...jwk, key_ops: ['verify'] }
+        : jwk;
+    })
+  );
   const publicJwks = await getOidcProviderPublicJwks(providerPrivateKeyConfigs);
   const localJWKSet = createLocalJWKSet({ keys: publicJwks });
 

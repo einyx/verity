@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { generateKeyPairSync } from 'node:crypto';
+import { createPrivateKey, generateKeyPairSync } from 'node:crypto';
 
 import {
   LogtoOidcConfigKey,
@@ -8,6 +8,8 @@ import {
   type LogtoOidcConfigType,
 } from '@logto/schemas';
 import { SignJWT, importJWK, jwtVerify } from 'jose';
+
+import { exportJWK } from '#src/utils/jwks.js';
 
 import loadOidcValues from './oidc.js';
 
@@ -157,4 +159,55 @@ describe('loadOidcValues', () => {
       ).rejects.toThrow('requires dev features to be enabled');
     });
   });
+});
+
+describe('ML-DSA-65 key use', () => {
+  const supportsMlDsaRuntime = (() => {
+    try {
+      generateMlDsaPrivateKeyPem();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const itIfMlDsaRuntime = supportsMlDsaRuntime ? it : it.skip;
+
+  itIfMlDsaRuntime(
+    'marks a retired ML-DSA key verify-only and leaves the current key signable',
+    async () => {
+      const currentPem = generateMlDsaPrivateKeyPem();
+      const retiredPem = generateMlDsaPrivateKeyPem();
+      const loaded = await loadOidcValues(
+        issuer,
+        {
+          [LogtoOidcConfigKey.PrivateKeys]: [
+            {
+              id: 'current',
+              value: currentPem,
+              createdAt: 2,
+              status: OidcSigningKeyStatus.Current,
+            },
+            {
+              id: 'retired',
+              value: retiredPem,
+              createdAt: 1,
+              status: OidcSigningKeyStatus.Previous,
+            },
+          ],
+          [LogtoOidcConfigKey.CookieKeys]: [
+            { id: 'cookie-key', value: 'cookie-key-value', createdAt: 0 },
+          ],
+          [LogtoOidcConfigKey.Session]: {},
+        },
+        defaultCimdConfig,
+        true
+      );
+      const currentJwk = await exportJWK(createPrivateKey(currentPem));
+      const retiredJwk = await exportJWK(createPrivateKey(retiredPem));
+      const keyOpsByKid = new Map(loaded.privateJwks.map((jwk) => [jwk.kid, jwk.key_ops]));
+
+      expect(keyOpsByKid.get(retiredJwk.kid)).toEqual(['verify']);
+      expect(keyOpsByKid.get(currentJwk.kid)).toBeUndefined();
+    }
+  );
 });

@@ -70,6 +70,15 @@ class MockEcEnvSet extends EnvSet {
 
 const ecEnvSet = new MockEcEnvSet(defaultTenantId, EnvSet.values.dbUrl);
 
+/** An env set for a tenant whose current signing key is ML-DSA-65. */
+class MockMlEnvSet extends EnvSet {
+  override get oidc(): EnvSet['oidc'] {
+    return { ...mockEnvSet.oidc, jwkSigningAlg: 'ML-DSA-65' };
+  }
+}
+
+const mlEnvSet = new MockMlEnvSet(defaultTenantId, EnvSet.values.dbUrl);
+
 /**
  * The tenant-level `cimdEnabled` flag is the only effective-enablement input the jest
  * environment leaves off (dev features and SSRF protection are both on), so flipping it is
@@ -143,30 +152,30 @@ const createContext = (
 const stubDevFeatures = (isDevFeaturesEnabled: boolean) =>
   Sinon.stub(EnvSet, 'values').value({ ...EnvSet.values, isDevFeaturesEnabled });
 
+/** The ID token signing algorithms a provider advertises for the given env set and dev-feature flag. */
+const advertisedIdTokenAlgs = (envSet: EnvSet, isDevFeaturesEnabled: boolean) => {
+  const { id, queries, libraries, logtoConfigs, subscription } = new MockTenant();
+  const stub = stubDevFeatures(isDevFeaturesEnabled);
+
+  try {
+    const provider = initOidc(id, envSet, queries, libraries, logtoConfigs, subscription);
+
+    return getProviderConfiguration(provider).enabledJWA.idTokenSigningAlgValues;
+  } finally {
+    stub.restore();
+  }
+};
+
 describe('oidc provider init', () => {
-  it('advertises ML-DSA-65 signing only when dev features are enabled', () => {
-    const { id, queries, libraries, logtoConfigs, subscription } = new MockTenant();
+  it('advertises ML-DSA-65 only for an ML-DSA tenant when dev features are enabled', () => {
+    expect(advertisedIdTokenAlgs(mlEnvSet, true)).toContain('ML-DSA-65');
+    expect(advertisedIdTokenAlgs(mlEnvSet, false)).not.toContain('ML-DSA-65');
+  });
 
-    const enabledWithDevFeatures = stubDevFeatures(true);
-    try {
-      const provider = initOidc(id, mockEnvSet, queries, libraries, logtoConfigs, subscription);
-      const { enabledJWA } = getProviderConfiguration(provider);
-
-      expect(enabledJWA.idTokenSigningAlgValues).toContain('ML-DSA-65');
-      expect(enabledJWA.authorizationSigningAlgValues).toContain('ML-DSA-65');
-    } finally {
-      enabledWithDevFeatures.restore();
-    }
-
-    const disabledWithDevFeatures = stubDevFeatures(false);
-    try {
-      const provider = initOidc(id, mockEnvSet, queries, libraries, logtoConfigs, subscription);
-      const { enabledJWA } = getProviderConfiguration(provider);
-
-      expect(enabledJWA.idTokenSigningAlgValues).not.toContain('ML-DSA-65');
-    } finally {
-      disabledWithDevFeatures.restore();
-    }
+  it('keeps the advertised algorithms of RSA and EC tenants unchanged by the dev flag', () => {
+    expect(advertisedIdTokenAlgs(mockEnvSet, true)).not.toContain('ML-DSA-65');
+    expect(advertisedIdTokenAlgs(ecEnvSet, true)).not.toContain('ML-DSA-65');
+    expect(advertisedIdTokenAlgs(ecEnvSet, true)).toEqual(advertisedIdTokenAlgs(ecEnvSet, false));
   });
 
   it('init should not throw', async () => {

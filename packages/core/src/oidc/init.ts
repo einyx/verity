@@ -93,13 +93,16 @@ import { getAcceptedUserClaims, getUserClaimsData } from './scope.js';
 const supportedSigningAlgs = Object.freeze(['RS256', 'PS256', 'ES256', 'ES384', 'ES512'] as const);
 
 /**
- * Dev feature: post-quantum signing keys. ML-DSA is only advertised when dev features are enabled,
- * so the list stays unchanged for production tenants.
+ * Dev feature: post-quantum signing keys. ML-DSA-65 is advertised only for a tenant whose current
+ * signing key is ML-DSA-65, and only when dev features are enabled. Every other tenant keeps the
+ * same algorithm list it has today, so existing clients see no change in discovery.
  */
-const getEnabledSigningAlgs = (): SigningAlgorithm[] => {
+const getEnabledSigningAlgs = (currentSigningAlg: string | undefined): SigningAlgorithm[] => {
   const algs: string[] = [
     ...supportedSigningAlgs,
-    ...(EnvSet.values.isDevFeaturesEnabled ? ['ML-DSA-65'] : []),
+    ...(EnvSet.values.isDevFeaturesEnabled && currentSigningAlg === 'ML-DSA-65'
+      ? ['ML-DSA-65']
+      : []),
   ];
 
   // The bundled @types/oidc-provider does not list ML-DSA; the provider accepts it on Node.js 24.7+.
@@ -227,10 +230,10 @@ export default function initOidc(
       }
     ),
     enabledJWA: {
-      authorizationSigningAlgValues: getEnabledSigningAlgs(),
-      userinfoSigningAlgValues: getEnabledSigningAlgs(),
-      idTokenSigningAlgValues: getEnabledSigningAlgs(),
-      introspectionSigningAlgValues: getEnabledSigningAlgs(),
+      authorizationSigningAlgValues: getEnabledSigningAlgs(envSet.oidc.jwkSigningAlg),
+      userinfoSigningAlgValues: getEnabledSigningAlgs(envSet.oidc.jwkSigningAlg),
+      idTokenSigningAlgValues: getEnabledSigningAlgs(envSet.oidc.jwkSigningAlg),
+      introspectionSigningAlgValues: getEnabledSigningAlgs(envSet.oidc.jwkSigningAlg),
     },
     conformIdTokenClaims: false,
     ...getProviderFetchConfig(),

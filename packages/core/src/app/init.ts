@@ -115,10 +115,8 @@ export default async function initApp(app: Koa): Promise<void> {
 
   // The landing page's demo request lives on the root as a modal. Old demo links point at /demo, so a
   // browser visit is sent to the root with the modal's anchor, which the landing page opens on load.
-  // Guarded as part of the landing page demo chat feature.
   app.use(async (ctx, next) => {
     if (
-      EnvSet.values.isDevFeaturesEnabled &&
       ctx.method === 'GET' &&
       ctx.URL.pathname === '/demo' &&
       ctx.get('accept').includes('text/html')

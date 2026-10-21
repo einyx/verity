@@ -201,6 +201,8 @@ const findDocumentsContext = async (deps: LandingPageChatDeps, question: string)
 // One retry covers a transient model failure (timeout, rate limit) without leaving the visitor at an error.
 const modelAttempts = 2;
 const modelRetryDelayMs = 300;
+// Bounds one model call, so a slow model cannot hold a visitor's request open.
+const modelTimeoutMs = 15_000;
 // Shown in place of a model reply when every attempt fails. The visitor's message has already been saved.
 const modelUnavailableReply =
   "I couldn't come up with an answer just now, but your message is saved. You can also write to hello@meshx.io.";
@@ -692,6 +694,7 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
     const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
     const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
+      signal: AbortSignal.timeout(modelTimeoutMs),
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,

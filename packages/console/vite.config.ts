@@ -65,6 +65,13 @@ const buildConfig = (mode: string): UserConfig => ({
       output: {
         // Tip: You can use `pnpx vite-bundle-visualizer` to analyze the bundle size
         manualChunks: (id, meta) => {
+          // @assistant-ui classes extend base classes from the same package. If the package is split across
+          // chunks, and one of them imports react, the base class can be read before its chunk has run,
+          // which blanks the console with "The superclass is not a constructor".
+          if (id.includes('/node_modules/@assistant-ui/')) {
+            return 'assistant-ui';
+          }
+
           if (/\/node_modules\/(cose-base|layout-base|cytoscape|cytoscape-[^/]*)\//.test(id)) {
             return 'cytoscape';
           }

@@ -379,8 +379,9 @@ export const handleChatTurn = async (
     return rejected;
   }
 
-  // Another instance may hold this conversation. Continue it from the saved transcript when it is not held here.
-  if (!state.sessions.has(input.sessionId) && deps.loadSession) {
+  // Another instance may have added turns since this one last saw the conversation. Always continue from
+  // the saved transcript when one exists, so a stale copy here never drops a turn.
+  if (deps.loadSession) {
     const stored = await deps.loadSession(input.sessionId);
 
     if (stored) {

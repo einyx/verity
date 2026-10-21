@@ -102,6 +102,50 @@ test.describe('landing demo chat', () => {
     });
   });
 
+  test.describe('consent', () => {
+    test.use({ locale: 'en-US' });
+
+    test('asks for consent with Yes and No, and sends the choice the visitor makes', async ({
+      page,
+    }) => {
+      await routeLanding(page, 200, { reply: 'unused' });
+
+      // The server asks for consent before it saves a lead. This stands in for that reply: the
+      // consent question with its Yes | No options. A No gets the decline reply, which ends the lead.
+      const sent: string[] = [];
+      await page.route('**/api/landing-page/chat', async (route) => {
+        const body: unknown = route.request().postDataJSON();
+        const message =
+          typeof body === 'object' && body !== null && 'message' in body ? body.message : undefined;
+        // The test records every visitor message in the order it was sent.
+        // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- the list is the record of requests, in order
+        sent.push(String(message));
+
+        const declined = message === 'No';
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            declined
+              ? { reply: 'No problem at all, we will not send your details.', options: [] }
+              : { reply: 'May we contact you about your demo?', options: ['Yes', 'No'] }
+          ),
+        });
+      });
+
+      await openChat(page);
+      await sendMessage(page, 'I would like a demo');
+
+      await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
+      await page.getByRole('button', { name: 'No' }).click();
+
+      await expect(
+        page.getByText('No problem at all, we will not send your details.')
+      ).toBeVisible();
+      expect(sent).toEqual(['I would like a demo', 'No']);
+    });
+  });
+
   test.describe('accessibility', () => {
     test.use({ locale: 'en-US' });
 

@@ -55,15 +55,15 @@ function SessionForm({ data }: Props) {
                 onChange(value && Number(value));
               }}
               onValueUp={() => {
-                onChange(value + 1);
+                onChange((value ?? 0) + 1);
               }}
               onValueDown={() => {
-                onChange(value - 1);
+                onChange((value ?? 0) - 1);
               }}
               onBlur={() => {
-                if (value < 1) {
+                if (value !== undefined && value < 1) {
                   onChange(1);
-                } else if (value > maxSessionDuration) {
+                } else if (value !== undefined && value > maxSessionDuration) {
                   onChange(maxSessionDuration);
                 }
               }}

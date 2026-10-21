@@ -1,7 +1,7 @@
 import { type AdminConsoleKey } from '@logto/phrases';
 import { Theme } from '@logto/schemas';
-import { useCallback } from 'react';
-import { useDropzone, type FileRejection, type Accept } from 'react-dropzone';
+import { type InputHTMLAttributes, useCallback } from 'react';
+import { type Accept, type DropzoneOptions, type FileRejection, useDropzone } from 'react-dropzone';
 import { type FieldError } from 'react-hook-form';
 
 import Delete from '@/assets/icons/delete.svg?react';
@@ -69,6 +69,9 @@ function FileReader({ onChange, value, attributes, fieldError, setError }: Props
     onChange(undefined);
   };
 
+  // The options are passed through as the react-dropzone type, which the React 19 types make stricter
+  // than the options this reader sets. See FileUploader.
+  // eslint-disable-next-line no-restricted-syntax -- react-dropzone's option type needs drag handlers the React 19 types omit
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     noDrag: true, // Only allow file selection via the file input.
@@ -77,7 +80,7 @@ function FileReader({ onChange, value, attributes, fieldError, setError }: Props
     multiple: false, // Upload only one file at a time.
     accept,
     disabled: isReadOnlyField,
-  });
+  } as unknown as DropzoneOptions);
 
   return (
     <div>
@@ -111,7 +114,11 @@ function FileReader({ onChange, value, attributes, fieldError, setError }: Props
               size="large"
               disabled={isReadOnlyField}
             />
-            <input {...getInputProps({ className: styles.fileInput })} />
+            <input
+              // eslint-disable-next-line no-restricted-syntax -- react-dropzone types the input props as a narrow subset the input rejects
+              {...(getInputProps() as InputHTMLAttributes<HTMLInputElement>)}
+              className={styles.fileInput}
+            />
           </div>
           {Boolean(fieldError) && <div className={styles.error}>{fieldError?.message}</div>}
         </>

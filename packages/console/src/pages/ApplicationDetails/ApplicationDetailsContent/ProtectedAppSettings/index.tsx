@@ -147,11 +147,11 @@ function ProtectedAppSettings({ data }: Props) {
             {...register('protectedAppMetadata.origin', {
               required: true,
               validate: (value) => {
-                if (!validateUriOrigin(value)) {
+                if (!validateUriOrigin(value ?? '')) {
                   return t('protected_app.form.errors.invalid_url');
                 }
 
-                if (shouldRejectLocalhostOrigin(value)) {
+                if (shouldRejectLocalhostOrigin(value ?? '')) {
                   return t('protected_app.form.errors.localhost');
                 }
 

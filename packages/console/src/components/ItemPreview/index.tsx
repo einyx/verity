@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import type { To } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
@@ -30,7 +30,7 @@ function ItemPreview({ title, subtitle, icon, to, size = 'default', suffix, toTa
               className={classNames(styles.title, styles.withLink)}
               to={getTo(to)}
               target={toTarget}
-              onClick={(event) => {
+              onClick={(event: MouseEvent<HTMLAnchorElement>) => {
                 event.stopPropagation();
               }}
             >

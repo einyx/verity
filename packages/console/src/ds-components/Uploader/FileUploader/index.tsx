@@ -3,8 +3,8 @@ import type { AllowedUploadMimeType, RequestErrorBody, UserAssets } from '@logto
 import { maxUploadFileSize } from '@logto/schemas';
 import classNames from 'classnames';
 import { HTTPError, type KyInstance } from 'ky';
-import { useCallback, useEffect, useState } from 'react';
-import { type FileRejection, useDropzone } from 'react-dropzone';
+import { type InputHTMLAttributes, useCallback, useEffect, useState } from 'react';
+import { type DropzoneOptions, type FileRejection, useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 
 import UploaderIcon from '@/assets/icons/upload.svg?react';
@@ -169,12 +169,15 @@ function FileUploader<T extends Record<string, unknown> = UserAssets>({
     ]
   );
 
+  // The react-dropzone option type requires drag handlers that the React 19 types do not provide. The
+  // options are passed through as that type, since this uploader only sets the options listed here.
+  // eslint-disable-next-line no-restricted-syntax -- react-dropzone's option type needs drag handlers the React 19 types omit
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     disabled: isUploading || isDisabled,
     multiple: false,
     accept: Object.fromEntries(allowedMimeTypes.map((mimeType) => [mimeType, []])),
-  });
+  } as unknown as DropzoneOptions);
 
   return (
     <div
@@ -187,7 +190,11 @@ function FileUploader<T extends Record<string, unknown> = UserAssets>({
         className
       )}
     >
-      <input {...getInputProps()} />
+      {/* react-dropzone types its input props as a narrow subset that the input element does not accept. */}
+      <input
+        // eslint-disable-next-line no-restricted-syntax -- react-dropzone types the input props as a narrow subset the input rejects
+        {...(getInputProps() as InputHTMLAttributes<HTMLInputElement>)}
+      />
       <div className={styles.placeholder}>
         {isUploading ? (
           <>

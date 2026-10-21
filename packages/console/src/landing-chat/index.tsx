@@ -11,26 +11,63 @@ import {
   type ChatModelAdapter,
 } from '@assistant-ui/react';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
+import { demoChatByLocale, demoChatEn } from '@logto/phrases';
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-const welcomeTitle = "Let's plan your demo";
-const greeting = "Tell us who you are and what you'd like to see. We'll shape the demo around it.";
-const fallbackError = 'Something went wrong on our side. You can also reach us at hello@meshx.io.';
-// Matches the promise in the Request a demo steps: a reply from a solutions engineer within a business day.
-const closedNotice =
-  'Your request is in. A solutions engineer will reply within one business day, from a real person.';
-const errorNotice =
-  "We couldn't reach the assistant just now. Try again, or write to hello@meshx.io.";
+// Copy comes from @logto/phrases. The visitor's browser language picks the locale; any key a locale
+// lacks falls back to English.
+
+const findLocale = () => {
+  const preferred = navigator.languages.length > 0 ? navigator.languages : [navigator.language];
+  const locales = Object.keys(demoChatByLocale);
+
+  for (const tag of preferred) {
+    const match = locales.find((locale) => locale.toLowerCase() === tag.toLowerCase());
+
+    if (match) {
+      return match;
+    }
+  }
+
+  for (const tag of preferred) {
+    const language = tag.toLowerCase().split('-')[0];
+    const match = locales.find((locale) => locale.toLowerCase().split('-')[0] === language);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return 'en';
+};
+
+// The English copy is the base, so a key a locale lacks still has text.
+const copy: typeof demoChatEn = { ...demoChatEn, ...demoChatByLocale[findLocale()] };
+
+const {
+  welcome_title: welcomeTitle,
+  greeting,
+  fallback_error: fallbackError,
+  // Matches the promise in the Request a demo steps: a reply from a solutions engineer within a business day.
+  closed_notice: closedNotice,
+  // Shown only when the request never reached the server; once it does, the server saves the message and answers.
+  error_notice: errorNotice,
+  example_placeholder: examplePlaceholder,
+  quick_platform_demo: quickPlatformDemo,
+  quick_foundation_ai: quickFoundationAi,
+  quick_dashboards: quickDashboards,
+  quick_use_case: quickUseCase,
+} = copy;
+
 // Matches the server's per-message limit in landing-page-chat-guard.ts.
 const maxMessageLength = 1000;
-const examplePlaceholder = 'Tell us about your team and one decision you want to improve…';
 // One tap answers the first question: the visitor's interest, which the assistant then follows up on.
 const quickReplies = [
-  { prompt: 'Platform demo', tag: 'Overview', icon: 'grid' },
-  { prompt: 'Foundation AI', tag: 'Product', icon: 'spark' },
-  { prompt: 'Dashboards.AI', tag: 'Product', icon: 'chart' },
-  { prompt: 'A specific use case', tag: 'Tailored', icon: 'target' },
+  { prompt: quickPlatformDemo, tag: 'Overview', icon: 'grid' },
+  { prompt: quickFoundationAi, tag: 'Product', icon: 'spark' },
+  { prompt: quickDashboards, tag: 'Product', icon: 'chart' },
+  { prompt: quickUseCase, tag: 'Tailored', icon: 'target' },
 ] as const;
 
 type IdeaIcon = (typeof quickReplies)[number]['icon'];
@@ -93,7 +130,7 @@ const createAdapter = (
     const response = await fetch('/api/landing-page/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({ sessionId, message }),
+      body: JSON.stringify({ sessionId, message, locale: navigator.language }),
       signal: abortSignal,
     });
 

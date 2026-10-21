@@ -157,7 +157,7 @@ function Branding({ application, isActive }: Props) {
                   control={control}
                   register={register}
                   fields={Object.values(Theme).map((theme) => ({
-                    name: `branding.${themeToLogoName[theme]}`,
+                    name: `branding.${themeToLogoName[theme]}` as const,
                     error: errors.branding?.[themeToLogoName[theme]],
                     type: 'app_logo',
                     theme,

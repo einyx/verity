@@ -29,7 +29,7 @@ import ProtectedAppSettings from './ProtectedAppSettings';
 import styles from './index.module.scss';
 import { type ApplicationForm } from './utils';
 
-const hasMixedUriProtocols = (applicationType: ApplicationType, uris: string[]): boolean => {
+const hasMixedUriProtocols = (applicationType: ApplicationType, uris: string[] = []): boolean => {
   switch (applicationType) {
     case ApplicationType.Native: {
       return uris.some((uri) => validateRedirectUrl(uri, 'web'));

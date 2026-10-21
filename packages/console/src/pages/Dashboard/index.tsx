@@ -1,12 +1,15 @@
 import { format, startOfDay } from 'date-fns';
-import { useMemo, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Area,
+  Area as AreaBase,
+  type AreaProps,
   AreaChart,
-  CartesianGrid,
+  CartesianGrid as CartesianGridBase,
+  type CartesianGridProps,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as TooltipBase,
+  type TooltipProps,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -29,6 +32,15 @@ const tickStyle = {
   fontSize: 11,
   fontFamily: 'var(--font-family)',
 };
+
+// The recharts 2.x exports are class components, which the React 19 JSX checks reject. These aliases keep
+// each component's props and type it as a function component so it can be used in JSX.
+// eslint-disable-next-line no-restricted-syntax -- recharts 2.x class components fail React 19 JSX checks; the cast keeps their props
+const Area = AreaBase as unknown as FC<AreaProps>;
+// eslint-disable-next-line no-restricted-syntax -- recharts 2.x class components fail React 19 JSX checks; the cast keeps their props
+const CartesianGrid = CartesianGridBase as unknown as FC<CartesianGridProps>;
+// eslint-disable-next-line no-restricted-syntax -- recharts 2.x class components fail React 19 JSX checks; the cast keeps their props
+const Tooltip = TooltipBase as unknown as FC<TooltipProps<number, string>>;
 
 const tickFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
@@ -139,7 +151,9 @@ function Dashboard() {
                     axisLine={false}
                     tickLine={false}
                     tick={tickStyle}
-                    tickFormatter={(tick) => tickFormatter.format(Number(tick)).toLowerCase()}
+                    tickFormatter={(tick: number | string) =>
+                      tickFormatter.format(Number(tick)).toLowerCase()
+                    }
                   />
                   <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--color-primary' }} />
                 </AreaChart>

@@ -1,5 +1,6 @@
 import { type Log } from '@logto/schemas';
 import classNames from 'classnames';
+import type { MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import Failed from '@/assets/icons/failed.svg?react';
@@ -31,7 +32,7 @@ function EventName({ eventKey, payload, isSuccess, to }: Props) {
         <Link
           className={styles.title}
           to={getTo(to)}
-          onClick={(event) => {
+          onClick={(event: MouseEvent<HTMLAnchorElement>) => {
             event.stopPropagation();
           }}
         >

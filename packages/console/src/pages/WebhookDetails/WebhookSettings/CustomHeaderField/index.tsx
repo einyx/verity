@@ -84,12 +84,12 @@ function CustomHeaderField() {
     () => ({
       key: (index: number) =>
         register(`headers.${index}.key`, {
-          validate: (key) => validateKey(key, index),
+          validate: (key) => validateKey(key ?? '', index),
           onChange: revalidate,
         }),
       value: (index: number) =>
         register(`headers.${index}.value`, {
-          validate: (value) => validateValue(value, index),
+          validate: (value) => validateValue(value ?? '', index),
           onChange: revalidate,
         }),
     }),

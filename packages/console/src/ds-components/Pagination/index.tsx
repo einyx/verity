@@ -140,7 +140,7 @@ function Pagination({
         disabledClassName={styles.disabled}
         pageRangeDisplayed={isPicoMode ? -1 : undefined}
         marginPagesDisplayed={isPicoMode ? 0 : undefined}
-        onPageChange={({ selected }) => {
+        onPageChange={({ selected }: { selected: number }) => {
           onChange?.(selected + 1);
         }}
       />

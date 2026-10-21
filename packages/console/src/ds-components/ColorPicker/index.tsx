@@ -50,7 +50,7 @@ function ColorPicker({ name, onChange, value = '#000000' }: Props) {
         <div className={styles.palette}>
           <ColorPalette
             color={color}
-            onChange={({ hex }) => {
+            onChange={({ hex }: { hex: string }) => {
               onChange(hex);
             }}
           />

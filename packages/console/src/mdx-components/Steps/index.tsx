@@ -15,8 +15,7 @@ import styles from './index.module.scss';
 
 type Props = {
   readonly children:
-    | Array<ReactElement<StepProps, typeof Step>>
-    | ReactElement<StepProps, typeof Step>;
+    Array<ReactElement<StepProps, typeof Step>> | ReactElement<StepProps, typeof Step>;
 };
 
 /** Find the first scrollable element in the parent chain. */
@@ -121,7 +120,7 @@ export default function Steps({ children: reactChildren }: Props) {
         )}
         <Sample />
         {children.map((component, index) =>
-          React.cloneElement(component, {
+          React.cloneElement<StepProps & React.RefAttributes<HTMLDivElement>>(component, {
             key: component.props.title,
             index,
             ref: (element: HTMLDivElement) => {

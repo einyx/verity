@@ -74,29 +74,21 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
       async run({ messages, abortSignal }) {
         onRunStateChange(true);
 
-        // Forward cancellation into a real AbortController. The runtime's signal is not always a DOM
-        // AbortSignal, and ky calls `signal.addEventListener`, which throws on such objects.
-        const controller = new AbortController();
-        const forwardAbort = () => {
-          controller.abort(abortSignal.reason);
-        };
-
-        if (abortSignal.aborted) {
-          forwardAbort();
-        } else if (typeof abortSignal.addEventListener === 'function') {
-          abortSignal.addEventListener('abort', forwardAbort, { once: true });
-        }
-
+        // No abort signal is passed to ky: the signal from the runtime fails ky's
+        // `signal.addEventListener` call in the browser, which blocks every message.
         try {
           const response = await api
             .post('api/ai-chat/completions', {
-              signal: controller.signal,
               // Only role and content go to the server; proposed actions stay on the client.
               json: {
-                messages: messages.map((message) => ({
-                  role: message.role,
-                  content: textOf(message.content),
-                })),
+                // The server rejects empty content, and the runtime keeps placeholder messages
+                // (for example an empty assistant turn) in the history, so drop them here.
+                messages: messages
+                  .map((message) => ({
+                    role: message.role,
+                    content: textOf(message.content),
+                  }))
+                  .filter(({ content }) => content.trim().length > 0),
               },
             })
             .json<ChatResponse>();

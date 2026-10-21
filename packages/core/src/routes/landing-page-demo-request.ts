@@ -8,7 +8,7 @@ import { type DemoLead } from './landing-page-chat-guard.js';
 
 type FetchLike = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body: string }
+  init: { method: string; headers: Record<string, string>; body: string; signal: AbortSignal }
 ) => Promise<{ ok: boolean; status: number }>;
 
 type DemoRequestBody = {
@@ -61,6 +61,8 @@ export const createDemoRequest = async (
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(toDemoRequestBody(lead)),
+    // The portal is a separate service: a slow or unreachable one must not hold up the visitor's reply.
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) {

@@ -133,9 +133,11 @@ const imageOffsetGuard = z.object({
 
 export const landingPageDocumentGuard = z.object({
   layout: z.record(z.string().max(60), imageOffsetGuard).optional(),
-  // Extra text that is editable in place, keyed by a `data-cms-copy` id on the page. Optional, and a
-  // missing id keeps the shipped text.
-  copy: z.record(z.string().max(80), z.string().min(1).max(1000)).optional(),
+  // Extra text that is editable in place, keyed by a `data-cms-copy` id on the page, then by language tag
+  // (for example `it` or `pt-br`). A missing id or language keeps the page's own text.
+  copy: z
+    .record(z.string().max(80), z.record(z.string().max(10), z.string().min(1).max(1000)))
+    .optional(),
   demoChat: demoChatGuard,
   hero: heroGuard,
   fomo: fomoGuard,

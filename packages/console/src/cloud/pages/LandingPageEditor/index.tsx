@@ -8,6 +8,28 @@ import LandingPreviewFrame, { setAtPath } from './LandingPreviewFrame';
 import NavArtwork from './NavArtwork';
 import styles from './index.module.scss';
 
+// The languages of the marketing site, in the same order as its language menu.
+const previewLocales: ReadonlyArray<readonly [string, string]> = [
+  ['en', 'English'],
+  ['ar', 'العربية'],
+  ['de', 'Deutsch'],
+  ['es', 'Español'],
+  ['fa-ir', 'فارسی'],
+  ['fr', 'Français'],
+  ['it', 'Italiano'],
+  ['ja', '日本語'],
+  ['ko', '한국어'],
+  ['pl-pl', 'Polski'],
+  ['pt-br', 'Português (Brasil)'],
+  ['pt-pt', 'Português (Portugal)'],
+  ['ru', 'Русский'],
+  ['th', 'ไทย'],
+  ['tr-tr', 'Türkçe'],
+  ['zh-cn', '简体中文'],
+  ['zh-hk', '繁體中文（香港）'],
+  ['zh-tw', '繁體中文（台灣）'],
+];
+
 // Editor for the marketing site's copy. Changes save to the draft; nothing reaches the site until it
 // is published. Section order and layout live in the site's code, so only the copy is edited here.
 // Copy in this page is plain English on purpose: it sits behind the dev-feature flag, not translated.
@@ -55,6 +77,7 @@ function LandingPageEditorContent() {
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
   const [activeKey, setActiveKey] = useState<string>();
+  const [previewLocale, setPreviewLocale] = useState('en');
 
   useEffect(() => {
     if (data && draft === undefined) {
@@ -287,7 +310,26 @@ function LandingPageEditorContent() {
             </section>
           )}
 
-          <LandingPreviewFrame draft={draft} onEdit={editField} onMove={moveImage} />
+          <label>
+            Preview language{' '}
+            <select
+              value={previewLocale}
+              onChange={(event) => setPreviewLocale(event.target.value)}
+            >
+              {previewLocales.map(([code, label]) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <LandingPreviewFrame
+            draft={draft}
+            locale={previewLocale}
+            onEdit={editField}
+            onMove={moveImage}
+          />
         </div>
       </div>
     </div>

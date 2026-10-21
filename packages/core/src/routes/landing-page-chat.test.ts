@@ -82,11 +82,11 @@ describe('handleChatTurn', () => {
 
   it('retries the model once when it fails transiently, then replies normally', async () => {
     const { deps, modelCalls } = fakeDeps({});
-    const failures = { left: 1 };
-    const { callModel } = deps;
+    let failures = 1;
+    const callModel = deps.callModel;
     deps.callModel = async (messages, context) => {
-      if (failures.left > 0) {
-        failures.left -= 1;
+      if (failures > 0) {
+        failures -= 1;
         modelCalls.push(messages);
         throw new Error('Model returned 429');
       }
@@ -110,7 +110,7 @@ describe('handleChatTurn', () => {
 
     expect(result).toEqual({
       status: 200,
-      body: { reply: 'meshX connects your data to your AI.', submitted: false },
+      body: { reply: 'meshX connects your data to your AI.', submitted: false, options: [] },
     });
     expect(modelCalls[0]).toEqual([{ role: 'user', content: 'What is meshX?' }]);
   });
@@ -187,7 +187,11 @@ describe('handleChatTurn', () => {
     const result = await handleChatTurn(turn('Here is my info'), deps, createChatState());
 
     expect(leads).toHaveLength(0);
-    expect(result.body).toEqual({ reply: 'Could you confirm your email?', submitted: false });
+    expect(result.body).toEqual({
+      reply: 'Could you confirm your email?',
+      submitted: false,
+      options: [],
+    });
   });
 
   it('tells the visitor when delivery fails and keeps the session open', async () => {
@@ -271,3 +275,22 @@ describe('handleChatTurn', () => {
 });
 
 /* eslint-enable @silverhand/fp/no-let, @silverhand/fp/no-mutation, @silverhand/fp/no-mutating-methods, no-await-in-loop */
+
+describe('reply options', () => {
+  it('returns the choices the reply ends with, and removes that line from the text', async () => {
+    const { deps } = fakeDeps({
+      reply: {
+        content:
+          'How would you like to be contacted?\n[[options: Email | WhatsApp | Phone call | LinkedIn]]',
+      },
+    });
+
+    const result = await handleChatTurn(turn('Sure'), deps, createChatState());
+
+    expect(result.body).toEqual({
+      reply: 'How would you like to be contacted?',
+      submitted: false,
+      options: ['Email', 'WhatsApp', 'Phone call', 'LinkedIn'],
+    });
+  });
+});

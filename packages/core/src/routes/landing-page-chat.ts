@@ -38,6 +38,8 @@ import {
 import { createDemoRequest } from './landing-page-demo-request.js';
 import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-page-docs.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
+import { signLeadFileQuery } from './landing-page-signed.js';
+import { type SlackLeadInput, postLeadToSlack } from './landing-page-slack.js';
 
 // Public demo chat on the landing page. Anonymous and model-backed, so the server enforces every limit:
 // the published switch, the per-IP and daily caps, the turn cap, the lead schema, and the transcript.
@@ -190,28 +192,42 @@ const modelRetryDelayMs = 300;
 const askModel = async (
   deps: LandingPageChatDeps,
   messages: ChatMessage[],
-  context?: string,
-  attempt = 1
+  context?: string
 ): Promise<ModelReply | undefined> => {
-  try {
-    return await deps.callModel(messages, context);
-  } catch (error: unknown) {
-    // Only the error message is logged: it names the status or the network failure, never the visitor's text.
-    // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
-    console.error(
-      `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
-    );
+  for (let attempt = 1; attempt <= modelAttempts; attempt += 1) {
+    try {
+      return await deps.callModel(messages, context);
+    } catch (error: unknown) {
+      // Only the error message is logged: it names the status or the network failure, never the visitor's text.
+      // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
+      console.error(
+        `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
 
-    if (attempt >= modelAttempts) {
-      return undefined;
+      if (attempt < modelAttempts) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, modelRetryDelayMs);
+        });
+      }
     }
-
-    await new Promise((resolve) => {
-      setTimeout(resolve, modelRetryDelayMs);
-    });
-
-    return askModel(deps, messages, context, attempt + 1);
   }
+
+  return undefined;
+};
+
+/** Signed links to a lead's brief and slides, or undefined when the link base or secret is not configured. */
+const signedFileLinks = (sessionId: string) => {
+  const base = process.env.LANDING_LEAD_FILES_BASE;
+  const secret = process.env.LANDING_LEAD_LINK_SECRET;
+
+  if (!base || !secret) {
+    return;
+  }
+
+  const link = (kind: 'brief' | 'slides') =>
+    `${base}/api/landing-lead-files/${kind}/${sessionId}?${signLeadFileQuery(secret, kind, sessionId)}`;
+
+  return { brief: link('brief'), slides: link('slides') };
 };
 
 /** Runs company research for a lead. A failure is logged without the lead's details and changes nothing. */
@@ -235,6 +251,26 @@ const researchLeadCompany = async (
   }
 };
 
+/**
+ * Takes a trailing `[[options: A | B]]` line off a reply. The chat shows those choices as buttons, so the
+ * visitor can tap a contact method or yes/no instead of typing it. At most four short options are kept.
+ */
+const splitReplyOptions = (content: string): { text: string; options: string[] } => {
+  const match = /\n?\[\[options:\s*([^\]]+)]]\s*$/.exec(content);
+
+  if (!match?.[1]) {
+    return { text: content, options: [] };
+  }
+
+  const options = match[1]
+    .split('|')
+    .map((option) => option.trim())
+    .filter((option) => option.length > 0 && option.length <= 40)
+    .slice(0, 4);
+
+  return { text: content.slice(0, match.index).trimEnd(), options };
+};
+
 /** Applies the model's reply: a valid lead is delivered, anything else is text for the visitor. */
 const applyReply = async (
   turn: { sessionId: string; message: string; reply: ModelReply; session: Session },
@@ -249,6 +285,23 @@ const applyReply = async (
     const record = { sessionId, lead, emailStatus: 'pending' as const };
     await recordLeadSafely(deps.recordLead, record);
 
+    // Company research starts as soon as the lead is saved, not after the email, so a failed email
+    // still leaves the company profile and the conversation analysis for the Leads page.
+    void researchLeadCompany(deps.researchCompany, sessionId, lead.email, [
+      ...session.messages,
+      { role: 'user', content: message },
+      { role: 'assistant', content: thanks },
+    ]);
+
+    // The Kubo demo request is filed whether or not the email goes out, so a mail outage never loses the demo.
+    try {
+      await deps.provisionDemo?.(lead);
+    } catch {
+      // The lead is saved, so the team can still follow up. The log names no details.
+      // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
+      console.error('Landing page chat: the Kubo demo request could not be filed.');
+    }
+
     try {
       await deps.sendLead(lead);
     } catch {
@@ -262,20 +315,6 @@ const applyReply = async (
     }
 
     await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'sent' });
-
-    try {
-      await deps.provisionDemo?.(lead);
-      // Company research runs in the background: the visitor's reply does not wait for the company site.
-      void researchLeadCompany(deps.researchCompany, sessionId, lead.email, [
-        ...session.messages,
-        { role: 'user', content: message },
-        { role: 'assistant', content: thanks },
-      ]);
-    } catch {
-      // The lead is already saved and emailed, so the team can still follow up. The log names no details.
-      // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
-      console.error('Landing page chat: the Kubo demo request could not be filed.');
-    }
 
     state.sessions.set(sessionId, {
       ...session,
@@ -319,7 +358,9 @@ const applyReply = async (
     submitted: false,
   });
 
-  return { status: 200, body: { reply: content, submitted: false } };
+  const { text, options } = splitReplyOptions(content);
+
+  return { status: 200, body: { reply: text, submitted: false, options } };
 };
 
 /** One visitor turn. Returns the status and body to send. Pure apart from the injected dependencies. */
@@ -513,6 +554,41 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     if (insight) {
       await saveLeadConversationInsight(pool, sessionId, insight);
+    }
+
+    // Post the completed lead to the sales channel. Off unless the channel's webhook is configured.
+    const row = await pool.maybeOne<{
+      lead: Record<string, unknown>;
+      emailStatus: string;
+      companyProfile: Record<string, unknown> | undefined;
+    }>(sql`
+      select lead, email_status as "emailStatus", company_profile as "companyProfile"
+      from landing_leads
+      where tenant_id = ${adminTenantId}
+        and session_id = ${sessionId}
+    `);
+
+    if (row) {
+      await postLeadToSlack(
+        {
+          // The lead was validated when it was saved; it is read back as stored.
+          // eslint-disable-next-line no-restricted-syntax -- The stored lead is validated before it is saved.
+          lead: row.lead as unknown as SlackLeadInput['lead'],
+          emailStatus: row.emailStatus,
+          leadsUrl: process.env.LANDING_LEAD_LEADS_URL,
+          fileLinks: signedFileLinks(sessionId),
+          // eslint-disable-next-line no-restricted-syntax -- The stored profile is written by this service only.
+          profile: (row.companyProfile ?? undefined) as SlackLeadInput['profile'],
+        },
+        {
+          webhookUrl: process.env.LANDING_LEAD_SLACK_WEBHOOK_URL,
+          fetch: async (url, init) => fetch(url, init),
+        }
+      ).catch(() => {
+        // The lead is saved either way. The log names no lead details.
+        // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no lead details.
+        console.error('Landing page chat: the lead could not be posted to Slack.');
+      });
     }
   },
   provisionDemo: async (lead) => {

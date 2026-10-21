@@ -1072,3 +1072,11 @@
   object-fit: cover;
 }
 
+/* Artwork inside a card band, the same 96px height as the Get Started bands, so it never covers the title. */
+.bandArt {
+  display: block;
+  width: 100%;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}

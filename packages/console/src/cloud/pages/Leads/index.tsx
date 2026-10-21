@@ -1,27 +1,31 @@
-import classNames from 'classnames';
+/* eslint-disable max-lines -- The Leads page keeps the list, the detail card, and the demo request controls together, so the flow reads in one place. */
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import useSWR from 'swr';
 
 import {
   type LandingLead,
   type LandingLeadTranscript,
   useLandingLeads,
 } from '@/cloud/hooks/use-landing-leads';
+import Button from '@/ds-components/Button';
+import Card from '@/ds-components/Card';
+import CardTitle from '@/ds-components/CardTitle';
+import DangerousRaw from '@/ds-components/DangerousRaw';
+import Table from '@/ds-components/Table';
+import useApi from '@/hooks/use-api';
 
 import styles from './index.module.scss';
 
 // Leads from the landing demo chat, for the sales team. Read-only: contact details and conversations are
-// shown to cloud admins only, and a conversation is loaded when its lead is opened. Plain English on
-// purpose, like the landing page editor, because the page is behind the dev-feature flag.
+// shown to cloud admins only. Built from the console's own components, like the rest of the console.
+// Plain English on purpose, because the page is behind the dev-feature flag.
+
+// The Kubo demo request for a lead, matched by email. Approving it is what starts the tenant's provisioning.
+type KuboDemoRequest = { name: string; email: string; phase: string; tenant?: string | undefined };
 
 const formatDate = (value: LandingLead['createdAt']) =>
   new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-
-const emailStatusLabel: Record<string, string> = {
-  sent: 'Sent',
-  failed: 'Failed',
-  pending: 'Pending',
-};
 
 const readText = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
@@ -29,37 +33,38 @@ const readText = (value: unknown): string | undefined =>
 const readList = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
-/** The company summary and chat insight stored on a lead. Anything that does not match is left out. */
+const readRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === 'object' && value !== null ? Object.fromEntries(Object.entries(value)) : {};
+
 const readProfile = (lead: LandingLead) => {
-  const profile = lead.companyProfile ?? {};
-  const { conversation } = profile;
-  const insight = typeof conversation === 'object' && conversation !== null ? conversation : {};
+  const profile = readRecord(lead.companyProfile);
+  const insight = readRecord(profile.conversation);
 
   return {
     summary: readText(profile.summary),
     sources: readList(profile.sources),
-    tone: readText((insight as Record<string, unknown>).tone),
-    outcomes: readList((insight as Record<string, unknown>).outcomes),
-    nextSteps: readList((insight as Record<string, unknown>).nextSteps),
+    tone: readText(insight.tone),
+    outcomes: readList(insight.outcomes),
+    nextSteps: readList(insight.nextSteps),
   };
 };
 
-const bookingLinkFor = (base: string, email: string) =>
-  `${base}${base.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`;
+const bookingLinkFor = (base: string, name: string, email: string) =>
+  `${base}${base.includes('?') ? '&' : '?'}name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
 
-function EmailStatus({ value }: { readonly value: string }) {
-  return (
-    <span
-      className={classNames(
-        styles.badge,
-        value === 'sent' && styles.badgeSuccess,
-        value === 'failed' && styles.badgeError
-      )}
-    >
-      {emailStatusLabel[value] ?? value}
-    </span>
-  );
-}
+/** Saves a blob the admin has downloaded, through a temporary link. */
+const saveBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  // A temporary link is only used to trigger this one download, then discarded.
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- The download link is set up before it is clicked.
+  link.href = url;
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- The download link is set up before it is clicked.
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 function Transcript({
   messages,
@@ -87,10 +92,7 @@ function Transcript({
           // The transcript is read-only and never reordered, so the position is a stable key.
           // eslint-disable-next-line react/no-array-index-key
           key={index}
-          className={classNames(
-            styles.message,
-            message.role === 'user' ? styles.messageVisitor : styles.messageAssistant
-          )}
+          className={message.role === 'user' ? styles.messageVisitor : styles.messageAssistant}
         >
           <span className={styles.messageRole}>
             {message.role === 'user' ? 'Visitor' : 'Assistant'}
@@ -103,11 +105,29 @@ function Transcript({
 }
 
 function Leads() {
-  const { leads, bookingUrl, error, isLoading, loadTranscript, loadBriefPdf } = useLandingLeads();
-  const [briefFailed, setBriefFailed] = useState(false);
+  const { leads, bookingUrl, error, isLoading, loadTranscript, loadBriefPdf, loadSlidesPptx } =
+    useLandingLeads();
   const [openedId, setOpenedId] = useState<string>();
   const [transcript, setTranscript] = useState<LandingLeadTranscript>();
   const [transcriptFailed, setTranscriptFailed] = useState(false);
+  const [fileFailed, setFileFailed] = useState(false);
+  const api = useApi();
+  const demoRequests = useSWR<KuboDemoRequest[]>('api/kubo/demorequests');
+  const [demoFailed, setDemoFailed] = useState(false);
+
+  const demoRequestFor = (email: string) =>
+    demoRequests.data?.find((request) => request.email.toLowerCase() === email.toLowerCase());
+
+  const decideDemoRequest = async (name: string, decision: 'approve' | 'reject') => {
+    setDemoFailed(false);
+
+    try {
+      await api.post(`api/kubo/demorequests/${name}/${decision}`);
+      await demoRequests.mutate();
+    } catch {
+      setDemoFailed(true);
+    }
+  };
 
   const openLead = async (lead: LandingLead) => {
     setOpenedId(lead.id);
@@ -121,226 +141,243 @@ function Leads() {
     }
   };
 
+  const downloadFile = async (
+    lead: LandingLead,
+    load: (sessionId: string) => Promise<Blob>,
+    filename: string
+  ) => {
+    setFileFailed(false);
+
+    try {
+      saveBlob(await load(lead.sessionId), filename);
+    } catch {
+      setFileFailed(true);
+    }
+  };
+
   const opened = leads?.find((lead) => lead.id === openedId);
-  const count = leads?.length ?? 0;
+  const profile = opened ? readProfile(opened) : undefined;
 
   return (
     <div className={styles.container}>
       <Helmet title="Leads" />
 
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Leads</h1>
-          <p className={styles.subtitle}>
-            Visitors who asked the landing page chat to be contacted. Open a lead to read its
-            conversation.
-          </p>
-        </div>
-        {leads && <span className={styles.count}>{count} total</span>}
-      </header>
+      <Card>
+        <CardTitle
+          title={<DangerousRaw>Leads</DangerousRaw>}
+          subtitle={
+            <DangerousRaw>
+              Visitors who asked the landing page chat to be contacted. Open a lead to read its
+              conversation and download its meeting brief.
+            </DangerousRaw>
+          }
+        />
+        <Table
+          rowGroups={[{ key: 'leads', data: leads ?? [] }]}
+          rowIndexKey="id"
+          isLoading={isLoading}
+          errorMessage={error ? 'Leads could not be loaded. Try again in a moment.' : undefined}
+          placeholder={<DangerousRaw>No leads yet.</DangerousRaw>}
+          rowClickHandler={(lead) => {
+            void openLead(lead);
+          }}
+          columns={[
+            {
+              title: <DangerousRaw>Name</DangerousRaw>,
+              dataIndex: 'name',
+              render: (lead) => `${lead.lead.firstName} ${lead.lead.lastName}`,
+            },
+            {
+              title: <DangerousRaw>Company</DangerousRaw>,
+              dataIndex: 'company',
+              render: (lead) => lead.lead.company,
+            },
+            {
+              title: <DangerousRaw>Email</DangerousRaw>,
+              dataIndex: 'email',
+              render: (lead) => lead.lead.email,
+            },
+            {
+              title: <DangerousRaw>Email sent</DangerousRaw>,
+              dataIndex: 'emailStatus',
+              render: (lead) => lead.emailStatus,
+            },
+            {
+              title: <DangerousRaw>Created</DangerousRaw>,
+              dataIndex: 'createdAt',
+              render: (lead) => formatDate(lead.createdAt),
+            },
+          ]}
+        />
+      </Card>
 
-      {isLoading && <p className={styles.muted}>Loading leads…</p>}
-
-      {error && (
-        <div className={styles.card}>
-          <p className={styles.notice}>Leads could not be loaded. Try again in a moment.</p>
-        </div>
-      )}
-
-      {leads && count === 0 && (
-        <div className={styles.card}>
-          <div className={styles.empty}>
-            <p className={styles.emptyTitle}>No leads yet</p>
-            <p className={styles.muted}>
-              When a visitor asks the landing page chat to be contacted, their lead appears here.
-            </p>
+      {opened && profile && (
+        <Card>
+          <CardTitle
+            title={<DangerousRaw>Lead details</DangerousRaw>}
+            subtitle={
+              <DangerousRaw>
+                {`${opened.lead.firstName} ${opened.lead.lastName}, ${opened.lead.company}`}
+              </DangerousRaw>
+            }
+          />
+          <div className={styles.facts}>
+            <span>Email</span>
+            <span>{opened.lead.email}</span>
+            {opened.lead.role && (
+              <>
+                <span>Role</span>
+                <span>{opened.lead.role}</span>
+              </>
+            )}
+            {opened.lead.industry && (
+              <>
+                <span>Industry</span>
+                <span>{opened.lead.industry}</span>
+              </>
+            )}
+            {opened.lead.contactMethod && (
+              <>
+                <span>Preferred contact</span>
+                <span>
+                  {opened.lead.contactMethod}
+                  {opened.lead.contactDetail ? `: ${opened.lead.contactDetail}` : ''}
+                </span>
+              </>
+            )}
+            {opened.lead.decision && (
+              <>
+                <span>Wants to see</span>
+                <span>{opened.lead.decision}</span>
+              </>
+            )}
           </div>
-        </div>
-      )}
 
-      {leads && count > 0 && (
-        <div className={classNames(styles.layout, opened && styles.layoutWithDetail)}>
-          <div className={styles.card}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Company</th>
-                  <th>Email</th>
-                  <th>Email status</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    className={classNames(styles.row, openedId === lead.id && styles.rowSelected)}
-                    tabIndex={0}
-                    aria-selected={openedId === lead.id}
-                    onClick={() => {
-                      void openLead(lead);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        void openLead(lead);
-                      }
-                    }}
-                  >
-                    <td className={styles.strong}>
-                      {`${lead.lead.firstName} ${lead.lead.lastName}`}
-                    </td>
-                    <td>{lead.lead.company}</td>
-                    <td>{lead.lead.email}</td>
-                    <td>
-                      <EmailStatus value={lead.emailStatus} />
-                    </td>
-                    <td className={styles.muted}>{formatDate(lead.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {opened && (
-            <aside className={styles.card} aria-label="Lead details">
-              <div className={styles.detailHeader}>
-                <div>
-                  <p
-                    className={styles.strong}
-                  >{`${opened.lead.firstName} ${opened.lead.lastName}`}</p>
-                  <p className={styles.muted}>{opened.lead.company}</p>
-                </div>
-                <button
-                  type="button"
-                  className={styles.close}
-                  aria-label="Close lead details"
-                  onClick={() => {
-                    setOpenedId(undefined);
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-
-              <dl className={styles.facts}>
-                <dt>Email</dt>
-                <dd>{opened.lead.email}</dd>
-                {opened.lead.role && (
-                  <>
-                    <dt>Role</dt>
-                    <dd>{opened.lead.role}</dd>
-                  </>
-                )}
-                {opened.lead.industry && (
-                  <>
-                    <dt>Industry</dt>
-                    <dd>{opened.lead.industry}</dd>
-                  </>
-                )}
-                {opened.lead.contactMethod && (
-                  <>
-                    <dt>Preferred contact</dt>
-                    <dd>
-                      {opened.lead.contactMethod}
-                      {opened.lead.contactDetail ? `: ${opened.lead.contactDetail}` : ''}
-                    </dd>
-                  </>
-                )}
-                {opened.lead.decision && (
-                  <>
-                    <dt>Decision</dt>
-                    <dd>{opened.lead.decision}</dd>
-                  </>
-                )}
-              </dl>
-
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={styles.primary}
-                  onClick={() => {
-                    void loadBriefPdf(opened.sessionId)
-                      .then((blob) => {
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `meeting-brief-${opened.sessionId}.pdf`;
-                        link.click();
-                        URL.revokeObjectURL(url);
-                        setBriefFailed(false);
-                      })
-                      .catch(() => {
-                        setBriefFailed(true);
-                      });
-                  }}
-                >
-                  Download meeting brief (PDF)
-                </button>
-                {bookingUrl && (
-                  <a
-                    className={styles.secondary}
-                    href={bookingLinkFor(bookingUrl, opened.lead.email)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Book a meeting
-                  </a>
-                )}
-              </div>
-              {briefFailed && <p className={styles.notice}>The brief could not be created.</p>}
-
-              <h2 className={styles.sectionTitle}>Company</h2>
-              {(() => {
-                const profile = readProfile(opened);
-
-                return (
-                  <div className={styles.insight}>
-                    <p>
-                      {profile.summary ??
-                        'No company profile yet. The company website could not be read.'}
-                    </p>
-                    {profile.sources.length > 0 && (
-                      <p className={styles.muted}>Sources: {profile.sources.join(', ')}</p>
-                    )}
-                    <p>
-                      <strong>Tone:</strong> {profile.tone ?? 'not yet analysed'}
-                    </p>
-                    <p>
-                      <strong>Likely outcomes</strong>
-                    </p>
-                    {profile.outcomes.length > 0 ? (
-                      <ul>
-                        {profile.outcomes.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className={styles.muted}>Not yet analysed.</p>
-                    )}
-                    <p>
-                      <strong>Cover next</strong>
-                    </p>
-                    {profile.nextSteps.length > 0 && (
-                      <ul>
-                        {profile.nextSteps.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+          <div className={styles.actions}>
+            <Button
+              type="primary"
+              title={<DangerousRaw>Download meeting brief (PDF)</DangerousRaw>}
+              onClick={() => {
+                void downloadFile(opened, loadBriefPdf, `meeting-brief-${opened.sessionId}.pdf`);
+              }}
+            />
+            <Button
+              type="outline"
+              title={<DangerousRaw>Download meeting slides (PPTX)</DangerousRaw>}
+              onClick={() => {
+                void downloadFile(
+                  opened,
+                  loadSlidesPptx,
+                  `meeting-slides-${opened.sessionId}.pptx`
                 );
-              })()}
+              }}
+            />
+            {bookingUrl && (
+              <Button
+                type="outline"
+                title={<DangerousRaw>Book a meeting</DangerousRaw>}
+                onClick={() => {
+                  window.open(
+                    bookingLinkFor(
+                      bookingUrl,
+                      `${opened.lead.firstName} ${opened.lead.lastName}`,
+                      opened.lead.email
+                    ),
+                    '_blank',
+                    'noopener'
+                  );
+                }}
+              />
+            )}
+          </div>
+          {fileFailed && <p className={styles.notice}>The file could not be created.</p>}
+          {(() => {
+            const request = demoRequestFor(opened.lead.email);
 
-              <h2 className={styles.sectionTitle}>Conversation</h2>
-              <Transcript messages={transcript} isFailed={transcriptFailed} />
-            </aside>
-          )}
-        </div>
+            return (
+              <div className={styles.section}>
+                <p className={styles.heading}>Demo request</p>
+                {request ? (
+                  <>
+                    <p>
+                      {request.name} · {request.phase}
+                      {request.tenant ? ` · ${request.tenant}` : ''}
+                    </p>
+                    {request.phase === 'Pending' && (
+                      <div className={styles.actions}>
+                        <Button
+                          type="primary"
+                          title={<DangerousRaw>Approve demo</DangerousRaw>}
+                          onClick={() => {
+                            void decideDemoRequest(request.name, 'approve');
+                          }}
+                        />
+                        <Button
+                          type="outline"
+                          title={<DangerousRaw>Reject demo</DangerousRaw>}
+                          onClick={() => {
+                            void decideDemoRequest(request.name, 'reject');
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className={styles.muted}>No demo request for this lead yet.</p>
+                )}
+                {demoFailed && <p className={styles.notice}>The decision could not be saved.</p>}
+              </div>
+            );
+          })()}
+
+          <div className={styles.section}>
+            <p className={styles.heading}>Company</p>
+            <p>
+              {profile.summary ?? 'No company profile yet. The company website could not be read.'}
+            </p>
+            {profile.sources.length > 0 && (
+              <p className={styles.muted}>Sources: {profile.sources.join(', ')}</p>
+            )}
+          </div>
+
+          <div className={styles.section}>
+            <p className={styles.heading}>How the conversation went</p>
+            <p>
+              <strong>Tone:</strong> {profile.tone ?? 'not yet analysed'}
+            </p>
+            <p>
+              <strong>Likely outcomes</strong>
+            </p>
+            {profile.outcomes.length > 0 ? (
+              <ul>
+                {profile.outcomes.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className={styles.muted}>Not yet analysed.</p>
+            )}
+            <p>
+              <strong>Cover next</strong>
+            </p>
+            {profile.nextSteps.length > 0 && (
+              <ul>
+                {profile.nextSteps.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.section}>
+            <p className={styles.heading}>Conversation</p>
+            <Transcript messages={transcript} isFailed={transcriptFailed} />
+          </div>
+        </Card>
       )}
     </div>
   );
 }
 
 export default Leads;
+/* eslint-enable max-lines */

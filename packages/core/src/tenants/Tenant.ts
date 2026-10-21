@@ -240,7 +240,8 @@ export default class Tenant implements TenantContext {
     // while distinguishing "demo app from admin tenant" and "demo app from user tenant";
     // on the cloud, we need to configure admin tenant sign-in experience, so a preview is needed for
     // testing without signing out of the admin console.
-    if (id !== adminTenantId || isMultiTenancy) {
+    // The demo apps are a dev feature: they are only mounted when dev features are enabled.
+    if ((id !== adminTenantId || isMultiTenancy) && EnvSet.values.isDevFeaturesEnabled) {
       // Mount demo app
       app.use(
         mount(

@@ -8,6 +8,7 @@ import koaGuard from '#src/middleware/koa-guard.js';
 
 import { checkVisitorMessage, productionModerator } from './landing-page-abuse.js';
 import {
+  type ChatHitStore,
   createIpLimiter,
   createWindowLimiter,
   demoChatLimits,
@@ -94,12 +95,28 @@ type ChatState = {
   readonly sessionLimiter: ReturnType<typeof createWindowLimiter>;
 };
 
-export const createChatState = (): ChatState => ({
+/**
+ * Limits are counted through `store`. Production passes the shared database store, so the per-IP and
+ * daily limits hold across instances. Without one, counts are kept in memory for a single instance.
+ */
+export const createChatState = (store?: ChatHitStore): ChatState => ({
   sessions: new Map(),
-  ipLimiter: createIpLimiter(),
-  // The daily cap is per instance. It is not shared across instances, so it is a floor, not a ceiling.
-  sessionLimiter: createWindowLimiter(demoChatLimits.maxSessionsPerDay, 86_400_000),
+  ipLimiter: createIpLimiter({ store }),
+  sessionLimiter: createWindowLimiter(demoChatLimits.maxSessionsPerDay, 86_400_000, { store }),
 });
+
+/** Checks a limit, or returns undefined when the shared store cannot answer, so the caller fails closed. */
+const checkLimit = async (allow: () => Promise<boolean>): Promise<boolean | undefined> => {
+  try {
+    return await allow();
+  } catch {
+    // The log names no details: the store failed, and the message holds no visitor content.
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
+    console.error('Landing page chat: a rate limit could not be checked.');
+
+    return undefined;
+  }
+};
 const submitLeadTool = {
   type: 'function' as const,
   function: {
@@ -148,7 +165,17 @@ const preflight = async (
     return error(404, 'landing_page.chat_disabled', 'Not found.');
   }
 
-  if (!state.ipLimiter.allow(input.ip)) {
+  const ipAllowed = await checkLimit(async () => state.ipLimiter.allow(input.ip));
+
+  if (ipAllowed === undefined) {
+    return error(
+      503,
+      'landing_page.chat_unavailable',
+      'The assistant is unavailable. Please try again or use the request form.'
+    );
+  }
+
+  if (!ipAllowed) {
     return error(429, 'landing_page.chat_rate_limited', 'Too many requests.');
   }
 
@@ -160,17 +187,29 @@ const preflight = async (
 };
 
 /** Gets the session for this id, or starts one within the daily cap. */
-const openSession = (
+const openSession = async (
   sessionId: string,
   state: ChatState
-): { session: Session } | { rejection: ChatResult } => {
+): Promise<{ session: Session } | { rejection: ChatResult }> => {
   const existing = state.sessions.get(sessionId);
 
   if (existing) {
     return { session: existing };
   }
 
-  if (!state.sessionLimiter.allow('global')) {
+  const dailyAllowed = await checkLimit(async () => state.sessionLimiter.allow('global'));
+
+  if (dailyAllowed === undefined) {
+    return {
+      rejection: error(
+        503,
+        'landing_page.chat_unavailable',
+        'The assistant is unavailable. Please try again or use the request form.'
+      ),
+    };
+  }
+
+  if (!dailyAllowed) {
     return {
       rejection: error(
         429,
@@ -582,7 +621,7 @@ export const handleChatTurn = async (
     );
   }
 
-  const opened = openSession(input.sessionId, state);
+  const opened = await openSession(input.sessionId, state);
 
   if ('rejection' in opened) {
     return opened.rejection;
@@ -668,7 +707,10 @@ export const landingPageChatRoutes = (deps: LandingPageChatDeps, state = createC
     '/api/landing-page/chat',
     koaGuard({ body: chatBodyGuard, status: [200, 400, 404, 429, 502, 503] }),
     async (ctx, next) => {
-      const result = await handleChatTurn({ ...ctx.guard.body, ip: ctx.ip }, deps, state);
+      // Behind a trusted proxy, the last X-Forwarded-For entry is the one the nearest proxy added. Earlier
+      // entries can be set by the visitor, so they are never used for the limit.
+      const ip = ctx.request.ips.at(-1) ?? ctx.ip;
+      const result = await handleChatTurn({ ...ctx.guard.body, ip }, deps, state);
 
       ctx.status = result.status;
       ctx.body = result.body;

@@ -5,7 +5,12 @@ import { EnvSet } from '#src/env-set/index.js';
 import { billingRoutes, isBillingConfigured } from '#src/routes/billing.js';
 import { localCloudRoutes } from '#src/routes/cloud-dev.js';
 import { cloudTenantRoutes } from '#src/routes/cloud-tenants.js';
-import { createProductionChatDeps, landingPageChatRoutes } from '#src/routes/landing-page-chat.js';
+import { createSharedHitStore } from '#src/routes/landing-page-chat-counters.js';
+import {
+  createChatState,
+  createProductionChatDeps,
+  landingPageChatRoutes,
+} from '#src/routes/landing-page-chat.js';
 import { landingPageLeadRoutes } from '#src/routes/landing-page-leads.js';
 import { landingPageRoutes } from '#src/routes/landing-page.js';
 import { periodicUsageRoute } from '#src/routes/periodic-usage.js';
@@ -27,7 +32,9 @@ export const mountAdminRoutes = (app: Koa, id: string, envSet: EnvSet) => {
     app.use(landingPageLeadRoutes(envSet).routes());
 
     // Public demo chat. It stays off unless the published landing document switches it on.
-    app.use(landingPageChatRoutes(createProductionChatDeps()).routes());
+    // Limits are counted in the database, so they hold across every instance.
+    const chatState = createChatState(createSharedHitStore(async () => EnvSet.sharedPool));
+    app.use(landingPageChatRoutes(createProductionChatDeps(), chatState).routes());
   }
 
   app.use(localCloudRoutes());

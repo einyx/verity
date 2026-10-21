@@ -82,48 +82,60 @@ describe('isValidDemoChatMessage', () => {
 });
 
 describe('createWindowLimiter', () => {
-  it('allows up to the limit within the window, then refuses', () => {
-    const limiter = createWindowLimiter(2, 1000, () => 0);
+  it('allows up to the limit within the window, then refuses', async () => {
+    const limiter = createWindowLimiter(2, 1000, { now: () => 0 });
 
-    expect(limiter.allow('ip')).toBe(true);
-    expect(limiter.allow('ip')).toBe(true);
-    expect(limiter.allow('ip')).toBe(false);
+    expect(await limiter.allow('ip')).toBe(true);
+    expect(await limiter.allow('ip')).toBe(true);
+    expect(await limiter.allow('ip')).toBe(false);
   });
 
-  it('frees a slot once the window has passed', () => {
+  it('frees a slot once the window has passed', async () => {
     let now = 0;
-    const limiter = createWindowLimiter(1, 1000, () => now);
+    const limiter = createWindowLimiter(1, 1000, { now: () => now });
 
-    expect(limiter.allow('ip')).toBe(true);
-    expect(limiter.allow('ip')).toBe(false);
+    expect(await limiter.allow('ip')).toBe(true);
+    expect(await limiter.allow('ip')).toBe(false);
 
     now = 1000;
-    expect(limiter.allow('ip')).toBe(true);
+    expect(await limiter.allow('ip')).toBe(true);
   });
 
-  it('keeps keys independent', () => {
-    const limiter = createWindowLimiter(1, 1000, () => 0);
+  it('keeps keys independent', async () => {
+    const limiter = createWindowLimiter(1, 1000, { now: () => 0 });
 
-    expect(limiter.allow('a')).toBe(true);
-    expect(limiter.allow('b')).toBe(true);
+    expect(await limiter.allow('a')).toBe(true);
+    expect(await limiter.allow('b')).toBe(true);
+  });
+
+  it('rejects when the shared store fails, so callers can fail closed', async () => {
+    const limiter = createWindowLimiter(1, 1000, {
+      store: {
+        hit: async () => {
+          throw new Error('database unavailable');
+        },
+      },
+    });
+
+    await expect(limiter.allow('ip')).rejects.toThrow('database unavailable');
   });
 });
 
 describe('createIpLimiter', () => {
-  it('stops an IP at the per-minute burst limit, without affecting other IPs', () => {
+  it('stops an IP at the per-minute burst limit, without affecting other IPs', async () => {
     let now = 0;
-    const limiter = createIpLimiter(() => now);
+    const limiter = createIpLimiter({ now: () => now });
 
-    const burst = Array.from({ length: demoChatLimits.perIpPerMinute }, () =>
-      limiter.allow('1.2.3.4')
+    const burst = await Promise.all(
+      Array.from({ length: demoChatLimits.perIpPerMinute }, async () => limiter.allow('1.2.3.4'))
     );
     expect(burst.every(Boolean)).toBe(true);
 
-    expect(limiter.allow('1.2.3.4')).toBe(false);
-    expect(limiter.allow('5.6.7.8')).toBe(true);
+    expect(await limiter.allow('1.2.3.4')).toBe(false);
+    expect(await limiter.allow('5.6.7.8')).toBe(true);
 
     now = 60_000;
-    expect(limiter.allow('1.2.3.4')).toBe(true);
+    expect(await limiter.allow('1.2.3.4')).toBe(true);
   });
 });
 

@@ -90,33 +90,59 @@ export const isValidDemoChatMessage = (message: unknown): message is string =>
   message.trim().length > 0 &&
   message.length <= demoChatLimits.maxMessageLength;
 
-/** A sliding-window counter per key, kept in memory for one instance. */
-export const createWindowLimiter = (limit: number, windowMs: number, now = () => Date.now()) => {
+/**
+ * Records a hit for a key in a window and returns whether it is within the limit. Shared stores count
+ * across every instance; the default store keeps counts in memory for one instance.
+ */
+export type ChatHitStore = {
+  hit: (key: string, windowMs: number, limit: number, now: number) => Promise<boolean>;
+};
+
+/** A sliding-window store kept in memory for one instance. */
+const createMemoryHitStore = (): ChatHitStore => {
   const hits = new Map<string, number[]>();
 
   return {
-    /** Records a hit and returns whether it is within the limit. */
-    allow(key: string): boolean {
-      const current = now();
-      const recent = (hits.get(key) ?? []).filter((time) => current - time < windowMs);
+    async hit(key, windowMs, limit, current) {
+      const counterKey = `${windowMs}:${key}`;
+      const recent = (hits.get(counterKey) ?? []).filter((time) => current - time < windowMs);
       const allowed = recent.length < limit;
 
-      hits.set(key, allowed ? [...recent, current] : recent);
+      hits.set(counterKey, allowed ? [...recent, current] : recent);
 
       return allowed;
     },
   };
 };
 
-/** Per-IP limits for the chat: a short burst window and an hourly window. Both must allow the hit. */
-export const createIpLimiter = (now?: () => number) => {
-  const perMinute = createWindowLimiter(demoChatLimits.perIpPerMinute, 60_000, now);
-  const perHour = createWindowLimiter(demoChatLimits.perIpPerHour, 3_600_000, now);
+type LimiterOptions = { now?: () => number; store?: ChatHitStore };
+
+/** A counter per key for one window. Rejects if the store fails, so callers can fail closed. */
+export const createWindowLimiter = (
+  limit: number,
+  windowMs: number,
+  options: LimiterOptions = {}
+) => {
+  const store = options.store ?? createMemoryHitStore();
+  const now = options.now ?? (() => Date.now());
 
   return {
-    allow(ip: string): boolean {
-      const minuteOk = perMinute.allow(ip);
-      const hourOk = perHour.allow(ip);
+    /** Records a hit and resolves to whether it is within the limit. */
+    async allow(key: string): Promise<boolean> {
+      return store.hit(key, windowMs, limit, now());
+    },
+  };
+};
+
+/** Per-IP limits for the chat: a short burst window and an hourly window. Both must allow the hit. */
+export const createIpLimiter = (options: LimiterOptions = {}) => {
+  const perMinute = createWindowLimiter(demoChatLimits.perIpPerMinute, 60_000, options);
+  const perHour = createWindowLimiter(demoChatLimits.perIpPerHour, 3_600_000, options);
+
+  return {
+    async allow(ip: string): Promise<boolean> {
+      const minuteOk = await perMinute.allow(ip);
+      const hourOk = await perHour.allow(ip);
 
       return minuteOk && hourOk;
     },

@@ -1143,8 +1143,9 @@ addEventListener('resize', () => {
   }, 150);
 });
 
-// eslint-disable-next-line unicorn/prefer-top-level-await -- the console build targets es2020, which has no top-level await
-bootstrap();
+// Not awaited: top-level await is unsupported by the console's es2020 build target, and
+// the module is loaded with `void import(...)`, so nothing waits on this promise.
+void bootstrap();
 
 /* eslint-enable max-lines */
 /* eslint-enable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods */

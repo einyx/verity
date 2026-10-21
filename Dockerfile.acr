@@ -106,7 +106,7 @@ COPY packages/tunnel/package.json packages/tunnel/package.json
 COPY packages/connectors/templates packages/connectors/templates
 
 ### Install dependencies (cached while manifests are unchanged) ###
-RUN pnpm i
+RUN pnpm i --frozen-lockfile
 
 COPY . .
 

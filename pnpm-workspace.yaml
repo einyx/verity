@@ -8,6 +8,8 @@ allowBuilds:
   core-js: true
   esbuild: true
   puppeteer: true
+  # Native resolver pulled in by a dependency of the lint/build tooling; its install script must run for the image's non-frozen `pnpm i`.
+  unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@assistant-ui/core@0.3.30'
   - '@assistant-ui/react@0.15.30'

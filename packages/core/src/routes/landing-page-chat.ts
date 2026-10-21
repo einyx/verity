@@ -198,28 +198,31 @@ const modelRetryDelayMs = 300;
 const askModel = async (
   deps: LandingPageChatDeps,
   messages: ChatMessage[],
-  context?: string,
-  attempt = 1
+  context?: string
 ): Promise<ModelReply | undefined> => {
-  try {
-    return await deps.callModel(messages, context);
-  } catch (error: unknown) {
-    // Only the error message is logged: it names the status or the network failure, never the visitor's text.
-    // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
-    console.error(
-      `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
-    );
+  const attempts = Array.from({ length: modelAttempts }, (_, index) => index + 1);
 
-    if (attempt >= modelAttempts) {
-      return undefined;
+  for (const attempt of attempts) {
+    try {
+      // eslint-disable-next-line no-await-in-loop -- each attempt must finish before deciding whether to retry.
+      return await deps.callModel(messages, context);
+    } catch (error: unknown) {
+      // Only the error message is logged: it names the status or the network failure, never the visitor's text.
+      // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
+      console.error(
+        `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
+
+      if (attempt < modelAttempts) {
+        // eslint-disable-next-line no-await-in-loop -- the retry delay must elapse before the next attempt starts.
+        await new Promise((resolve) => {
+          setTimeout(resolve, modelRetryDelayMs);
+        });
+      }
     }
-
-    await new Promise((resolve) => {
-      setTimeout(resolve, modelRetryDelayMs);
-    });
-
-    return askModel(deps, messages, context, attempt + 1);
   }
+
+  return undefined;
 };
 
 /** Signed links to a lead's brief and slides, or undefined when the link base or secret is not configured. */

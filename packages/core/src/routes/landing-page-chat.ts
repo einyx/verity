@@ -28,6 +28,7 @@ import {
   recordTurnSafely,
   type RecordedChatTurn,
 } from './landing-page-chat-store.js';
+import { createDemoRequest } from './landing-page-demo-request.js';
 import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-page-docs.js';
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
 
@@ -49,6 +50,8 @@ export type LandingPageChatDeps = {
   recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
   /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
   recordLead?: (lead: LeadRecord) => Promise<void>;
+  /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
+  provisionDemo?: (lead: DemoLead) => Promise<void>;
 };
 
 type Session = {
@@ -204,6 +207,14 @@ const applyReply = async (
     }
 
     await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'sent' });
+
+    try {
+      await deps.provisionDemo?.(lead);
+    } catch {
+      // The lead is already saved and emailed, so the team can still follow up. The log names no details.
+      // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
+      console.error('Landing page chat: the Kubo demo request could not be filed.');
+    }
 
     state.sessions.set(sessionId, {
       ...session,
@@ -416,6 +427,13 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
   recordLead: async (lead) => {
     const pool = await EnvSet.sharedPool;
     await recordLandingLead(pool, lead);
+  },
+  provisionDemo: async (lead) => {
+    // Off unless the portal's shared token is configured, which matches the portal's own switch.
+    await createDemoRequest(lead, {
+      token: process.env.KUBO_DEMO_REQUEST_TOKEN,
+      fetch: async (url, init) => fetch(url, init),
+    });
   },
 });
 /* eslint-enable max-lines */

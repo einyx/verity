@@ -74,7 +74,72 @@ const consentAsked = async (deps: LandingPageChatDeps) => {
   return state;
 };
 
+describe('handleChatTurn Turnstile gate', () => {
+  it('refuses a new session without a confirmed token, and makes no model call', async () => {
+    const { deps, modelCalls } = fakeDeps({});
+    const verified: Array<string | undefined> = [];
+    deps.verifyTurnstile = async (token) => {
+      verified.push(token);
+
+      return false;
+    };
+
+    const result = await handleChatTurn(turn('What is meshX?'), deps, createChatState());
+
+    expect(result.status).toBe(403);
+    expect(result.body).toMatchObject({ code: 'landing_page.chat_verification_failed' });
+    expect(verified).toEqual([undefined]);
+    expect(modelCalls).toHaveLength(0);
+  });
+
+  it('starts a new session when the token is confirmed', async () => {
+    const { deps, modelCalls } = fakeDeps({});
+    deps.verifyTurnstile = async (token) => token === 'good-token';
+
+    const result = await handleChatTurn(
+      { ...turn('What is meshX?'), turnstileToken: 'good-token' },
+      deps,
+      createChatState()
+    );
+
+    expect(result.status).toBe(200);
+    expect(modelCalls).toHaveLength(1);
+  });
+
+  it('checks the token once per session, and not again on later turns', async () => {
+    const { deps } = fakeDeps({});
+    const verified: string[] = [];
+    deps.verifyTurnstile = async (token) => {
+      verified.push(token ?? '');
+
+      return true;
+    };
+    const state = createChatState();
+
+    await handleChatTurn({ ...turn('First question'), turnstileToken: 'first' }, deps, state);
+    await handleChatTurn(turn('A follow-up'), deps, state);
+
+    expect(verified).toEqual(['first']);
+  });
+});
+
 describe('handleChatTurn', () => {
+  it('answers with the fallback and makes no model call while the kill switch is off', async () => {
+    const previous = process.env.LANDING_CHAT_MODEL_ENABLED;
+    process.env.LANDING_CHAT_MODEL_ENABLED = 'false';
+
+    try {
+      const { deps, modelCalls } = fakeDeps({});
+
+      const result = await handleChatTurn(turn('What is meshX?'), deps, createChatState());
+
+      expect(result.status).toBe(200);
+      expect(modelCalls).toHaveLength(0);
+    } finally {
+      process.env.LANDING_CHAT_MODEL_ENABLED = previous;
+    }
+  });
+
   it('returns not found and does not call the model while the switch is off', async () => {
     const { deps, modelCalls } = fakeDeps({ published: { demoChat: { enabled: false } } });
 

@@ -257,6 +257,8 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
           "'self'",
           ...conditionalArray(!isProduction && ["'unsafe-eval'", "'unsafe-inline'"]),
           ...cdnSources,
+          // The landing-page demo chat loads the Cloudflare Turnstile widget.
+          'https://challenges.cloudflare.com',
         ],
         connectSrc: [
           "'self'",
@@ -266,7 +268,14 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
           ...ossSurveyOrigins,
           ...developmentOrigins,
         ],
-        frameSrc: ["'self'", ...adminOrigins, ...coreOrigins, defaultTenantOrigin],
+        // The Turnstile widget renders in a challenges.cloudflare.com frame.
+        frameSrc: [
+          "'self'",
+          ...adminOrigins,
+          ...coreOrigins,
+          defaultTenantOrigin,
+          'https://challenges.cloudflare.com',
+        ],
       },
     },
   };

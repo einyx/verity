@@ -48,6 +48,7 @@ import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-
 import { parseAcsConnectionString, sendLeadEmail } from './landing-page-lead-email.js';
 import { signLeadFileQuery } from './landing-page-signed.js';
 import { type SlackLeadInput, postLeadToSlack } from './landing-page-slack.js';
+import { verifyTurnstileToken } from './landing-page-turnstile.js';
 
 // Public demo chat on the landing page. Anonymous and model-backed, so the server enforces every limit:
 // the published switch, the per-IP and daily caps, the turn cap, the lead schema, and the transcript.
@@ -71,6 +72,11 @@ export type LandingPageChatDeps = {
   ) => Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined>;
   /** Whether a lead is already saved for this conversation, so another instance does not file it again. */
   loadLeadFiled?: (sessionId: string) => Promise<boolean>;
+  /**
+   * Confirms the Turnstile token that a new chat session must carry. Optional, so tests run without it;
+   * production always supplies it, and a missing or unconfirmed token refuses the session.
+   */
+  verifyTurnstile?: (token: string | undefined, ip: string) => Promise<boolean>;
   /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
   recordLead?: (lead: LeadRecord) => Promise<void>;
   /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
@@ -258,11 +264,22 @@ const unavailableReply = (locale: string | undefined): string => {
   return (tag && demoChatByLocale[tag]?.model_unavailable) ?? demoChatEn.model_unavailable;
 };
 
+/**
+ * Operations kill switch for model spend. Set LANDING_CHAT_MODEL_ENABLED=false to stop every model call.
+ * Visitors then get the localized fallback reply, and their turns are still saved. The value comes from the
+ * process environment, so changing it means restarting the service with the new value.
+ */
+const modelEnabled = () => process.env.LANDING_CHAT_MODEL_ENABLED !== 'false';
+
 const askModel = async (
   deps: LandingPageChatDeps,
   messages: ChatMessage[],
   context?: string
 ): Promise<ModelReply | undefined> => {
+  if (!modelEnabled()) {
+    return undefined;
+  }
+
   const attempts = Array.from({ length: modelAttempts }, (_, index) => index + 1);
 
   for (const attempt of attempts) {
@@ -611,17 +628,40 @@ const reshapeReply = async (
   return retried ?? reply;
 };
 
-export const handleChatTurn = async (
-  input: { sessionId: string; message: string; ip: string; locale?: string },
+/**
+ * A session not held in memory after the transcript is restored is new. Only a new session has to pass the
+ * Turnstile check, so a script without a token cannot open sessions or use up the daily cap.
+ * Undefined when the turn may go on.
+ */
+const checkNewSession = async (
+  input: { sessionId: string; ip: string; turnstileToken?: string },
   deps: LandingPageChatDeps,
   state: ChatState
-): Promise<ChatResult> => {
-  const rejected = await preflight(input, deps, state);
-
-  if (rejected) {
-    return rejected;
+): Promise<ChatResult | undefined> => {
+  if (state.sessions.has(input.sessionId) || !deps.verifyTurnstile) {
+    return undefined;
   }
 
+  const verified = await deps.verifyTurnstile(input.turnstileToken, input.ip);
+
+  return verified
+    ? undefined
+    : error(
+        403,
+        'landing_page.chat_verification_failed',
+        'Please complete the check and try again.'
+      );
+};
+
+/**
+ * Restores the saved transcript, then checks a new session's Turnstile token. Returns the rejection to send,
+ * or undefined when the turn may go on.
+ */
+const admitTurn = async (
+  input: { sessionId: string; ip: string; turnstileToken?: string },
+  deps: LandingPageChatDeps,
+  state: ChatState
+): Promise<ChatResult | undefined> => {
   const restored = await restoreSavedTranscript(input.sessionId, deps, state);
 
   if (!restored) {
@@ -631,6 +671,32 @@ export const handleChatTurn = async (
       'landing_page.chat_unavailable',
       'The assistant is unavailable. Please try again or use the request form.'
     );
+  }
+
+  return checkNewSession(input, deps, state);
+};
+
+export const handleChatTurn = async (
+  input: {
+    sessionId: string;
+    message: string;
+    ip: string;
+    locale?: string;
+    turnstileToken?: string;
+  },
+  deps: LandingPageChatDeps,
+  state: ChatState
+): Promise<ChatResult> => {
+  const rejected = await preflight(input, deps, state);
+
+  if (rejected) {
+    return rejected;
+  }
+
+  const admission = await admitTurn(input, deps, state);
+
+  if (admission) {
+    return admission;
   }
 
   const opened = await openSession(input.sessionId, state);
@@ -716,6 +782,8 @@ const chatBodyGuard = z.object({
   message: z.string().max(demoChatLimits.maxMessageLength),
   // The visitor's browser language, so a fallback reply can be written in it. Optional; English is used otherwise.
   locale: z.string().max(16).optional(),
+  // The Turnstile token for a new session. Only checked when the session is new.
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 /** Public route for the landing page chat. Mounted on the admin tenant, Cloud only. */
@@ -724,7 +792,7 @@ export const landingPageChatRoutes = (deps: LandingPageChatDeps, state = createC
 
   router.post(
     '/api/landing-page/chat',
-    koaGuard({ body: chatBodyGuard, status: [200, 400, 404, 429, 502, 503] }),
+    koaGuard({ body: chatBodyGuard, status: [200, 400, 403, 404, 429, 502, 503] }),
     async (ctx, next) => {
       // Behind a trusted proxy, the last X-Forwarded-For entry is the one the nearest proxy added. Earlier
       // entries can be set by the visitor, so they are never used for the limit.
@@ -737,6 +805,12 @@ export const landingPageChatRoutes = (deps: LandingPageChatDeps, state = createC
       return next();
     }
   );
+
+  // The Turnstile site key is public. The browser needs it to draw the check before a session starts.
+  // Null means the check is not configured, and the browser then sends no token.
+  router.get('/api/landing-page/chat/config', (ctx) => {
+    ctx.body = { turnstileSiteKey: process.env.TURNSTILE_SITE_KEY ?? null };
+  });
 
   return router;
 };
@@ -751,6 +825,9 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     return row?.published;
   },
+  // A new session without a token confirmed by Cloudflare is refused. A missing secret refuses too.
+  verifyTurnstile: async (token, ip) =>
+    verifyTurnstileToken(process.env.TURNSTILE_SECRET_KEY, token, ip),
   callModel: async (messages, context) => {
     const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
     const response = await fetch(`${endpoint}/chat/completions`, {

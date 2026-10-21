@@ -60,16 +60,7 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
     assertThat(sub !== clientId, new RequestError({ code: 'auth.forbidden', status: 403 }));
   };
 
-  // Behind the dev-feature flag: without it the routes do not exist for the caller.
-  const assertDevFeature = () => {
-    assertThat(
-      EnvSet.values.isDevFeaturesEnabled,
-      new RequestError({ code: 'entity.not_found', status: 404 })
-    );
-  };
-
   router.get('/api/landing-leads', async (ctx, next) => {
-    assertDevFeature();
     await authenticateAdmin(ctx);
 
     const limit = toPageNumber(ctx.query.limit, defaultPageSize, maxPageSize) || defaultPageSize;
@@ -98,7 +89,6 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
   });
 
   router.get('/api/landing-leads/:sessionId/transcript', async (ctx, next) => {
-    assertDevFeature();
     await authenticateAdmin(ctx);
 
     const sessionId = typeof ctx.params.sessionId === 'string' ? ctx.params.sessionId : '';
@@ -117,7 +107,6 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
   });
 
   router.get('/api/landing-leads/:sessionId/brief.pdf', async (ctx, next) => {
-    assertDevFeature();
     await authenticateAdmin(ctx);
 
     const sessionId = typeof ctx.params.sessionId === 'string' ? ctx.params.sessionId : '';

@@ -104,10 +104,10 @@ beforeEach(() => {
 });
 
 describe('landing leads routes', () => {
-  it('returns not found while dev features are off', async () => {
+  it('serves the leads while dev features are off', async () => {
     env.isDevFeaturesEnabled = false;
     const response = await get('/api/landing-leads');
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(200);
   });
 
   it('refuses a token without the landing page scope', async () => {

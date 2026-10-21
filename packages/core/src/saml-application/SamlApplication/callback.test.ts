@@ -1,4 +1,4 @@
-import { generateKeyPair, SignJWT, type JWTPayload } from 'jose';
+import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTPayload } from 'jose';
 import nock from 'nock';
 
 import {
@@ -12,7 +12,8 @@ const mockUser = { sub: 'user123', auth_time: 1_700_000_000 };
 const mockIssuer = 'https://issuer.example.com';
 const mockEndpoint = 'https://auth.example.com';
 const mockSamlApplicationId = 'saml-app-id';
-const envSet = createMockSamlEnvSet({ issuer: mockIssuer, localJWKSet: async () => publicKey });
+const localJWKSet = createLocalJWKSet({ keys: [await exportJWK(publicKey)] });
+const envSet = createMockSamlEnvSet({ issuer: mockIssuer, localJWKSet });
 const samlApp = new SamlApplication(
   createMockSamlApplicationDetails(),
   mockSamlApplicationId,

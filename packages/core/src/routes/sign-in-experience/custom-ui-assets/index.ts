@@ -76,6 +76,24 @@ const uploadThroughAzureFunction = async (
   });
 };
 
+// Generic like koaQuotaGuard, so the router infers one context type from the guard chain.
+const koaSelfHostedBringYourUiGuard =
+  <StateT, ContextT, ResponseBodyT>(): MiddlewareType<StateT, ContextT, ResponseBodyT> =>
+  // eslint-disable-next-line unicorn/consistent-function-scoping -- The returned middleware must be generic over the router's context types, which a module-level arrow cannot infer.
+  async (_, next) => {
+    // Custom UI upload is activated in this fork without a license.
+    assertThat(
+      true,
+      new RequestError({
+        code: 'subscription.limit_exceeded',
+        status: 403,
+        data: { key: 'bringYourUiEnabled' },
+      })
+    );
+
+    return next();
+  };
+
 export default function customUiAssetsRoutes<T extends ManagementApiRouter>(
   ...[
     router,
@@ -91,24 +109,11 @@ export default function customUiAssetsRoutes<T extends ManagementApiRouter>(
    * Outside Cloud the quota guard is a no-op. Use effective license entitlements so Bring your UI
    * falls back to the OSS default when the offline grace period ends.
    */
-  const koaSelfHostedBringYourUiGuard: MiddlewareType = async (_, next) => {
-    // Custom UI upload is activated in this fork without a license.
-    assertThat(
-      true,
-      new RequestError({
-        code: 'subscription.limit_exceeded',
-        status: 403,
-        data: { key: 'bringYourUiEnabled' },
-      })
-    );
-
-    return next();
-  };
 
   router.post(
     '/sign-in-exp/default/custom-ui-assets',
     isSelfHosted
-      ? koaSelfHostedBringYourUiGuard
+      ? koaSelfHostedBringYourUiGuard()
       : koaQuotaGuard({ key: 'bringYourUiEnabled', quota }),
     koaGuard({
       files: object({

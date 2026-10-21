@@ -12,6 +12,12 @@ import { createLocalJWKSet } from 'jose';
 import { getOidcProviderPublicJwks } from '#src/libraries/oidc-private-key.js';
 import { exportJWK } from '#src/utils/jwks.js';
 
+/** The ML-DSA algorithms Logto generates for AKP keys. Any other value is not a signing algorithm oidc-provider accepts. */
+const akpSigningAlgs = ['ML-DSA-44', 'ML-DSA-65', 'ML-DSA-87'] as const;
+
+const getAkpSigningAlg = (alg: string | undefined) =>
+  akpSigningAlgs.find((candidate) => candidate === alg);
+
 const getEcSigningAlg = (crv: string | undefined) => {
   switch (crv) {
     case 'P-256': {
@@ -81,7 +87,7 @@ const loadOidcValues = async (
    */
   const jwkSigningAlg =
     conditional(currentPrivateJwk.kty === 'EC' && getEcSigningAlg(currentPrivateJwk.crv)) ??
-    conditional(currentPrivateJwk.kty === 'AKP' && currentPrivateJwk.alg);
+    (currentPrivateJwk.kty === 'AKP' ? getAkpSigningAlg(currentPrivateJwk.alg) : undefined);
 
   return Object.freeze({
     cookieKeys,

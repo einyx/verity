@@ -24,6 +24,7 @@ import { type AllClientMetadata, type ClientAuthMethod, errors } from 'oidc-prov
 import type { EnvSet } from '#src/env-set/index.js';
 
 import { escapeRegExp, getEffectivePort } from './redirect-uri/utils.js';
+import { toAsymmetricSigningAlg } from './signing-alg.js';
 
 /**
  * Build constant client metadata for an application based on its type and optional flags.
@@ -40,7 +41,7 @@ export const getConstantClientMetadata = (
   type: ApplicationType,
   options?: Pick<CustomClientMetadata, 'allowTokenExchange' | 'isDeviceFlow'>
 ): AllClientMetadata => {
-  const { jwkSigningAlg } = envSet.oidc;
+  const jwkSigningAlg = toAsymmetricSigningAlg(envSet.oidc.jwkSigningAlg);
 
   const optionalGrantTypes = condArray(options?.allowTokenExchange && GrantType.TokenExchange);
 

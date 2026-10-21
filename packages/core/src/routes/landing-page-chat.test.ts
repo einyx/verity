@@ -82,11 +82,11 @@ describe('handleChatTurn', () => {
 
   it('retries the model once when it fails transiently, then replies normally', async () => {
     const { deps, modelCalls } = fakeDeps({});
-    let failures = 1;
-    const callModel = deps.callModel;
+    const failures = { left: 1 };
+    const { callModel } = deps;
     deps.callModel = async (messages, context) => {
-      if (failures > 0) {
-        failures -= 1;
+      if (failures.left > 0) {
+        failures.left -= 1;
         modelCalls.push(messages);
         throw new Error('Model returned 429');
       }

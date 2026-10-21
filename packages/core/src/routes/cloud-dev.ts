@@ -1,4 +1,4 @@
-import type { Context, Next } from 'koa';
+import type { Context, Middleware, Next } from 'koa';
 import proxy from 'koa-proxies';
 
 import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
@@ -52,7 +52,8 @@ export const localCloudRoutes = () => {
   // The default tenant's Management API is served by this instance on its user endpoint.
   // Each tenant is served on its own host when the endpoint is domain-based (`http://*.host`), so the
   // proxy targets the tenant's host. Otherwise every tenant shares the endpoint.
-  const tenantProxies = new Map<string, ReturnType<typeof proxy>>();
+  // Typed with koa's default Middleware: ReturnType<typeof proxy> resolves to koa-proxies' last overload, which does not match the proxy the call returns.
+  const tenantProxies = new Map<string, Middleware>();
   const tenantProxyFor = (tenantId: string) => {
     const existing = tenantProxies.get(tenantId);
 

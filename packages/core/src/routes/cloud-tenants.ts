@@ -8,7 +8,7 @@ import {
   TenantTag,
 } from '@logto/schemas';
 import { sql } from '@silverhand/slonik';
-import type { Context, Next } from 'koa';
+import type { Context } from 'koa';
 import Router from 'koa-router';
 import { z } from 'zod';
 
@@ -111,23 +111,13 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     }
   };
 
-  const authorize = (scope: CloudScope) => async (ctx: Context, next: Next) => {
-    await authenticate(ctx, scope);
+  router.get('/api/tenants', koaGuard({ status: [200, 304, 401, 403] }), async (ctx, next) => {
+    const pool = await EnvSet.sharedPool;
+    const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
 
-    return next();
-  };
-
-  router.get(
-    '/api/tenants',
-    authorize(CloudScope.ManageTenantSelf),
-    koaGuard({ status: [200, 304, 401, 403] }),
-    async (ctx, next) => {
-      const pool = await EnvSet.sharedPool;
-      const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
-
-      // The admin tenant is the instance's own console. Only its operator, who holds the admin role there,
-      // sees it in the list. Every other user, including Cloud customers, sees customer tenants only.
-      const operator = await pool.maybeOne<{ userId: string }>(sql`
+    // The admin tenant is the instance's own console. Only its operator, who holds the admin role there,
+    // sees it in the list. Every other user, including Cloud customers, sees customer tenants only.
+    const operator = await pool.maybeOne<{ userId: string }>(sql`
         select ur.user_id as "userId"
         from users_roles ur
         join roles r on r.id = ur.role_id
@@ -135,23 +125,22 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
         limit 1
       `);
 
-      const rows = await pool.any<TenantRow>(sql`
+    const rows = await pool.any<TenantRow>(sql`
         select id, name, tag, region_name as "regionName", created_at as "createdAt"
         from tenants
         where id <> ${adminTenantId} or ${Boolean(operator)}
         order by created_at
       `);
-      ctx.body = rows.map((row) => toTenantResponse(row));
+    ctx.body = rows.map((row) => toTenantResponse(row));
 
-      return next();
-    }
-  );
+    return next();
+  });
 
   router.get(
     '/api/tenants/:tenantId',
-    authorize(CloudScope.ManageTenantSelf),
     koaGuard({ status: [200, 304, 401, 403, 404] }),
     async (ctx, next) => {
+      await authenticate(ctx, CloudScope.ManageTenantSelf);
       const pool = await EnvSet.sharedPool;
 
       const row = await pool.maybeOne<TenantRow>(sql`

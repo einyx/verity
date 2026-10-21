@@ -8,6 +8,8 @@ import RequestError from '#src/errors/RequestError/index.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 
+import { toAsymmetricSigningAlg } from './signing-alg.js';
+
 export const isReservedResource = (indicator: string): indicator is ReservedResource =>
   // eslint-disable-next-line no-restricted-syntax -- it's the best way to do it
   Object.values(ReservedResource).includes(indicator as ReservedResource);
@@ -17,7 +19,7 @@ export const getSharedResourceServerData = (
 ): Pick<ResourceServer, 'accessTokenFormat' | 'jwt'> => ({
   accessTokenFormat: 'jwt',
   jwt: {
-    sign: { alg: envSet.oidc.jwkSigningAlg },
+    sign: { alg: toAsymmetricSigningAlg(envSet.oidc.jwkSigningAlg) },
   },
 });
 

@@ -18,6 +18,8 @@ const config = {
   moduleNameMapper: {
     '^#src/(.*)\\.js(x)?$': '<rootDir>/build/$1',
     '^(chalk|inquirer)$': '<rootDir>/../shared/lib/esm/module-proxy.js',
+    // pptxgenjs ships an ESM-only entry that Jest cannot load; its CommonJS build is used instead.
+    '^pptxgenjs$': '<rootDir>/node_modules/pptxgenjs/dist/pptxgen.cjs.js',
     // Map the connector-kit to the installed version rather than finding it from the `shared` package (which is the default behavior of `mockEsm` in the `shared` package)
     '^@logto/connector-kit$': '<rootDir>/node_modules/@logto/connector-kit/lib/index.js',
   },

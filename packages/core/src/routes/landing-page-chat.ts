@@ -60,7 +60,9 @@ export type LandingPageChatDeps = {
   /** Saves the conversation in the admin tenant. Optional, so the chat works without a store. */
   recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
   /** Reads a saved conversation, so a turn served by another instance continues the same chat. */
-  loadSession?: (sessionId: string) => Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined>;
+  loadSession?: (
+    sessionId: string
+  ) => Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined>;
   /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
   recordLead?: (lead: LeadRecord) => Promise<void>;
   /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
@@ -196,27 +198,28 @@ const modelRetryDelayMs = 300;
 const askModel = async (
   deps: LandingPageChatDeps,
   messages: ChatMessage[],
-  context?: string
+  context?: string,
+  attempt = 1
 ): Promise<ModelReply | undefined> => {
-  for (let attempt = 1; attempt <= modelAttempts; attempt += 1) {
-    try {
-      return await deps.callModel(messages, context);
-    } catch (error: unknown) {
-      // Only the error message is logged: it names the status or the network failure, never the visitor's text.
-      // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
-      console.error(
-        `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
-      );
+  try {
+    return await deps.callModel(messages, context);
+  } catch (error: unknown) {
+    // Only the error message is logged: it names the status or the network failure, never the visitor's text.
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
+    console.error(
+      `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
+    );
 
-      if (attempt < modelAttempts) {
-        await new Promise((resolve) => {
-          setTimeout(resolve, modelRetryDelayMs);
-        });
-      }
+    if (attempt >= modelAttempts) {
+      return undefined;
     }
-  }
 
-  return undefined;
+    await new Promise((resolve) => {
+      setTimeout(resolve, modelRetryDelayMs);
+    });
+
+    return askModel(deps, messages, context, attempt + 1);
+  }
 };
 
 /** Signed links to a lead's brief and slides, or undefined when the link base or secret is not configured. */
@@ -368,6 +371,30 @@ const applyReply = async (
 };
 
 /** One visitor turn. Returns the status and body to send. Pure apart from the injected dependencies. */
+/**
+ * Another instance may have added turns since this one last saw the conversation. Always continue from
+ * the saved transcript when one exists, so a stale copy here never drops a turn.
+ */
+const restoreSavedTranscript = async (
+  sessionId: string,
+  deps: LandingPageChatDeps,
+  state: ChatState
+): Promise<void> => {
+  if (!deps.loadSession) {
+    return;
+  }
+
+  const stored = await deps.loadSession(sessionId);
+
+  if (stored) {
+    state.sessions.set(sessionId, {
+      messages: stored.messages,
+      userTurns: stored.messages.filter((item) => item.role === 'user').length,
+      submitted: stored.submitted,
+    });
+  }
+};
+
 export const handleChatTurn = async (
   input: { sessionId: string; message: string; ip: string },
   deps: LandingPageChatDeps,
@@ -379,19 +406,7 @@ export const handleChatTurn = async (
     return rejected;
   }
 
-  // Another instance may have added turns since this one last saw the conversation. Always continue from
-  // the saved transcript when one exists, so a stale copy here never drops a turn.
-  if (deps.loadSession) {
-    const stored = await deps.loadSession(input.sessionId);
-
-    if (stored) {
-      state.sessions.set(input.sessionId, {
-        messages: stored.messages,
-        userTurns: stored.messages.filter((item) => item.role === 'user').length,
-        submitted: stored.submitted,
-      });
-    }
-  }
+  await restoreSavedTranscript(input.sessionId, deps, state);
 
   const opened = openSession(input.sessionId, state);
 

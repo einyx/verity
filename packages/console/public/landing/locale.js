@@ -3,10 +3,24 @@
 (() => {
   const storageKey = 'landing-locale';
   const locales = [
-    ['en', 'English'], ['ar', 'العربية'], ['de', 'Deutsch'], ['es', 'Español'], ['fa-ir', 'فارسی'],
-    ['fr', 'Français'], ['it', 'Italiano'], ['ja', '日本語'], ['ko', '한국어'], ['pl-pl', 'Polski'],
-    ['pt-br', 'Português (Brasil)'], ['pt-pt', 'Português (Portugal)'], ['ru', 'Русский'], ['th', 'ไทย'],
-    ['tr-tr', 'Türkçe'], ['zh-cn', '简体中文'], ['zh-hk', '繁體中文（香港）'], ['zh-tw', '繁體中文（台灣）'],
+    ['en', 'English'],
+    ['ar', 'العربية'],
+    ['de', 'Deutsch'],
+    ['es', 'Español'],
+    ['fa-ir', 'فارسی'],
+    ['fr', 'Français'],
+    ['it', 'Italiano'],
+    ['ja', '日本語'],
+    ['ko', '한국어'],
+    ['pl-pl', 'Polski'],
+    ['pt-br', 'Português (Brasil)'],
+    ['pt-pt', 'Português (Portugal)'],
+    ['ru', 'Русский'],
+    ['th', 'ไทย'],
+    ['tr-tr', 'Türkçe'],
+    ['zh-cn', '简体中文'],
+    ['zh-hk', '繁體中文（香港）'],
+    ['zh-tw', '繁體中文（台灣）'],
   ];
   const triggers = [...document.querySelectorAll('[data-locale-button]')];
   const list = document.querySelector('[data-locale-list]');
@@ -17,7 +31,14 @@
     const nodes = [];
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.parentElement && !['SCRIPT', 'STYLE'].includes(node.parentElement.tagName) && node.nodeValue.trim()) {
+      // The language names themselves (the list and the trigger label) are never translated.
+      const inPicker = node.parentElement?.closest('[data-locale-list], [data-locale-button]');
+      if (
+        node.parentElement &&
+        !inPicker &&
+        !['SCRIPT', 'STYLE'].includes(node.parentElement.tagName) &&
+        node.nodeValue.trim()
+      ) {
         nodes.push(node);
       }
     }

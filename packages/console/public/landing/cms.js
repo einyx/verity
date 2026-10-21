@@ -6,7 +6,12 @@
 (() => {
   const read = (doc, path) => path.split('.').reduce((value, key) => value?.[key], doc);
 
+  // The last document filled, so the preview can refill it after the language changes.
+  let lastDoc;
+
   const fill = (doc) => {
+    lastDoc = doc;
+
     for (const el of document.querySelectorAll('[data-cms]')) {
       // Never overwrite the text the visitor is typing into.
       if (el === document.activeElement) {
@@ -24,7 +29,8 @@
         continue;
       }
 
-      const value = doc.copy?.[el.dataset.cmsCopy];
+      // Overrides are per language. The page's language is set by locale.js, so it is read here.
+      const value = doc.copy?.[el.dataset.cmsCopy]?.[document.documentElement.lang];
       if (typeof value === 'string') {
         el.textContent = value;
       }
@@ -86,12 +92,28 @@
     if (event.data?.type === 'meshx-cms-draft' && event.data.doc) {
       fill(event.data.doc);
     }
+
+    // The editor picked a language to preview. The page switches to it with its own language menu,
+    // then the draft is filled again so the overrides for that language show. The translation loads
+    // asynchronously, so the refill waits for it.
+    if (event.data?.type === 'meshx-cms-locale' && /^[a-z-]+$/.test(event.data.code)) {
+      document
+        .querySelector(`[data-locale-list] button[data-locale="${event.data.code}"]`)
+        ?.click();
+      setTimeout(() => {
+        if (lastDoc) {
+          fill(lastDoc);
+        }
+      }, 800);
+    }
   });
 
   // Text marked for the CMS is editable in place. Links and buttons are not navigated to in preview.
   for (const el of document.querySelectorAll('[data-cms], [data-cms-copy]')) {
     // Extra copy is stored under `copy.<id>` in the draft; the main copy uses its own dotted path.
-    const path = el.dataset.cms ?? `copy.${el.dataset.cmsCopy}`;
+    // Extra copy is stored per language, so the path is read when the edit is made.
+    const path = () =>
+      el.dataset.cms ?? `copy.${el.dataset.cmsCopy}.${document.documentElement.lang}`;
     // plaintext-only is not supported by every browser, so plain editing is used and pasting is
     // limited to plain text, which keeps the stored copy free of formatting.
     el.setAttribute('contenteditable', 'true');
@@ -102,7 +124,7 @@
     });
     el.addEventListener('input', () => {
       window.parent.postMessage(
-        { type: 'meshx-cms-edit', path, value: el.textContent },
+        { type: 'meshx-cms-edit', path: path(), value: el.textContent },
         location.origin
       );
     });

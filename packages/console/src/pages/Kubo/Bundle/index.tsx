@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import ConnectionIcon from '@/assets/icons/connection.svg?react';
 import KeyIcon from '@/assets/icons/key.svg?react';
 import ShieldIcon from '@/assets/icons/shield.svg?react';
-import uploadSecurityImage from '@/assets/images/wizard/upload-security-pixel.png';
+import bundleImage from '@/assets/images/wizard/bundle-pixel.png';
 import Button from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
 import TextInput from '@/ds-components/TextInput';
@@ -124,7 +124,7 @@ function Bundle() {
                 aria-current={isActive ? 'step' : undefined}
               >
                 <div className={getStartedStyles.modelBand}>
-                  <img className={styles.stepImage} src={uploadSecurityImage} alt="" />
+                  <img className={styles.bandArt} src={bundleImage} alt="" />
                 </div>
                 <div className={getStartedStyles.modelBody}>
                   <div className={getStartedStyles.resourceHeader}>

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The Kubo proxy keeps its routes in one file, next to the portal calls they forward. */
 import { array, boolean, number, object, string } from 'zod';
 
 import koaGuard from '#src/middleware/koa-guard.js';
@@ -96,6 +97,34 @@ const priceKshowsNodes = async (snapshot: { nodes?: KshowsNode[] }) => {
   return { ...snapshot, nodes };
 };
 
+// Approve or reject a demo request. Approval is what starts the tenant's provisioning, so these are the
+// operator's own actions; the request name is checked before it is passed on to the portal.
+const demoRequestAction =
+  (action: 'approve' | 'reject') =>
+  async (ctx: ManagementApiRouterContext, next: () => Promise<unknown>) => {
+    const name = typeof ctx.params.name === 'string' ? ctx.params.name : '';
+
+    if (!/^[\da-z-]{1,63}$/.test(name)) {
+      ctx.status = 400;
+      ctx.body = { message: 'Invalid demo request name.' };
+      return;
+    }
+
+    const response = await fetch(new URL(`/api/demorequests/${name}/${action}`, kuboPortalUrl()), {
+      method: 'POST',
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      upstreamError(ctx, `Kubo portal returned ${response.status}`);
+      return;
+    }
+
+    ctx.body = { ok: true };
+    return next();
+  };
+
 const forward = async (ctx: ManagementApiRouterContext, path: string) => {
   const baseUrl = kuboPortalUrl();
   const response = await fetch(new URL(path, baseUrl), {
@@ -135,6 +164,9 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
     await forward(ctx, '/api/cluster/economics');
     return next();
   });
+
+  router.post('/kubo/demorequests/:name/approve', demoRequestAction('approve'));
+  router.post('/kubo/demorequests/:name/reject', demoRequestAction('reject'));
 
   router.get('/kubo/demorequests', async (ctx, next) => {
     await forward(ctx, '/api/demorequests');
@@ -359,3 +391,4 @@ export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: R
     }
   );
 }
+/* eslint-enable max-lines */

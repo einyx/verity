@@ -1,6 +1,6 @@
-import { buildBriefHtml, renderBriefPdf } from './landing-page-brief.js';
+import { type BriefInput, buildBriefHtml, renderBriefPdf } from './landing-page-brief.js';
 
-const input = {
+const input: BriefInput = {
   lead: {
     firstName: 'Sam',
     lastName: 'Lee',
@@ -39,7 +39,7 @@ describe('buildBriefHtml', () => {
   });
 
   it('leaves out the booking link when no scheduling URL is configured', () => {
-    expect(buildBriefHtml({ ...input, bookingUrl: null })).not.toContain('Book the next meeting');
+    expect(buildBriefHtml({ ...input, bookingUrl: undefined })).not.toContain('Book the next meeting');
   });
 
   it('says so when no company profile exists yet', () => {

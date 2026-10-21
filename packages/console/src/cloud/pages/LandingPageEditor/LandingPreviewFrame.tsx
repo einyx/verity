@@ -37,10 +37,13 @@ export const setAtPath = (source: unknown, path: string, value: string): unknown
  */
 function LandingPreviewFrame({
   draft,
+  locale,
   onEdit,
   onMove,
 }: {
   readonly draft: unknown;
+  /** The language the preview shows, and the one that edits are saved under. */
+  readonly locale: string;
   readonly onEdit: (path: string, value: string) => void;
   readonly onMove: (id: string, x: number, y: number) => void;
 }) {
@@ -53,9 +56,20 @@ function LandingPreviewFrame({
     );
   }, [draft]);
 
+  const sendLocale = useCallback(() => {
+    frameRef.current?.contentWindow?.postMessage(
+      { type: 'meshx-cms-locale', code: locale },
+      window.location.origin
+    );
+  }, [locale]);
+
   useEffect(() => {
     sendDraft();
   }, [sendDraft]);
+
+  useEffect(() => {
+    sendLocale();
+  }, [sendLocale]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent<unknown>) => {
@@ -74,6 +88,7 @@ function LandingPreviewFrame({
 
       if (data.type === 'meshx-cms-ready') {
         sendDraft();
+        sendLocale();
       }
 
       if (data.type === 'meshx-cms-edit' && typeof data.path === 'string') {
@@ -98,7 +113,7 @@ function LandingPreviewFrame({
     return () => {
       window.removeEventListener('message', onMessage);
     };
-  }, [onEdit, onMove, sendDraft]);
+  }, [onEdit, onMove, sendDraft, sendLocale]);
 
   return (
     <>

@@ -36,7 +36,6 @@ const fakePool = {
   },
 };
 
-const env = { isDevFeaturesEnabled: true };
 const auth = {
   scopes: ['manage:landing:page'] as string[],
   token: { sub: 'user-1', clientId: 'console-app' },
@@ -47,7 +46,6 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
     get values() {
       return {
         adminUrlSet: { endpoint: new URL('https://admin.example.com') },
-        isDevFeaturesEnabled: env.isDevFeaturesEnabled,
         isProduction: false,
         isUnitTest: true,
       };
@@ -58,6 +56,12 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
 
 jest.unstable_mockModule('#src/middleware/koa-auth/index.js', () => ({
   verifyBearerTokenFromRequest: async () => ({ ...auth.token, scopes: auth.scopes }),
+}));
+
+// The slides builder loads an ES-only PowerPoint library that Jest cannot parse here. These tests do not
+// build slides, so the builder is replaced.
+jest.unstable_mockModule('./landing-page-slides.js', () => ({
+  buildSlidesDeck: async () => Buffer.from(''),
 }));
 
 const { landingPageLeadRoutes } = await import('./landing-page-leads.js');
@@ -88,7 +92,6 @@ const lead = (index: number): Row => ({
 });
 
 beforeEach(() => {
-  env.isDevFeaturesEnabled = true;
   auth.scopes = ['manage:landing:page'];
   auth.token = { sub: 'user-1', clientId: 'console-app' };
   state.leads = [lead(1), lead(2), lead(3)];
@@ -104,12 +107,6 @@ beforeEach(() => {
 });
 
 describe('landing leads routes', () => {
-  it('returns not found while dev features are off', async () => {
-    env.isDevFeaturesEnabled = false;
-    const response = await get('/api/landing-leads');
-    expect(response.status).toBe(404);
-  });
-
   it('refuses a token without the landing page scope', async () => {
     auth.scopes = ['read:something-else'];
     const response = await get('/api/landing-leads');

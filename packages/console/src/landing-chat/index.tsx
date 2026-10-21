@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The landing chat keeps its adapter, thread and composer together, so the widget reads as one file. */
 // Demo chat for the static landing page. Built into `public/landing/demo-chat-app.js` by
 // `vite.landing-chat.config.ts`. The model call and every limit run on the server in the landing page
 // chat route, so this file only renders the conversation and forwards each visitor turn.
@@ -76,10 +77,13 @@ const readError = async (response: Response): Promise<string> => {
 const createAdapter = (
   sessionId: string,
   onStarted: () => void,
-  onSubmitted: () => void
+  onSubmitted: () => void,
+  onOptions: (options: string[]) => void
 ): ChatModelAdapter => ({
   async run({ messages, abortSignal }) {
     onStarted();
+    // The choices from the last reply are cleared once the visitor replies.
+    onOptions([]);
     const last = messages.at(-1);
     const message = (last?.content ?? [])
       .flatMap((part) => (part.type === 'text' ? [part.text] : []))
@@ -111,6 +115,13 @@ const createAdapter = (
     ) {
       onSubmitted();
     }
+
+    // Quick-reply choices (contact method, yes or no) that the reply offers as buttons.
+    const options =
+      typeof data === 'object' && data !== null && 'options' in data && Array.isArray(data.options)
+        ? data.options.filter((option): option is string => typeof option === 'string')
+        : [];
+    onOptions(options);
 
     return { content: [{ type: 'text', text: reply }] };
   },
@@ -235,6 +246,7 @@ function ThinkingStatus() {
 function DemoChat() {
   const sessionId = useMemo(() => crypto.randomUUID(), []);
   const [submitted, setSubmitted] = useState(false);
+  const [options, setOptions] = useState<string[]>([]);
   // The example placeholder only helps before the first message; afterwards a short prompt is enough.
   const [started, setStarted] = useState(false);
   const adapter = useMemo(
@@ -246,7 +258,8 @@ function DemoChat() {
         },
         () => {
           setSubmitted(true);
-        }
+        },
+        setOptions
       ),
     [sessionId]
   );
@@ -285,6 +298,23 @@ function DemoChat() {
             <ThinkingStatus />
           </ThreadPrimitive.If>
         </ThreadPrimitive.Viewport>
+        {!submitted && options.length > 0 && (
+          <div
+            className="demo-chat-options"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 16px 8px' }}
+          >
+            {options.map((option) => (
+              <ThreadPrimitive.Suggestion
+                key={option}
+                send
+                className="demo-chat-chip"
+                prompt={option}
+              >
+                <span className="demo-chat-idea-label">{option}</span>
+              </ThreadPrimitive.Suggestion>
+            ))}
+          </div>
+        )}
         {submitted ? (
           <p className="demo-chat-status" role="status">
             {closedNotice}
@@ -340,3 +370,4 @@ if (mountPoint) {
     </ChatErrorBoundary>
   );
 }
+/* eslint-enable max-lines */

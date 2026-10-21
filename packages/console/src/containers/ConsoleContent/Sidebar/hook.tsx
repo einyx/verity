@@ -184,7 +184,7 @@ export const useSidebarMenuItems = (): {
           Icon: menuIcons.get_started,
           title: 'leads',
           path: 'leads',
-          // Leads from the landing demo chat. Dev feature, Cloud only, admin tenant only.
+          // Leads from the landing demo chat. Cloud only, admin tenant only.
           isHidden: !(isCloud && currentTenantId === adminTenantId),
         },
         {

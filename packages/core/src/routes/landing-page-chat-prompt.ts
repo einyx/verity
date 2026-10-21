@@ -23,4 +23,5 @@ export const systemPrompt = [
   'Then confirm the next step in one sentence: a solutions engineer reaches out within one business day, the way they chose. Then ask once for consent to be contacted.',
   'In submit_lead, set contactMethod to email, whatsapp, phone or linkedin, and put the number or profile link in contactDetail.',
   'Call submit_lead only after the visitor has agreed to be contacted.',
+  'When you offer a choice of contact method, end your reply with one line exactly: [[options: Email | WhatsApp | Phone call | LinkedIn]]. When you ask whether you may contact them, end your reply with one line exactly: [[options: Yes | No]]. Use that line only for these two questions, and write nothing after it.',
 ].join('\n');

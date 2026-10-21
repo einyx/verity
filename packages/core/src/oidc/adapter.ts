@@ -178,13 +178,14 @@ export default function postgresAdapter(
     return {
       upsert: reject,
       find: async (id) => {
-        if (id === demoAppApplicationId) {
+        // The demo clients are a dev feature, so they are only served when dev features are enabled.
+        if (id === demoAppApplicationId && EnvSet.values.isDevFeaturesEnabled) {
           return buildDemoAppClientMetadata(envSet);
         }
         if (id === accountCenterApplicationId) {
           return buildAccountCenterClientMetadata(envSet);
         }
-        if (id === deviceDemoAppApplicationId) {
+        if (id === deviceDemoAppApplicationId && EnvSet.values.isDevFeaturesEnabled) {
           return buildDeviceDemoAppClientMetadata(envSet);
         }
 

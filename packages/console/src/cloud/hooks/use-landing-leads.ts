@@ -35,6 +35,8 @@ const landingLeadGuard = z.object({
 
 export type LandingLead = z.infer<typeof landingLeadGuard>;
 
+type LeadsListing = { leads: LandingLead[]; bookingUrl?: string | undefined };
+
 const leadsResponseGuard = z.object({
   leads: z.array(landingLeadGuard),
   bookingUrl: z.string().nullable().optional(),
@@ -63,14 +65,14 @@ export const useLandingLeads = () => {
 
   const getToken = useCallback(async () => getAccessToken(cloudApi.indicator), [getAccessToken]);
 
-  const { data, error, isLoading } = useSWR<
-    { leads: LandingLead[]; bookingUrl?: string | undefined },
-    Error
-  >(isAuthenticated ? `${leadsBase}/list` : undefined, async () => {
-    const token = await getToken();
-    const body = leadsResponseGuard.parse(await request(token, ''));
-    return { leads: body.leads, bookingUrl: body.bookingUrl };
-  });
+  const { data, error, isLoading } = useSWR<LeadsListing, Error>(
+    isAuthenticated ? `${leadsBase}/list` : undefined,
+    async (): Promise<LeadsListing> => {
+      const token = await getToken();
+      const body = leadsResponseGuard.parse(await request(token, ''));
+      return { leads: body.leads, bookingUrl: body.bookingUrl ?? undefined };
+    }
+  );
 
   // Loads one session's transcript, only when the team opens that lead.
   const loadTranscript = useCallback(
@@ -100,12 +102,50 @@ export const useLandingLeads = () => {
     [getToken]
   );
 
+  // The slides need the admin token too, so they are fetched here as a file, like the brief.
+  const loadSlides = useCallback(
+    async (sessionId: string): Promise<Blob> => {
+      const token = await getToken();
+      const response = await fetch(
+        `${window.location.origin}${leadsBase}/${encodeURIComponent(sessionId)}/slides.pptx`,
+        { headers: { Authorization: `Bearer ${token ?? ''}` } }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Slides request failed: ${response.status}`);
+      }
+
+      return response.blob();
+    },
+    [getToken]
+  );
+
+  // The slides are fetched with the admin token, the same way as the brief.
+  const loadSlidesPptx = useCallback(
+    async (sessionId: string): Promise<Blob> => {
+      const token = await getToken();
+      const response = await fetch(
+        `${window.location.origin}${leadsBase}/${encodeURIComponent(sessionId)}/slides.pptx`,
+        { headers: { Authorization: `Bearer ${token ?? ''}` } }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Slides request failed: ${response.status}`);
+      }
+
+      return response.blob();
+    },
+    [getToken]
+  );
+
   return {
     leads: data?.leads,
+    loadSlidesPptx,
     bookingUrl: data?.bookingUrl ?? undefined,
     error,
     isLoading,
     loadTranscript,
     loadBriefPdf,
+    loadSlides,
   };
 };

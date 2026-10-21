@@ -18,6 +18,15 @@ const generateEcPrivateKeyPem = (namedCurve: string) =>
     .privateKey.export({ type: 'pkcs8', format: 'pem' })
     .toString();
 
+// @types/node does not type ML-DSA key types yet, so the generator is widened to accept the name.
+const generateMlDsaPrivateKeyPem = () => {
+  const generate = generateKeyPairSync as unknown as (type: 'ml-dsa-65') => {
+    privateKey: { export: (options: Record<string, unknown>) => string };
+  };
+
+  return generate('ml-dsa-65').privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
+};
+
 const generateRsaPrivateKeyPem = () =>
   generateKeyPairSync('rsa', { modulusLength: 2048 })
     .privateKey.export({ type: 'pkcs8', format: 'pem' })
@@ -84,5 +93,68 @@ describe('loadOidcValues', () => {
     expect(jwkSigningAlg).toBe('ES256');
     expect(privateJwks).toHaveLength(2);
     expect(publicJwks).toHaveLength(2);
+  });
+
+  describe('ML-DSA keys', () => {
+    // ML-DSA requires Node.js 24.7+; skip these cases on runtimes without it.
+    const supportsMlDsa = (() => {
+      try {
+        generateMlDsaPrivateKeyPem();
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    const itIfMlDsa = supportsMlDsa ? it : it.skip;
+
+    itIfMlDsa('excludes ML-DSA keys from the keystore when dev features are disabled', async () => {
+      const { privateJwks, publicJwks, jwkSigningAlg } = await loadOidcValues(
+        issuer,
+        buildConfigs([generateEcPrivateKeyPem('prime256v1'), generateMlDsaPrivateKeyPem()]),
+        defaultCimdConfig,
+        false
+      );
+
+      expect(jwkSigningAlg).toBe('ES256');
+      expect(privateJwks.map(({ kty }) => kty)).toEqual(['EC']);
+      expect(publicJwks.map(({ kty }) => kty)).toEqual(['EC']);
+    });
+
+    itIfMlDsa('keeps ML-DSA keys in the keystore when dev features are enabled', async () => {
+      const { privateJwks, publicJwks } = await loadOidcValues(
+        issuer,
+        buildConfigs([generateEcPrivateKeyPem('prime256v1'), generateMlDsaPrivateKeyPem()]),
+        defaultCimdConfig,
+        true
+      );
+
+      expect(privateJwks).toHaveLength(2);
+      expect(privateJwks).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kty: 'AKP' })])
+      );
+      expect(publicJwks).toHaveLength(2);
+    });
+
+    itIfMlDsa('uses ML-DSA-65 as the signing algorithm for an ML-DSA current key', async () => {
+      const { jwkSigningAlg } = await loadOidcValues(
+        issuer,
+        buildConfigs([generateMlDsaPrivateKeyPem()]),
+        defaultCimdConfig,
+        true
+      );
+
+      expect(jwkSigningAlg).toBe('ML-DSA-65');
+    });
+
+    itIfMlDsa('rejects an ML-DSA current key when dev features are disabled', async () => {
+      await expect(
+        loadOidcValues(
+          issuer,
+          buildConfigs([generateMlDsaPrivateKeyPem()]),
+          defaultCimdConfig,
+          false
+        )
+      ).rejects.toThrow('requires dev features to be enabled');
+    });
   });
 });

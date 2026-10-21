@@ -248,7 +248,8 @@ export const createLogtoConfigLibrary = ({
               status === OidcSigningKeyStatus.Next
                 ? signingKeyRotationState?.signingKeyRotationAt
                 : undefined,
-            signingKeyAlgorithm: jwk.kty,
+            // ML-DSA keys report `AKP` as the key type; the algorithm name identifies them.
+            signingKeyAlgorithm: jwk.kty === 'AKP' ? jwk.alg : jwk.kty,
             status,
           });
 

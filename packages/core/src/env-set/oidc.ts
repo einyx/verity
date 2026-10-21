@@ -27,23 +27,50 @@ const getEcSigningAlg = (crv: string | undefined) => {
   }
 };
 
+/**
+ * Dev feature: post-quantum signing keys. ML-DSA keys are removed from the provider keystore
+ * (and so from JWKS) when dev features are disabled.
+ */
+const excludeMlDsaKeys = async (keys: LogtoOidcConfigType[LogtoOidcConfigKey.PrivateKeys]) => {
+  const keyTypes = await Promise.all(
+    keys.map(async ({ value }) => {
+      const jwk = await exportJWK(crypto.createPrivateKey(value));
+
+      return jwk.kty;
+    })
+  );
+
+  return keys.filter((_, index) => keyTypes[index] !== 'AKP');
+};
+
 const loadOidcValues = async (
   issuer: string,
   configs: LogtoOidcConfigType,
-  cimdConfig: CimdConfig
+  cimdConfig: CimdConfig,
+  isDevFeaturesEnabled = false
 ) => {
   const cookieKeys = configs[LogtoOidcConfigKey.CookieKeys].map(({ value }) => value);
   const currentPrivateKey = crypto.createPrivateKey(
     getCurrentOidcPrivateKey(configs[LogtoOidcConfigKey.PrivateKeys]).value
   );
-  const privateKeys = getOidcProviderPrivateKeys(configs[LogtoOidcConfigKey.PrivateKeys]).map(
-    ({ value }) => crypto.createPrivateKey(value)
+  const currentPrivateJwk = await exportJWK(currentPrivateKey);
+
+  if (!isDevFeaturesEnabled && currentPrivateJwk.kty === 'AKP') {
+    throw new Error(
+      'The current OIDC signing key is ML-DSA, which requires dev features to be enabled.'
+    );
+  }
+
+  const providerPrivateKeyConfigs = isDevFeaturesEnabled
+    ? configs[LogtoOidcConfigKey.PrivateKeys]
+    : await excludeMlDsaKeys(configs[LogtoOidcConfigKey.PrivateKeys]);
+  const privateKeys = getOidcProviderPrivateKeys(providerPrivateKeyConfigs).map(({ value }) =>
+    crypto.createPrivateKey(value)
   );
   const session = configs[LogtoOidcConfigKey.Session];
   const privateJwks = await Promise.all(privateKeys.map(async (key) => exportJWK(key)));
-  const publicJwks = await getOidcProviderPublicJwks(configs[LogtoOidcConfigKey.PrivateKeys]);
+  const publicJwks = await getOidcProviderPublicJwks(providerPrivateKeyConfigs);
   const localJWKSet = createLocalJWKSet({ keys: publicJwks });
-  const currentPrivateJwk = await exportJWK(currentPrivateKey);
 
   /**
    * The declared algorithm must match the current key's actual curve — Logto generates P-384
@@ -52,9 +79,9 @@ const loadOidcValues = async (
    * RSA keys stay `undefined` to fall back to the oidc-provider `RS256` defaults, for backwards
    * compatibility since we were using RSA keys before v1.0.0-beta.20.
    */
-  const jwkSigningAlg = conditional(
-    currentPrivateJwk.kty === 'EC' && getEcSigningAlg(currentPrivateJwk.crv)
-  );
+  const jwkSigningAlg =
+    conditional(currentPrivateJwk.kty === 'EC' && getEcSigningAlg(currentPrivateJwk.crv)) ??
+    conditional(currentPrivateJwk.kty === 'AKP' && currentPrivateJwk.alg);
 
   return Object.freeze({
     cookieKeys,

@@ -33,6 +33,15 @@ const getCalculateKidComponents = (jwk: JWK) => {
         x: jwk.x,
       };
     }
+
+    // Post-quantum (ML-DSA) keys use the AKP key type; RFC members are `alg` and `pub`.
+    case 'AKP': {
+      return {
+        alg: jwk.alg,
+        kty: 'AKP',
+        pub: jwk.pub,
+      };
+    }
     default:
   }
 };
@@ -41,6 +50,16 @@ const calculateKid = (jwk: JWK) => {
   const components = getCalculateKidComponents(jwk);
 
   return createHash('sha256').update(JSON.stringify(components)).digest().toString('base64url');
+};
+
+/**
+ * ML-DSA is available in `node:crypto` from Node.js 24.7 onwards. Older runtimes cannot
+ * generate or use ML-DSA keys.
+ */
+export const isMlDsaSupported = (nodeVersion = process.versions.node) => {
+  const [major = 0, minor = 0] = nodeVersion.split('.').map(Number);
+
+  return major > 24 || (major === 24 && minor >= 7);
 };
 
 export const exportJWK = async (key: Parameters<typeof joseExportJWK>[0]): Promise<JWK> => {

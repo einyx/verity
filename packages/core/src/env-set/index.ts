@@ -112,7 +112,8 @@ export class EnvSet {
     this.#oidc = await loadOidcValues(
       appendPath(this.#endpoint, '/oidc').href,
       oidcConfigs,
-      cimdConfig
+      cimdConfig,
+      EnvSet.values.isDevFeaturesEnabled
     );
   }
 

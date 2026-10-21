@@ -43,6 +43,11 @@ export enum LogtoOidcConfigKey {
 export enum SupportedSigningKeyAlgorithm {
   RSA = 'RSA',
   EC = 'EC',
+  /**
+   * Post-quantum signing key (NIST FIPS 204). Only available when dev features are enabled,
+   * and only creatable on runtimes that support ML-DSA (Node.js 24.7+).
+   */
+  ML_DSA_65 = 'ML-DSA-65',
 }
 
 export const oidcConfigKeyGuard = z.object({
@@ -249,15 +254,9 @@ export const logtoTenantConfigGuard: Readonly<{
 
 /* --- Summary --- */
 export type LogtoConfigKey =
-  | LogtoOidcConfigKey
-  | LogtoJwtTokenKey
-  | LogtoActionKey
-  | LogtoTenantConfigKey;
+  LogtoOidcConfigKey | LogtoJwtTokenKey | LogtoActionKey | LogtoTenantConfigKey;
 export type LogtoConfigType =
-  | LogtoOidcConfigType
-  | JwtCustomizerType
-  | ActionType
-  | LogtoTenantConfigType;
+  LogtoOidcConfigType | JwtCustomizerType | ActionType | LogtoTenantConfigType;
 export type LogtoConfigGuard = typeof logtoOidcConfigGuard &
   typeof jwtCustomizerConfigGuard &
   typeof actionConfigGuard &

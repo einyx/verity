@@ -18,7 +18,14 @@ import {
 } from '@logto/schemas';
 import { conditional, trySafe, tryThat } from '@silverhand/essentials';
 import { type i18n } from 'i18next';
-import { type KoaContextWithOIDC, Provider, type ResourceServer, errors } from 'oidc-provider';
+import {
+  type KoaContextWithOIDC,
+  Provider,
+  type ResourceServer,
+  type SigningAlgorithm,
+  type SigningAlgorithmWithNone,
+  errors,
+} from 'oidc-provider';
 import getRawBody from 'raw-body';
 import snakecaseKeys from 'snakecase-keys';
 
@@ -84,6 +91,21 @@ import { getAcceptedUserClaims, getUserClaimsData } from './scope.js';
 
 // Temporarily removed 'EdDSA' since it's not supported by browser yet
 const supportedSigningAlgs = Object.freeze(['RS256', 'PS256', 'ES256', 'ES384', 'ES512'] as const);
+
+/**
+ * Dev feature: post-quantum signing keys. ML-DSA is only advertised when dev features are enabled,
+ * so the list stays unchanged for production tenants.
+ */
+const getEnabledSigningAlgs = (): SigningAlgorithm[] => {
+  const algs: string[] = [
+    ...supportedSigningAlgs,
+    ...(EnvSet.values.isDevFeaturesEnabled ? ['ML-DSA-65'] : []),
+  ];
+
+  // The bundled @types/oidc-provider does not list ML-DSA; the provider accepts it on Node.js 24.7+.
+  // eslint-disable-next-line no-restricted-syntax -- the list only contains algorithms the provider supports
+  return algs as SigningAlgorithm[];
+};
 
 export default function initOidc(
   tenantId: string,
@@ -198,15 +220,17 @@ export default function initOidc(
     ...conditional(
       envSet.oidc.jwkSigningAlg && {
         clientDefaults: {
-          id_token_signed_response_alg: envSet.oidc.jwkSigningAlg,
+          // The AKP fallback yields the key's own `alg` string, which the bundled types do not narrow to ML-DSA.
+          // eslint-disable-next-line no-restricted-syntax -- the value is a signing algorithm from the tenant's own key
+          id_token_signed_response_alg: envSet.oidc.jwkSigningAlg as SigningAlgorithmWithNone,
         },
       }
     ),
     enabledJWA: {
-      authorizationSigningAlgValues: [...supportedSigningAlgs],
-      userinfoSigningAlgValues: [...supportedSigningAlgs],
-      idTokenSigningAlgValues: [...supportedSigningAlgs],
-      introspectionSigningAlgValues: [...supportedSigningAlgs],
+      authorizationSigningAlgValues: getEnabledSigningAlgs(),
+      userinfoSigningAlgValues: getEnabledSigningAlgs(),
+      idTokenSigningAlgValues: getEnabledSigningAlgs(),
+      introspectionSigningAlgValues: getEnabledSigningAlgs(),
     },
     conformIdTokenClaims: false,
     ...getProviderFetchConfig(),
@@ -563,9 +587,9 @@ export default function initOidc(
       const { Client: client } = ctx.oidc.entities;
 
       // Directly return false only when `rotateRefreshToken` has been explicitly set to `false`.
-      if (
-        !(client?.metadata().rotateRefreshToken ?? customClientMetadataDefault.rotateRefreshToken)
-      ) {
+      if (!(
+        client?.metadata().rotateRefreshToken ?? customClientMetadataDefault.rotateRefreshToken
+      )) {
         return false;
       }
 

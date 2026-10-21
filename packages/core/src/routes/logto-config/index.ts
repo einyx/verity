@@ -17,6 +17,7 @@ import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import defaults from '#src/oidc/defaults.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
+import { isMlDsaSupported } from '#src/utils/jwks.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
@@ -194,6 +195,20 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
     async (ctx, next) => {
       const { keyType } = ctx.guard.params;
       const { signingKeyAlgorithm, rotationGracePeriod } = ctx.guard.body;
+
+      // Dev feature: post-quantum signing keys are rejected unless dev features are enabled.
+      if (
+        signingKeyAlgorithm === SupportedSigningKeyAlgorithm.ML_DSA_65 &&
+        !EnvSet.values.isDevFeaturesEnabled
+      ) {
+        throw new RequestError({ code: 'oidc.invalid_request', status: 422 });
+      }
+
+      // ML-DSA keys can only be generated on Node.js 24.7+; reject clearly on older runtimes.
+      if (signingKeyAlgorithm === SupportedSigningKeyAlgorithm.ML_DSA_65 && !isMlDsaSupported()) {
+        throw new RequestError({ code: 'oidc.invalid_request', status: 422 });
+      }
+
       const configKey = getOidcConfigKeyDatabaseColumnName(keyType);
       const effectiveRotationGracePeriod =
         rotationGracePeriod ?? EnvSet.values.privateKeyRotationGracePeriod;

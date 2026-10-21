@@ -100,7 +100,8 @@ describe('EnvSet.load()', () => {
     expect(mockLoadOidcValues).toHaveBeenCalledWith(
       expect.any(String),
       expect.anything(),
-      defaultCimdConfig
+      defaultCimdConfig,
+      expect.any(Boolean)
     );
   });
 

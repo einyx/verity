@@ -161,6 +161,30 @@ describe('loadOidcValues', () => {
   });
 });
 
+describe('retired signing keys', () => {
+  it.each([
+    ['RSA', generateRsaPrivateKeyPem],
+    ['EC', () => generateEcPrivateKeyPem('prime256v1')],
+  ])(
+    'marks a retired %s key verify-only and leaves the current key signable',
+    async (_, makePem) => {
+      const currentPem = makePem();
+      const retiredPem = makePem();
+      const loaded = await loadOidcValues(
+        issuer,
+        buildConfigs([currentPem, retiredPem]),
+        defaultCimdConfig
+      );
+      const currentJwk = await exportJWK(createPrivateKey(currentPem));
+      const retiredJwk = await exportJWK(createPrivateKey(retiredPem));
+      const keyOpsByKid = new Map(loaded.privateJwks.map((jwk) => [jwk.kid, jwk.key_ops]));
+
+      expect(keyOpsByKid.get(retiredJwk.kid)).toEqual(['verify']);
+      expect(keyOpsByKid.get(currentJwk.kid)).toBeUndefined();
+    }
+  );
+});
+
 describe('ML-DSA-65 key use', () => {
   const supportsMlDsaRuntime = (() => {
     try {

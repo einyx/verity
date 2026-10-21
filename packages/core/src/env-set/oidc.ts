@@ -76,11 +76,10 @@ const loadOidcValues = async (
     getOidcProviderPrivateKeys(providerPrivateKeyConfigs).map(async ({ value, status }) => {
       const jwk = await exportJWK(crypto.createPrivateKey(value));
 
-      // Dev feature: a non-current ML-DSA key still verifies tokens it issued, but must never sign.
-      // The keystore's signing lookup honors key_ops, so restricting it to "verify" is enough.
-      return jwk.kty === 'AKP' && status !== OidcSigningKeyStatus.Current
-        ? { ...jwk, key_ops: ['verify'] }
-        : jwk;
+      // A key that is not current (retired, or staged for a later rotation) still verifies tokens it
+      // issued, but must never sign. The keystore's signing lookup honors key_ops, so restricting it
+      // to "verify" is enough, for every key type.
+      return status === OidcSigningKeyStatus.Current ? jwk : { ...jwk, key_ops: ['verify'] };
     })
   );
   const publicJwks = await getOidcProviderPublicJwks(providerPrivateKeyConfigs);

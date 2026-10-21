@@ -1,3 +1,4 @@
+import { demoChatByLocale, demoChatEn } from '@logto/phrases';
 import { adminTenantId } from '@logto/schemas';
 import { sql } from '@silverhand/slonik';
 import Router from 'koa-router';
@@ -242,9 +243,19 @@ const modelAttempts = 2;
 const modelRetryDelayMs = 300;
 // Bounds one model call, so a slow model cannot hold a visitor's request open.
 const modelTimeoutMs = 15_000;
-// Shown in place of a model reply when every attempt fails. The visitor's message has already been saved.
-const modelUnavailableReply =
-  "I couldn't come up with an answer just now, but your message is saved. You can also write to hello@meshx.io.";
+// Shown in place of a model reply when every attempt fails, in the visitor's language when it is supported.
+// The visitor's message has already been saved.
+const unavailableReply = (locale: string | undefined): string => {
+  const requested = locale?.toLowerCase();
+  const language = requested?.split('-')[0];
+  const tag =
+    Object.keys(demoChatByLocale).find((candidate) => candidate.toLowerCase() === requested) ??
+    Object.keys(demoChatByLocale).find(
+      (candidate) => candidate.toLowerCase().split('-')[0] === language
+    );
+
+  return (tag && demoChatByLocale[tag]?.model_unavailable) ?? demoChatEn.model_unavailable;
+};
 
 const askModel = async (
   deps: LandingPageChatDeps,
@@ -600,7 +611,7 @@ const reshapeReply = async (
 };
 
 export const handleChatTurn = async (
-  input: { sessionId: string; message: string; ip: string },
+  input: { sessionId: string; message: string; ip: string; locale?: string },
   deps: LandingPageChatDeps,
   state: ChatState
 ): Promise<ChatResult> => {
@@ -683,7 +694,12 @@ export const handleChatTurn = async (
     // The model already had its retry. The visitor's message is kept and answered with a plain
     // fallback, so a failed model call never loses the turn.
     return applyReply(
-      { sessionId: input.sessionId, message, reply: { content: modelUnavailableReply }, session },
+      {
+        sessionId: input.sessionId,
+        message,
+        reply: { content: unavailableReply(input.locale) },
+        session,
+      },
       deps,
       state
     );
@@ -697,6 +713,8 @@ export const handleChatTurn = async (
 const chatBodyGuard = z.object({
   sessionId: z.string().max(64),
   message: z.string().max(demoChatLimits.maxMessageLength),
+  // The visitor's browser language, so a fallback reply can be written in it. Optional; English is used otherwise.
+  locale: z.string().max(16).optional(),
 });
 
 /** Public route for the landing page chat. Mounted on the admin tenant, Cloud only. */

@@ -262,6 +262,30 @@ describe('handleChatTurn', () => {
     expect(JSON.stringify(savedTurns)).toContain('What is meshX?');
   });
 
+  it('answers a failed turn in the visitor language when it is supported', async () => {
+    const { deps } = fakeDeps({ reply: 'throw' });
+
+    const result = await handleChatTurn(
+      { ...turn('What is meshX?'), locale: 'de-DE' },
+      deps,
+      createChatState()
+    );
+
+    expect(JSON.stringify(result.body)).toContain('Ihre Nachricht ist gespeichert');
+  });
+
+  it('answers a failed turn in English when the visitor language is not supported', async () => {
+    const { deps } = fakeDeps({ reply: 'throw' });
+
+    const result = await handleChatTurn(
+      { ...turn('What is meshX?'), locale: 'xx-YY' },
+      deps,
+      createChatState()
+    );
+
+    expect(JSON.stringify(result.body)).toContain('your message is saved');
+  });
+
   it('makes exactly two model attempts when every attempt fails', async () => {
     const { deps, modelCalls } = fakeDeps({ reply: 'throw' });
 

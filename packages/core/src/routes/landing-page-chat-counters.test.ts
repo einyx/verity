@@ -11,6 +11,7 @@ const fakePool = (counts: number[]) => {
   let next = 0;
 
   const pool = {
+    query: async () => null,
     one: async (query: { values: unknown[] }) => {
       bound.push(query.values);
       const hits = counts[next] ?? 0;

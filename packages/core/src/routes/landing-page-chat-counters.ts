@@ -22,6 +22,17 @@ export const createSharedHitStore = (getPool: () => Promise<CommonQueryMethods>)
       returning hits
     `);
 
+    // A row is only read within its own window, and a day is longer than every window in use. About one
+    // hit in a hundred clears the older rows, so the table stays small. A failed clean-up is ignored, since
+    // the count above has already decided this hit.
+    if (Math.random() < 0.01) {
+      await pool
+        .query(
+          sql`delete from landing_chat_rate_counters where window_start < now() - interval '1 day'`
+        )
+        .catch(() => null);
+    }
+
     return hits <= limit;
   },
 });

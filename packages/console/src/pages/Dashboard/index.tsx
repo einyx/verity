@@ -81,17 +81,6 @@ function Dashboard() {
         <div className={styles.title}>{t('dashboard.title')}</div>
         <div className={styles.subtitle}>{t('dashboard.description')}</div>
       </div>
-      <div className={styles.videoCard}>
-        {/* Foundation Data overview, served from public/get-started. The player has no text of its own. */}
-        <video
-          className={styles.video}
-          controls
-          preload="metadata"
-          playsInline
-          aria-label="Foundation Data overview"
-          src={`${import.meta.env.BASE_URL}get-started/foundation-data.mp4`}
-        />
-      </div>
       {isLoading && <Skeleton />}
       {error && <AppError errorMessage={error.body?.message} />}
       {!isLoading && totalData && newData && activeData && (

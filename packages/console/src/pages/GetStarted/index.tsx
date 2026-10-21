@@ -229,17 +229,6 @@ function GetStarted() {
           )}
         </div>
       </div>
-      <div className={styles.videoCard}>
-        {/* Foundation Data overview, served from public/get-started. The player has no text of its own. */}
-        <video
-          className={styles.video}
-          controls
-          preload="metadata"
-          playsInline
-          aria-label="Foundation Data overview"
-          src={`${import.meta.env.BASE_URL}get-started/foundation-data.mp4`}
-        />
-      </div>
       <div className={styles.statGrid}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>{t('applications.title')}</div>

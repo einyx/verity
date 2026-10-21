@@ -152,6 +152,18 @@ function Kubo() {
           Deployment health, components, and operations across your namespaces.
         </p>
       </div>
+      <div className={styles.videoCard}>
+        {/* Foundation Data overview from public/get-started. Muted so it never plays sound on its own. */}
+        <video
+          className={styles.video}
+          controls
+          muted
+          preload="metadata"
+          playsInline
+          aria-label="Foundation Data overview"
+          src={`${import.meta.env.BASE_URL}/get-started/foundation-data.mp4`}
+        />
+      </div>
 
       <Card className={styles.overview}>
         <div className={styles.overviewTotal}>

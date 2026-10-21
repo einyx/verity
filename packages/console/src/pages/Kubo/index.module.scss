@@ -1072,3 +1072,20 @@
   object-fit: cover;
 }
 
+
+.videoCard {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--color-layer-1);
+}

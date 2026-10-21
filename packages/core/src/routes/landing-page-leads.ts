@@ -8,7 +8,7 @@ import RequestError from '#src/errors/RequestError/index.js';
 import { verifyBearerTokenFromRequest } from '#src/middleware/koa-auth/index.js';
 import assertThat from '#src/utils/assert-that.js';
 
-import { type BriefInput, buildBriefHtml, renderBriefPdf } from './landing-page-brief.js';
+import { type BriefInput, renderBriefPdf } from './landing-page-brief.js';
 import { type LeadFileKind, verifyLeadFileQuery } from './landing-page-signed.js';
 import { buildSlidesDeck } from './landing-page-slides.js';
 
@@ -150,7 +150,7 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
 
     assertThat(row, new RequestError({ code: 'entity.not_found', status: 404 }));
 
-    const html = buildBriefHtml({
+    const pdf = await renderBriefPdf({
       // The lead's fields were validated when the lead was saved, so they are read as stored.
       // eslint-disable-next-line no-restricted-syntax -- The stored lead is validated before it is saved.
       lead: row.lead as unknown as BriefLead,
@@ -158,7 +158,6 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
       profile: (row.companyProfile ?? undefined) as BriefInput['profile'],
       bookingUrl: process.env.LANDING_LEAD_BOOKING_URL,
     });
-    const pdf = await renderBriefPdf(html);
 
     ctx.set('content-type', 'application/pdf');
     ctx.set('content-disposition', `attachment; filename="meeting-brief-${sessionId}.pdf"`);
@@ -236,9 +235,7 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
     assertThat(input, new RequestError({ code: 'entity.not_found', status: 404 }));
 
     if (fileKind === 'brief') {
-      const pdf = await renderBriefPdf(
-        buildBriefHtml({ ...input, bookingUrl: process.env.LANDING_LEAD_BOOKING_URL })
-      );
+      const pdf = await renderBriefPdf({ ...input, bookingUrl: process.env.LANDING_LEAD_BOOKING_URL });
       ctx.set('content-type', 'application/pdf');
       ctx.set('content-disposition', `attachment; filename="meeting-brief-${sessionId}.pdf"`);
       ctx.body = pdf;

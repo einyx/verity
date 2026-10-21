@@ -50,7 +50,7 @@ describe('buildBriefHtml', () => {
 
 describe('renderBriefPdf', () => {
   it('renders a PDF with the local Chrome', async () => {
-    const pdf = await renderBriefPdf(buildBriefHtml(input));
+    const pdf = await renderBriefPdf(input);
     expect(Buffer.from(pdf.slice(0, 5)).toString()).toBe('%PDF-');
   }, 60_000);
 });

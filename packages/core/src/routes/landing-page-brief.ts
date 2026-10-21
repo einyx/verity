@@ -1,15 +1,7 @@
-import { execFile } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-import { promisify } from 'node:util';
+import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from 'pdf-lib';
 
 // The one-page meeting brief for a sales lead: who they are, the company, how the chat went, and what to
-// cover next. Styled with the meshX deck's palette (warm off-white, red accent, serif type). Rendered to
-// PDF by a local Chrome, so it needs no extra npm dependency.
-
-const execFileAsync = promisify(execFile);
-const defaultChromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+// cover next. Rendered to PDF in code with pdf-lib, so it needs no browser in the image.
 
 export type BriefInput = {
   lead: {
@@ -105,25 +97,149 @@ export const buildBriefHtml = (input: BriefInput): string => {
 </body></html>`;
 };
 
-/** Renders the brief HTML to a PDF with a local Chrome. The temporary files are removed afterwards. */
-export const renderBriefPdf = async (html: string): Promise<Uint8Array> => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'meshx-brief-'));
-  const htmlFile = path.join(directory, 'brief.html');
-  const pdfFile = path.join(directory, 'brief.pdf');
+// Standard PDF fonts only cover WinAnsi, so anything else is replaced rather than failing the render.
+const toWinAnsi = (value: string) => value.replaceAll(/[^ -~ -ÿ]/g, '?');
 
-  try {
-    await writeFile(htmlFile, html, 'utf8');
-    await execFileAsync(process.env.CHROME_PATH ?? defaultChromePath, [
-      '--headless=new',
-      '--disable-gpu',
-      '--no-sandbox',
-      '--no-pdf-header-footer',
-      `--print-to-pdf=${pdfFile}`,
-      `file://${htmlFile}`,
-    ]);
+const pageSize: [number, number] = [595.28, 841.89];
+const margin = 52;
+const contentWidth = pageSize[0] - margin * 2;
+const accent = rgb(0.988, 0.2, 0.035);
+const ink = rgb(0.122, 0.118, 0.11);
+const muted = rgb(0.435, 0.424, 0.4);
 
-    return await readFile(pdfFile);
-  } finally {
-    await rm(directory, { recursive: true, force: true });
+type Writer = {
+  doc: PDFDocument;
+  page: PDFPage;
+  y: number;
+  regular: PDFFont;
+  bold: PDFFont;
+};
+
+const newPage = (writer: Writer) => {
+  writer.page = writer.doc.addPage(pageSize);
+  writer.y = pageSize[1] - margin;
+};
+
+/** Wraps text to the content width and draws it, starting a new page when the block does not fit. */
+const drawText = (
+  writer: Writer,
+  text: string,
+  options: { size?: number; font?: 'regular' | 'bold'; color?: ReturnType<typeof rgb>; indent?: number } = {}
+) => {
+  const size = options.size ?? 11;
+  const font = options.font === 'bold' ? writer.bold : writer.regular;
+  const width = contentWidth - (options.indent ?? 0);
+  const words = toWinAnsi(text).split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = '';
+
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (font.widthOfTextAtSize(candidate, size) > width && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
   }
+  if (line) {
+    lines.push(line);
+  }
+
+  for (const current of lines.length > 0 ? lines : ['']) {
+    if (writer.y - size * 1.4 < margin) {
+      newPage(writer);
+    }
+    writer.page.drawText(current, {
+      x: margin + (options.indent ?? 0),
+      y: writer.y - size,
+      size,
+      font,
+      color: options.color ?? ink,
+    });
+    writer.y -= size * 1.4;
+  }
+};
+
+const drawHeading = (writer: Writer, text: string) => {
+  writer.y -= 14;
+  drawText(writer, text.toUpperCase(), { size: 10, font: 'bold', color: accent });
+  writer.y -= 2;
+};
+
+const drawItems = (writer: Writer, items: string[] | undefined, fallback: string) => {
+  if (!items || items.length === 0) {
+    drawText(writer, fallback, { size: 10, color: muted });
+    return;
+  }
+  for (const item of items) {
+    drawText(writer, `- ${item}`, { size: 10.5, indent: 10 });
+  }
+};
+
+/** Renders the brief to a one-or-more-page PDF. Values are copied as text, never interpreted as markup. */
+export const renderBriefPdf = async (input: BriefInput): Promise<Uint8Array> => {
+  const doc = await PDFDocument.create();
+  const writer: Writer = {
+    doc,
+    page: doc.addPage(pageSize),
+    y: pageSize[1] - margin,
+    regular: await doc.embedFont(StandardFonts.Helvetica),
+    bold: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+  const { lead, profile } = input;
+  const conversation = profile?.conversation;
+  const name = `${lead.firstName} ${lead.lastName}`.trim();
+
+  drawText(writer, 'meshx.', { size: 16, font: 'bold' });
+  writer.y -= 8;
+  drawText(writer, `Meeting brief: ${lead.company}`, { size: 20, font: 'bold' });
+  drawText(
+    writer,
+    `Prepared for the sales team${profile?.generatedAt ? ` - ${profile.generatedAt.slice(0, 10)}` : ''}`,
+    { size: 9.5, color: muted }
+  );
+
+  drawHeading(writer, 'The lead');
+  drawText(writer, `${name}${lead.role ? `, ${lead.role}` : ''}`, { size: 12, font: 'bold' });
+  drawText(writer, lead.email, { size: 10, color: muted });
+  if (lead.decision) {
+    drawText(writer, `Wants to see: ${lead.decision}`, { size: 10.5 });
+  }
+
+  drawHeading(writer, 'The company');
+  drawText(
+    writer,
+    profile?.summary ?? 'No company profile yet. The company website could not be read.',
+    { size: 10.5, color: profile?.summary ? ink : muted }
+  );
+  if (profile?.sources && profile.sources.length > 0) {
+    drawText(writer, `Sources: ${profile.sources.join(', ')}`, { size: 9, color: muted });
+  }
+
+  drawHeading(writer, 'How the conversation went');
+  drawText(writer, `Tone: ${conversation?.tone ?? 'not yet analysed'}`, { size: 10.5 });
+  drawText(writer, 'Likely outcomes', { size: 10.5, font: 'bold' });
+  drawItems(writer, conversation?.outcomes, 'Not yet analysed.');
+
+  drawHeading(writer, 'Cover in the next meeting');
+  drawItems(
+    writer,
+    conversation?.nextSteps,
+    'Start from the decision the visitor named, and ask what it would change for their team.'
+  );
+
+  if (input.bookingUrl) {
+    writer.y -= 14;
+    drawText(writer, `Book the next meeting: ${input.bookingUrl}`, { size: 10 });
+  }
+
+  writer.y -= 14;
+  drawText(
+    writer,
+    "meshX - Confidential: contains a prospect's contact details. Share only with the sales team.",
+    { size: 8, color: muted }
+  );
+
+  return doc.save();
 };

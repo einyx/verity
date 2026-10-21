@@ -27,8 +27,6 @@ import {
   logtoOidcConfigGuard,
 } from '@logto/schemas';
 import { type ConsoleLog } from '@logto/shared';
-
-import { EnvSet } from '#src/env-set/index.js';
 import chalk from 'chalk';
 import { ZodError, z } from 'zod';
 
@@ -50,7 +48,11 @@ export const createLogtoConfigLibrary = ({
   },
   pool,
   wellKnownCache,
-}: Pick<Queries, 'logtoConfigs' | 'pool' | 'wellKnownCache'>) => {
+  cloudAdminOrigin,
+}: Pick<Queries, 'logtoConfigs' | 'pool' | 'wellKnownCache'> & {
+  /** Origin of the admin Logto, used to build the cloud API resource indicator. */
+  readonly cloudAdminOrigin: string;
+}) => {
   const getOidcConfigs = async (consoleLog: ConsoleLog): Promise<LogtoOidcConfigType> => {
     try {
       const { rows } = await getRowsByKeys(Object.values(LogtoOidcConfigKey));
@@ -96,7 +98,7 @@ export const createLogtoConfigLibrary = ({
     return {
       appId: result.data.appId,
       appSecret: result.data.appSecret,
-      resource: getCloudApiIndicator(EnvSet.values.adminUrlSet.endpoint.origin),
+      resource: getCloudApiIndicator(cloudAdminOrigin),
     };
   };
 

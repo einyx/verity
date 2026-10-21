@@ -15,20 +15,16 @@ import { createConnectorLibrary } from '#src/libraries/connector.js';
 import { createLogtoConfigLibrary } from '#src/libraries/logto-config.js';
 import koaAccountCenterSsr from '#src/middleware/koa-account-center-ssr.js';
 import koaAutoConsent from '#src/middleware/koa-auto-consent.js';
-import koaConsoleRedirectProxy from '#src/middleware/koa-console-redirect-proxy.js';
 import koaDeviceFlowShortcut from '#src/middleware/koa-device-flow-shortcut.js';
 import koaExperienceSsr from '#src/middleware/koa-experience-ssr.js';
 import koaInteractionDetails from '#src/middleware/koa-interaction-details.js';
-import koaLandingProxy from '#src/middleware/koa-landing-proxy.js';
 import { koaExperienceSecurityHeaders } from '#src/middleware/koa-security-headers.js';
 import koaServeDomainVerificationFiles from '#src/middleware/koa-serve-domain-verification-files.js';
 import koaSpaProxy from '#src/middleware/koa-spa-proxy.js';
 import koaSpaSessionGuard from '#src/middleware/koa-spa-session-guard.js';
 import initOidc from '#src/oidc/init.js';
 import { mountCallbackRouter } from '#src/routes/callback.js';
-import { isLocalCloud } from '#src/routes/cloud-dev.js';
 import initApis, { initMcpRouter, initPublicWellKnownApis } from '#src/routes/init.js';
-import initMeApis from '#src/routes-me/init.js';
 import BasicSentinel from '#src/sentinel/basic-sentinel.js';
 
 import { redisCache } from '../caches/index.js';
@@ -39,6 +35,7 @@ import Libraries from './Libraries.js';
 import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
 import { mountAdminRoutes } from './admin-routes.js';
+import { mountAdminTenantApps } from './admin-tenant-apps.js';
 import { mountBaseMiddleware } from './base-middleware.js';
 import {
   getSigningKeyRotationState,
@@ -66,17 +63,6 @@ type CreateTenant = {
    * owns the tenant instances.
    */
   withDefaultTenant: WithDefaultTenant;
-};
-
-/**
- * Mounts the marketing site proxy at the root when `LANDING_UPSTREAM` names the site's server.
- * Part of the landing page CMS feature.
- */
-const mountLandingSite = (app: Koa) => {
-  const upstream = process.env.LANDING_UPSTREAM?.trim();
-  if (EnvSet.values.isDevFeaturesEnabled && upstream) {
-    app.use(koaLandingProxy(upstream));
-  }
 };
 
 export default class Tenant implements TenantContext {
@@ -121,7 +107,7 @@ export default class Tenant implements TenantContext {
    */
   #disposed = false;
 
-  // eslint-disable-next-line max-params
+  // eslint-disable-next-line max-params -- the constructor wires every tenant dependency; each default is one branch, and splitting it is tracked separately.
   private constructor(
     public readonly envSet: EnvSet,
     public readonly id: string,
@@ -129,7 +115,12 @@ export default class Tenant implements TenantContext {
     public readonly withDefaultTenant: WithDefaultTenant,
     public readonly wellKnownCache: WellKnownCache,
     public readonly queries = new Queries(envSet.pool, wellKnownCache),
-    public readonly logtoConfigs = createLogtoConfigLibrary(queries),
+    public readonly logtoConfigs = createLogtoConfigLibrary({
+      logtoConfigs: queries.logtoConfigs,
+      pool: queries.pool,
+      wellKnownCache,
+      cloudAdminOrigin: EnvSet.values.adminUrlSet.endpoint.origin,
+    }),
     public readonly cloudConnection = createCloudConnectionLibrary(logtoConfigs),
     public readonly connectors = createConnectorLibrary(queries, cloudConnection),
     public readonly subscription = new SubscriptionLibrary(
@@ -209,31 +200,7 @@ export default class Tenant implements TenantContext {
 
     // Mount admin tenant APIs and app
     if (id === adminTenantId) {
-      // Mount `/me` APIs for admin tenant
-      app.use(mount('/me', initMeApis(tenantContext)));
-
-      // Serve the marketing site at the root when a site is configured. Its paths are forwarded before
-      // the console redirect below, so `/` shows the site and `/console` stays with the console.
-      mountLandingSite(app);
-
-      // Mount Admin Console when needed
-      // Skip in multi-tenancy mode since Logto Cloud serves Admin Console in this case; local cloud
-      // runs as a single instance, so it serves the console itself.
-      if (!isMultiTenancy || isLocalCloud()) {
-        app.use(koaConsoleRedirectProxy(queries));
-        app.use(
-          mount(
-            '/' + AdminApps.Console,
-            koaSpaProxy({
-              mountedApps,
-              queries,
-              packagePath: AdminApps.Console,
-              port: 5002,
-              prefix: AdminApps.Console,
-            })
-          )
-        );
-      }
+      mountAdminTenantApps(app, { tenantContext, mountedApps, queries });
     }
 
     // In OSS, no need for mounting demo app in the admin tenant since it may cause confusion

@@ -22,6 +22,7 @@ const createLibrary = () =>
     },
     pool: { transaction: poolTransaction },
     wellKnownCache: {},
+    cloudAdminOrigin: 'https://admin.logto.test',
   } as unknown as Parameters<typeof createLogtoConfigLibrary>[0]);
 
 const action: LogtoAction = {

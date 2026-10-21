@@ -3,6 +3,7 @@ import { TtlCache } from '@logto/shared';
 import { createMockPool, createMockQueryResult } from '@silverhand/slonik';
 
 import { WellKnownCache } from '#src/caches/well-known.js';
+import { EnvSet } from '#src/env-set/index.js';
 import type { CloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
 import { createCloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
 import type { ConnectorLibrary } from '#src/libraries/connector.js';
@@ -96,7 +97,12 @@ export class MockTenant implements TenantContext {
     this.queries = new MockQueries(queriesOverride, this.wellKnownCache);
 
     this.logtoConfigs = {
-      ...createLogtoConfigLibrary(this.queries),
+      ...createLogtoConfigLibrary({
+        logtoConfigs: this.queries.logtoConfigs,
+        pool: this.queries.pool,
+        wellKnownCache: this.wellKnownCache,
+        cloudAdminOrigin: EnvSet.values.adminUrlSet.endpoint.origin,
+      }),
       ...logtoConfigsOverride,
     };
     this.cloudConnection = createCloudConnectionLibrary(this.logtoConfigs);

@@ -42,4 +42,7 @@ close_tunnels() {
 }
 trap close_tunnels EXIT
 
+# The Kubo portal tunnel for landing demo requests (KUBO_PORTAL_URL=http://127.0.0.1:19091).
+./scripts/dev-kubo-portal.sh
+
 KUBO_PORTAL_URL="http://localhost:${PORTAL_PORT}" pnpm dev

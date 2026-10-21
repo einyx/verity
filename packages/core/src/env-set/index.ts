@@ -98,6 +98,7 @@ export class EnvSet {
       logtoConfigs: logtoConfigQueries,
       pool,
       wellKnownCache,
+      cloudAdminOrigin: EnvSet.values.adminUrlSet.endpoint.origin,
     });
 
     await promoteScheduledSigningKeyRotation();

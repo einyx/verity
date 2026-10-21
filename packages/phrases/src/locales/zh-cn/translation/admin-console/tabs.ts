@@ -24,6 +24,7 @@ const tabs = {
   agent: '智能体',
   bundle: '捆绑包',
   mcp_servers: 'MCP 服务器',
+  leads: '线索',
 };
 
 export default Object.freeze(tabs);

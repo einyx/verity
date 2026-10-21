@@ -15,7 +15,7 @@
     "generate": "./generate.sh",
     "precommit": "lint-staged",
     "start": "vite",
-    "dev": "vite",
+    "dev": "node scripts/sync-landing.mjs --copy && vite",
     "check": "tsc --noEmit",
     "build": "pnpm generate && pnpm build:landing-chat && node scripts/sync-landing.mjs && vite build",
     "build:landing-chat": "vite build -c vite.landing-chat.config.ts",

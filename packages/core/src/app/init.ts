@@ -143,7 +143,10 @@ export default async function initApp(app: Koa): Promise<void> {
         ctx.get('accept').includes('text/html')
       ) {
         // A signed-in browser goes to the console, not the marketing page, so signing in never lands on the site.
-        if (ctx.cookies.get('_session')) {
+        // The landing page editor previews the page from inside the signed-in console with `cmsPreview=1`.
+        const isCmsPreview = ctx.URL.searchParams.get('cmsPreview') === '1';
+
+        if (ctx.cookies.get('_session') && !isCmsPreview) {
           ctx.redirect(ossConsolePath);
           return;
         }

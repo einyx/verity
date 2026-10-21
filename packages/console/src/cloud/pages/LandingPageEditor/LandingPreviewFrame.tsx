@@ -89,7 +89,7 @@ function LandingPreviewFrame({
       <iframe
         ref={frameRef}
         className={styles.pageFrame}
-        src="/console/landing/index.html?cmsPreview=1"
+        src="/?cmsPreview=1"
         title="Landing page preview"
         onLoad={sendDraft}
       />

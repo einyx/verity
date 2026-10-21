@@ -19,9 +19,11 @@ const fakeDeps = (options: {
   published?: unknown;
   reply?: { content?: string; lead?: unknown } | 'throw';
   sendLeadFails?: boolean;
+  recordFails?: boolean;
 }) => {
   const modelCalls: Array<Array<{ role: string; content: string }>> = [];
   const leads: unknown[] = [];
+  const records: Array<{ emailStatus: string }> = [];
 
   const deps: LandingPageChatDeps = {
     readPublished: async () => options.published ?? enabledDocument,
@@ -41,9 +43,16 @@ const fakeDeps = (options: {
 
       leads.push(lead);
     },
+    recordLead: async (record) => {
+      if (options.recordFails) {
+        throw new Error('database down');
+      }
+
+      records.push(record);
+    },
   };
 
-  return { deps, modelCalls, leads };
+  return { deps, modelCalls, leads, records };
 };
 
 const turn = (message: string, id = sessionId, address = ip) => ({
@@ -167,6 +176,31 @@ describe('handleChatTurn', () => {
     expect(result.status).toBe(503);
     expect(result.body.code).toBe('landing_page.chat_delivery_failed');
     expect(state.sessions.get(sessionId)?.submitted).toBe(false);
+  });
+
+  it('records a delivered lead as pending, then sent', async () => {
+    const { deps, records } = fakeDeps({ reply: { lead: validLead } });
+
+    await handleChatTurn(turn('Please contact me'), deps, createChatState());
+
+    expect(records.map((record) => record.emailStatus)).toEqual(['pending', 'sent']);
+  });
+
+  it('records a lead as failed when delivery fails, so the team can follow it up', async () => {
+    const { deps, records } = fakeDeps({ reply: { lead: validLead }, sendLeadFails: true });
+
+    await handleChatTurn(turn('Please contact me'), deps, createChatState());
+
+    expect(records.map((record) => record.emailStatus)).toEqual(['pending', 'failed']);
+  });
+
+  it('keeps the visitor reply when a lead cannot be recorded', async () => {
+    const { deps, leads } = fakeDeps({ reply: { lead: validLead }, recordFails: true });
+
+    const result = await handleChatTurn(turn('Please contact me'), deps, createChatState());
+
+    expect(leads).toEqual([validLead]);
+    expect(result.body.submitted).toBe(true);
   });
 
   it('returns a clean error when the model call fails', async () => {

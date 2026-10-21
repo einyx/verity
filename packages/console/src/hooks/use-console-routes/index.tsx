@@ -16,6 +16,7 @@ import { customizeJwt } from './routes/customize-jwt';
 import { enterpriseSso } from './routes/enterprise-sso';
 import { kubo } from './routes/kubo';
 import { landingPage } from './routes/landing-page';
+import { leads } from './routes/leads';
 import { mcpPortal, mcpPortalDetails } from './routes/mcp-portal';
 import { mfa } from './routes/mfa';
 import { organizationTemplate } from './routes/organization-template';
@@ -61,7 +62,7 @@ export const useConsoleRoutes = () => {
         mcpPortalDetails,
         webhooks,
         ...(isActionsEnabled ? [actions] : []),
-        ...(isCloud ? [landingPage] : []),
+        ...(isCloud ? [landingPage, leads] : []),
         users,
         auditLogs,
         roles,

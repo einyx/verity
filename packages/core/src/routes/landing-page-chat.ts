@@ -17,10 +17,14 @@ import {
   parseDemoLead,
   type DemoLead,
 } from './landing-page-chat-guard.js';
+/* eslint-disable max-lines -- The chat route already exceeded the limit; the lead flow adds its own steps to the same handler. */
 import { systemPrompt } from './landing-page-chat-prompt.js';
 import { type ModelReply, readModelReply } from './landing-page-chat-reply.js';
 import {
+  type LeadRecord,
   recordLandingChatTurn,
+  recordLandingLead,
+  recordLeadSafely,
   recordTurnSafely,
   type RecordedChatTurn,
 } from './landing-page-chat-store.js';
@@ -43,6 +47,8 @@ export type LandingPageChatDeps = {
   searchDocs?: (question: string) => Promise<string | undefined>;
   /** Saves the conversation in the admin tenant. Optional, so the chat works without a store. */
   recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
+  /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
+  recordLead?: (lead: LeadRecord) => Promise<void>;
 };
 
 type Session = {
@@ -181,9 +187,14 @@ const applyReply = async (
   const lead = parseDemoLead(reply.lead);
 
   if (reply.lead !== undefined && lead) {
+    // The lead is saved first, so a failed email still leaves a record for the team to follow up.
+    const record = { sessionId, lead, emailStatus: 'pending' as const };
+    await recordLeadSafely(deps.recordLead, record);
+
     try {
       await deps.sendLead(lead);
     } catch {
+      await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'failed' });
       // The visitor is told the request did not go through, so a lead is never lost silently.
       return error(
         503,
@@ -191,6 +202,8 @@ const applyReply = async (
         'We could not send your request. Please try again or use the request form.'
       );
     }
+
+    await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'sent' });
 
     state.sessions.set(sessionId, {
       ...session,
@@ -400,4 +413,9 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
     const pool = await EnvSet.sharedPool;
     await recordLandingChatTurn(pool, turn);
   },
+  recordLead: async (lead) => {
+    const pool = await EnvSet.sharedPool;
+    await recordLandingLead(pool, lead);
+  },
 });
+/* eslint-enable max-lines */

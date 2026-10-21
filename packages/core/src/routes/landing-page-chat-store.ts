@@ -40,6 +40,51 @@ export const recordLandingChatTurn = async (
   `);
 };
 
+type LeadEmailStatus = 'pending' | 'sent' | 'failed';
+
+export type LeadRecord = {
+  readonly sessionId: string;
+  readonly lead: DemoLead;
+  readonly emailStatus: LeadEmailStatus;
+};
+
+/**
+ * Saves a lead in the admin tenant, one row per session. It is written before the email is sent, so a
+ * lead survives a delivery failure, and updated with the delivery result afterwards.
+ */
+export const recordLandingLead = async (
+  pool: CommonQueryMethods,
+  record: LeadRecord
+): Promise<void> => {
+  await pool.query(sql`
+    insert into landing_leads (id, tenant_id, session_id, lead, email_status)
+    values (
+      ${generateStandardId()},
+      ${adminTenantId},
+      ${record.sessionId},
+      ${sql.jsonb({ ...record.lead })},
+      ${record.emailStatus}
+    )
+    on conflict (tenant_id, session_id) do update
+      set lead = excluded.lead,
+        email_status = excluded.email_status,
+        updated_at = now()
+  `);
+};
+
+/** Saves a lead without letting a failed save change the visitor's reply. The log names no contact details. */
+export const recordLeadSafely = async (
+  record: ((lead: LeadRecord) => Promise<void>) | undefined,
+  lead: LeadRecord
+): Promise<void> => {
+  try {
+    await record?.(lead);
+  } catch {
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
+    console.error('Landing page chat: a lead could not be recorded.');
+  }
+};
+
 /**
  * Saves the conversation after a turn. A failed save never changes the reply the visitor gets. The
  * log line names no conversation or contact details.

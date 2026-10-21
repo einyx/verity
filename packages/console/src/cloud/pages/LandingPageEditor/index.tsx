@@ -6,7 +6,6 @@ import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landi
 import ContentEditor, { isRecord } from './ContentEditor';
 import LandingPreviewFrame, { setAtPath } from './LandingPreviewFrame';
 import NavArtwork from './NavArtwork';
-import Preview from './Preview';
 import styles from './index.module.scss';
 
 // Editor for the marketing site's copy. Changes save to the draft; nothing reaches the site until it
@@ -48,7 +47,7 @@ const sectionHints: Record<string, string> = {
 };
 
 function LandingPageEditorContent() {
-  const { data, error, saveDraft, publish, rollback, listVersions, sendChat } = useLandingPage();
+  const { data, error, saveDraft, publish, rollback, listVersions } = useLandingPage();
   const [draft, setDraft] = useState<unknown>();
   const [versions, setVersions] = useState<LandingPageVersion[]>([]);
   const [versionsError, setVersionsError] = useState(false);
@@ -56,8 +55,6 @@ function LandingPageEditorContent() {
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
   const [activeKey, setActiveKey] = useState<string>();
-  // The whole-page preview shows every section in site order, not just the one being edited.
-  const [showWholePage, setShowWholePage] = useState(false);
 
   useEffect(() => {
     if (data && draft === undefined) {
@@ -262,54 +259,25 @@ function LandingPageEditorContent() {
             </p>
           </header>
 
-          <div className={styles.viewToggle} role="group" aria-label="Preview">
-            <button
-              type="button"
-              aria-pressed={showWholePage}
-              onClick={() => {
-                setShowWholePage(true);
-              }}
-            >
-              Preview whole page
-            </button>
-            <button
-              type="button"
-              aria-pressed={!showWholePage}
-              onClick={() => {
-                setShowWholePage(false);
-              }}
-            >
-              Edit one section
-            </button>
-          </div>
-
-          {showWholePage && <LandingPreviewFrame draft={draft} onEdit={editField} />}
-
-          {!showWholePage && selected && (
+          {selected && (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionName}>{sectionLabels[selected[0]] ?? selected[0]}</h2>
                 <p className={styles.sectionHint}>{sectionHints[selected[0]]}</p>
               </div>
               <div className={styles.sectionBody}>
-                <div className={styles.sectionColumns}>
-                  <ContentEditor
-                    label=""
-                    value={selected[1]}
-                    onChange={(next) => {
-                      setDraft({ ...currentDraft, [selected[0]]: next });
-                    }}
-                  />
-                  <Preview
-                    name={selected[0]}
-                    value={selected[1]}
-                    onSendChat={sendChat}
-                    onEdit={editField}
-                  />
-                </div>
+                <ContentEditor
+                  label=""
+                  value={selected[1]}
+                  onChange={(next) => {
+                    setDraft({ ...currentDraft, [selected[0]]: next });
+                  }}
+                />
               </div>
             </section>
           )}
+
+          <LandingPreviewFrame draft={draft} onEdit={editField} />
         </div>
       </div>
     </div>

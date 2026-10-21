@@ -24,6 +24,7 @@ const tabs = {
   agent: 'عامل',
   bundle: 'بسته',
   mcp_servers: 'سرورهای MCP',
+  leads: 'سرنخ‌های فروش',
 };
 
 export default Object.freeze(tabs);

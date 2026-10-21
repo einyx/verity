@@ -24,6 +24,7 @@ const tabs = {
   agent: 'เอเจนต์',
   bundle: 'บันเดิล',
   mcp_servers: 'เซิร์ฟเวอร์ MCP',
+  leads: 'ลีด',
 };
 
 export default Object.freeze(tabs);

@@ -11,6 +11,7 @@ const tabs = {
   stacks: 'Workspaces',
   mcp_servers: 'MCP servers',
   landing_page: 'Landing page',
+  leads: 'Leads',
   run_bootstrap: 'Run bootstrap',
   capacity: 'Capacity map',
   agent: 'Agent',

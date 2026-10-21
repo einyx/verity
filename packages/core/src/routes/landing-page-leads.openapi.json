@@ -1,0 +1,106 @@
+{
+  "tags": [
+    {
+      "name": "Dev feature",
+      "description": "In-development API surfaces. Hidden from public OpenAPI output unless dev features are enabled."
+    }
+  ],
+  "paths": {
+    "/api/landing-leads": {
+      "get": {
+        "summary": "List landing chat leads",
+        "description": "Lists leads captured by the landing page demo chat, newest first. Admin tenant only, read-only. Contact details are included; conversations are not, so load one with the transcript route.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 0, "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of leads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["leads"],
+                  "properties": {
+                    "leads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "sessionId", "lead", "emailStatus", "status", "createdAt"],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "sessionId": { "type": "string" },
+                          "lead": { "type": "object" },
+                          "emailStatus": { "type": "string", "enum": ["pending", "sent", "failed"] },
+                          "status": { "type": "string" },
+                          "createdAt": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "The token lacks the landing page scope, or is a machine token." },
+          "404": { "description": "Dev features are not enabled." }
+        }
+      }
+    },
+    "/api/landing-leads/{sessionId}/transcript": {
+      "get": {
+        "summary": "Get a landing chat transcript",
+        "description": "Returns the visitor's and the assistant's messages for one conversation. Admin tenant only, read-only.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "maxLength": 64 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["messages"],
+                  "properties": {
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["role", "content"],
+                        "properties": {
+                          "role": { "type": "string", "enum": ["user", "assistant"] },
+                          "content": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "The token lacks the landing page scope, or is a machine token." },
+          "404": { "description": "Dev features are not enabled, or no such conversation." }
+        }
+      }
+    }
+  }
+}

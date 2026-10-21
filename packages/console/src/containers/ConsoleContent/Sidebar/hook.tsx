@@ -181,6 +181,13 @@ export const useSidebarMenuItems = (): {
           isHidden: !(isCloud && currentTenantId === adminTenantId),
         },
         {
+          Icon: menuIcons.get_started,
+          title: 'leads',
+          path: 'leads',
+          // Leads from the landing demo chat. Dev feature, Cloud only, admin tenant only.
+          isHidden: !(isCloud && currentTenantId === adminTenantId),
+        },
+        {
           Icon: menuIcons.tenant_settings,
           title: 'tenant_settings',
         },

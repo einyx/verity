@@ -24,6 +24,7 @@ const tabs = {
   agent: '代理',
   bundle: '套件',
   mcp_servers: 'MCP 伺服器',
+  leads: '潛在客戶',
 };
 
 export default Object.freeze(tabs);

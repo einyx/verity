@@ -2,7 +2,7 @@
 
 ###### [STAGE] Build ######
 # Builds only the MCP portal service. The install is filtered to the portal and its dependencies.
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /etc/mcp-portal
 ENV CI=true
 
@@ -17,7 +17,7 @@ COPY packages/mcp-portal packages/mcp-portal
 RUN pnpm --filter @logto/mcp-portal build
 
 ###### [STAGE] App ######
-FROM node:22-alpine AS app
+FROM node:24-alpine AS app
 ENV NODE_ENV=production
 # Local file store for when no PORTAL_DATABASE_URL is set. Mount a volume here to keep it.
 ENV PORTAL_REGISTRY_PATH=/data/upstreams.json

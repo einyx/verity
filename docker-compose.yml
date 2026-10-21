@@ -4,7 +4,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    image: svhd/logto:${TAG-latest}
+    # The default is our build on GHCR. Set LOGTO_IMAGE to run another build.
+    image: ${LOGTO_IMAGE:-ghcr.io/einyx/logto:master-248a19df1}
     entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
     ports:
       - 3001:3001

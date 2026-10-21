@@ -239,6 +239,14 @@ describe('handleChatTurn', () => {
     expect(result.body.code).toBe('landing_page.chat_unavailable');
   });
 
+  it('makes exactly two model attempts when every attempt fails', async () => {
+    const { deps, modelCalls } = fakeDeps({ reply: 'throw' });
+
+    await handleChatTurn(turn('What is meshX?'), deps, createChatState());
+
+    expect(modelCalls).toHaveLength(2);
+  });
+
   it('caps new conversations per day across the instance', async () => {
     const { deps } = fakeDeps({});
     const state = createChatState();

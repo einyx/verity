@@ -1143,7 +1143,8 @@ addEventListener('resize', () => {
   }, 150);
 });
 
-await bootstrap();
+// eslint-disable-next-line unicorn/prefer-top-level-await -- the console build targets es2020, which has no top-level await
+bootstrap();
 
 /* eslint-enable max-lines */
 /* eslint-enable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods */

@@ -183,14 +183,35 @@ const findDocumentsContext = async (deps: LandingPageChatDeps, question: string)
   } catch {}
 };
 
+// One retry covers a transient model failure (timeout, rate limit) without leaving the visitor at an error.
+const modelAttempts = 2;
+const modelRetryDelayMs = 300;
+
 const askModel = async (
   deps: LandingPageChatDeps,
   messages: ChatMessage[],
-  context?: string
+  context?: string,
+  attempt = 1
 ): Promise<ModelReply | undefined> => {
   try {
     return await deps.callModel(messages, context);
-  } catch {}
+  } catch (error: unknown) {
+    // Only the error message is logged: it names the status or the network failure, never the visitor's text.
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this line holds no visitor content.
+    console.error(
+      `Landing page chat: model call failed on attempt ${attempt} of ${modelAttempts}: ${error instanceof Error ? error.message : 'unknown error'}`
+    );
+
+    if (attempt >= modelAttempts) {
+      return undefined;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, modelRetryDelayMs);
+    });
+
+    return askModel(deps, messages, context, attempt + 1);
+  }
 };
 
 /** Runs company research for a lead. A failure is logged without the lead's details and changes nothing. */

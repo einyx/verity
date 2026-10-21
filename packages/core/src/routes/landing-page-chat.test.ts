@@ -80,6 +80,29 @@ describe('handleChatTurn', () => {
     expect(modelCalls).toHaveLength(0);
   });
 
+  it('retries the model once when it fails transiently, then replies normally', async () => {
+    const { deps, modelCalls } = fakeDeps({});
+    const failures = { left: 1 };
+    const { callModel } = deps;
+    deps.callModel = async (messages, context) => {
+      if (failures.left > 0) {
+        failures.left -= 1;
+        modelCalls.push(messages);
+        throw new Error('Model returned 429');
+      }
+
+      return callModel(messages, context);
+    };
+
+    const result = await handleChatTurn(turn('What is meshX?'), deps, createChatState());
+
+    expect(result).toEqual({
+      status: 200,
+      body: { reply: 'meshX connects your data to your AI.', submitted: false, options: [] },
+    });
+    expect(modelCalls).toHaveLength(2);
+  });
+
   it('returns the model reply for a valid message', async () => {
     const { deps, modelCalls } = fakeDeps({});
 

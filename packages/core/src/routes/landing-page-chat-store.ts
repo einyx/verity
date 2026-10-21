@@ -5,7 +5,7 @@ import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { type DemoLead } from './landing-page-chat-guard.js';
 import { type CompanyProfile } from './landing-page-company.js';
 
-type RecordedChatMessage = { readonly role: 'user' | 'assistant'; readonly content: string };
+export type RecordedChatMessage = { readonly role: 'user' | 'assistant'; readonly content: string };
 
 /**
  * One visitor conversation, as it stands after a turn. Only the visitor's and the assistant's text
@@ -130,4 +130,37 @@ export const saveLeadConversationInsight = async (
     where tenant_id = ${adminTenantId}
       and session_id = ${sessionId}
   `);
+};
+
+/**
+ * Reads a saved conversation back, so a turn that lands on another instance continues the same chat
+ * instead of starting over. Returns undefined when the session was never saved.
+ */
+export const loadLandingChatSession = async (
+  pool: CommonQueryMethods,
+  sessionId: string
+): Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined> => {
+  const row = await pool.maybeOne<{ messages: unknown; submitted: boolean }>(sql`
+    select messages, submitted
+    from landing_chat_sessions
+    where tenant_id = ${adminTenantId}
+      and session_id = ${sessionId}
+  `);
+
+  if (!row || !Array.isArray(row.messages)) {
+    return;
+  }
+
+  const messages = row.messages.flatMap((item): RecordedChatMessage[] =>
+    typeof item === 'object' &&
+    item !== null &&
+    'role' in item &&
+    'content' in item &&
+    (item.role === 'user' || item.role === 'assistant') &&
+    typeof item.content === 'string'
+      ? [{ role: item.role, content: item.content }]
+      : []
+  );
+
+  return { messages, submitted: row.submitted };
 };

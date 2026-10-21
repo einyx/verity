@@ -27,7 +27,9 @@ import {
   saveLeadConversationInsight,
   recordLandingLead,
   recordLeadSafely,
+  loadLandingChatSession,
   recordTurnSafely,
+  type RecordedChatMessage,
   type RecordedChatTurn,
 } from './landing-page-chat-store.js';
 import {
@@ -57,6 +59,8 @@ export type LandingPageChatDeps = {
   searchDocs?: (question: string) => Promise<string | undefined>;
   /** Saves the conversation in the admin tenant. Optional, so the chat works without a store. */
   recordTurn?: (turn: RecordedChatTurn) => Promise<void>;
+  /** Reads a saved conversation, so a turn served by another instance continues the same chat. */
+  loadSession?: (sessionId: string) => Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined>;
   /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
   recordLead?: (lead: LeadRecord) => Promise<void>;
   /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
@@ -375,6 +379,19 @@ export const handleChatTurn = async (
     return rejected;
   }
 
+  // Another instance may hold this conversation. Continue it from the saved transcript when it is not held here.
+  if (!state.sessions.has(input.sessionId) && deps.loadSession) {
+    const stored = await deps.loadSession(input.sessionId);
+
+    if (stored) {
+      state.sessions.set(input.sessionId, {
+        messages: stored.messages,
+        userTurns: stored.messages.filter((item) => item.role === 'user').length,
+        submitted: stored.submitted,
+      });
+    }
+  }
+
   const opened = openSession(input.sessionId, state);
 
   if ('rejection' in opened) {
@@ -525,6 +542,10 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
   recordTurn: async (turn) => {
     const pool = await EnvSet.sharedPool;
     await recordLandingChatTurn(pool, turn);
+  },
+  loadSession: async (sessionId) => {
+    const pool = await EnvSet.sharedPool;
+    return loadLandingChatSession(pool, sessionId);
   },
   recordLead: async (lead) => {
     const pool = await EnvSet.sharedPool;

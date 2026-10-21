@@ -4,6 +4,7 @@ import { createMockUtils, pickDefault } from '@logto/shared/esm';
 import Sinon from 'sinon';
 
 import { mockAdminConsoleData, mockCookieKeys, mockPrivateKeys } from '#src/__mocks__/index.js';
+import { EnvSet } from '#src/env-set/index.js';
 import { MockTenant } from '#src/test-utils/tenant.js';
 import { createRequester } from '#src/utils/test-utils.js';
 
@@ -76,8 +77,7 @@ const logtoConfigLibraries = {
           if (type === LogtoOidcConfigKey.PrivateKeys) {
             const jwk = await (exportJWK as (key: unknown) => Promise<{ kty: string }>)(value);
             const status = ('status' in rest ? rest.status : undefined) as
-              | OidcSigningKeyStatus
-              | undefined;
+              OidcSigningKeyStatus | undefined;
 
             return {
               id,
@@ -185,5 +185,22 @@ describe('configs routes staged rotation', () => {
     ).resolves.toHaveProperty('status', 200);
 
     expect(rotatePrivateSigningKeys).toHaveBeenCalledWith(newPrivateKey, 60);
+  });
+
+  it('rejects ML-DSA-65 rotation with 422 when dev features are disabled', async () => {
+    const stub = Sinon.stub(EnvSet, 'values').value({
+      ...EnvSet.values,
+      isDevFeaturesEnabled: false,
+    });
+
+    try {
+      await expect(
+        routeRequester.post('/configs/oidc/private-keys/rotate').send({
+          signingKeyAlgorithm: 'ML-DSA-65',
+        })
+      ).resolves.toHaveProperty('status', 422);
+    } finally {
+      stub.restore();
+    }
   });
 });

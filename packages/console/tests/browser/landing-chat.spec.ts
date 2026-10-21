@@ -37,6 +37,15 @@ const routeLanding = async (page: Page, chatStatus: number, chatBody: unknown) =
       });
     }
 
+    // No Turnstile site key by default, so the chat draws no widget unless a test sets one.
+    if (url.pathname === '/api/landing-page/chat/config') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ turnstileSiteKey: null }),
+      });
+    }
+
     if (url.host === 'localhost' && url.pathname.startsWith('/console/landing/')) {
       const relative = url.pathname.slice('/console/landing/'.length) || 'index.html';
       const file = path.join(landingRoot, relative);
@@ -143,6 +152,48 @@ test.describe('landing demo chat', () => {
         page.getByText('No problem at all, we will not send your details.')
       ).toBeVisible();
       expect(sent).toEqual(['I would like a demo', 'No']);
+    });
+  });
+
+  test.describe('turnstile', () => {
+    test.use({ locale: 'en-US' });
+
+    test('sends the Turnstile token with the first message of a new session', async ({ page }) => {
+      await routeLanding(page, 200, { reply: 'unused' });
+
+      // The site key is served, and Cloudflare's script is replaced by a stand-in that hands back a token.
+      await page.route('**/api/landing-page/chat/config', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ turnstileSiteKey: 'test-site-key' }),
+        });
+      });
+      await page.route('https://challenges.cloudflare.com/**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/javascript',
+          body: "window.turnstile = { render: function (container, options) { setTimeout(function () { options.callback('test-token'); }, 0); return 'widget-1'; }, reset: function () {} };",
+        });
+      });
+
+      const sent: unknown[] = [];
+      await page.route('**/api/landing-page/chat', async (route) => {
+        // The test records each chat request in the order it was sent.
+        // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- the list is the record of requests, in order
+        sent.push(route.request().postDataJSON());
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ reply: 'Thanks for the details.' }),
+        });
+      });
+
+      await openChat(page);
+      await sendMessage(page, 'I would like a demo');
+
+      await expect(page.getByText('Thanks for the details.')).toBeVisible();
+      expect(sent[0]).toMatchObject({ turnstileToken: 'test-token' });
     });
   });
 

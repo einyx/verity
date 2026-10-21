@@ -15,6 +15,8 @@ import { demoChatByLocale, demoChatEn } from '@logto/phrases';
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { readWithin, renderTurnstile } from './turnstile';
+
 // Copy comes from @logto/phrases. The visitor's browser language picks the locale; any key a locale
 // lacks falls back to English.
 
@@ -111,11 +113,21 @@ const readError = async (response: Response): Promise<string> => {
   }
 };
 
+/** How long a send waits for the widget to produce a token before it goes without one. */
+const turnstileWaitMs = 5000;
+
+/** The Turnstile token for the next new session. A token is used once, so it is taken and cleared here. */
+type TurnstileSource = {
+  take: () => Promise<string | undefined>;
+  renew: () => void;
+};
+
 const createAdapter = (
   sessionId: string,
   onStarted: () => void,
   onSubmitted: () => void,
-  onOptions: (options: string[]) => void
+  onOptions: (options: string[]) => void,
+  turnstile: TurnstileSource
 ): ChatModelAdapter => ({
   async run({ messages, abortSignal }) {
     onStarted();
@@ -127,10 +139,20 @@ const createAdapter = (
       .join('\n')
       .trim();
 
+    // The token is only checked when the session is new. Taking it and renewing the widget now means the
+    // next message already has a fresh token, whatever the outcome of this request.
+    const turnstileToken = await turnstile.take();
+    turnstile.renew();
+
     const response = await fetch('/api/landing-page/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({ sessionId, message, locale: navigator.language }),
+      body: JSON.stringify({
+        sessionId,
+        message,
+        locale: navigator.language,
+        turnstileToken,
+      }),
       signal: abortSignal,
     });
 
@@ -286,6 +308,35 @@ function DemoChat() {
   const [options, setOptions] = useState<string[]>([]);
   // The example placeholder only helps before the first message; afterwards a short prompt is enough.
   const [started, setStarted] = useState(false);
+  // Turnstile: the widget keeps one fresh token ready. The site key comes from the server; without one,
+  // no widget is drawn and no token is sent.
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const tokenRef = useRef<string | undefined>(undefined);
+  const renewRef = useRef<(() => void) | undefined>(undefined);
+  // Set once a widget is being drawn, so a send knows whether it should wait for a token.
+  const drawnRef = useRef(false);
+  const [siteKey, setSiteKey] = useState<string | undefined>(undefined);
+  const turnstile = useMemo<TurnstileSource>(
+    () => ({
+      take: async () => {
+        // Without a widget there is no token to wait for.
+        if (!drawnRef.current) {
+          return;
+        }
+
+        // The widget may still be solving when the visitor sends, so wait for a token for a short time.
+        const token = await readWithin(() => tokenRef.current, turnstileWaitMs);
+        // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref holds the widget's current token, which is single-use
+        tokenRef.current = undefined;
+
+        return token;
+      },
+      renew: () => {
+        renewRef.current?.();
+      },
+    }),
+    []
+  );
   const adapter = useMemo(
     () =>
       createAdapter(
@@ -296,9 +347,10 @@ function DemoChat() {
         () => {
           setSubmitted(true);
         },
-        setOptions
+        setOptions,
+        turnstile
       ),
-    [sessionId]
+    [sessionId, turnstile]
   );
   const runtime = useLocalRuntime(adapter);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -309,9 +361,62 @@ function DemoChat() {
     inputRef.current?.focus();
   }, []);
 
+  // Reads the public Turnstile site key. A failed read leaves the chat without a widget.
+  useEffect(() => {
+    const loadSiteKey = async () => {
+      try {
+        const response = await fetch('/api/landing-page/chat/config', {
+          headers: { accept: 'application/json' },
+        });
+        const data: unknown = response.ok ? await response.json() : undefined;
+        const key =
+          typeof data === 'object' &&
+          data !== null &&
+          'turnstileSiteKey' in data &&
+          typeof data.turnstileSiteKey === 'string'
+            ? data.turnstileSiteKey
+            : '';
+        setSiteKey(key === '' ? undefined : key);
+      } catch {
+        setSiteKey(undefined);
+      }
+    };
+
+    void loadSiteKey();
+  }, []);
+
+  useEffect(() => {
+    const container = widgetRef.current;
+
+    if (!siteKey || !container) {
+      return;
+    }
+
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref records that a widget is being drawn
+    drawnRef.current = true;
+
+    const draw = async () => {
+      try {
+        const renew = await renderTurnstile(container, siteKey, (token) => {
+          // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref holds the widget's latest token, replaced on each callback
+          tokenRef.current = token;
+        });
+        // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref holds the widget's reset function, set once it is drawn
+        renewRef.current = renew;
+      } catch {
+        // Without a widget the chat sends no token, and the server refuses new sessions.
+        // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref is cleared when the widget fails
+        tokenRef.current = undefined;
+      }
+    };
+
+    void draw();
+  }, [siteKey]);
+
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ThreadPrimitive.Root className="demo-chat-thread">
+        <div ref={widgetRef} className="demo-chat-turnstile" />
         <ThreadPrimitive.Viewport className="demo-chat-log">
           <ThreadPrimitive.Empty>
             <div className="demo-chat-welcome">

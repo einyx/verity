@@ -17,7 +17,6 @@ void i18next.use(initReactI18next).init({
 // @ts-expect-error monkey-patch for `crypto`
 crypto.subtle = webcrypto.subtle;
 global.TextEncoder = TextEncoder;
-// @ts-expect-error monkey-patch for `TextEncoder`/`TextDecoder`
 global.TextDecoder = TextDecoder;
 /* eslint-enable @silverhand/fp/no-mutation */
 

@@ -26,6 +26,7 @@
     "pretest": "pnpm generate",
     "pretest:ci": "pnpm generate",
     "test:ci": "jest --coverage --silent",
+    "test:browser": "playwright test",
     "test": "jest"
   },
   "devDependencies": {
@@ -43,6 +44,7 @@
     "@mdx-js/react": "^3.0.1",
     "@mdx-js/rollup": "^3.0.1",
     "@monaco-editor/react": "^4.6.0",
+    "@playwright/test": "^1.48.1",
     "@silverhand/eslint-config": "6.0.1",
     "@silverhand/eslint-config-react": "6.0.2",
     "@silverhand/essentials": "^2.9.1",

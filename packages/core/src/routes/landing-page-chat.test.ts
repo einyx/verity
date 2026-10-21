@@ -247,13 +247,19 @@ describe('handleChatTurn', () => {
     expect(result.body.submitted).toBe(true);
   });
 
-  it('returns a clean error when the model call fails', async () => {
+  it('keeps the visitor message and answers with a fallback when the model call fails', async () => {
     const { deps } = fakeDeps({ reply: 'throw' });
+    const savedTurns: unknown[] = [];
+    deps.recordTurn = async (saved) => {
+      savedTurns.push(saved);
+    };
 
     const result = await handleChatTurn(turn('What is meshX?'), deps, createChatState());
 
-    expect(result.status).toBe(502);
-    expect(result.body.code).toBe('landing_page.chat_unavailable');
+    expect(result.status).toBe(200);
+    expect(JSON.stringify(result.body)).toContain('your message is saved');
+    expect(savedTurns).toHaveLength(1);
+    expect(JSON.stringify(savedTurns)).toContain('What is meshX?');
   });
 
   it('makes exactly two model attempts when every attempt fails', async () => {

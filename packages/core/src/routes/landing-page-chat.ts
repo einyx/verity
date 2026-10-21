@@ -201,6 +201,9 @@ const findDocumentsContext = async (deps: LandingPageChatDeps, question: string)
 // One retry covers a transient model failure (timeout, rate limit) without leaving the visitor at an error.
 const modelAttempts = 2;
 const modelRetryDelayMs = 300;
+// Shown in place of a model reply when every attempt fails. The visitor's message has already been saved.
+const modelUnavailableReply =
+  "I couldn't come up with an answer just now, but your message is saved. You can also write to hello@meshx.io.";
 
 const askModel = async (
   deps: LandingPageChatDeps,
@@ -636,10 +639,12 @@ export const handleChatTurn = async (
   const firstReply = await askModel(deps, turnMessages, context);
 
   if (!firstReply) {
-    return error(
-      502,
-      'landing_page.chat_unavailable',
-      'The assistant is unavailable. Please try again or use the request form.'
+    // The model already had its retry. The visitor's message is kept and answered with a plain
+    // fallback, so a failed model call never loses the turn.
+    return applyReply(
+      { sessionId: input.sessionId, message, reply: { content: modelUnavailableReply }, session },
+      deps,
+      state
     );
   }
 

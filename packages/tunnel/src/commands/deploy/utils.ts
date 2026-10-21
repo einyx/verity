@@ -156,7 +156,8 @@ const getAccessToken = async (auth: string, endpoint: URL, managementApiResource
 
 const uploadCustomUiAssets = async (accessToken: string, endpoint: URL, zipBuffer: Uint8Array) => {
   const form = new FormData();
-  const blob = new Blob([zipBuffer], { type: 'application/zip' });
+  // Copy into an ArrayBuffer-backed view: newer TypeScript lib types reject ArrayBufferLike as a BlobPart.
+  const blob = new Blob([new Uint8Array<ArrayBuffer>(zipBuffer)], { type: 'application/zip' });
   const timestamp = Math.floor(Date.now() / 1000);
   form.append('file', blob, `custom-ui-${timestamp}.zip`);
 

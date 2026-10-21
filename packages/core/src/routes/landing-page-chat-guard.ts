@@ -53,7 +53,17 @@ const demoLeadGuard = z
     contactDetail: z.string().trim().max(200).optional(),
     consent: z.literal(true),
   })
-  .strict();
+  .strict()
+  .superRefine((lead, context) => {
+    // A phone, WhatsApp or LinkedIn request is useless without the number or profile to reach them on.
+    if (lead.contactMethod && lead.contactMethod !== 'email' && !lead.contactDetail) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contactDetail'],
+        message: 'A contact method other than email needs a number or profile link.',
+      });
+    }
+  });
 
 export type DemoLead = z.infer<typeof demoLeadGuard>;
 
@@ -62,6 +72,16 @@ export const parseDemoLead = (input: unknown): DemoLead | undefined => {
   const result = demoLeadGuard.safeParse(input);
 
   return result.success ? result.data : undefined;
+};
+
+/**
+ * The first field that stops a proposed lead from being sent, so the chat can ask for it by name.
+ * Undefined when the lead is valid or the problem is not tied to one field.
+ */
+export const firstInvalidLeadField = (input: unknown): string | undefined => {
+  const result = demoLeadGuard.safeParse(input);
+
+  return result.success ? undefined : result.error.issues[0]?.path[0]?.toString();
 };
 
 /** Whether a user message is within the length cap and not empty. */

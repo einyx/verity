@@ -136,6 +136,23 @@ export const saveLeadConversationInsight = async (
  * Reads a saved conversation back, so a turn that lands on another instance continues the same chat
  * instead of starting over. Returns undefined when the session was never saved.
  */
+/** Whether a lead is saved for this conversation. Read before a turn saves its own lead, so a retry sees it. */
+export const loadLandingLeadFiled = async (
+  pool: CommonQueryMethods,
+  sessionId: string
+): Promise<boolean> => {
+  const row = await pool.one<{ filed: boolean }>(sql`
+    select exists(
+      select 1
+      from landing_leads
+      where tenant_id = ${adminTenantId}
+        and session_id = ${sessionId}
+    ) as filed
+  `);
+
+  return row.filed;
+};
+
 export const loadLandingChatSession = async (
   pool: CommonQueryMethods,
   sessionId: string
@@ -151,7 +168,7 @@ export const loadLandingChatSession = async (
     return;
   }
 
-  const messages = row.messages.flatMap((item): RecordedChatMessage[] =>
+  const messages = row.messages.flatMap((item: unknown): RecordedChatMessage[] =>
     typeof item === 'object' &&
     item !== null &&
     'role' in item &&

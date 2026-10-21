@@ -61,6 +61,19 @@ const turn = (message: string, id = sessionId, address = ip) => ({
   ip: address,
 });
 
+const consentQuestion = 'May we contact you about your demo?\n[[options: Yes | No]]';
+
+/** Starts a conversation whose last reply asked for consent, so a lead can be sent on the next turn. */
+const consentAsked = async (deps: LandingPageChatDeps) => {
+  const state = createChatState();
+  const { callModel } = deps;
+  deps.callModel = async () => ({ content: consentQuestion });
+  await handleChatTurn(turn('Ready when you are'), deps, state);
+  deps.callModel = callModel;
+
+  return state;
+};
+
 describe('handleChatTurn', () => {
   it('returns not found and does not call the model while the switch is off', async () => {
     const { deps, modelCalls } = fakeDeps({ published: { demoChat: { enabled: false } } });
@@ -165,9 +178,9 @@ describe('handleChatTurn', () => {
     const { deps, modelCalls, leads } = fakeDeps({
       reply: { lead: validLead },
     });
-    const state = createChatState();
+    const state = await consentAsked(deps);
 
-    const first = await handleChatTurn(turn('Please contact me'), deps, state);
+    const first = await handleChatTurn(turn('Yes, please contact me'), deps, state);
     const second = await handleChatTurn(turn('Anything else?'), deps, state);
 
     expect(first.body).toEqual({
@@ -188,17 +201,17 @@ describe('handleChatTurn', () => {
 
     expect(leads).toHaveLength(0);
     expect(result.body).toEqual({
-      reply: 'Could you confirm your email?',
+      reply: 'Before I send this, may we contact you about your demo?',
       submitted: false,
-      options: [],
+      options: ['Yes', 'No'],
     });
   });
 
   it('tells the visitor when delivery fails and keeps the session open', async () => {
     const { deps } = fakeDeps({ reply: { lead: validLead }, sendLeadFails: true });
-    const state = createChatState();
+    const state = await consentAsked(deps);
 
-    const result = await handleChatTurn(turn('Please contact me'), deps, state);
+    const result = await handleChatTurn(turn('Yes, please contact me'), deps, state);
 
     expect(result.status).toBe(503);
     expect(result.body.code).toBe('landing_page.chat_delivery_failed');
@@ -208,7 +221,7 @@ describe('handleChatTurn', () => {
   it('records a delivered lead as pending, then sent', async () => {
     const { deps, records } = fakeDeps({ reply: { lead: validLead } });
 
-    await handleChatTurn(turn('Please contact me'), deps, createChatState());
+    await handleChatTurn(turn('Yes, please contact me'), deps, await consentAsked(deps));
 
     expect(records.map((record) => record.emailStatus)).toEqual(['pending', 'sent']);
   });
@@ -216,7 +229,7 @@ describe('handleChatTurn', () => {
   it('records a lead as failed when delivery fails, so the team can follow it up', async () => {
     const { deps, records } = fakeDeps({ reply: { lead: validLead }, sendLeadFails: true });
 
-    await handleChatTurn(turn('Please contact me'), deps, createChatState());
+    await handleChatTurn(turn('Yes, please contact me'), deps, await consentAsked(deps));
 
     expect(records.map((record) => record.emailStatus)).toEqual(['pending', 'failed']);
   });
@@ -224,7 +237,11 @@ describe('handleChatTurn', () => {
   it('keeps the visitor reply when a lead cannot be recorded', async () => {
     const { deps, leads } = fakeDeps({ reply: { lead: validLead }, recordFails: true });
 
-    const result = await handleChatTurn(turn('Please contact me'), deps, createChatState());
+    const result = await handleChatTurn(
+      turn('Yes, please contact me'),
+      deps,
+      await consentAsked(deps)
+    );
 
     expect(leads).toEqual([validLead]);
     expect(result.body.submitted).toBe(true);

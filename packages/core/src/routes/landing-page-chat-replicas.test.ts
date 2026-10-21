@@ -1,4 +1,4 @@
-/* eslint-disable @silverhand/fp/no-mutating-methods, @silverhand/fp/no-mutation, @silverhand/fp/no-let -- The tests record each model call and the shared fake store. */
+/* eslint-disable @silverhand/fp/no-mutating-methods -- The tests record each model call and the shared fake store. */
 import { type RecordedChatMessage, type RecordedChatTurn } from './landing-page-chat-store.js';
 import { createChatState, handleChatTurn, type LandingPageChatDeps } from './landing-page-chat.js';
 
@@ -7,6 +7,10 @@ import { createChatState, handleChatTurn, type LandingPageChatDeps } from './lan
 const sessionId = 'session-replica-0001';
 const ip = '203.0.113.20';
 const enabledDocument = { demoChat: { enabled: true } };
+
+// Scripted replies shared by the tests below. They take no input, so they live outside each test.
+const notedReply = () => ({ content: 'Thanks, noted.' });
+const shortReply = () => ({ content: 'Thanks.' });
 
 const validLead = {
   firstName: 'Ada',
@@ -54,7 +58,7 @@ describe('landing page chat across replicas', () => {
     const store: Store = new Map();
     const modelCalls: ModelCall[] = [];
     const sent: unknown[] = [];
-    const reply = () => ({ content: 'Thanks, noted.' });
+    const reply = notedReply;
 
     const depsA = replicaDeps({ store, modelCalls, reply, sent });
     const depsB = replicaDeps({ store, modelCalls, reply, sent });
@@ -80,7 +84,7 @@ describe('landing page chat across replicas', () => {
     const store: Store = new Map();
     const modelCalls: ModelCall[] = [];
     const sent: unknown[] = [];
-    const reply = () => ({ content: 'Thanks.' });
+    const reply = shortReply;
 
     const depsA = replicaDeps({ store, modelCalls, reply, sent });
     const depsB = replicaDeps({ store, modelCalls, reply, sent });
@@ -90,9 +94,9 @@ describe('landing page chat across replicas', () => {
 
     // The second call's history must still hold the name the visitor typed on the first replica.
     const secondCall = modelCalls[1] ?? [];
-    expect(
-      secondCall.some((item) => item.role === 'user' && item.content === 'Test Lead02')
-    ).toBe(true);
+    expect(secondCall.some((item) => item.role === 'user' && item.content === 'Test Lead02')).toBe(
+      true
+    );
   });
 
   it('submits the lead on a consent turn that lands on another replica', async () => {
@@ -101,8 +105,8 @@ describe('landing page chat across replicas', () => {
     const sent: unknown[] = [];
     const steps = [
       { content: 'Who should I contact?' },
-      { content: 'Which channel do you prefer?' },
-      { content: 'Shall I send the request?', lead: validLead },
+      { content: 'May we contact you about your demo?\n[[options: Yes | No]]' },
+      { content: 'Thanks, sending now.', lead: validLead },
     ];
     const reply = (turnIndex: number) => steps[turnIndex] ?? { content: 'ok' };
 
@@ -119,3 +123,5 @@ describe('landing page chat across replicas', () => {
     expect(store.get(sessionId)?.submitted).toBe(true);
   });
 });
+
+/* eslint-enable @silverhand/fp/no-mutating-methods */

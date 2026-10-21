@@ -12,6 +12,7 @@ import {
   createWindowLimiter,
   demoChatLimits,
   demoContactMethods,
+  firstInvalidLeadField,
   isDemoChatEnabled,
   isValidDemoChatMessage,
   parseDemoLead,
@@ -20,6 +21,7 @@ import {
 /* eslint-disable max-lines -- The chat route already exceeded the limit; the lead flow adds its own steps to the same handler. */
 import { systemPrompt } from './landing-page-chat-prompt.js';
 import { type ModelReply, readModelReply } from './landing-page-chat-reply.js';
+import { replyShapeProblems, shapeCorrection } from './landing-page-chat-shape.js';
 import {
   type LeadRecord,
   recordLandingChatTurn,
@@ -28,6 +30,7 @@ import {
   recordLandingLead,
   recordLeadSafely,
   loadLandingChatSession,
+  loadLandingLeadFiled,
   recordTurnSafely,
   type RecordedChatMessage,
   type RecordedChatTurn,
@@ -63,6 +66,8 @@ export type LandingPageChatDeps = {
   loadSession?: (
     sessionId: string
   ) => Promise<{ messages: RecordedChatMessage[]; submitted: boolean } | undefined>;
+  /** Whether a lead is already saved for this conversation, so another instance does not file it again. */
+  loadLeadFiled?: (sessionId: string) => Promise<boolean>;
   /** Saves each lead in the admin tenant, before and after the email. Optional, like recordTurn. */
   recordLead?: (lead: LeadRecord) => Promise<void>;
   /** Files the lead as a demo request with the Kubo portal. Optional; a failure never reaches the visitor. */
@@ -79,6 +84,8 @@ type Session = {
   readonly messages: readonly ChatMessage[];
   readonly userTurns: number;
   readonly submitted: boolean;
+  /** Set once the Kubo request and company research have run, so a retried lead does not repeat them. */
+  readonly filed?: boolean;
 };
 
 type ChatState = {
@@ -281,6 +288,93 @@ const splitReplyOptions = (content: string): { text: string; options: string[] }
   return { text: content.slice(0, match.index).trimEnd(), options };
 };
 
+const consentQuestion =
+  'Before I send this, may we contact you about your demo?\n[[options: Yes | No]]';
+
+/** What to ask for when a proposed lead has a gap, named by the field that is missing. */
+const leadQuestions: Record<string, string> = {
+  firstName: 'What is your first name?',
+  lastName: 'And your last name?',
+  email: 'What is your work email?',
+  company: 'Which company are you with?',
+  contactMethod:
+    'How would you like us to contact you?\n[[options: Email | WhatsApp | Phone call | LinkedIn]]',
+  contactDetail: 'What number or LinkedIn profile should we use?',
+  consent: consentQuestion,
+};
+
+const declinedReply =
+  'No problem at all, we will not send your details. You can still ask me anything about meshX.';
+
+/**
+ * What the visitor's message answers, when the chat's last reply asked for consent with Yes | No.
+ * A lead is only sent after an explicit yes; a no stops it. Anything else is not an answer.
+ */
+const consentAnswer = (session: Session, message: string): 'granted' | 'declined' | undefined => {
+  const last = session.messages.at(-1);
+
+  if (last?.role !== 'assistant' || !/\[\[options:\s*Yes\s*\|\s*No\s*]]/.test(last.content)) {
+    return undefined;
+  }
+
+  if (/^\s*no\b|\b(don'?t|do not|not interested|no thanks)\b/i.test(message)) {
+    return 'declined';
+  }
+
+  return /(?<!\p{L})(yes|yeah|yep|sure|ok|okay|si|sí|sì|go ahead)(?!\p{L})/iu.test(message)
+    ? 'granted'
+    : undefined;
+};
+
+/**
+ * The question to ask instead of sending a lead the model proposed too early or with a gap. Undefined when
+ * the lead can go, or when the model proposed no lead at all.
+ */
+type PendingAsk = {
+  /** The question or message to show instead of sending the lead. */
+  text: string;
+  /** Whether the model's own sentences before the question should stay in the reply. */
+  keepReaction: boolean;
+};
+
+const askBeforeSending = (
+  proposed: unknown,
+  session: Session,
+  message: string
+): PendingAsk | undefined => {
+  if (proposed === undefined) {
+    return undefined;
+  }
+
+  const answer = consentAnswer(session, message);
+
+  if (answer === 'declined') {
+    return { text: declinedReply, keepReaction: false };
+  }
+
+  if (!parseDemoLead(proposed)) {
+    const field = firstInvalidLeadField(proposed) ?? '';
+
+    return { text: leadQuestions[field] ?? 'Could you share that once more?', keepReaction: true };
+  }
+
+  return answer === 'granted' ? undefined : { text: consentQuestion, keepReaction: true };
+};
+
+/**
+ * The model's sentences that are not questions, followed by the one question the chat asks. This keeps the
+ * genuine reaction the prompt asks for, without a second question competing with the one we ask.
+ */
+const withReaction = (modelText: string | undefined, question: string): string => {
+  const reaction = (modelText ?? '')
+    .split(/(?<=[!.?])\s+/)
+    .filter((sentence) => sentence.trim().length > 0 && !sentence.includes('?'))
+    .join(' ')
+    .trim();
+
+  return reaction ? `${reaction}\n\n${question}` : question;
+};
+
 /** Applies the model's reply: a valid lead is delivered, anything else is text for the visitor. */
 const applyReply = async (
   turn: { sessionId: string; message: string; reply: ModelReply; session: Session },
@@ -289,27 +383,34 @@ const applyReply = async (
 ): Promise<ChatResult> => {
   const { sessionId, message, reply, session } = turn;
   const lead = parseDemoLead(reply.lead);
+  const pending = askBeforeSending(reply.lead, session, message);
 
-  if (reply.lead !== undefined && lead) {
+  if (lead && !pending) {
     // The lead is saved first, so a failed email still leaves a record for the team to follow up.
     const record = { sessionId, lead, emailStatus: 'pending' as const };
     await recordLeadSafely(deps.recordLead, record);
 
-    // Company research starts as soon as the lead is saved, not after the email, so a failed email
-    // still leaves the company profile and the conversation analysis for the Leads page.
-    void researchLeadCompany(deps.researchCompany, sessionId, lead.email, [
-      ...session.messages,
-      { role: 'user', content: message },
-      { role: 'assistant', content: thanks },
-    ]);
+    // The Kubo request and company research run once per conversation. If the email fails and the visitor
+    // tries again, the retry only sends the email; it must not file a second demo or post a second Slack message.
+    if (!session.filed) {
+      // Company research starts as soon as the lead is saved, not after the email, so a failed email
+      // still leaves the company profile and the conversation analysis for the Leads page.
+      void researchLeadCompany(deps.researchCompany, sessionId, lead.email, [
+        ...session.messages,
+        { role: 'user', content: message },
+        { role: 'assistant', content: thanks },
+      ]);
 
-    // The Kubo demo request is filed whether or not the email goes out, so a mail outage never loses the demo.
-    try {
-      await deps.provisionDemo?.(lead);
-    } catch {
-      // The lead is saved, so the team can still follow up. The log names no details.
-      // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
-      console.error('Landing page chat: the Kubo demo request could not be filed.');
+      // The Kubo demo request is filed whether or not the email goes out, so a mail outage never loses the demo.
+      try {
+        await deps.provisionDemo?.(lead);
+      } catch {
+        // The lead is saved, so the team can still follow up. The log names no details.
+        // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no contact details.
+        console.error('Landing page chat: the Kubo demo request could not be filed.');
+      }
+
+      state.sessions.set(sessionId, { ...session, filed: true });
     }
 
     try {
@@ -346,7 +447,11 @@ const applyReply = async (
     return { status: 200, body: { reply: thanks, submitted: true } };
   }
 
-  const content = (reply.content ?? '').trim().slice(0, 1000) || 'Could you tell me a bit more?';
+  const content = pending
+    ? pending.keepReaction
+      ? withReaction(reply.content, pending.text)
+      : pending.text
+    : (reply.content ?? '').trim().slice(0, 1000) || 'Could you tell me a bit more?';
 
   state.sessions.set(sessionId, {
     ...session,
@@ -378,24 +483,76 @@ const applyReply = async (
  * Another instance may have added turns since this one last saw the conversation. Always continue from
  * the saved transcript when one exists, so a stale copy here never drops a turn.
  */
+/**
+ * Returns false only when the saved transcript could not be read and this instance has no copy either, so the
+ * turn cannot continue the conversation. A read failure with a local copy continues from that copy.
+ */
 const restoreSavedTranscript = async (
   sessionId: string,
   deps: LandingPageChatDeps,
   state: ChatState
-): Promise<void> => {
-  if (!deps.loadSession) {
-    return;
+): Promise<boolean> => {
+  const existing = state.sessions.get(sessionId);
+
+  try {
+    const stored = deps.loadSession ? await deps.loadSession(sessionId) : undefined;
+    // A lead row means the Kubo request and research already ran, even when another instance filed it.
+    const filed =
+      existing?.filed === true ||
+      (deps.loadLeadFiled ? await deps.loadLeadFiled(sessionId) : false);
+
+    if (!stored && !filed) {
+      return true;
+    }
+
+    const base = stored
+      ? {
+          messages: stored.messages,
+          userTurns: stored.messages.filter((item) => item.role === 'user').length,
+          submitted: stored.submitted,
+        }
+      : (existing ?? { messages: [], userTurns: 0, submitted: false });
+
+    state.sessions.set(sessionId, { ...base, filed });
+
+    return true;
+  } catch {
+    // The log names no details: the read failed, and the message holds no visitor content.
+    // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no visitor content.
+    console.error('Landing page chat: the saved conversation could not be read.');
+
+    return existing !== undefined;
+  }
+};
+
+/**
+ * Asks the model once more when a text reply breaks the shape rules (more than one question, too many
+ * sentences, a bullet list). The retry is not stored; the visitor gets whichever reply came last.
+ */
+const reshapeReply = async (
+  deps: LandingPageChatDeps,
+  messages: ChatMessage[],
+  context: string | undefined,
+  reply: ModelReply
+): Promise<ModelReply> => {
+  const problems =
+    reply.lead === undefined && reply.content ? replyShapeProblems(reply.content) : [];
+
+  if (problems.length === 0 || !reply.content) {
+    return reply;
   }
 
-  const stored = await deps.loadSession(sessionId);
+  const retried = await askModel(
+    deps,
+    [
+      ...messages,
+      { role: 'assistant', content: reply.content },
+      { role: 'user', content: shapeCorrection(problems) },
+    ],
+    context
+  );
 
-  if (stored) {
-    state.sessions.set(sessionId, {
-      messages: stored.messages,
-      userTurns: stored.messages.filter((item) => item.role === 'user').length,
-      submitted: stored.submitted,
-    });
-  }
+  return retried ?? reply;
 };
 
 export const handleChatTurn = async (
@@ -409,7 +566,16 @@ export const handleChatTurn = async (
     return rejected;
   }
 
-  await restoreSavedTranscript(input.sessionId, deps, state);
+  const restored = await restoreSavedTranscript(input.sessionId, deps, state);
+
+  if (!restored) {
+    // 503, not 502: the failing dependency is our own store, not the model. The visitor sees the same message.
+    return error(
+      503,
+      'landing_page.chat_unavailable',
+      'The assistant is unavailable. Please try again or use the request form.'
+    );
+  }
 
   const opened = openSession(input.sessionId, state);
 
@@ -466,19 +632,18 @@ export const handleChatTurn = async (
   }
 
   const context = await findDocumentsContext(deps, buildDocumentsQuery(session.messages, message));
-  const reply = await askModel(
-    deps,
-    [...session.messages, { role: 'user', content: message }],
-    context
-  );
+  const turnMessages: ChatMessage[] = [...session.messages, { role: 'user', content: message }];
+  const firstReply = await askModel(deps, turnMessages, context);
 
-  if (!reply) {
+  if (!firstReply) {
     return error(
       502,
       'landing_page.chat_unavailable',
       'The assistant is unavailable. Please try again or use the request form.'
     );
   }
+
+  const reply = await reshapeReply(deps, turnMessages, context, firstReply);
 
   return applyReply({ sessionId: input.sessionId, message, reply, session }, deps, state);
 };
@@ -565,6 +730,10 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
   loadSession: async (sessionId) => {
     const pool = await EnvSet.sharedPool;
     return loadLandingChatSession(pool, sessionId);
+  },
+  loadLeadFiled: async (sessionId) => {
+    const pool = await EnvSet.sharedPool;
+    return loadLandingLeadFiled(pool, sessionId);
   },
   recordLead: async (lead) => {
     const pool = await EnvSet.sharedPool;

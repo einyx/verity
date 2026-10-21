@@ -1,4 +1,4 @@
-/* eslint-disable @silverhand/fp/no-mutating-methods -- The tests record each turn the route saves. */
+/* eslint-disable @silverhand/fp/no-mutating-methods, @silverhand/fp/no-mutation -- The tests record each turn the route saves, and switch the scripted model reply between turns. */
 import { type RecordedChatTurn } from './landing-page-chat-store.js';
 import { createChatState, handleChatTurn, type LandingPageChatDeps } from './landing-page-chat.js';
 
@@ -62,17 +62,18 @@ describe('landing page chat recording', () => {
   });
 
   it('saves a submitted lead with its fields and the closing reply', async () => {
-    const { deps, recorded } = fakeDeps({ reply: { lead: validLead } });
+    const { deps, recorded } = fakeDeps({
+      reply: { content: 'May we contact you about your demo?\n[[options: Yes | No]]' },
+    });
+    const state = createChatState();
 
-    await handleChatTurn(
-      input('Ada, ada@example.com, Analytical Engines'),
-      deps,
-      createChatState()
-    );
+    await handleChatTurn(input('Ada, ada@example.com, Analytical Engines'), deps, state);
+    deps.callModel = async () => ({ lead: validLead });
+    await handleChatTurn(input('yes'), deps, state);
 
-    expect(recorded).toHaveLength(1);
-    expect(recorded[0]).toMatchObject({ sessionId, lead: validLead, submitted: true });
-    expect(recorded[0]?.messages.at(-1)?.role).toBe('assistant');
+    expect(recorded).toHaveLength(2);
+    expect(recorded[1]).toMatchObject({ sessionId, lead: validLead, submitted: true });
+    expect(recorded[1]?.messages.at(-1)?.role).toBe('assistant');
   });
 
   it('still answers the visitor when the save fails', async () => {
@@ -85,4 +86,4 @@ describe('landing page chat recording', () => {
   });
 });
 
-/* eslint-enable @silverhand/fp/no-mutating-methods */
+/* eslint-enable @silverhand/fp/no-mutating-methods, @silverhand/fp/no-mutation */

@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 export const demoChatLimits = {
   /** Requests per IP per minute. */
-  perIpPerMinute: 15,
+  perIpPerMinute: 60,
   /** Requests per IP per hour. */
   perIpPerHour: 120,
   /** User turns allowed in one conversation. */

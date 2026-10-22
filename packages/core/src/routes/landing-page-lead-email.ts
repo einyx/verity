@@ -7,7 +7,8 @@ import { type DemoLead } from './landing-page-chat-guard.js';
 // line breaks are removed so nothing can add a header or a second message to the email.
 
 /** The team inbox that receives every demo lead. */
-export const demoLeadRecipient = 'hello@meshx.io';
+// Temporary: lead notifications go to these inboxes while the sales flow is tested.
+export const demoLeadRecipients = ['alessio@meshx.io', 'clinton@meshx.io'];
 
 const apiVersion = '2023-03-31';
 
@@ -104,7 +105,7 @@ export const sendLeadEmail = async (
   const url = new URL(`/emails:send?api-version=${apiVersion}`, config.endpoint);
   const body = JSON.stringify({
     senderAddress: config.sender,
-    recipients: { to: [{ address: demoLeadRecipient }] },
+    recipients: { to: demoLeadRecipients.map((address) => ({ address })) },
     replyTo: [{ address: toSingleLine(lead.email) }],
     content: {
       subject: 'New demo request from the meshX landing page',

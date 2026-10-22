@@ -1,7 +1,7 @@
 /* eslint-disable @silverhand/fp/no-mutating-methods -- The sender tests record the request the fake transport receives. */
 import {
   buildLeadBody,
-  demoLeadRecipient,
+  demoLeadRecipients,
   parseAcsConnectionString,
   sendLeadEmail,
   toSingleLine,
@@ -112,7 +112,9 @@ describe('sendLeadEmail', () => {
     expect(request?.url).toBe(
       'https://example.communication.azure.com/emails:send?api-version=2023-03-31'
     );
-    expect(payload.recipients.to[0]?.address).toBe(demoLeadRecipient);
+    expect(
+      payload.recipients.to.map((recipient: { address: string }) => recipient.address)
+    ).toEqual(demoLeadRecipients);
     expect(payload.replyTo[0]?.address).toBe('ada@example.com');
     expect(payload.content.plainText).toContain('Name: Ada Lovelace');
     expect(headers['x-ms-date']).toBe('Tue, 20 Oct 2026 12:00:00 GMT');

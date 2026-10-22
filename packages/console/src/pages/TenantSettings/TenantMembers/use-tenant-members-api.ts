@@ -1,4 +1,5 @@
 import { OrganizationInvitationStatus, type TenantRole } from '@logto/schemas';
+import { HTTPError } from 'ky';
 import { useContext, useMemo } from 'react';
 
 import { useAuthedCloudApi } from '@/cloud/hooks/use-cloud-api';
@@ -24,6 +25,19 @@ type TenantMembersApi = {
   resendInvitation: (invitationId: string) => Promise<void>;
   revokeInvitation: (invitationId: string) => Promise<void>;
   deleteInvitation: (invitationId: string) => Promise<void>;
+};
+
+/** A 404 on delete means the invitation is already gone, which is the outcome the caller wanted. */
+const ignoreNotFound = async (request: Promise<unknown>) => {
+  try {
+    await request;
+  } catch (error: unknown) {
+    if (error instanceof HTTPError && error.response.status === 404) {
+      return;
+    }
+
+    throw error;
+  }
 };
 
 /** A bare array of invitations, the shape the published client type describes. */
@@ -102,9 +116,11 @@ export const useCloudTenantMembersApi = (): TenantMembersApi & {
         });
       },
       deleteInvitation: async (invitationId) => {
-        await cloudApi.delete('/api/tenants/:tenantId/invitations/:invitationId', {
-          params: { tenantId, invitationId },
-        });
+        await ignoreNotFound(
+          cloudApi.delete('/api/tenants/:tenantId/invitations/:invitationId', {
+            params: { tenantId, invitationId },
+          })
+        );
       },
     }),
     [cloudApi, tenantId]
@@ -140,7 +156,9 @@ const useOssTenantMembersApi = (): TenantMembersApi => {
         });
       },
       deleteInvitation: async (invitationId) => {
-        await api.delete(`me/tenant/invitations/${encodeURIComponent(invitationId)}`);
+        await ignoreNotFound(
+          api.delete(`me/tenant/invitations/${encodeURIComponent(invitationId)}`)
+        );
       },
     }),
     [api]

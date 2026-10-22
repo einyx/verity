@@ -267,6 +267,8 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
           ...coreOrigins,
           ...ossSurveyOrigins,
           ...developmentOrigins,
+          // The Turnstile widget connects to challenges.cloudflare.com while it runs.
+          'https://challenges.cloudflare.com',
         ],
         // The Turnstile widget renders in a challenges.cloudflare.com frame.
         frameSrc: [

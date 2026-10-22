@@ -29,6 +29,9 @@ const fakePool = {
     return [];
   },
   maybeOne: async (query: { sql: string; values: unknown[] }) => {
+    if (query.sql.includes('from landing_leads')) {
+      return { lead: { firstName: 'Ada' }, companyProfile: undefined };
+    }
     if (query.sql.includes('from landing_chat_sessions')) {
       const sessionId = query.values.at(-1);
       return state.sessions.find((row) => row.session_id === sessionId);
@@ -58,6 +61,11 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
 
 jest.unstable_mockModule('#src/middleware/koa-auth/index.js', () => ({
   verifyBearerTokenFromRequest: async () => ({ ...auth.token, scopes: auth.scopes }),
+}));
+
+jest.unstable_mockModule('./landing-page-brief.js', () => ({
+  // Real PDF bytes, as the renderer returns them: a Uint8Array.
+  renderBriefPdf: async () => new Uint8Array([37, 80, 68, 70, 45, 49, 46, 55]),
 }));
 
 const { landingPageLeadRoutes } = await import('./landing-page-leads.js');
@@ -128,6 +136,27 @@ describe('landing leads routes', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- supertest types the body as any; the shape is checked here.
     expect(response.body.leads.map((row: Row) => row.id)).toEqual(['lead-3', 'lead-2', 'lead-1']);
     expect(response.body.leads[0]).not.toHaveProperty('messages');
+  });
+
+  it('sends the brief as a PDF file, not JSON', async () => {
+    const response = await request(createApp())
+      .get('/api/landing-leads/session-pdf/brief.pdf')
+      .set('Authorization', 'Bearer test')
+      .buffer(true)
+      .parse((resource, callback) => {
+        const chunks: Uint8Array[] = [];
+        resource.on('data', (chunk: Uint8Array) => {
+          // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- collects the streamed bytes for the assertion
+          chunks.push(chunk);
+        });
+        resource.on('end', () => {
+          callback(null, Buffer.concat(chunks));
+        });
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toBe('application/pdf');
+    expect(Buffer.from(response.body).toString('latin1').startsWith('%PDF-')).toBe(true);
   });
 
   it('caps the page size at 100 and defaults it to 50', async () => {

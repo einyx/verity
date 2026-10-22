@@ -161,7 +161,8 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
 
     ctx.set('content-type', 'application/pdf');
     ctx.set('content-disposition', `attachment; filename="meeting-brief-${sessionId}.pdf"`);
-    ctx.body = pdf;
+    // Koa serializes a Uint8Array as JSON, so the PDF bytes must be a Buffer.
+    ctx.body = Buffer.from(pdf);
 
     return next();
   });
@@ -235,10 +236,14 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
     assertThat(input, new RequestError({ code: 'entity.not_found', status: 404 }));
 
     if (fileKind === 'brief') {
-      const pdf = await renderBriefPdf({ ...input, bookingUrl: process.env.LANDING_LEAD_BOOKING_URL });
+      const pdf = await renderBriefPdf({
+        ...input,
+        bookingUrl: process.env.LANDING_LEAD_BOOKING_URL,
+      });
       ctx.set('content-type', 'application/pdf');
       ctx.set('content-disposition', `attachment; filename="meeting-brief-${sessionId}.pdf"`);
-      ctx.body = pdf;
+      // Koa serializes a Uint8Array as JSON, so the PDF bytes must be a Buffer.
+      ctx.body = Buffer.from(pdf);
     } else {
       const date = new Date().toISOString().slice(0, 10);
       ctx.set(

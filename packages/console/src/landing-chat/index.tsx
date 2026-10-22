@@ -101,7 +101,15 @@ function IdeaIconMark({ icon }: { readonly icon: IdeaIcon }) {
   );
 }
 
+// Shown when the visitor has sent too many messages in a short time, so they know to wait instead of retrying.
+const rateLimitedNotice =
+  "You've sent a lot of messages in a short time. Please wait a few minutes and try again.";
+
 const readError = async (response: Response): Promise<string> => {
+  if (response.status === 429) {
+    return rateLimitedNotice;
+  }
+
   try {
     const body: unknown = await response.json();
     const message =

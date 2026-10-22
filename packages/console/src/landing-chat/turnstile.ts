@@ -99,7 +99,25 @@ export const renderTurnstile = async (
     },
   });
 
+  // The widget can lose its frame while the dialog is closed or moved, and reset then fails. In that case
+  // draw a fresh widget in the same container so the next send still gets a token.
+  const redraw = async () => {
+    try {
+      await renderTurnstile(container, siteKey, onToken);
+    } catch {
+      onToken();
+    }
+  };
+
   return () => {
-    api.reset(widgetId);
+    try {
+      if (!container.querySelector('iframe')) {
+        throw new Error('Turnstile frame is missing.');
+      }
+      api.reset(widgetId);
+    } catch {
+      container.replaceChildren();
+      void redraw();
+    }
   };
 };

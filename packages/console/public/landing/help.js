@@ -1,6 +1,6 @@
 (() => {
   // One document-level listener handles every trigger, so the buttons work in every browser without depending on
-  // when individual listeners are attached. Help uses the native dialog; Docs and the language list are overlay panels.
+  // when individual listeners are attached. Help uses the native dialog; Docs is an overlay panel. The language menu lives in locale.js.
   const helpDialog = document.getElementById('help-dialog');
   const panel = (id) => document.getElementById(id);
 
@@ -13,8 +13,6 @@
     if (element) element.hidden = true;
   };
 
-  window.closeLocaleModal = () => closePanel(panel('locale-modal'));
-
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
@@ -26,10 +24,6 @@
     }
     if (target.closest('[data-docs-open]')) {
       openPanel(panel('docs-modal'));
-      return;
-    }
-    if (target.closest('[data-locale-button]')) {
-      openPanel(panel('locale-modal'));
       return;
     }
     if (target.closest('[data-help-close], [data-dialog-close]')) {

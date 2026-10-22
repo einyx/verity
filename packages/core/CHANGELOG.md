@@ -1,5 +1,52 @@
 # Change Log
 
+## 1.46.0
+
+### Minor Changes
+
+- d8ad796: ask the AI assistant about your tenant and confirm changes it proposes
+
+  The AI assistant can read your tenant data and propose changes, which only take effect after you confirm them. You can create personal access tokens in the account center, and the sign-in experience, enterprise SSO details and tenant member roles offer their full set of options.
+
+### Patch Changes
+
+- 10e4c47: open the landing page demo chat from old /demo links without a dev feature flag
+
+  Old "Request a demo" links that point at /demo now open the demo chat on the landing page, in every environment.
+
+- 6f98931: keep the landing page demo chat from sending a request before the visitor agrees
+
+  The demo chat now sends a request only after the visitor answers yes to being contacted, and it asks for any missing detail by name. Replies stay short and ask one question at a time. If a visitor says no, no details are sent. Retrying after a delivery failure no longer files a second demo request.
+
+- fef188e: review the landing page demo chat's leads in the admin console
+
+  The Leads page lists visitors who asked the landing page chat to be contacted, with their contact details. Open a lead to read its conversation, and download its meeting brief.
+
+- 35745f3: retry the landing page chat once when the assistant model fails
+
+  The demo chat no longer shows "We couldn't reach the assistant" after a single temporary model failure. The visitor's message is retried once before the error is shown.
+
+- e14ace6: fix the tenant member list and sign-out redirect in cloud
+
+  The tenant members list now loads instead of returning 404. Signing out of the console now returns to the console's sign-in page, so the sign-out redirect URI is accepted.
+
+- Updated dependencies [cf9d122]
+- Updated dependencies [c5d7322]
+- Updated dependencies [2fd5b37]
+- Updated dependencies [6dd8c11]
+- Updated dependencies [fef188e]
+- Updated dependencies [4b2d1d6]
+- Updated dependencies [c5d7322]
+- Updated dependencies [9193c59]
+- Updated dependencies [3181768]
+- Updated dependencies [d8ad796]
+- Updated dependencies [e14ace6]
+  - @logto/console@1.43.0
+  - @logto/tenant-seed@0.0.1
+  - @logto/core-kit@2.14.0
+  - @logto/cli@1.46.0
+  - @logto/schemas@1.46.0
+
 ## 1.45.0
 
 ### Minor Changes
@@ -264,11 +311,9 @@
 - 7b1ba44fd: upgrade the OIDC provider to node-oidc-provider v9
 
   ## Security
-
   - revoking an opaque access token now also revokes all tokens under the same grant, including the refresh token. In v8, the refresh token stayed usable after revocation and could keep requesting new access tokens.
 
   ## Updates
-
   - the revocation endpoint now rejects JWT access tokens with `unsupported_token_type`, instead of returning a success response without actually revoking anything in v8.
   - add the RFC 8414 authorization server metadata endpoint (`/oidc/.well-known/oauth-authorization-server`).
   - remove the redundant `at_hash` claim from ID tokens issued at the token endpoint.
@@ -729,7 +774,6 @@
   After passkey sign-in is enabled, new users are prompted to bind a passkey during registration. Existing users who have not bound a passkey (WebAuthn) factor yet can be guided to bind one in a later sign-in flow. If a user already has a WebAuthn credential from MFA setup, that credential can be reused directly for passkey sign-in without requiring another registration step.
 
   #### Various sign-in flows to support different user journeys and preferences
-
   1. **Passkey sign-in button**: When **Show passkey sign-in button** is enabled, users can click **Continue with passkey** on the sign-in page to immediately trigger the browser passkey chooser and complete sign-in.
   2. **Identifier-first flow (button hidden)**: When **Show passkey sign-in button** is disabled, sign-in follows an identifier-first flow. Users first enter an identifier (for example email or username) on the first screen. On the next step, the flow prioritizes passkey and prompts users to **Verify via passkey** before falling back to password or verification code when needed.
   3. **Allow autofill**: When **Allow autofill** is enabled, supported browsers can show passkey suggestions directly from the identifier input on the sign-in page. Users can select a previously saved passkey from the autofill popup and sign in with minimal extra input.
@@ -1118,7 +1162,6 @@
   We are now supporting the standard OIDC `ui_locales` auth parameter to customize the language of the authentication pages. You can pass the `ui_locales` parameter in the `signIn` method via the `extraParams` option in all Logto SDKs.
 
   ### What it does
-
   - Determines the UI language of the Logto-hosted sign-in experience at runtime. Logto picks the first language tag in `ui_locales` that is supported in your tenant's language library.
   - Affects email localization for messages triggered by the interaction (e.g., verification code emails).
   - Exposes the original value to email templates as a variable `uiLocales`, allowing you to include it in the email subject/content if needed.
@@ -1214,7 +1257,6 @@
   You can now collect user profile information on the last step of your registration flow.
 
   ### Getting started
-
   1. In Console: `Sign-in Experience > Collect user profile`. Add your profile fields:
 
      - Use built-in basics (Name, Gender, Birthdate, Address, …); or
@@ -1285,7 +1327,6 @@
 
   - **Social connectors**: GitHub, Google, Facebook, Standard OAuth 2.0, and Standard OIDC.
   - **Enterprise SSO connectors**: All OIDC-based SSO connectors.
-
   1. Enable the token storage as needed for social and enterprise SSO connectors in the Logto Console or via the Logto Management API.
   2. Once enabled, Logto will automatically store the token set issued by the provider after a successful user authentication.
   3. After the token set is stored, you can retrieve the access token via the Logto Account API for the user. This allows your application to access third-party APIs without requiring the user to reauthenticate.
@@ -1601,7 +1642,6 @@
   In summary, while `identifiers` allows for optional selection among email and phone, `secondaryIdentifiers` enforces mandatory inclusion of all specified identifiers.
 
   ### Examples
-
   1. `username` as the primary identifier. In addition, user will be required to provide a verified `email` and `phone number` during the sign-up process.
 
   ```json
@@ -1655,7 +1695,6 @@
   ```
 
   ### Sign-in experience settings
-
   - `@logto/core`: Update the `/api/sign-in-experience` endpoint to support the new `secondaryIdentifiers` field in the sign-up settings.
   - `@logto/console`: Replace the sign-up identifier single selector with a multi-selector to support multiple sign-up identifiers. The order of the identifiers can be rearranged by dragging and dropping the items in the list. The first item in the list will be considered the primary identifier and stored in the `signUp.identifiers` field, while the rest will be stored in the `signUp.secondaryIdentifiers` field.
 
@@ -1765,7 +1804,6 @@
     3. Use the default template set in the email connector settings.
 
   ### Management API
-
   - `PUT /email-templates`: Bulk create or update email templates.
   - `GET /email-templates`: List all email templates with filter by language and type support.
   - `DELETE /email-templates`: Bulk delete email templates by language and type.
@@ -1774,7 +1812,6 @@
   - `PATCH /email-templates/{id}/details`: Update email template details by ID.
 
   ### Supported email connectors
-
   - `@logto/connector-aliyun-dm`
   - `@logto/connector-aws-ses`
   - `@logto/connector-mailgun`
@@ -1815,7 +1852,6 @@
   This update enhances organization user role management APIs to support role assignment by both names and IDs, improving integration flexibility.
 
   ### Updates
-
   - Added `organizationRoleNames` parameter to:
     - POST `/api/organizations/{id}/users/{userId}/roles` (assign roles)
     - PUT `/api/organizations/{id}/users/{userId}/roles` (replace roles)
@@ -1873,7 +1909,6 @@
   - Particularly problematic in multi-tenant environments with different language requirements.
 
   ### Solution
-
   - Updated `koaI18next` middleware to create a cloned i18next instance for each request.
   - Attach the request-scoped instance to Koa context (`ctx.i18n`) All subsequent middleware and handlers should now use `ctx.i18n` instead of the global `i18next` instance.
   - Maintains the global instance for initialization while preventing cross-request contamination
@@ -1881,7 +1916,6 @@
 - a5990ec57: fixes an incorrect condition check in the verification code flow where `isNewIdentifier` was using inverted logic for email and phone comparisons.
 
   ### Changes
-
   - Corrected `isNewIdentifier` boolean logic to use `identifier.value !== user.primaryEmail` for email checks
   - Fixed phone number comparison to properly use `identifier.value !== user.primaryPhone`
 
@@ -2033,14 +2067,12 @@
 
   > ![Note]
   > Go to the [Logto Docs](https://bump.sh/logto/doc/logto-user-api) to find full API reference.
-
   1. Use `/api/account-center` endpoint to enable the feature, for security reason, it is disabled by default. And set fields permission for each field.
   2. Use `client.getAccessToken()` to get the access token.
   3. Attach the access token to the Authorization header of your request, and start interacting with the Account API directly from the frontend.
   4. You may need to setup `logto-verification-id` header as an additional verification for some requests related to identity verification.
 
   ## What you can do with Account API
-
   1. Get user account profile
   2. Update basic information including name, avatar, username and other profile information
   3. Update password
@@ -2421,7 +2453,6 @@
   This feature allows machine-to-machine apps to be associated with organizations, and be assigned with organization roles.
 
   ### Console
-
   - Add a new "machine-to-machine" type to organization roles. All existing roles are now "user" type.
   - You can manage machine-to-machine apps in the organization details page -> Machine-to-machine apps section.
   - You can view the associated organizations in the machine-to-machine app details page.
@@ -2924,14 +2955,12 @@
 - 32df9acde: implement Logto core API to support the new third-party application feature, and user consent interaction flow
 
   ### Management API
-
   - Add new endpoint `/applications/sign-in-experiences` with `PUT`, `GET` methods to manage the application level sign-in experiences.
   - Add new endpoint `/applications/:id/users/:userId/consent-organizations` with `PUT`, `GET`, `POST`, `DELETE` methods to manage the user granted organizations for the third-party application.
   - Add new endpoint `/applications/:id/user-consent-scopes` with `GET`, `POST`, `DELETE` methods to manage the user consent resource, organization, and user scopes for the third-party application.
   - Update the `/applications` endpoint to include the new `is_third_party` field. Support create third-party applications, and query by `is_third_party` field.
 
   ### Interaction API
-
   - Add the `koaAutoConsent` to support the auto-consent interaction flow for the first-party application. If is the first-party application we can auto-consent the requested scopes. If is the third-party application we need to redirect the user to the consent page to get the user consent manually.
   - Add the `GET /interaction/consent` endpoint to support fetching the consent context for the user consent page. Including the application detail, authenticated user info, all the requested scopes and user organizations info (if requested scopes include the organization scope).
   - Update the `POST /interaction/consent` endpoint to support the user consent interaction flow. Including grant all the missing scopes, and update the user granted organizations for the third-party application.
@@ -3222,7 +3251,6 @@
   - Update `passwordPolicy` property in the sign-in experience via Management API.
 
   ### Side effects
-
   - All new users will be affected by the new policy immediately.
   - Existing users will not be affected by the new policy until they change their password.
   - We removed password restrictions when adding or updating a user via Management API.
@@ -3309,7 +3337,6 @@
 - 73666f8fa: Provide new features for webhooks
 
   ## Features
-
   - Manage webhooks via the Admin Console
   - Securing webhooks by validating signature
   - Allow to enable/disable a webhook
@@ -3317,7 +3344,6 @@
   - Support multi-events for a webhook
 
   ## Updates
-
   - schemas: add `name`, `events`, `signingKey`, and `enabled` fields to the `hook` schema
   - core: change the `user-agent` value from `Logto (https://logto.io)` to `Logto (https://logto.io/)` in the webhook request headers
   - core: deprecate `event` field in all hook-related APIs, use `events` instead
@@ -3640,7 +3666,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 - f41fd3f05: - cli: use `ec` with `secp384r1` as the default key generation type
@@ -3876,7 +3901,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 ### Patch Changes

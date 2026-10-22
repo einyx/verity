@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.14.0
+
+### Minor Changes
+
+- 9193c59: add `UserScope.PersonalAccessTokens` for authorizing personal access token management
+
 ## 2.13.0
 
 ### Minor Changes
@@ -288,7 +294,6 @@
   - Update `passwordPolicy` property in the sign-in experience via Management API.
 
   ### Side effects
-
   - All new users will be affected by the new policy immediately.
   - Existing users will not be affected by the new policy until they change their password.
   - We removed password restrictions when adding or updating a user via Management API.

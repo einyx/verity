@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.46.0
+
+### Patch Changes
+
+- Updated dependencies [9193c59]
+  - @logto/core-kit@2.14.0
+
 ## 1.45.0
 
 ## 1.44.0
@@ -462,7 +469,6 @@
   We are now supporting the standard OIDC `ui_locales` auth parameter to customize the language of the authentication pages. You can pass the `ui_locales` parameter in the `signIn` method via the `extraParams` option in all Logto SDKs.
 
   ### What it does
-
   - Determines the UI language of the Logto-hosted sign-in experience at runtime. Logto picks the first language tag in `ui_locales` that is supported in your tenant's language library.
   - Affects email localization for messages triggered by the interaction (e.g., verification code emails).
   - Exposes the original value to email templates as a variable `uiLocales`, allowing you to include it in the email subject/content if needed.
@@ -525,7 +531,6 @@
   You can now collect user profile information on the last step of your registration flow.
 
   ### Getting started
-
   1. In Console: `Sign-in Experience > Collect user profile`. Add your profile fields:
 
      - Use built-in basics (Name, Gender, Birthdate, Address, …); or
@@ -574,7 +579,6 @@
 
   - **Social connectors**: GitHub, Google, Facebook, Standard OAuth 2.0, and Standard OIDC.
   - **Enterprise SSO connectors**: All OIDC-based SSO connectors.
-
   1. Enable the token storage as needed for social and enterprise SSO connectors in the Logto Console or via the Logto Management API.
   2. Once enabled, Logto will automatically store the token set issued by the provider after a successful user authentication.
   3. After the token set is stored, you can retrieve the access token via the Logto Account API for the user. This allows your application to access third-party APIs without requiring the user to reauthenticate.
@@ -714,7 +718,6 @@
   In summary, while `identifiers` allows for optional selection among email and phone, `secondaryIdentifiers` enforces mandatory inclusion of all specified identifiers.
 
   ### Examples
-
   1. `username` as the primary identifier. In addition, user will be required to provide a verified `email` and `phone number` during the sign-up process.
 
   ```json
@@ -768,7 +771,6 @@
   ```
 
   ### Sign-in experience settings
-
   - `@logto/core`: Update the `/api/sign-in-experience` endpoint to support the new `secondaryIdentifiers` field in the sign-up settings.
   - `@logto/console`: Replace the sign-up identifier single selector with a multi-selector to support multiple sign-up identifiers. The order of the identifiers can be rearranged by dragging and dropping the items in the list. The first item in the list will be considered the primary identifier and stored in the `signUp.identifiers` field, while the rest will be stored in the `signUp.secondaryIdentifiers` field.
 
@@ -904,14 +906,12 @@
 
   > ![Note]
   > Go to the [Logto Docs](https://bump.sh/logto/doc/logto-user-api) to find full API reference.
-
   1. Use `/api/account-center` endpoint to enable the feature, for security reason, it is disabled by default. And set fields permission for each field.
   2. Use `client.getAccessToken()` to get the access token.
   3. Attach the access token to the Authorization header of your request, and start interacting with the Account API directly from the frontend.
   4. You may need to setup `logto-verification-id` header as an additional verification for some requests related to identity verification.
 
   ## What you can do with Account API
-
   1. Get user account profile
   2. Update basic information including name, avatar, username and other profile information
   3. Update password
@@ -1082,7 +1082,6 @@
   This feature allows machine-to-machine apps to be associated with organizations, and be assigned with organization roles.
 
   ### Console
-
   - Add a new "machine-to-machine" type to organization roles. All existing roles are now "user" type.
   - You can manage machine-to-machine apps in the organization details page -> Machine-to-machine apps section.
   - You can view the associated organizations in the machine-to-machine app details page.
@@ -1335,7 +1334,6 @@
 - 951865859: ## Resolve third-party app's /interaction/consent endpoint 500 error
 
   ### Reproduction steps
-
   - Create an organization scope with an empty description and assign this scope to a third-party application.
   - Login to the third-party application and request the organization scope.
   - Proceed through the interaction flow until reaching the consent page.
@@ -1528,7 +1526,6 @@
   - Update `passwordPolicy` property in the sign-in experience via Management API.
 
   ### Side effects
-
   - All new users will be affected by the new policy immediately.
   - Existing users will not be affected by the new policy until they change their password.
   - We removed password restrictions when adding or updating a user via Management API.
@@ -1590,7 +1587,6 @@
 - 73666f8fa: Provide new features for webhooks
 
   ## Features
-
   - Manage webhooks via the Admin Console
   - Securing webhooks by validating signature
   - Allow to enable/disable a webhook
@@ -1598,7 +1594,6 @@
   - Support multi-events for a webhook
 
   ## Updates
-
   - schemas: add `name`, `events`, `signingKey`, and `enabled` fields to the `hook` schema
   - core: change the `user-agent` value from `Logto (https://logto.io)` to `Logto (https://logto.io/)` in the webhook request headers
   - core: deprecate `event` field in all hook-related APIs, use `events` instead
@@ -1769,7 +1764,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 - 343b1090f: ### Add custom content sign-in-experience settings to allow insert custom static html content to the logto sign-in pages
@@ -1888,7 +1882,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 ### Patch Changes

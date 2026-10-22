@@ -1,5 +1,47 @@
 # Change Log
 
+## 1.43.0
+
+### Minor Changes
+
+- d8ad796: ask the AI assistant about your tenant and confirm changes it proposes
+
+  The AI assistant can read your tenant data and propose changes, which only take effect after you confirm them. You can create personal access tokens in the account center, and the sign-in experience, enterprise SSO details and tenant member roles offer their full set of options.
+
+### Patch Changes
+
+- cf9d122: match the Ask AI dialog to the demo chat design
+
+  The Ask AI dialog now uses the same card, backdrop, and spacing as the demo chat on the landing page.
+
+- c5d7322: fix tenant api requests from the console being rejected
+
+  Requests to the tenant authentication endpoints now use the cloud API token, so member management and tenant creation no longer fail with an authorization error.
+
+- 2fd5b37: fix the tenant invitation list failing to load
+
+  The invitation list and the invite form now read the invitations returned by the cloud service, so pending invitations show and no longer break the invite form.
+
+- 6dd8c11: send invitee emails that are still typed when Invite is clicked
+
+  An address typed in the invite field is now added as an invitee when you click Invite, instead of showing "Invitee email is required" until you press Space or Enter.
+
+- fef188e: review the landing page demo chat's leads in the admin console
+
+  The Leads page lists visitors who asked the landing page chat to be contacted, with their contact details. Open a lead to read its conversation, and download its meeting brief.
+
+- 4b2d1d6: show whether boolean features are included in your plan
+
+  Features that are either included or not included in your plan now show that status on every plan, instead of only showing "Not in use" when the feature has no usage.
+
+- 3181768: fix the sidebar highlighting several items at once
+
+  Only the item for the current page is highlighted now. The Workspaces item no longer stays highlighted on the other infrastructure pages.
+
+- e14ace6: fix the tenant member list and sign-out redirect in cloud
+
+  The tenant members list now loads instead of returning 404. Signing out of the console now returns to the console's sign-in page, so the sign-out redirect URI is accepted.
+
 ## 1.42.0
 
 ### Minor Changes
@@ -282,7 +324,6 @@
   After passkey sign-in is enabled, new users are prompted to bind a passkey during registration. Existing users who have not bound a passkey (WebAuthn) factor yet can be guided to bind one in a later sign-in flow. If a user already has a WebAuthn credential from MFA setup, that credential can be reused directly for passkey sign-in without requiring another registration step.
 
   #### Various sign-in flows to support different user journeys and preferences
-
   1. **Passkey sign-in button**: When **Show passkey sign-in button** is enabled, users can click **Continue with passkey** on the sign-in page to immediately trigger the browser passkey chooser and complete sign-in.
   2. **Identifier-first flow (button hidden)**: When **Show passkey sign-in button** is disabled, sign-in follows an identifier-first flow. Users first enter an identifier (for example email or username) on the first screen. On the next step, the flow prioritizes passkey and prompts users to **Verify via passkey** before falling back to password or verification code when needed.
   3. **Allow autofill**: When **Allow autofill** is enabled, supported browsers can show passkey suggestions directly from the identifier input on the sign-in page. Users can select a previously saved passkey from the autofill popup and sign in with minimal extra input.
@@ -476,7 +517,6 @@
   You can now collect user profile information on the last step of your registration flow.
 
   ### Getting started
-
   1. In Console: `Sign-in Experience > Collect user profile`. Add your profile fields:
 
      - Use built-in basics (Name, Gender, Birthdate, Address, …); or
@@ -578,7 +618,6 @@
   In summary, while `identifiers` allows for optional selection among email and phone, `secondaryIdentifiers` enforces mandatory inclusion of all specified identifiers.
 
   ### Examples
-
   1. `username` as the primary identifier. In addition, user will be required to provide a verified `email` and `phone number` during the sign-up process.
 
   ```json
@@ -632,7 +671,6 @@
   ```
 
   ### Sign-in experience settings
-
   - `@logto/core`: Update the `/api/sign-in-experience` endpoint to support the new `secondaryIdentifiers` field in the sign-up settings.
   - `@logto/console`: Replace the sign-up identifier single selector with a multi-selector to support multiple sign-up identifiers. The order of the identifiers can be rearranged by dragging and dropping the items in the list. The first item in the list will be considered the primary identifier and stored in the `signUp.identifiers` field, while the rest will be stored in the `signUp.secondaryIdentifiers` field.
 
@@ -881,7 +919,6 @@
   This feature allows machine-to-machine apps to be associated with organizations, and be assigned with organization roles.
 
   ### Console
-
   - Add a new "machine-to-machine" type to organization roles. All existing roles are now "user" type.
   - You can manage machine-to-machine apps in the organization details page -> Machine-to-machine apps section.
   - You can view the associated organizations in the machine-to-machine app details page.
@@ -1096,7 +1133,6 @@
 - 6fe6f87bc: support adding API resource permissions to organization roles and organization permissions in 3rd-party applications
 
   ## Updates
-
   - Separated the "Organization template" from the "Organization" page, establishing it as a standalone page for clearer navigation and functionality.
   - Enhanced the "Organization template" page by adding functionality that allows users to click on an organization role, which then navigates to the organization role details page where users can view its corresponding permissions and general settings.
   - Enabled the assignment of API resource permissions directly from the organization role details page, improving role management and access control.
@@ -1284,7 +1320,6 @@
   - Update `passwordPolicy` property in the sign-in experience via Management API.
 
   ### Side effects
-
   - All new users will be affected by the new policy immediately.
   - Existing users will not be affected by the new policy until they change their password.
   - We removed password restrictions when adding or updating a user via Management API.
@@ -1328,7 +1363,6 @@
 - 73666f8fa: Provide new features for webhooks
 
   ## Features
-
   - Manage webhooks via the Admin Console
   - Securing webhooks by validating signature
   - Allow to enable/disable a webhook
@@ -1336,7 +1370,6 @@
   - Support multi-events for a webhook
 
   ## Updates
-
   - schemas: add `name`, `events`, `signingKey`, and `enabled` fields to the `hook` schema
   - core: change the `user-agent` value from `Logto (https://logto.io)` to `Logto (https://logto.io/)` in the webhook request headers
   - core: deprecate `event` field in all hook-related APIs, use `events` instead
@@ -1462,7 +1495,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 - f41fd3f05: drop settings table and add systems table
@@ -1611,7 +1643,6 @@
   - Web hooks
 
   ### Improvements
-
   - Refactored Interaction APIs and Audit logs
 
 ### Patch Changes

@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - '!packages/shell'
   - packages/toolkit/*
   - packages/connectors/*
   - "!packages/connectors/templates"

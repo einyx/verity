@@ -35,9 +35,11 @@ cache
 fly.toml
 dump.rdb
 .*tmp
+/.release
 
 # Claude local files
-.claude/
+.claude/*
+!.claude/commands/
 docs/superpowers/
 CLAUDE.md
 

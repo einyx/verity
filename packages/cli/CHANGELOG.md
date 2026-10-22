@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.46.0
+
+### Patch Changes
+
+- Updated dependencies [c5d7322]
+- Updated dependencies [9193c59]
+  - @logto/tenant-seed@0.0.1
+  - @logto/core-kit@2.14.0
+  - @logto/schemas@1.46.0
+
 ## 1.45.0
 
 ### Patch Changes

@@ -350,6 +350,15 @@ export default function koaSecurityHeaders<StateT, ContextT, ResponseBodyT>(
     ) {
       await helmetPromise(consoleSecurityHeaderSettings, req, res);
 
+      // The admin tenant's sign-in experience embeds these public branding images from the
+      // console origin. Keep the console's default same-origin policy for every other asset.
+      if (
+        requestPath === `/${AdminApps.Console}/meshx-logo.svg` ||
+        requestPath === `/${AdminApps.Console}/meshx-logo-dark.svg`
+      ) {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      }
+
       return next();
     }
 

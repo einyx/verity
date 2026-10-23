@@ -20,9 +20,8 @@ await mockEsmWithActual('#src/env-set/index.js', () => ({
   getTenantEndpoint: () => new URL('https://tenant.example.com'),
 }));
 
-const { default: koaSecurityHeaders, koaExperienceSecurityHeaders } = await import(
-  './koa-security-headers.js'
-);
+const { default: koaSecurityHeaders, koaExperienceSecurityHeaders } =
+  await import('./koa-security-headers.js');
 
 const koaNoop = noop as unknown as Koa.Next;
 const customScriptSource = 'https://scripts.example.com';
@@ -257,5 +256,20 @@ describe('koaSecurityHeaders() middleware — experience CSP', () => {
     expect(scriptSource).toContain('https://cdn.jsdelivr.net/');
     expect(scriptSource).not.toContain(customScriptSource);
     expect(queries.signInExperiences.findDefaultSignInExperience).not.toHaveBeenCalled();
+  });
+
+  it('allows the public MeshX branding SVGs to load on cross-origin sign-in pages', async () => {
+    const run = koaSecurityHeaders(['api', 'oidc'], 'default');
+    const logoContext = createMockContext({
+      method: 'GET',
+      url: '/console/meshx-logo-dark.svg',
+    });
+    const consoleContext = createMockContext({ method: 'GET', url: '/console/index.html' });
+
+    await run(logoContext, koaNoop);
+    await run(consoleContext, koaNoop);
+
+    expect(logoContext.res.getHeader('Cross-Origin-Resource-Policy')).toBe('cross-origin');
+    expect(consoleContext.res.getHeader('Cross-Origin-Resource-Policy')).toBe('same-origin');
   });
 });

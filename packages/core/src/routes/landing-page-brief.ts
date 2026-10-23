@@ -1,4 +1,5 @@
 import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { wordmarkPngBase64 } from './landing-page-brand.js';
 
 // The one-page meeting brief for a sales lead: who they are, the company, how the chat went, and what to
 // cover next. Rendered to PDF in code with pdf-lib, so it needs no browser in the image.
@@ -11,6 +12,8 @@ export type BriefInput = {
     company: string;
     role?: string;
     decision?: string;
+    contactMethod?: string;
+    contactDetail?: string;
   };
   profile?: {
     summary?: string;
@@ -20,6 +23,22 @@ export type BriefInput = {
     conversation?: { tone?: string; outcomes?: string[]; nextSteps?: string[] };
   };
   bookingUrl?: string | undefined;
+};
+
+/** The visitor's LinkedIn profile, when they chose LinkedIn and gave an https link on linkedin.com. */
+export const linkedinProfile = (lead: BriefInput['lead']): string | undefined => {
+  if (lead.contactMethod !== 'linkedin' || !lead.contactDetail) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(lead.contactDetail);
+    const onLinkedin = url.hostname === 'linkedin.com' || url.hostname.endsWith('.linkedin.com');
+
+    return url.protocol === 'https:' && onLinkedin ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const escapeHtml = (value: string) =>
@@ -38,6 +57,7 @@ const list = (items: string[] | undefined, fallback: string) =>
 /** The brief as a standalone HTML page. Every value from the lead or the model is escaped. */
 export const buildBriefHtml = (input: BriefInput): string => {
   const { lead, profile } = input;
+  const linkedin = linkedinProfile(lead);
   const name = `${lead.firstName} ${lead.lastName}`.trim();
   const conversation = profile?.conversation;
   const bookingLink = input.bookingUrl
@@ -50,20 +70,20 @@ export const buildBriefHtml = (input: BriefInput): string => {
   @page { size: A4; margin: 18mm; }
   body { margin: 0; background: #F0EEE6; color: #1F1E1C; font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; line-height: 1.45; }
   .wordmark { font-size: 16pt; font-weight: bold; color: #1F1E1C; }
-  .wordmark span { color: #FC3209; }
+  .wordmark span { color: #FE330A; }
   h1 { font-size: 22pt; margin: 14px 0 4px; font-weight: normal; }
-  h2 { font-size: 12pt; margin: 18px 0 6px; color: #FC3209; text-transform: uppercase; letter-spacing: 0.06em; }
+  h2 { font-size: 12pt; margin: 18px 0 6px; color: #FE330A; text-transform: uppercase; letter-spacing: 0.06em; }
   .card { background: #FDFDFD; border: 1px solid #E4E2DA; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
   .muted { color: #6F6C66; font-size: 10pt; }
   .meta { color: #6F6C66; font-size: 10pt; }
   ul { margin: 4px 0 0 18px; padding: 0; }
   li { margin-bottom: 4px; }
-  .booking { margin-top: 18px; padding: 10px 14px; border-left: 4px solid #FC3209; background: #FDFDFD; }
-  a { color: #FC3209; }
+  .booking { margin-top: 18px; padding: 10px 14px; border-left: 4px solid #FE330A; background: #FDFDFD; }
+  a { color: #FE330A; }
   footer { margin-top: 24px; font-size: 8pt; color: #6F6C66; }
 </style></head>
 <body>
-  <div class="wordmark">meshx<span>.</span></div>
+  <img class="wordmark" alt="meshX" width="160" src="data:image/png;base64,${wordmarkPngBase64}">
   <h1>Meeting brief: ${escapeHtml(lead.company)}</h1>
   <p class="meta">Prepared for the sales team${profile?.generatedAt ? ` · ${escapeHtml(profile.generatedAt.slice(0, 10))}` : ''}</p>
 
@@ -71,6 +91,7 @@ export const buildBriefHtml = (input: BriefInput): string => {
   <div class="card">
     <p><strong>${escapeHtml(name)}</strong>${lead.role ? `, ${escapeHtml(lead.role)}` : ''}</p>
     <p class="meta">${escapeHtml(lead.email)}</p>
+    ${linkedin ? `<p class="meta">LinkedIn: <a href="${escapeHtml(linkedin)}">${escapeHtml(linkedin)}</a></p>` : ''}
     ${lead.decision ? `<p>Wants to see: ${escapeHtml(lead.decision)}</p>` : ''}
   </div>
 
@@ -103,9 +124,9 @@ const toWinAnsi = (value: string) => value.replaceAll(/[^ -~ -ÿ]/g, '?');
 const pageSize: [number, number] = [595.28, 841.89];
 const margin = 52;
 const contentWidth = pageSize[0] - margin * 2;
-const accent = rgb(0.988, 0.2, 0.035);
-const ink = rgb(0.122, 0.118, 0.11);
-const muted = rgb(0.435, 0.424, 0.4);
+const accent = rgb(0.996, 0.2, 0.039); // FE330A, the deck accent
+const ink = rgb(0.055, 0.055, 0.055); // 0E0E0E
+const muted = rgb(0.388, 0.384, 0.373); // 63625F
 
 type Writer = {
   doc: PDFDocument;
@@ -124,7 +145,12 @@ const newPage = (writer: Writer) => {
 const drawText = (
   writer: Writer,
   text: string,
-  options: { size?: number; font?: 'regular' | 'bold'; color?: ReturnType<typeof rgb>; indent?: number } = {}
+  options: {
+    size?: number;
+    font?: 'regular' | 'bold';
+    color?: ReturnType<typeof rgb>;
+    indent?: number;
+  } = {}
 ) => {
   const size = options.size ?? 11;
   const font = options.font === 'bold' ? writer.bold : writer.regular;
@@ -188,11 +214,20 @@ export const renderBriefPdf = async (input: BriefInput): Promise<Uint8Array> => 
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
   };
   const { lead, profile } = input;
+  const linkedin = linkedinProfile(lead);
   const conversation = profile?.conversation;
   const name = `${lead.firstName} ${lead.lastName}`.trim();
 
-  drawText(writer, 'meshx.', { size: 16, font: 'bold' });
-  writer.y -= 8;
+  const logo = await doc.embedPng(Buffer.from(wordmarkPngBase64, 'base64'));
+  const logoWidth = 130;
+  const logoHeight = (logoWidth * logo.height) / logo.width;
+  writer.page.drawImage(logo, {
+    x: margin,
+    y: writer.y - logoHeight,
+    width: logoWidth,
+    height: logoHeight,
+  });
+  writer.y -= logoHeight + 12;
   drawText(writer, `Meeting brief: ${lead.company}`, { size: 20, font: 'bold' });
   drawText(
     writer,
@@ -203,6 +238,9 @@ export const renderBriefPdf = async (input: BriefInput): Promise<Uint8Array> => 
   drawHeading(writer, 'The lead');
   drawText(writer, `${name}${lead.role ? `, ${lead.role}` : ''}`, { size: 12, font: 'bold' });
   drawText(writer, lead.email, { size: 10, color: muted });
+  if (linkedin) {
+    drawText(writer, `LinkedIn: ${linkedin}`, { size: 10, color: muted });
+  }
   if (lead.decision) {
     drawText(writer, `Wants to see: ${lead.decision}`, { size: 10.5 });
   }

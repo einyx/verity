@@ -17,6 +17,7 @@ import { enterpriseSso } from './routes/enterprise-sso';
 import { kubo } from './routes/kubo';
 import { landingPage } from './routes/landing-page';
 import { leads } from './routes/leads';
+import { tenantAccess } from './routes/tenant-access';
 import { mcpPortal, mcpPortalDetails } from './routes/mcp-portal';
 import { mfa } from './routes/mfa';
 import { organizationTemplate } from './routes/organization-template';
@@ -62,7 +63,7 @@ export const useConsoleRoutes = () => {
         mcpPortalDetails,
         webhooks,
         ...(isActionsEnabled ? [actions] : []),
-        ...(isCloud ? [landingPage, leads] : []),
+        ...(isCloud ? [landingPage, leads, tenantAccess] : []),
         users,
         auditLogs,
         roles,

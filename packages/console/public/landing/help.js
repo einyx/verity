@@ -5,6 +5,7 @@
   const panel = (id) => document.getElementById(id);
 
   const openPanel = (element) => {
+    if (!element) return;
     document.getElementById('mobile-nav')?.removeAttribute('open');
     element.hidden = false;
     element.querySelector('button, a')?.focus();

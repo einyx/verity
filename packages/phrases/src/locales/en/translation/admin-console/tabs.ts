@@ -23,6 +23,7 @@ const tabs = {
   roles: 'Roles',
   docs: 'Docs',
   tenant_settings: 'Settings',
+  tenant_access: 'Tenant access',
   mfa: 'Multi-factor auth',
   customize_jwt: 'Custom JWT',
   signing_keys: 'Signing keys',

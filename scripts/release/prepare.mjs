@@ -28,47 +28,22 @@ if (tagIndex === -1) {
 }
 
 const previous = tagIndex === -1 ? tags[0] : tags[tagIndex + 1];
-const range = `${previous}..${tagIndex === -1 ? 'HEAD' : tag}`;
 const taggedDate = git('log', '-1', '--format=%cs', tagIndex === -1 ? 'HEAD' : tag);
 
 const repo = git('remote', 'get-url', 'origin')
   .replace(/^.*github\.com[:/]/, '')
   .replace(/\.git$/, '');
 
-const sections = [
-  ['feat', 'Features'],
-  ['fix', 'Fixes'],
-  ['perf', 'Performance'],
-];
-const subjectPattern = /^(\w+)(?:\([^)]*\))?!?: (.+?)(?: \(#(\d+)\))?$/;
-
-const entries = git('log', '--no-merges', '--format=%s', range)
-  .split('\n')
-  .filter((subject) => subject && !/^release(\(|:)/.test(subject))
-  .map((subject) => {
-    const match = subjectPattern.exec(subject);
-    if (!match) return { type: 'other', line: `- ${subject}` };
-    const [, type, text, pr] = match;
-    const link = pr ? ` ([#${pr}](https://github.com/${repo}/pull/${pr}))` : '';
-    return { type, line: `- ${text}${link}` };
-  });
-
-const commitLines = [];
-for (const [type, title] of sections) {
-  const items = entries.filter((entry) => entry.type === type);
-  if (items.length > 0) commitLines.push(`### ${title}`, ...items.map((item) => item.line), '');
-}
-const others = entries.filter((entry) => !sections.some(([type]) => type === entry.type));
-if (others.length > 0) commitLines.push('### Other changes', ...others.map((item) => item.line), '');
-
 const changelog = read('packages/core/CHANGELOG.md');
 const escapedVersion = version.replaceAll('.', '\\.');
 const changelogSection =
   new RegExp(`## ${escapedVersion}\\n([\\s\\S]*?)(?=\\n## |$)`).exec(changelog)?.[1]?.trim() ?? '';
 
+const artworkUrl = `https://github.com/${repo}/releases/download/${tag}/artwork.png`;
+
 const notes = [
+  `![MeshX ${tag}](${artworkUrl})`,
   changelogSection,
-  commitLines.length > 0 ? ['## Commits', '', commitLines.join('\n').trim()].join('\n') : '',
   previous ? `**Full changelog**: https://github.com/${repo}/compare/${previous}...${tag}` : '',
 ]
   .filter(Boolean)

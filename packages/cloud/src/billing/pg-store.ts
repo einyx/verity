@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-types -- Lookups return null for a missing row; the store contract and its callers rely on that. */
-import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { adminTenantId, getTenantOrganizationId } from '@logto/schemas';
+import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 import { z } from 'zod';
 
+import { findTenantForCloudClient } from './cloud-client.js';
 import { isEndedStatus } from './entitlement.js';
 import { type InvitationRecord, invitationStatusGuard } from './invitation.js';
 import { invoiceGuard, type Invoice } from './invoice.js';
@@ -85,6 +86,7 @@ const subscriptionRow = z.object({
  * customer's console.
  */
 export const createPgBillingStore = (pool: CommonQueryMethods): BillingStore => ({
+  findTenantForCloudClient: async (clientId) => findTenantForCloudClient(pool, clientId),
   findSubscription: async (tenantId): Promise<Subscription | null> => {
     const row = await pool.maybeOne(sql`
       select plan_id, status, is_enterprise_plan, is_dev_plan, has_billing_customer,

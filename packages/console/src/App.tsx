@@ -114,7 +114,6 @@ function Providers() {
           cloudApi.scopes.CreateTenant,
           cloudApi.scopes.ManageTenantSelf,
           cloudApi.scopes.ManageAccountSelf,
-          cloudApi.scopes.ManageLandingPage,
         ]
       ),
       // Landing page CMS. Requested only with dev features, matching its editor route.

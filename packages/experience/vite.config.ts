@@ -8,6 +8,7 @@ import { defaultConfig, manualChunks } from '../../vite.shared.config';
 
 const buildConfig = (mode: string): UserConfig => ({
   server: {
+    host: process.env.DEV_SERVER_HOST,
     port: 5001,
     hmr: {
       port: 6001,

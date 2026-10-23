@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
+import useManageLandingPageGuard from '@/cloud/hooks/use-manage-landing-page-guard';
 
 import ContentEditor, { isRecord } from './ContentEditor';
 import LandingPreviewFrame, { setAtPath } from './LandingPreviewFrame';
 import NavArtwork from './NavArtwork';
 import styles from './index.module.scss';
+
+/* eslint-disable max-lines -- The landing editor is a cohesive page; extracting sections is a separate refactor. */
 
 // The languages of the marketing site, in the same order as its language menu.
 const previewLocales: ReadonlyArray<readonly [string, string]> = [
@@ -157,12 +160,12 @@ function LandingPageEditorContent() {
   };
 
   // Saves where an image was dragged to, as its offset in the draft's layout.
-  const moveImage = (id: string, x: number, y: number) => {
+  const moveImage = (id: string, offsetX: number, offsetY: number) => {
     setDraft((current: unknown) => {
       const record = isRecord(current) ? current : {};
       const layout = isRecord(record.layout) ? record.layout : {};
 
-      return { ...record, layout: { ...layout, [id]: { x, y } } };
+      return { ...record, layout: { ...layout, [id]: { x: offsetX, y: offsetY } } };
     });
   };
 
@@ -314,7 +317,9 @@ function LandingPageEditorContent() {
             Preview language{' '}
             <select
               value={previewLocale}
-              onChange={(event) => setPreviewLocale(event.target.value)}
+              onChange={(event) => {
+                setPreviewLocale(event.target.value);
+              }}
             >
               {previewLocales.map(([code, label]) => (
                 <option key={code} value={code}>
@@ -338,12 +343,23 @@ function LandingPageEditorContent() {
 
 // Rendered inside the console shell, which provides the sidebar, topbar, error boundary and scrolling.
 function LandingPageEditor() {
+  const ensureLandingPageScope = useManageLandingPageGuard();
+  const [scopeReady, setScopeReady] = useState(false);
+
+  useEffect(() => {
+    const loadScope = async () => {
+      setScopeReady(await ensureLandingPageScope());
+    };
+    void loadScope();
+  }, [ensureLandingPageScope]);
+
   return (
     <>
       <Helmet title="Landing page" />
-      <LandingPageEditorContent />
+      {scopeReady && <LandingPageEditorContent />}
     </>
   );
 }
 
 export default LandingPageEditor;
+/* eslint-enable max-lines */

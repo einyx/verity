@@ -88,6 +88,22 @@ export const authorizeOperator = async (
   return { issuer: identity.issuer, sub: identity.sub };
 };
 
+/** A cloud service M2M token is trusted only when its client id maps to a provisioned tenant. */
+export const authorizeCloudTenant = async (
+  authorization: string | undefined,
+  config: Pick<OperatorAuthConfig, 'issuer' | 'audience' | 'getKey'>,
+  store: Pick<BillingStore, 'findTenantForCloudClient'>
+): Promise<{ tenantId: string }> => {
+  const identity = await verifyCaller(authorization, config);
+  const tenantId = await store.findTenantForCloudClient(identity.sub);
+
+  if (!tenantId) {
+    throw new RequestError('Forbidden', 403);
+  }
+
+  return { tenantId };
+};
+
 /**
  * Tenant-scoped routes: an operator may act on any tenant, and any other caller must be an admin
  * of the tenant in the path. A verified admin of a different tenant gets 403.

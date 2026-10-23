@@ -148,16 +148,16 @@
 
 .side {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
+  gap: 8px;
+  padding: 12px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-layer-1);
@@ -172,12 +172,12 @@
 
 .actions {
   display: flex;
-  flex-direction: column;
+  flex-flow: row wrap;
   gap: 8px;
 }
 
 .button {
-  height: 36px;
+  height: 32px;
   padding: 0 14px;
   border-radius: 8px;
   font: inherit;
@@ -193,7 +193,7 @@
 }
 
 .primaryButton {
-  height: 36px;
+  height: 32px;
   padding: 0 14px;
   border: 1px solid var(--color-primary);
   border-radius: 8px;
@@ -216,7 +216,7 @@
 }
 
 .secondaryButton {
-  height: 36px;
+  height: 32px;
   padding: 0 14px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -277,16 +277,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .versionRow {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 10px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 13px;

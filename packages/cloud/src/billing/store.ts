@@ -52,6 +52,8 @@ export type BillingStore = {
   listInvoices: (tenantId: string) => Promise<Invoice[]>;
   /** The caller's role in a tenant, or `null` when they are not a member of it. */
   findMembership: (tenantId: string, identity: MemberIdentity) => Promise<TenantRole | null>;
+  /** Resolves a provisioned tenant cloud M2M client to its tenant, or null if it is not one. */
+  findTenantForCloudClient: (clientId: string) => Promise<string | undefined>;
   /** The invitations of a tenant, newest first. */
   listInvitations: (tenantId: string) => Promise<InvitationRecord[]>;
   /** One invitation by id, or `null` when there is none. */
@@ -89,6 +91,7 @@ export const createInMemoryBillingStore = (
     skus?: Sku[];
     invoices?: Record<string, Invoice[]>;
     members?: Record<string, Array<MemberIdentity & { role: TenantRole }>>;
+    cloudClients?: Record<string, string>;
     invitations?: InvitationRecord[];
   } = {}
 ): BillingStore => {
@@ -108,6 +111,7 @@ export const createInMemoryBillingStore = (
       data.members?.[tenantId]?.find(
         (member) => member.issuer === identity.issuer && member.sub === identity.sub
       )?.role ?? null,
+    findTenantForCloudClient: async (clientId) => data.cloudClients?.[clientId],
     listInvitations: async (tenantId) =>
       invitations
         .filter((invitation) => invitation.tenantId === tenantId)

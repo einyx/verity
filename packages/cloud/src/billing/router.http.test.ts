@@ -12,6 +12,7 @@ const issuer = 'https://auth.example.test/oidc';
 const audience = 'https://billing.example.test';
 const operatorSub = 'operator-user-1';
 const tenantAdminSub = 'tenant-admin-user-1';
+const cloudClientSub = 'cloud-client-1';
 const tenantId = 'tenant0000000000001';
 
 const quota = {
@@ -123,6 +124,7 @@ describe('billing router over HTTP', () => {
 
     const store = createInMemoryBillingStore({
       subscriptions: { [tenantId]: subscription },
+      cloudClients: { [cloudClientSub]: tenantId },
       skus: [foundationSku],
       invoices: { [tenantId]: [invoice] },
     });
@@ -165,6 +167,23 @@ describe('billing router over HTTP', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ planId: 'pro', status: 'active' });
+  });
+
+  it('returns the caller tenant subscription for its provisioned cloud client via /my', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/my/subscription`, {
+      headers: { authorization: `Bearer ${await tokenFor(cloudClientSub)}` },
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ planId: 'pro', status: 'active' });
+  });
+
+  it('does not allow a cloud client to select a different tenant explicitly', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/subscription`, {
+      headers: { authorization: `Bearer ${await tokenFor(cloudClientSub)}` },
+    });
+
+    expect(response.status).toBe(403);
   });
 
   it('returns 401 for invoices when no token is sent', async () => {

@@ -1,0 +1,92 @@
+/*
+ * Verity console theme, as rendered: the MeshX overrides from
+ * verity/packages/console/src/contexts/AppThemeProvider/index.module.scss,
+ * applied on top of verity/packages/toolkit/core-kit/scss/_console-themes.scss.
+ * Mapped onto the shadcn/design-system names (--primary, --sidebar-*,
+ * --background, ...) and the console's --ds-* sidebar tokens.
+ *
+ * Import after the design-system tokens.css so these win at equal specificity.
+ */
+
+:root {
+  --background: #faf9f7;
+  --foreground: #1b1919;
+  --card: #ffffff;
+  --card-foreground: #1b1919;
+  --popover: #ffffff;
+  --popover-foreground: #1b1919;
+  --primary: #ff301a;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f3f1;
+  --secondary-foreground: #1b1919;
+  --muted: #f3f3f1;
+  --muted-foreground: #615f59;
+  --accent: rgba(0, 0, 0, 4%);
+  --accent-foreground: #1e1f21;
+  --destructive: #ba1b1b;
+  --destructive-foreground: #ffffff;
+  --border: #dbdad5;
+  --input: #dbdad5;
+  --ring: #ff301a;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e1f21;
+  --sidebar-primary: #ff301a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(0, 0, 0, 4%);
+  --sidebar-accent-foreground: #1e1f21;
+  --sidebar-border: oklch(88.546% 0.007 88.648deg);
+  --sidebar-ring: #ff301a;
+  --sidebar-unofficial-sidebar-muted: #595a5b;
+
+  --ds-surface: #ffffff;
+  --ds-border: oklch(88.546% 0.007 88.648deg);
+  --ds-label-primary: #1e1f21;
+  --ds-label-secondary: #595a5b;
+  --ds-label-secondary-hover: #3b3a3a;
+  --ds-highlight-m: rgba(0, 0, 0, 4%);
+  --ds-highlight-tone: rgba(0, 153, 255, 8%);
+  --ds-icon: #78767f;
+}
+
+:root.dark,
+:root[data-theme="dark"] {
+  --background: #1b1919;
+  --foreground: #faf9f7;
+  --card: #2d2c2a;
+  --card-foreground: #faf9f7;
+  --popover: #2d2c2a;
+  --popover-foreground: #faf9f7;
+  --primary: #ff5a40;
+  --primary-foreground: #ffffff;
+  --secondary: #3b3a37;
+  --secondary-foreground: #faf9f7;
+  --muted: #3b3a37;
+  --muted-foreground: #c2c0ba;
+  --accent: rgba(255, 255, 255, 4%);
+  --accent-foreground: #f8f8f7;
+  --destructive: #dd3730;
+  --destructive-foreground: #ffffff;
+  --border: #464540;
+  --input: #464540;
+  --ring: #ff5a40;
+
+  --sidebar: #37383a;
+  --sidebar-foreground: #f8f8f7;
+  --sidebar-primary: #ff5a40;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 4%);
+  --sidebar-accent-foreground: #f8f8f7;
+  --sidebar-border: oklch(38.626% 0.007 95.233deg);
+  --sidebar-ring: #ff5a40;
+  --sidebar-unofficial-sidebar-muted: #cccccc;
+
+  --ds-surface: #37383a;
+  --ds-border: oklch(38.626% 0.007 95.233deg);
+  --ds-label-primary: #f8f8f7;
+  --ds-label-secondary: #cccccc;
+  --ds-label-secondary-hover: #dddcdb;
+  --ds-highlight-m: rgba(255, 255, 255, 4%);
+  --ds-highlight-tone: rgba(0, 153, 255, 8%);
+  --ds-icon: #adaab4;
+}

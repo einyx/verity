@@ -36,6 +36,7 @@ const experienceAliasPlugin = (): Plugin => ({
 const buildConfig = (mode: string): UserConfig => ({
   base: '/account',
   server: {
+    host: process.env.DEV_SERVER_HOST,
     port: 5004,
     hmr: {
       port: 6004,

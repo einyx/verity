@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- The Leads page keeps the list, the detail card, and the demo request controls together, so the flow reads in one place. */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useSWR from 'swr';
 
@@ -8,6 +8,7 @@ import {
   type LandingLeadTranscript,
   useLandingLeads,
 } from '@/cloud/hooks/use-landing-leads';
+import useManageLandingPageGuard from '@/cloud/hooks/use-manage-landing-page-guard';
 import Button from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
 import CardTitle from '@/ds-components/CardTitle';
@@ -105,6 +106,24 @@ function Transcript({
 }
 
 function Leads() {
+  const ensureLandingPageScope = useManageLandingPageGuard();
+  const [scopeReady, setScopeReady] = useState(false);
+
+  useEffect(() => {
+    const loadScope = async () => {
+      setScopeReady(await ensureLandingPageScope());
+    };
+    void loadScope();
+  }, [ensureLandingPageScope]);
+
+  if (!scopeReady) {
+    return null;
+  }
+
+  return <LeadsContent />;
+}
+
+function LeadsContent() {
   const { leads, bookingUrl, error, isLoading, loadTranscript, loadBriefPdf, loadSlidesPptx } =
     useLandingLeads();
   const [openedId, setOpenedId] = useState<string>();

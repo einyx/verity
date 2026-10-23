@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import {
   authorizeInvitee,
+  authorizeCloudTenant,
   authorizeOperator,
   authorizeTenantAdmin,
   type InvitationForAcceptance,
@@ -82,19 +83,22 @@ export const createBillingRouter = (
         response: subscriptionGuard,
       },
       async (context, next) => {
-        // Core reads this as an operator. A tenant admin reads the subscription of their own tenant.
-        try {
-          await authorizeOperator(context.request.headers.authorization, auth);
-        } catch {
-          await authorizeTenantAdmin(
-            context.request.headers.authorization,
-            context.guarded.params.tenantId,
-            auth,
-            store
-          );
-        }
+        const requestedTenantId = context.guarded.params.tenantId;
+        // Core's tenant cloud-connection M2M client reads its own subscription via `/my`.
+        const tenantId = await (async () => {
+          if (requestedTenantId === 'my') {
+            const caller = await authorizeCloudTenant(
+              context.request.headers.authorization,
+              auth,
+              store
+            );
+            return caller.tenantId;
+          }
 
-        const { tenantId } = context.guarded.params;
+          // Only platform operators may read subscriptions by explicit tenant id.
+          await authorizeOperator(context.request.headers.authorization, auth);
+          return requestedTenantId;
+        })();
         const skus = await store.listSkus({});
         const developmentSku = skus.find((sku) => sku.id === ReservedPlanId.Development);
 

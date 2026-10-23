@@ -1,6 +1,7 @@
 import pptxgenModule from 'pptxgenjs';
 
 import { type BriefInput } from './landing-page-brief.js';
+import { brand, wordmarkPngBase64 } from './landing-page-brand.js';
 
 // The package is CommonJS at runtime, where its default import is the class itself. Its typings describe an
 // ES default export that TypeScript resolves differently, so the class is read through this cast. The
@@ -9,6 +10,7 @@ type Text = { text: string; options: Record<string, unknown> };
 type Slide = {
   background: { color: string };
   addText: (text: string | Text[], options: Record<string, unknown>) => void;
+  addImage: (options: Record<string, unknown>) => void;
 };
 type Deck = {
   layout: string;
@@ -25,13 +27,13 @@ const PptxGenJS = pptxgenModule as unknown as new () => Deck;
 // brief and the deck (warm off-white, red accent, serif headings).
 
 const colours = {
-  background: 'F7F4EE',
-  ink: '1F1B16',
-  muted: '6B6259',
-  accent: 'C4291C',
+  background: brand.background,
+  ink: brand.ink,
+  muted: brand.muted,
+  accent: brand.accent,
 };
 
-const fonts = { heading: 'Georgia', body: 'Arial' };
+const fonts = { heading: brand.headingFont, body: brand.bodyFont };
 
 const productLines = [
   'Foundation AI: the intelligence layer that routes every question to a sourced, governed answer.',
@@ -54,14 +56,12 @@ const fullName = (lead: Lead) => `${lead.firstName} ${lead.lastName}`.trim();
 const addTitleSlide = (deck: Deck, lead: Lead, date: string) => {
   const slide = deck.addSlide();
   slide.background = { color: colours.background };
-  slide.addText('meshX', {
+  slide.addImage({
+    data: `image/png;base64,${wordmarkPngBase64}`,
     x: 0.7,
     y: 0.6,
-    w: 4,
-    h: 0.5,
-    fontFace: fonts.heading,
-    fontSize: 20,
-    color: colours.accent,
+    w: 2.4,
+    h: 0.44,
   });
   slide.addText(`Enterprise intelligence for ${lead.company}`, {
     x: 0.7,

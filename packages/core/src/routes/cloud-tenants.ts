@@ -17,6 +17,13 @@ import RequestError from '#src/errors/RequestError/index.js';
 import { verifyBearerTokenFromRequest } from '#src/middleware/koa-auth/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import { provisionTenant } from '#src/tenants/provision.js';
+import {
+  canManageTenants,
+  isAdminTenantOperator,
+  readTenantAccessDomains,
+  tenantAccessPolicyBody,
+  writeTenantAccessDomains,
+} from '#src/routes/cloud-tenant-access.js';
 import assertThat from '#src/utils/assert-that.js';
 
 // Cloud tenant API: list, read and create tenants on this instance. Served on the admin tenant's `/api`
@@ -78,7 +85,7 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
 
   // Checks the bearer token against the instance's cloud API resource and the route's scope, and returns
   // the user it was issued to. Only a signed-in user can own a tenant, so a machine token is refused.
-  const authenticate = async (ctx: Context, scope: CloudScope) => {
+  const verifyCaller = async (ctx: Context, scope: CloudScope) => {
     const audience = getCloudApiIndicator(EnvSet.values.adminUrlSet.endpoint.origin);
     const { sub, clientId, scopes } = await verifyBearerTokenFromRequest(
       envSet,
@@ -95,6 +102,29 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     return sub;
   };
 
+  const authenticate = async (ctx: Context, scope: CloudScope) => {
+    const sub = await verifyCaller(ctx, scope);
+    const pool = await EnvSet.sharedPool;
+    assertThat(
+      await canManageTenants(pool, sub),
+      new RequestError({ code: 'auth.forbidden', status: 403 })
+    );
+
+    return sub;
+  };
+
+  // The admin tenant is not shown to anyone who is not one of its operators, so these answer 404, not 403.
+  const authenticateOperator = async (ctx: Context) => {
+    const sub = await verifyCaller(ctx, CloudScope.ManageTenantSelf);
+    const pool = await EnvSet.sharedPool;
+    assertThat(
+      await isAdminTenantOperator(pool, sub),
+      new RequestError({ code: 'entity.not_found', status: 404 })
+    );
+
+    return sub;
+  };
+
   // The members list is read with the console's organization token for the tenant. The caller is still
   // checked against that organization's members below, so the fallback only changes which token is accepted.
   const authenticateTenantMember = async (ctx: Context, tenantId: string) => {
@@ -106,10 +136,42 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
         ctx.request,
         buildOrganizationUrn(getTenantOrganizationId(tenantId))
       );
+      const pool = await EnvSet.sharedPool;
+      assertThat(
+        await canManageTenants(pool, sub),
+        new RequestError({ code: 'auth.forbidden', status: 403 })
+      );
 
       return sub;
     }
   };
+
+  // The allow-list the admin console edits. Only an operator of the admin tenant may read or change it.
+  router.get(
+    '/api/tenant-access-policy',
+    koaGuard({ status: [200, 401, 403] }),
+    async (ctx, next) => {
+      await authenticateOperator(ctx);
+      const pool = await EnvSet.sharedPool;
+      ctx.body = { domains: await readTenantAccessDomains(pool) };
+
+      return next();
+    }
+  );
+
+  router.put(
+    '/api/tenant-access-policy',
+    koaGuard({ body: tenantAccessPolicyBody, status: [200, 400, 401, 403] }),
+    async (ctx, next) => {
+      await authenticateOperator(ctx);
+      const pool = await EnvSet.sharedPool;
+      const { domains } = ctx.guard.body;
+      await writeTenantAccessDomains(pool, domains);
+      ctx.body = { domains };
+
+      return next();
+    }
+  );
 
   router.get('/api/tenants', koaGuard({ status: [200, 304, 401, 403] }), async (ctx, next) => {
     const pool = await EnvSet.sharedPool;
@@ -167,6 +229,10 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     '/api/tenants/:tenantId/members',
     koaGuard({ status: [200, 304, 401, 403] }),
     async (ctx, next) => {
+      assertThat(
+        ctx.params.tenantId !== adminTenantId,
+        new RequestError({ code: 'entity.not_found', status: 404 })
+      );
       const userId = await authenticateTenantMember(ctx, ctx.params.tenantId ?? '');
       const organizationId = getTenantOrganizationId(ctx.params.tenantId ?? '');
       const pool = await EnvSet.sharedPool;

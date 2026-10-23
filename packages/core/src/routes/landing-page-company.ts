@@ -2,7 +2,7 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
 // Company research for a sales lead. It reads only the company's own public site, on the domain of the
-// visitor's work email: the homepage and the about page. It never reads people-search or social sites,
+// visitor's work email: the homepage, about, product, pricing, customers and careers pages. It never reads people-search or social sites,
 // and it never follows redirects, so the request stays on the domain the visitor gave us. The model
 // summarises only what those pages say.
 
@@ -33,7 +33,16 @@ const freeEmailDomains = new Set([
 const pageTimeoutMs = 5000;
 const maxPageBytes = 200_000;
 const maxTextChars = 6000;
-const pagePaths = ['/', '/about', '/about-us'];
+const pagePaths = [
+  '/',
+  '/about',
+  '/about-us',
+  '/product',
+  '/products',
+  '/pricing',
+  '/customers',
+  '/careers',
+];
 
 export type CompanyProfile = {
   domain: string;
@@ -184,7 +193,7 @@ const fetchText = async (fetchPage: Fetch, url: string): Promise<string | undefi
   return body.slice(0, maxPageBytes);
 };
 
-/** Reads the company's homepage and about page. Returns undefined when the site cannot be read safely. */
+/** Reads the company's public pages. Returns undefined when the site cannot be read safely. */
 const readCompanySite = async (
   domain: string,
   fetchPage: Fetch

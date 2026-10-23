@@ -8,9 +8,7 @@ import ContactIcon from '@/assets/icons/contact-us.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
 import DocumentIcon from '@/assets/icons/document-nav-button.svg?react';
 import Globe from '@/assets/icons/globe.svg?react';
-import CloudLogo from '@/assets/images/cloud-logo.svg?react';
-import Logo from '@/assets/images/logo.svg?react';
-import MeshxMark from '@/assets/images/meshx-mark.svg?react';
+import meshxWordmark from '@/assets/images/meshx-wordmark.png';
 import { githubReleasesLink } from '@/consts';
 import { isCloud } from '@/consts/env';
 import Dropdown, { DropdownItem } from '@/ds-components/Dropdown';
@@ -40,7 +38,6 @@ type Props = {
 function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { navigate } = useTenantPathname();
-  const LogtoLogo = isCloud ? CloudLogo : Logo;
 
   return (
     <div className={classNames(styles.topbar, className)}>
@@ -57,8 +54,7 @@ function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
           }
         }}
       >
-        <MeshxMark className={styles.mark} />
-        <LogtoLogo className={styles.logo} />
+        <img className={styles.wordmark} src={meshxWordmark} alt="meshX" />
       </div>
       {isCloud && !hideTenantSelector && <TenantSelector />}
       {!isCloud && !hideTitle && (

@@ -189,6 +189,13 @@ export const useSidebarMenuItems = (): {
         },
         {
           Icon: menuIcons.tenant_settings,
+          title: 'tenant_access',
+          path: 'tenant-access',
+          // Who may manage customer tenants. Cloud only, admin tenant only.
+          isHidden: !(isCloud && currentTenantId === adminTenantId),
+        },
+        {
+          Icon: menuIcons.tenant_settings,
           title: 'tenant_settings',
         },
       ],

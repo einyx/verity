@@ -320,6 +320,13 @@
   border-color: currentColor;
 }
 
+/* The options fade in with the reply that offers them, instead of appearing all at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-options {
+    animation: demo-chat-in 180ms ease-out;
+  }
+}
+
 .demo-chat-chip:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;

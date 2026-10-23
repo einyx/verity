@@ -10,11 +10,11 @@ export const demoChatLimits = {
   /** Requests per IP per hour. */
   perIpPerHour: 120,
   /** User turns allowed in one conversation. */
-  maxTurnsPerSession: 8,
+  maxTurnsPerSession: 30,
   /** Characters allowed in one user message. */
-  maxMessageLength: 1000,
+  maxMessageLength: 4000,
   /** Sessions the chat may start per day, across the instance. */
-  maxSessionsPerDay: 100,
+  maxSessionsPerDay: 1000,
 } as const;
 
 /** Whether the published document has the demo chat switched on. Missing or malformed reads as off. */

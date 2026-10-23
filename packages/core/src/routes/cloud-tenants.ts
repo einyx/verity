@@ -115,13 +115,19 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     const pool = await EnvSet.sharedPool;
     const userId = await authenticate(ctx, CloudScope.ManageTenantSelf);
 
-    // The admin tenant is the instance's own console. Only its operator, who holds the admin role there,
-    // sees it in the list. Every other user, including Cloud customers, sees customer tenants only.
+    // The admin tenant is the instance's own console. The first admin-tenant user is its operator.
+    // That user can be created after the admin-role alteration runs during bootstrap, so identify the
+    // operator by creation order rather than relying on the role having been assigned beforehand.
     const operator = await pool.maybeOne<{ userId: string }>(sql`
-        select ur.user_id as "userId"
-        from users_roles ur
-        join roles r on r.id = ur.role_id
-        where ur.tenant_id = ${adminTenantId} and ur.user_id = ${userId} and r.name = 'admin'
+        select id as "userId"
+        from users
+        where tenant_id = ${adminTenantId} and id = ${userId}
+          and id = (
+            select id from users
+            where tenant_id = ${adminTenantId}
+            order by created_at, id
+            limit 1
+          )
         limit 1
       `);
 

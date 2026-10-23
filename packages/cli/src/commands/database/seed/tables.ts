@@ -168,7 +168,7 @@ export const seedTables = async (
    */
   await seedPreConfiguredManagementApiAccessRole(connection, defaultTenantId);
 
-  await createTenant(connection, adminTenantId);
+  await createTenant(connection, adminTenantId, { name: 'Admin' });
   await seedOidcConfigs(connection, adminTenantId);
   await seedAdminData(connection, createAdminDataInAdminTenant(defaultTenantId));
   const adminAdminData = createAdminDataInAdminTenant(adminTenantId);

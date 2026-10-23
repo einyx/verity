@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import PageContext from '@/Providers/PageContextProvider/PageContext';
 import defaultAppleTouchLogo from '@/shared/assets/apple-touch-icon.png';
 import defaultFavicon from '@/shared/assets/favicon.png';
+import { isMeshxDarkBranding } from '@/shared/utils/meshx-dark-branding';
 import { type SignInExperienceResponse } from '@/types';
 
 import styles from './index.module.scss';
@@ -46,7 +47,12 @@ const AppMeta = () => {
         className={classNames(
           conditionalString(isPreview && styles.preview),
           platform === 'mobile' ? 'mobile' : 'desktop',
-          conditionalString(styles[theme])
+          conditionalString(styles[theme]),
+          conditionalString(
+            experienceSettings && isMeshxDarkBranding(experienceSettings.color)
+              ? styles.meshxDarkBranding
+              : undefined
+          )
         )}
       />
     </Helmet>

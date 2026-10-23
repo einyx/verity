@@ -25,7 +25,7 @@ import 'react-day-picker/dist/style.css';
 
 import CloudAppRoutes from '@/cloud/AppRoutes';
 import AppLoading from '@/components/AppLoading';
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import { cloudApi, getManagementApi, meApi } from '@/consts/resources';
 import { ConsoleRoutes } from '@/containers/ConsoleRoutes';
 
@@ -116,8 +116,8 @@ function Providers() {
           cloudApi.scopes.ManageAccountSelf,
         ]
       ),
-      // Landing page CMS. Requested only with dev features, matching its editor route.
-      ...conditionalArray(isCloud && isDevFeaturesEnabled && [cloudApi.scopes.ManageLandingPage]),
+      // Request the CMS scope so authorized operators can re-consent even when dev features are off.
+      ...conditionalArray(isCloud && [cloudApi.scopes.ManageLandingPage]),
     ],
     []
   );

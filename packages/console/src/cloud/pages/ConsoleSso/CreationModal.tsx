@@ -9,7 +9,7 @@ import Client, {
 import { useState } from 'react';
 import Modal from 'react-modal';
 import useSWR from 'swr';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { useCloudApi, toastResponseError } from '@/cloud/hooks/use-cloud-api';
 import Skeleton from '@/components/CreateConnectorForm/Skeleton';

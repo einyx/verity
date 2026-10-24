@@ -12,7 +12,7 @@ import {
   type TokenSetMetadata,
 } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '../env-set/index.js';
 

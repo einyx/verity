@@ -1,5 +1,5 @@
 import { jsonGuard, jsonObjectGuard, socialUserInfoGuard } from '@logto/connector-kit';
-import { type ZodType, z } from 'zod';
+import { type ZodType, z } from 'zod/v3';
 
 import {
   Applications,

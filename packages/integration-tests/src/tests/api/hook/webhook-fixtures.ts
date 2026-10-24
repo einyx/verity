@@ -4,7 +4,7 @@ import {
   jsonGuard,
   managementApiHooksRegistration,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { WebHookApiTest, getSupportedHookEvents } from '#src/helpers/hook.js';
 import { waitFor } from '#src/utils.js';

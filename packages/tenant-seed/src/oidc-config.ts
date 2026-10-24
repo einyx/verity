@@ -6,7 +6,7 @@ import { generateStandardId } from '@logto/shared';
 import { getEnvAsStringArray } from '@silverhand/essentials';
 import type { DatabaseTransactionConnection } from '@silverhand/slonik';
 import chalk from 'chalk';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { consoleLog } from './logger.js';
 import { getRowsByKeys, updateValueByKey } from './logto-config.js';

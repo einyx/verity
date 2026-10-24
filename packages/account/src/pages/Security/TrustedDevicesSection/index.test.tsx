@@ -63,7 +63,6 @@ const renderTrustedDevices = (
     </Routes>,
     {
       initialEntries: [securityRoute],
-      future: { v7_relativeSplatPath: true, v7_startTransition: true },
     },
     {
       pageContext: {

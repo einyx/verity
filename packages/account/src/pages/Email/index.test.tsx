@@ -68,10 +68,6 @@ const renderEmail = ({ pageContext, initialEntries = [emailRoute] }: EmailRender
     </Routes>,
     {
       initialEntries,
-      future: {
-        v7_relativeSplatPath: true,
-        v7_startTransition: true,
-      },
     },
     {
       pageContext: {

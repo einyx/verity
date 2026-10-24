@@ -28,7 +28,7 @@ import {
 } from '@logto/schemas';
 import { type ConsoleLog } from '@logto/shared';
 import chalk from 'chalk';
-import { ZodError, z } from 'zod';
+import { ZodError, z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { createLogtoConfigQueries } from '#src/queries/logto-config.js';

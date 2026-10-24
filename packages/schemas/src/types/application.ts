@@ -1,5 +1,5 @@
 import { UserScope } from '@logto/core-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   Applications,

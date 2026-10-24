@@ -1,7 +1,7 @@
 import { notImplemented } from '@logto/cli/lib/connector/index.js';
 import { ConnectorType } from '@logto/schemas';
 import { has } from '@silverhand/essentials';
-import { object, record, string, unknown } from 'zod';
+import { object, record, string, unknown } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- The Kubo proxy keeps its routes in one file, next to the portal calls they forward. */
-import { array, boolean, number, object, string } from 'zod';
+import { array, boolean, number, object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import { safeParseJson } from '#src/utils/json.js';

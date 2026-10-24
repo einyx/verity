@@ -6,7 +6,7 @@ import {
 } from '@logto/schemas';
 import type Router from 'koa-router';
 import { type IRouterParamContext } from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { isNoSkipMfaPolicy } from '#src/libraries/sign-in-experience/mfa-policy.js';

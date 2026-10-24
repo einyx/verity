@@ -1,7 +1,7 @@
 import { builtInLanguages as builtInConsoleLanguages } from '@logto/phrases';
 import { consoleUserPreferenceKey, type Theme } from '@logto/schemas';
 import { useContext, useEffect, useMemo } from 'react';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { AppThemeContext, buildDefaultAppearanceMode } from '@/contexts/AppThemeProvider';
 import type { DynamicAppearanceMode } from '@/types/appearance-mode';

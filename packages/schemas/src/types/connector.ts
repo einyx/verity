@@ -1,5 +1,5 @@
 import { ConnectorType, connectorMetadataGuard } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Connectors } from '../db-entries/index.js';
 

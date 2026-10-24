@@ -7,7 +7,7 @@ import {
   UpstreamUrlError,
   upstreamNamePattern,
 } from '@logto/mcp-portal';
-import { array, boolean, object, string } from 'zod';
+import { array, boolean, object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 

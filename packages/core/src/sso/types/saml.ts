@@ -1,5 +1,5 @@
 import { socialUserInfoGuard } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export { type ExtendedSocialUserInfo, extendedSocialUserInfoGuard } from '@logto/schemas';
 

@@ -1,7 +1,7 @@
 import { defaultConnectorMethods } from '@logto/cli/lib/connector/index.js';
 import { ConnectorType, TemplateType } from '@logto/connector-kit';
 import { type Passcode } from '@logto/schemas';
-import { any } from 'zod';
+import { any } from 'zod/v3';
 
 import {
   mockConnector,

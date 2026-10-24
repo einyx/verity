@@ -12,7 +12,7 @@
 
 import { identificationApiPayloadGuard, InteractionEvent } from '@logto/schemas';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

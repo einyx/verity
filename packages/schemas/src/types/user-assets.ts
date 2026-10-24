@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const maxUploadFileSize = 20 * 1024 * 1024; // 20 MB
 

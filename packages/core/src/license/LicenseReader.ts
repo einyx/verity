@@ -11,7 +11,7 @@ import { TtlCache } from '@logto/shared';
 import { type Optional } from '@silverhand/essentials';
 import { type CommonQueryMethods } from '@silverhand/slonik';
 import { got } from 'got';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { createSystemsQuery } from '#src/queries/system.js';

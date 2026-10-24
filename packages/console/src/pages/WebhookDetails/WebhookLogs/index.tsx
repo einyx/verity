@@ -3,7 +3,7 @@ import { conditional } from '@silverhand/essentials';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import useSWR from 'swr';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import EventSelector from '@/components/AuditLogTable/components/EventSelector';
 import EmptyDataPlaceholder from '@/components/EmptyDataPlaceholder';

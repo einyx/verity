@@ -1,7 +1,7 @@
 import type { LogtoErrorCode } from '@logto/phrases';
 import { InteractionEvent, eventGuard, identifierPayloadGuard, profileGuard } from '@logto/schemas';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { assignInteractionResults } from '#src/libraries/session/index.js';

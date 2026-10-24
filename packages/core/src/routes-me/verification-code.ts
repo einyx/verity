@@ -1,7 +1,7 @@
 import { TemplateType } from '@logto/connector-kit';
 import { emailRegEx } from '@logto/core-kit';
 import { SentinelActivityAction } from '@logto/schemas';
-import { object, string } from 'zod';
+import { object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import type { RouterInitArgs } from '#src/routes/types.js';

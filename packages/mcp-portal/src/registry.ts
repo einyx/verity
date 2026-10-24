@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import nodePath from 'node:path';
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const upstreamNamePattern = /^[a-z][\da-z-]{0,31}$/;
 

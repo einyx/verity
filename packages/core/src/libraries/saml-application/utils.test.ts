@@ -1,12 +1,13 @@
+import crypto from 'node:crypto';
+
 import { addDays, addYears } from 'date-fns';
-import forge from 'node-forge';
 
 import RequestError from '#src/errors/RequestError/index.js';
 
 import { generateKeyPairAndCertificate, calculateCertificateFingerprints } from './utils.js';
 
-const privateKeyBeginMarker = ['-----BEGIN', 'RSA', 'PRIVATE', 'KEY-----'].join(' ');
-const privateKeyEndMarker = ['-----END', 'RSA', 'PRIVATE', 'KEY-----'].join(' ');
+const privateKeyBeginMarker = ['-----BEGIN', 'PRIVATE', 'KEY-----'].join(' ');
+const privateKeyEndMarker = ['-----END', 'PRIVATE', 'KEY-----'].join(' ');
 
 describe('generateKeyPairAndCertificate', () => {
   it('should generate valid key pair and certificate', async () => {
@@ -27,13 +28,20 @@ describe('generateKeyPairAndCertificate', () => {
     expect(result.notAfter.getFullYear()).toBe(expectedNotAfter.getFullYear());
 
     // Verify certificate content - subject and issuer are identical since this is a self-signed certificate
-    const cert = forge.pki.certificateFromPem(result.certificate);
-    expect(cert.subject.getField('CN').value).toBe('logto.io');
-    expect(cert.issuer.getField('CN').value).toBe('logto.io');
-    expect(cert.subject.getField('O').value).toBe('Logto');
-    expect(cert.issuer.getField('O').value).toBe('Logto');
-    expect(cert.subject.getField('C').value).toBe('US');
-    expect(cert.issuer.getField('C').value).toBe('US');
+    const certificate = new crypto.X509Certificate(result.certificate);
+    expect(certificate.subject).toContain('CN=logto.io');
+    expect(certificate.issuer).toBe(certificate.subject);
+    expect(certificate.subject).toContain('O=Logto');
+    expect(certificate.subject).toContain('C=US');
+
+    const signer = crypto.createSign('RSA-SHA256');
+    signer.update('SAML certificate key pair check');
+    signer.end();
+    const signature = signer.sign(result.privateKey);
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update('SAML certificate key pair check');
+    verifier.end();
+    expect(verifier.verify(certificate.publicKey, signature)).toBe(true);
   });
 
   it('should generate certificate with custom lifespan', async () => {
@@ -50,18 +58,18 @@ describe('generateKeyPairAndCertificate', () => {
     const result1 = await generateKeyPairAndCertificate(1);
     const result2 = await generateKeyPairAndCertificate(1);
 
-    const cert1 = forge.pki.certificateFromPem(result1.certificate);
-    const cert2 = forge.pki.certificateFromPem(result2.certificate);
+    const cert1 = new crypto.X509Certificate(result1.certificate);
+    const cert2 = new crypto.X509Certificate(result2.certificate);
 
     expect(cert1.serialNumber).not.toBe(cert2.serialNumber);
   });
 
   it('should generate RSA key pair with 4096 bits', async () => {
     const result = await generateKeyPairAndCertificate(1);
-    const privateKey = forge.pki.privateKeyFromPem(result.privateKey);
+    const privateKey = crypto.createPrivateKey(result.privateKey);
 
     // RSA key should be 4096 bits
-    expect(forge.pki.privateKeyToPem(privateKey).length).toBeGreaterThan(3000); // A 4096-bit RSA private key in PEM format is typically longer than 3000 characters
+    expect(privateKey.asymmetricKeyDetails?.modulusLength).toBe(4096);
   });
 });
 

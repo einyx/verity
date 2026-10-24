@@ -1,7 +1,7 @@
 import { dateRegEx } from '@logto/core-kit';
 import { getActiveUsersResponseGuard, getNewUsersResponseGuard } from '@logto/schemas';
 import { endOfDay, format, subDays } from 'date-fns';
-import { number, object, string } from 'zod';
+import { number, object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 

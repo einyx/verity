@@ -2,7 +2,7 @@ import { MfaFactor, userMfaVerificationResponseGuard } from '@logto/schemas';
 import { getUserDisplayName } from '@logto/shared';
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
-import { object, string, z } from 'zod';
+import { object, string, z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import {

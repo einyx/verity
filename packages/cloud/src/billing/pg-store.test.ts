@@ -1,4 +1,4 @@
-import { createPool, sql } from '@silverhand/slonik';
+import { createPool, sql, type CommonQueryMethods } from '@silverhand/slonik';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createPgBillingStore } from './pg-store.js';
@@ -41,6 +41,39 @@ const quota = {
   securityFeaturesEnabled: false,
   customDomainsLimit: 0,
 };
+
+describe('createPgBillingStore without a database', () => {
+  it('parses JSONB quota records from SKU rows', async () => {
+    const pool = {
+      any: async () => [
+        {
+          type: 'AddOn',
+          id: 'test-addon',
+          created_at: new Date('2026-10-01T00:00:00.000Z'),
+          updated_at: new Date('2026-10-02T00:00:00.000Z'),
+          name: null,
+          default_price_id: null,
+          unit_price: '12.5',
+          quota: { hooksLimit: 10 },
+        },
+      ],
+    } as unknown as CommonQueryMethods;
+    const store = createPgBillingStore(pool);
+
+    await expect(store.listSkus({ type: 'AddOn' })).resolves.toEqual([
+      {
+        type: 'AddOn',
+        id: 'test-addon',
+        createdAt: new Date('2026-10-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-10-02T00:00:00.000Z'),
+        name: null,
+        defaultPriceId: null,
+        unitPrice: 12.5,
+        quota: { hooksLimit: 10 },
+      },
+    ]);
+  });
+});
 
 describe.skipIf(!databaseUrl)('createPgBillingStore', () => {
   const tenantId = 'billingtenant001';

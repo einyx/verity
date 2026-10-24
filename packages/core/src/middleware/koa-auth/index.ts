@@ -14,7 +14,7 @@ import { createLocalJWKSet, jwtVerify } from 'jose';
 import type { MiddlewareType, Request } from 'koa';
 import type { IMiddleware, IRouterParamContext } from 'koa-router';
 import { HTTPError } from 'ky';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

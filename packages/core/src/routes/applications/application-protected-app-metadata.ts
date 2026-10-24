@@ -1,5 +1,5 @@
 import { customDomainsGuard } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { protectedAppSignInCallbackUrl } from '#src/constants/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

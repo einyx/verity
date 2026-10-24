@@ -14,7 +14,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId, generateStandardSecret } from '@logto/shared';
 import { conditional } from '@silverhand/essentials';
-import { boolean, object, string, z } from 'zod';
+import { boolean, object, string, z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

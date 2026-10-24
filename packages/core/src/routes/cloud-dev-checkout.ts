@@ -3,7 +3,7 @@ import { text } from 'node:stream/consumers';
 import { ReservedPlanId, TenantTag } from '@logto/schemas';
 import { sql } from '@silverhand/slonik';
 import type { Context } from 'koa';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 

@@ -4,7 +4,7 @@ import { has } from '@silverhand/essentials';
 import type { MiddlewareType } from 'koa';
 import { koaBody, type ScalarOrArrayFiles } from 'koa-body';
 import type { IMiddleware, IRouterParamContext } from 'koa-router';
-import type { ZodType, ZodTypeDef } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

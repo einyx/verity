@@ -1,5 +1,5 @@
 import { protectedAppAdditionalScopes } from '@logto/core-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { cloudflareDataGuard, domainDnsRecordsGuard, domainStatusGuard } from './custom-domain.js';
 

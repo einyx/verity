@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const lineConfigGuard = z.object({
   clientId: z.string(),

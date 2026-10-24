@@ -103,10 +103,6 @@ const renderSocialFlow = ({ mode, pageContext, initialEntries }: SocialFlowRende
     </Routes>,
     {
       initialEntries: initialEntries ?? [entryMap[mode]],
-      future: {
-        v7_relativeSplatPath: true,
-        v7_startTransition: true,
-      },
     },
     {
       pageContext: {

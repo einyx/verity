@@ -1,6 +1,6 @@
 // MARK: SMS + Email connector
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type BaseConnector, type ConnectorType } from './foundation.js';
 

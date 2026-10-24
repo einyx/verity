@@ -1,7 +1,7 @@
 import { defaultTenantIdKey, defaultTenantId as ossDefaultTenantId } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
 import { useCallback, useContext, useMemo } from 'react';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { isCloud } from '@/consts/env';
 import { TenantsContext } from '@/contexts/TenantsProvider';

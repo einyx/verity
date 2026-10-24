@@ -1,5 +1,5 @@
 import { tokenResponseGuard } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { SecretEnterpriseSsoConnectorRelations } from '../db-entries/secret-enterprise-sso-connector-relation.js';
 import { SecretSocialConnectorRelations } from '../db-entries/secret-social-connector-relation.js';

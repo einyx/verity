@@ -1,6 +1,6 @@
 import { conditional, trySafe } from '@silverhand/essentials';
 import ky, { TimeoutError } from 'ky';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type CloudConnectionLibrary } from '../cloud-connection.js';
 

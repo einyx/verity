@@ -1,5 +1,5 @@
 import { type ToZodObject } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export type AuthRequestInfo = {
   issuer: string;

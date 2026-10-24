@@ -1,5 +1,5 @@
 import { type SsoConnectorWithProviderConfig, type SsoProviderType } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /* Saml Connectors */
 export type SamlSsoConnectorWithProviderConfig = Omit<

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type CheckoutConfig, createCheckoutSession } from './checkout.js';
+import { type CheckoutConfig, createCheckoutSession, readCheckoutStatus } from './checkout.js';
 
 const config: CheckoutConfig = {
   stripeSecretKey: 'sk_test_example',
@@ -77,5 +77,28 @@ describe('createCheckoutSession', () => {
     const outcome = await createCheckoutSession(config, input, fetcher);
 
     expect(outcome).toEqual({ ok: false, status: 502, message: 'No such price' });
+  });
+});
+
+describe('readCheckoutStatus', () => {
+  it('reads tenant and SKU metadata from a paid Stripe session', async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'cs_test_1',
+            status: 'complete',
+            payment_status: 'paid',
+            metadata: { tenantId: 'tenant_a', skuId: 'pro' },
+          }),
+          { status: 200 }
+        )
+    );
+
+    await expect(readCheckoutStatus(config, 'cs_test_1', fetcher)).resolves.toEqual({
+      tenantId: 'tenant_a',
+      skuId: 'pro',
+      status: 'complete',
+    });
   });
 });

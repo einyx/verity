@@ -1,6 +1,6 @@
 import { assert } from '@silverhand/essentials';
 import { got, HTTPError } from 'got';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import type {
   GetConnectorConfig,

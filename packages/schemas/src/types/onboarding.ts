@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const userOnboardingDataKey = 'onboarding';
 export const ossUserOnboardingDataKey = 'ossOnboarding';

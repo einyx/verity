@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const templateGuard = z.object({
   usageType: z.string(),

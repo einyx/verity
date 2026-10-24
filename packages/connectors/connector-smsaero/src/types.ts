@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * @doc https://smsaero.ru/integration/documentation/api/

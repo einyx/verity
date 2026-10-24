@@ -3,7 +3,7 @@ import resource from '@logto/phrases-experience';
 import type { Translation } from '@logto/schemas';
 import { CustomPhrases, translationGuard } from '@logto/schemas';
 import cleanDeep from 'clean-deep';
-import { object } from 'zod';
+import { object } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

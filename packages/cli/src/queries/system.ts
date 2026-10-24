@@ -4,7 +4,7 @@ import type { Nullable } from '@silverhand/essentials';
 import type { CommonQueryMethods, DatabaseTransactionConnection } from '@silverhand/slonik';
 import { sql } from '@silverhand/slonik';
 import { DatabaseError } from 'pg-protocol';
-import type { z } from 'zod';
+import type { z } from 'zod/v3';
 
 import { convertToIdentifiers } from '../sql.js';
 

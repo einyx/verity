@@ -7,7 +7,7 @@ import { conditionalString, trySafe } from '@silverhand/essentials';
 import { type Got, got, HTTPError } from 'got';
 import { HttpsProxyAgent } from 'hpagent';
 import PQueue from 'p-queue';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { getTranslationPromptMessages, untranslatedMark } from './prompts.js';
 import {

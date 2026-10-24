@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const appleConfigGuard = z.object({
   clientId: z.string(),

@@ -6,7 +6,7 @@ import {
 } from '@logto/schemas';
 import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { cloudApi } from '@/consts';
 

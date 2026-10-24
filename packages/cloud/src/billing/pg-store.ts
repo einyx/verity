@@ -64,7 +64,7 @@ const skuRow = z.object({
   name: z.string().nullable(),
   default_price_id: z.string().nullable(),
   unit_price: z.union([z.number(), z.string()]).nullable(),
-  quota: z.record(z.unknown()),
+  quota: z.record(z.string(), z.unknown()),
 });
 
 const subscriptionRow = z.object({
@@ -76,8 +76,8 @@ const subscriptionRow = z.object({
   // Slonik returns `timestamptz` as epoch milliseconds, so coerce rather than expect a `Date`.
   current_period_start: z.coerce.date(),
   current_period_end: z.coerce.date(),
-  quota: z.record(z.unknown()),
-  system_limit: z.record(z.unknown()),
+  quota: z.record(z.string(), z.unknown()),
+  system_limit: z.record(z.string(), z.unknown()),
 });
 
 /**

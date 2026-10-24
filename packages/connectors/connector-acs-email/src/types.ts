@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * Template usage types that must be configured, so every sign-in flow and invitation can send mail.

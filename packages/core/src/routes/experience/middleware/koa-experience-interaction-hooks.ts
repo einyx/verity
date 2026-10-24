@@ -2,7 +2,7 @@ import { InteractionEvent } from '@logto/schemas';
 import { conditionalString, noop, trySafe } from '@silverhand/essentials';
 import { type MiddlewareType } from 'koa';
 import { type IRouterParamContext } from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   HookContextManager,

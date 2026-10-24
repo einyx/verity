@@ -1,6 +1,6 @@
 import { type PasswordPolicy, passwordPolicyGuard } from '@logto/core-kit';
 import { type DeepPartial } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export enum LogResult {
   Success = 'Success',

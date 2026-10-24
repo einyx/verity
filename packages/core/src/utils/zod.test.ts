@@ -16,7 +16,7 @@ import {
   union,
   preprocess,
   undefined as zUndefined,
-} from 'zod';
+} from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 

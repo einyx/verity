@@ -11,8 +11,8 @@ import {
 } from '@logto/schemas';
 import { appendPath, trySafe, type Nullable } from '@silverhand/essentials';
 import { addYears } from 'date-fns';
-import forge from 'node-forge';
-import { z } from 'zod';
+import selfsigned from 'selfsigned';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import assertThat from '#src/utils/assert-that.js';
@@ -27,27 +27,9 @@ const pemCertificateGuard = z
 const base64Guard = z.string().regex(/^[\d+/A-Za-z]*={0,2}$/);
 
 export const generateKeyPairAndCertificate = async (lifeSpanInYears: number) => {
-  const keypair = forge.pki.rsa.generateKeyPair({ bits: 4096 });
-  return createCertificate(keypair, lifeSpanInYears);
-};
-
-const createCertificate = (keypair: forge.pki.KeyPair, lifeSpanInYears: number) => {
-  const cert = forge.pki.createCertificate();
   const notBefore = new Date();
   const notAfter = addYears(notBefore, lifeSpanInYears);
-
-  // Can not initialize the certificate with the keypair directly, so we need to set the public key manually.
-  /* eslint-disable @silverhand/fp/no-mutation */
-  cert.publicKey = keypair.publicKey;
-  // Use cryptographically secure pseudorandom number generator (CSPRNG) to generate a random serial number (usually more than 8 bytes).
-  // `serialNumber` should be IDENTICAL across different certificates, better not to be incremental.
-  cert.serialNumber = crypto.randomBytes(16).toString('hex');
-  cert.validity.notBefore = notBefore;
-  cert.validity.notAfter = notAfter;
-  /* eslint-enable @silverhand/fp/no-mutation */
-
-  // TODO: read from tenant config or let user customize before downloading
-  const identityAttributes: forge.pki.CertificateField[] = [
+  const identityAttributes = [
     {
       name: 'commonName',
       value: 'logto.io',
@@ -62,15 +44,18 @@ const createCertificate = (keypair: forge.pki.KeyPair, lifeSpanInYears: number) 
     },
   ];
 
-  cert.setSubject(identityAttributes);
-  cert.setIssuer(identityAttributes);
-  cert.sign(keypair.privateKey);
+  const { private: privateKey, cert: certificate } = await selfsigned.generate(
+    identityAttributes,
+    {
+      keyType: 'rsa',
+      keySize: 4096,
+      algorithm: 'sha256',
+      notBeforeDate: notBefore,
+      notAfterDate: notAfter,
+    }
+  );
 
-  return {
-    privateKey: forge.pki.privateKeyToPem(keypair.privateKey),
-    certificate: forge.pki.certificateToPem(cert),
-    notAfter,
-  };
+  return { privateKey, certificate, notAfter };
 };
 
 export const calculateCertificateFingerprints = (

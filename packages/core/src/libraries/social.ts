@@ -6,7 +6,7 @@ import { ConnectorType } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { trySafe, type Nullable } from '@silverhand/essentials';
 import type { InteractionResults } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import type { ConnectorLibrary } from '#src/libraries/connector.js';

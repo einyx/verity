@@ -6,7 +6,7 @@
  * @see {@link https://openid.net/specs/openid-connect-core-1_0.html#IDToken | OpenID Connect Core `acr` / `amr`}
  * @see {@link https://www.rfc-editor.org/rfc/rfc8176.html | RFC 8176 Authentication Method Reference Values}
  */
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject } from '../utils/zod.js';
 

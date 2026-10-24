@@ -1,5 +1,5 @@
 import { type SchemaLike } from '@logto/shared/universal';
-import type { ZodObject, ZodType, ZodOptional, ZodTypeAny } from 'zod';
+import type { ZodObject, ZodType, ZodOptional, ZodTypeAny } from 'zod/v3';
 
 export type { SchemaLike, SchemaValue, SchemaValuePrimitive } from '@logto/shared/universal';
 

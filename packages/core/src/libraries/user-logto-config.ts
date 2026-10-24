@@ -7,7 +7,7 @@ import {
   userPasskeySignInDataKey,
 } from '@logto/schemas';
 import { removeUndefinedKeys } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * Shared response guard schema for logto-config endpoints (account API and management API).

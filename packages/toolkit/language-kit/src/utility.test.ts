@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { number, ZodError } from 'zod';
+import { number, ZodError } from 'zod/v3';
 
 import {
   canonicalizeLanguageTag,

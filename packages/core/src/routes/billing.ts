@@ -9,7 +9,7 @@ import {
 import { createPool } from '@silverhand/slonik';
 import { createRemoteJWKSet } from 'jose';
 import type { Context, Next } from 'koa';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 

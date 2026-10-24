@@ -3,7 +3,7 @@ import { type CloudflareData, DomainStatus } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
 import chalk from 'chalk';
 import { type Response } from 'got';
-import { type ZodType } from 'zod';
+import { type ZodType } from 'zod/v3';
 
 import assertThat from '../assert-that.js';
 

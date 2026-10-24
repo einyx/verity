@@ -1,7 +1,7 @@
 import type { LanguageTag } from '@logto/language-kit';
 import { languages, findSupportedLanguageTag } from '@logto/language-kit';
 import type { DeepPartial, NormalizeKeyPaths } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import ar from './locales/ar/index.js';
 import demoChatar from './locales/ar/translation/demo-chat.js';

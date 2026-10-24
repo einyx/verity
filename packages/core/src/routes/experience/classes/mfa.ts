@@ -25,7 +25,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId, maskEmail, maskPhone } from '@logto/shared';
 import { cond, conditional, condObject, deduplicate, pick } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import {

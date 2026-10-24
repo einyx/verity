@@ -1,6 +1,6 @@
 import { LicenseEnv, type LicensePayload, ReservedPlanId } from '@logto/schemas';
 import { type JWTPayload, SignJWT, exportJWK, generateKeyPair, importJWK } from 'jose';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 

@@ -2,7 +2,7 @@ import { isEmailBlocklistItem, matchesEmailBlocklistItem } from '@logto/core-kit
 import { type EmailBlocklistPolicy } from '@logto/schemas';
 import { conditional, deduplicate } from '@silverhand/essentials';
 import { got } from 'got';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

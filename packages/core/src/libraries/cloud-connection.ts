@@ -4,7 +4,7 @@ import { formUrlEncodedHeaders } from '@logto/shared';
 import { appendPath } from '@silverhand/essentials';
 import Client from '@withtyped/client';
 import ky from 'ky';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { safeParseJson } from '#src/utils/json.js';

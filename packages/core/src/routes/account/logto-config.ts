@@ -4,7 +4,7 @@ import {
   userMfaDataGuard,
   userPasskeySignInDataGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   buildUpdatedUserLogtoConfig,

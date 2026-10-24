@@ -7,7 +7,7 @@ import {
   type TurnstileConfig,
 } from '@logto/schemas';
 import ky from 'ky';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type LogEntry } from '#src/middleware/koa-audit-log.js';
 import { ssrfProtectedFetch } from '#src/utils/outbound-request.js';

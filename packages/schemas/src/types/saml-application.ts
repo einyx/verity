@@ -1,5 +1,5 @@
 import { type ToZodObject } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Applications } from '../db-entries/application.js';
 import { SamlApplicationConfigs } from '../db-entries/saml-application-config.js';

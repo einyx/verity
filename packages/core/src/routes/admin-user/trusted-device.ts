@@ -1,6 +1,6 @@
 import { trustedDeviceResponseGuard, type TrustedDeviceResponse } from '@logto/schemas';
 import { pick } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildManagementApiContext } from '#src/libraries/hook/utils.js';

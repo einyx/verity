@@ -11,7 +11,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { conditional, trySafe } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { idpInitiatedSamlSsoSessionCookieName } from '#src/constants/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

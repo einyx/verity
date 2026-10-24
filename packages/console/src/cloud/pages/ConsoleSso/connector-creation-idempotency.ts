@@ -1,5 +1,5 @@
 import { SsoProviderName } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const pendingConnectorCreationGuard = z.object({
   key: z.string().min(1),

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Hooks, type Application, type TrustedDevice, type User } from '../db-entries/index.js';
 import {

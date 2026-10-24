@@ -1,7 +1,7 @@
 import { emailRegEx, PasswordPolicyChecker, usernameRegEx } from '@logto/core-kit';
 import { userInfoSelectFields, jsonObjectGuard } from '@logto/schemas';
 import { condArray, conditional, pick } from '@silverhand/essentials';
-import { literal, object, string } from 'zod';
+import { literal, object, string } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildUserPasswordPayloadFromPassword } from '#src/libraries/user.utils.js';

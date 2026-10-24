@@ -1,8 +1,8 @@
 import type { LanguageTag } from '@logto/language-kit';
 import { isLanguageTag } from '@logto/language-kit';
 import { type Nullable } from '@silverhand/essentials';
-import type { ZodType } from 'zod';
-import { z } from 'zod';
+import type { ZodType } from 'zod/v3';
+import { z } from 'zod/v3';
 
 import { connectorConfigFormItemGuard } from './config-form.js';
 import { type ToZodObject } from './foundation.js';

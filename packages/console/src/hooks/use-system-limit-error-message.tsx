@@ -2,7 +2,7 @@ import { type AdminConsoleKey } from '@logto/phrases';
 import { type RequestErrorBody } from '@logto/schemas';
 import { useCallback, useContext } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type SystemLimit } from '@/cloud/types/router';
 import SkuName from '@/components/SkuName';

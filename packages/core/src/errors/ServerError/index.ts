@@ -1,6 +1,6 @@
 // Needs to standardize
 
-import type { ZodError } from 'zod';
+import type { ZodError } from 'zod/v3';
 
 export default class ServerError extends Error {
   constructor(public readonly message: string) {

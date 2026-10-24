@@ -1,5 +1,5 @@
 import { validateRedirectUrl } from '@logto/core-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject } from '../../utils/zod.js';
 

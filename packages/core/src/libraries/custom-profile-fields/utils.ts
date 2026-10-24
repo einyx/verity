@@ -13,7 +13,7 @@ import {
   type CustomProfileField,
   type SignInExperience,
 } from '@logto/schemas';
-import { ZodError } from 'zod';
+import { ZodError } from 'zod/v3';
 
 import {
   reservedBuiltInProfileKeySet,

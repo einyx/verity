@@ -1,7 +1,7 @@
 import { type Application } from '@logto/schemas';
 import { useFormContext } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import FormCard from '@/components/FormCard';
 import { backchannelLogout } from '@/consts';

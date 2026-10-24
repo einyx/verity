@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type User, Users, UserSsoIdentities } from '../db-entries/index.js';
 import { identityGuard, MfaFactor } from '../foundations/index.js';

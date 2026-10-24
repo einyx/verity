@@ -4,7 +4,7 @@ import {
   getUserSessionsResponseGuard,
 } from '@logto/schemas';
 import { assert } from '@silverhand/essentials';
-import { nativeEnum, object, string } from 'zod';
+import { nativeEnum, object, string } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

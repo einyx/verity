@@ -1,7 +1,7 @@
 import type { ConnectorSession } from '@logto/connector-kit';
 import { ConnectorError, ConnectorErrorCodes, ConnectorType } from '@logto/connector-kit';
 import { jsonObjectGuard, SsoAuthenticationQueryKey } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { idpInitiatedSamlSsoSessionCookieName, ssoPath } from '#src/constants/index.js';
 import { EnvSet } from '#src/env-set/index.js';

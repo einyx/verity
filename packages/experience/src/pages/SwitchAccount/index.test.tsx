@@ -48,7 +48,6 @@ const renderSwitchAccount = () =>
       <SwitchAccount />
     </SettingsProvider>,
     {
-      future: { v7_relativeSplatPath: true, v7_startTransition: true },
       initialEntries: [
         `/${experience.routes.switchAccount}?login_hint=invitee%40example.com&one_time_token=token`,
       ],

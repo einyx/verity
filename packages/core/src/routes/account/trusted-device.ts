@@ -5,7 +5,7 @@ import {
   type AccountTrustedDeviceResponse,
 } from '@logto/schemas';
 import { pick } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

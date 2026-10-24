@@ -6,7 +6,7 @@ import {
   selfHostedPlanIds,
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

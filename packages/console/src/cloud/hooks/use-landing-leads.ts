@@ -1,7 +1,7 @@
 import { useLogto } from '@logto/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { cloudApi } from '@/consts';
 

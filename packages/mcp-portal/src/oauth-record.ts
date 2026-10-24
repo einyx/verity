@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * What an upstream's encrypted credential holds. A bearer token is stored as-is (the original format);

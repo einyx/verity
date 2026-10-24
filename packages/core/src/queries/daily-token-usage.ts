@@ -2,7 +2,7 @@ import { DailyTokenUsage } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import type { CommonQueryMethods } from '@silverhand/slonik';
 import { sql } from '@silverhand/slonik';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { getUtcStartOfTheDay } from '#src/oidc/utils.js';
 import { convertToIdentifiers } from '#src/utils/sql.js';

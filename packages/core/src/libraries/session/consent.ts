@@ -3,7 +3,7 @@ import { conditional } from '@silverhand/essentials';
 import type { Context } from 'koa';
 import type { PromptDetail, Provider } from 'oidc-provider';
 import { errors } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type EnvSet } from '#src/env-set/index.js';
 import { markAppLevelAccessControlChecked } from '#src/oidc/application-access-control.js';

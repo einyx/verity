@@ -1,6 +1,6 @@
 import { extractBearerToken } from '@logto/mcp-portal';
 import { got, HTTPError } from 'got';
-import { array, object, string, z } from 'zod';
+import { array, object, string, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

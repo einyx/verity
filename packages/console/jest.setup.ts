@@ -16,9 +16,7 @@ void i18next.use(initReactI18next).init({
 /* eslint-disable @silverhand/fp/no-mutation */
 // @ts-expect-error monkey-patch for `crypto`
 crypto.subtle = webcrypto.subtle;
-// @ts-expect-error Node's TextEncoder/TextDecoder types are stricter than the DOM globals they replace.
 global.TextEncoder = TextEncoder;
-// @ts-expect-error Node's TextEncoder/TextDecoder types are stricter than the DOM globals they replace.
 global.TextDecoder = TextDecoder;
 /* eslint-enable @silverhand/fp/no-mutation */
 

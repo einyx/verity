@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject } from '../../utils/zod.js';
 import { encryptedTokenSetGuard, type EncryptedTokenSet } from '../secrets.js';

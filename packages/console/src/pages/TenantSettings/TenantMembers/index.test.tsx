@@ -103,7 +103,6 @@ const renderMembers = async (entry: 'members' | 'invitations' | 'empty') => {
         }}
       >
         <MemoryRouter
-          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
           initialEntries={[entry === 'members' ? membersPath : `${membersPath}/invitations`]}
         >
           <TestRoutes />

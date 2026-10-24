@@ -12,7 +12,7 @@ import Client, { ResponseError } from '@withtyped/client';
 import { useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { cloudApi } from '@/consts';
 

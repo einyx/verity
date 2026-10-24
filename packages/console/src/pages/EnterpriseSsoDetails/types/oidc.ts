@@ -1,5 +1,5 @@
 import { type SsoProviderType, type SsoConnectorWithProviderConfig } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /* Oidc Connectors */
 export type OidcSsoConnectorWithProviderConfig = Omit<

@@ -1,7 +1,7 @@
 import { ossConsolePath } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
 import { type Path } from 'react-router-dom';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { storageKeys } from '@/consts';
 import { isCloud } from '@/consts/env';

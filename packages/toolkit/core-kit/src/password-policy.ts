@@ -1,7 +1,7 @@
 import { type webcrypto } from 'node:crypto';
 
 import { type DeepPartial } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { getPwnPasswordsForTest, isIntegrationTest } from './utils/integration-test.js';
 

@@ -1,5 +1,5 @@
 import { trySafe, type Optional } from '@silverhand/essentials';
-import { type ZodType } from 'zod';
+import { type ZodType } from 'zod/v3';
 
 import { invalidateWithGeneration, snapshotGeneration, type GuardedKeys } from './generation.js';
 import { type CacheStore } from './types.js';

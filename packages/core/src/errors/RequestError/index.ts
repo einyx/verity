@@ -3,7 +3,7 @@ import type { RequestErrorBody, RequestErrorMetadata } from '@logto/schemas';
 import type { Optional } from '@silverhand/essentials';
 import { conditional, pick } from '@silverhand/essentials';
 import i18next, { type i18n } from 'i18next';
-import { ZodError } from 'zod';
+import { ZodError } from 'zod/v3';
 
 export const formatZodError = ({ issues }: ZodError): string[] =>
   issues.map((issue) => {

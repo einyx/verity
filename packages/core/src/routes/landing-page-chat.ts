@@ -2,7 +2,7 @@ import { demoChatByLocale, demoChatEn } from '@logto/phrases';
 import { adminTenantId } from '@logto/schemas';
 import { sql } from '@silverhand/slonik';
 import Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

@@ -8,7 +8,7 @@ import {
 import { Tenants } from '@logto/schemas/models';
 import { conditional } from '@silverhand/essentials';
 import { parseDsn, sql, stringifyDsn } from '@silverhand/slonik';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { convertToIdentifiers } from '#src/utils/sql.js';

@@ -11,7 +11,7 @@ import {
   VerificationType,
   webAuthnRegistrationOptionsGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import { buildMessageRateGuard, withMessageRateGuard } from '#src/sentinel/message-rate-guard.js';

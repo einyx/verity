@@ -5,7 +5,7 @@ import {
   userWithOrganizationRolesGuard,
   Users,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { buildManagementApiContext, truncateMembershipDelta } from '#src/libraries/hook/utils.js';
 import { type QuotaLibrary } from '#src/libraries/quota.js';

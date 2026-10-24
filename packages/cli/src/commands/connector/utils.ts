@@ -10,7 +10,7 @@ import { got } from 'got';
 import pLimit from 'p-limit';
 import pRetry from 'p-retry';
 import { extract } from 'tar';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { connectorDirectory, coreDirectory } from '../../constants.js';
 import {

@@ -5,7 +5,7 @@ import {
   jsonGuard,
 } from '@logto/schemas';
 import { ResponseError } from '@withtyped/client';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildSafeActionErrorSummary } from '#src/libraries/action-sanitization.js';

@@ -7,7 +7,7 @@ import {
   type Organization,
   type User,
 } from '@logto/schemas';
-import { type z } from 'zod';
+import { type z } from 'zod/v3';
 
 export { ConnectorType } from '@logto/schemas';
 

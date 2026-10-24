@@ -3,7 +3,7 @@ import { OneTimeTokens, oneTimeTokenStatusGuard } from '@logto/schemas';
 import { generateStandardId, generateStandardSecret } from '@logto/shared';
 import { cond, trySafe } from '@silverhand/essentials';
 import { addSeconds } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import koaPagination from '#src/middleware/koa-pagination.js';

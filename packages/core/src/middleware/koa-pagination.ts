@@ -1,6 +1,6 @@
 import type { MiddlewareType } from 'koa';
 import type { IMiddleware } from 'koa-router';
-import { number } from 'zod';
+import { number } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildLink } from '#src/utils/pagination.js';

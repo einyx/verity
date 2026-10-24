@@ -1,6 +1,6 @@
 import { OrganizationJitEmailDomains } from '@logto/schemas';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type WithAuthContext } from '#src/middleware/koa-auth/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

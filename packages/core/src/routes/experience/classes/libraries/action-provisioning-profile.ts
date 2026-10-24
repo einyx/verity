@@ -1,5 +1,5 @@
 import { Users, userProfileGuard } from '@logto/schemas';
-import { type z } from 'zod';
+import { type z } from 'zod/v3';
 
 import { encryptUserPassword } from '#src/libraries/user.utils.js';
 

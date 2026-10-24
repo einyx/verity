@@ -1,6 +1,6 @@
 import { UserScope } from '@logto/core-kit';
 import { AccountCenterControlValue, uploadFileGuard, userAssetsGuard } from '@logto/schemas';
-import { object } from 'zod';
+import { object } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

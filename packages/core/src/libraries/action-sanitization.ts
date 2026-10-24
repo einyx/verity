@@ -6,7 +6,7 @@ import {
   type LoggableActionEvent,
   type LoggableActionResult,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { isArray, isRecord } from '#src/utils/type.js';
 

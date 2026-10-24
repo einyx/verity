@@ -10,7 +10,7 @@ import {
 } from '@logto/schemas';
 import { removeUndefinedKeys } from '@silverhand/essentials';
 import { ResponseError } from '@withtyped/client';
-import { ZodError, z } from 'zod';
+import { ZodError, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError, { formatZodError } from '#src/errors/RequestError/index.js';

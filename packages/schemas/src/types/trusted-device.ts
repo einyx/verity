@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { TrustedDevices } from '../db-entries/index.js';
 

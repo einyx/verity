@@ -1,6 +1,6 @@
 import { type ProtectedAppMetadata } from '@logto/schemas';
 import { type Response } from 'got';
-import { type ZodType, z } from 'zod';
+import { type ZodType, z } from 'zod/v3';
 
 export const cloudflareResponseGuard = z.object({
   success: z.boolean(),

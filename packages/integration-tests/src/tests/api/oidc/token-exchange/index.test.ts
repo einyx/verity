@@ -10,7 +10,7 @@ import {
 } from '@logto/schemas';
 import { formUrlEncodedHeaders } from '@logto/shared';
 import { HTTPError } from 'ky';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { createUserMfaVerification, deleteUser } from '#src/api/admin-user.js';
 import { oidcApi } from '#src/api/api.js';

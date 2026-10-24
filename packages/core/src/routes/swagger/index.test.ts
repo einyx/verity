@@ -4,7 +4,7 @@ import Koa from 'koa';
 import Router, { type IRouterParamContext } from 'koa-router';
 import { type OpenAPIV3 } from 'openapi-types';
 import request from 'supertest';
-import { number, object, string } from 'zod';
+import { number, object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import koaPagination from '#src/middleware/koa-pagination.js';

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { oauth2ConfigGuard } from '@logto/connector-oauth';
 

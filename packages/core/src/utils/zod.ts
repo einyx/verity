@@ -23,7 +23,7 @@ import {
   ZodDefault,
   ZodIntersection,
   ZodUndefined,
-} from 'zod';
+} from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 

@@ -1,5 +1,5 @@
 import { CaptchaType } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RadioGroup, { Radio } from '@/ds-components/RadioGroup';
 

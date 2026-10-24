@@ -19,7 +19,7 @@ import {
   webAuthnAuthenticationOptionsGuard,
 } from '@logto/schemas';
 import type { Provider } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import { type WithInteractionDetailsContext } from '#src/middleware/koa-interaction-details.js';

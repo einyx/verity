@@ -6,7 +6,7 @@ import {
 import { conditional, trySafe } from '@silverhand/essentials';
 import { ResponseError } from '@withtyped/client';
 import { type HTTPError } from 'got';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 

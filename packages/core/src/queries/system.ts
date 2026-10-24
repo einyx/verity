@@ -1,7 +1,7 @@
 import { type SystemGuard, type SystemKey, Systems } from '@logto/schemas';
 import type { CommonQueryMethods } from '@silverhand/slonik';
 import { sql } from '@silverhand/slonik';
-import { type z } from 'zod';
+import { type z } from 'zod/v3';
 
 import { convertToIdentifiers } from '#src/utils/sql.js';
 

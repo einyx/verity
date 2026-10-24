@@ -12,7 +12,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { format } from 'date-fns';
-import { type z } from 'zod';
+import { type z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import assertThat from '#src/utils/assert-that.js';

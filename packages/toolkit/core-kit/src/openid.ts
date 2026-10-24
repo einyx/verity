@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /** Scopes that reserved by Logto, which will be added to the auth request automatically. */
 export enum ReservedScope {

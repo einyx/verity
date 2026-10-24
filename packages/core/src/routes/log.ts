@@ -10,7 +10,7 @@ import {
   type AuditLogPrefix,
 } from '@logto/schemas';
 import { yes } from '@silverhand/essentials';
-import { object, string } from 'zod';
+import { object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import koaPagination from '#src/middleware/koa-pagination.js';

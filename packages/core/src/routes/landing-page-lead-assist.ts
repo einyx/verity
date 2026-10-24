@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const leadAssistResultGuard = z.object({
   summary: z.string().trim().min(1).max(1200),

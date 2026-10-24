@@ -11,7 +11,7 @@ import {
   verificationCodePolicyGuard,
 } from '@logto/schemas';
 import { conditional, type Optional, tryThat } from '@silverhand/essentials';
-import { literal, object, string, z } from 'zod';
+import { literal, object, string, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import {

@@ -7,7 +7,7 @@ import deepmerge from 'deepmerge';
 import { type Context, type Middleware } from 'koa';
 import compose from 'koa-compose';
 import Router, { type IRouterParamContext } from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type SearchOptions } from '#src/database/utils.js';
 import { buildManagementApiContext } from '#src/libraries/hook/utils.js';

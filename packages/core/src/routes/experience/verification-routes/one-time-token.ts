@@ -5,7 +5,7 @@ import {
 } from '@logto/schemas';
 import { Action } from '@logto/schemas/lib/types/log/interaction.js';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import type TenantContext from '#src/tenants/TenantContext.js';

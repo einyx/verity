@@ -8,7 +8,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { conditional } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildUpdatedUserLogtoConfig } from '#src/libraries/user-logto-config.js';

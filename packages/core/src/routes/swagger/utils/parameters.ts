@@ -2,7 +2,7 @@ import camelcase from 'camelcase';
 import deepmerge from 'deepmerge';
 import { type OpenAPIV3 } from 'openapi-types';
 import pluralize from 'pluralize';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   fallbackDefaultPageSize,

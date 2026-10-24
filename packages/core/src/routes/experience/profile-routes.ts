@@ -11,7 +11,7 @@ import {
 import { addDays, format } from 'date-fns';
 import { type MiddlewareType } from 'koa';
 import type Router from 'koa-router';
-import { object, z } from 'zod';
+import { object, z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { type WithLogContext } from '#src/middleware/koa-audit-log.js';

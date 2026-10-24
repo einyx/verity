@@ -3,7 +3,7 @@ import { trySafe } from '@silverhand/essentials';
 import { HTTPError } from 'ky';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import useApi from '@/hooks/use-api';
 import { type JwtCustomizerForm } from '@/pages/CustomizeJwtDetails/type';

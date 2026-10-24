@@ -1,0 +1,47 @@
+const inkeep_ai_bot = {
+  intro_message:
+    'こんにちは、Logto AI です！\n\nドキュメント、ヘルプ記事、およびその他のコンテンツで訓練された AI アシスタントです。\n\n`Logto` に関して何でも質問してください。',
+  chat_placeholder: 'Logto AI に質問して、ステップバイステップのガイドを受け取る',
+  disclaimer_label: 'Logto AI 免責事項',
+  disclaimer_tooltip: '回答は AI によって生成され、検証が必要な場合があります。',
+  example_questions_label: '質問の例',
+  example_questions: [
+    'Logto セットアップのクイックスタートガイド',
+    'マルチテナンシーアーキテクチャの構成',
+    'ユーザープロファイルを統合する方法？',
+  ],
+  stop: '停止',
+  clear: '最初から始める',
+  get_help: 'サポートを受ける',
+  copy_chat: 'コピー',
+  ask_ai_label: 'AI に質問',
+  contact: 'お問い合わせ',
+  discord: 'Discord',
+  action_proposed: '提案された変更: {{tool}}',
+  action_confirm: '確認',
+  action_cancel: 'キャンセル',
+  action_running: '作成中…',
+  action_done: '作成しました',
+  action_cancelled: 'キャンセルしました',
+  action_failed: '作成されていません',
+  action_failed_detail:
+    'この変更を実行できませんでした。期限切れの可能性があります。もう一度依頼してください。',
+  setup_prompt_copied: 'セットアップ用プロンプトをコピーしました',
+  onboard_agent: 'MeshX にエージェントを導入する',
+  attached_files_label: '添付ファイル',
+  attach_file: 'ファイルを添付',
+  remove_file: '{{name}} を削除',
+  attachment_error: '100KB 以下のテキストファイルのみ添付できます: {{names}}',
+  copy_you: 'あなた',
+  copy_assistant: 'MeshX AI',
+  file_label: 'ファイル: {{name}}',
+  enter_to_send: 'Enterで送信',
+  thinking_steps: [
+    '考え中…',
+    'メッセージを読んでいます…',
+    '希望内容を計算しています…',
+    '適切な meshX の回答を探しています…',
+  ],
+};
+
+export default Object.freeze(inkeep_ai_bot);

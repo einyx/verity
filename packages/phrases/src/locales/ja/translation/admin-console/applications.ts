@@ -1,0 +1,133 @@
+const applications = {
+  page_title: 'アプリケーション ',
+  title: 'アプリケーション ',
+  subtitle:
+    'ネイティブ、シングルページ、マシン・トゥ・マシン、または従来のアプリケーションに Logto 認証を設定する',
+  subtitle_with_app_type: 'あなたの {{name}} アプリケーションに Logto 認証を設定する',
+  create_device_flow_description:
+    'OAuth 2.0 デバイス認可グラントを使用するネイティブアプリケーションを作成します。入力制限のあるデバイスやヘッドレスアプリ向けです。',
+  create: 'アプリケーションを作成する',
+  create_third_party: 'サードパーティアプリケーションを作成する',
+  create_thrid_party_modal_title: 'サードパーティアプリを作成する（{{type}}）',
+  application_name: 'アプリケーション名',
+  application_name_placeholder: '私のアプリ',
+  application_description: 'アプリケーションの説明',
+  application_description_placeholder: 'アプリケーションの説明を入力してください',
+  select_application_type: 'アプリケーションタイプを選択してください',
+  no_application_type_selected: 'まだアプリケーションタイプが選択されていません',
+  application_created: 'アプリケーションが正常に作成されました。',
+  tab: {
+    my_applications: 'My apps',
+    third_party_applications: 'Third-party apps',
+  },
+  app_id: 'App ID',
+  type: {
+    native: {
+      title: 'ネイティブアプリ',
+      subtitle: 'ネイティブ環境で実行されるアプリケーション',
+      description: '例：iOSアプリ、Androidアプリ、デスクトップアプリ、テレビ、CLI',
+    },
+    spa: {
+      title: 'シングルページアプリ',
+      subtitle: 'Web ブラウザで実行され、データを動的に更新するアプリケーション',
+      description: '例：React DOM アプリ、Vue アプリ',
+    },
+    traditional: {
+      title: '従来的な Web',
+      subtitle: 'Web サーバーのみでページをレンダリングおよび更新するアプリケーション',
+      description: '例：Next.js、PHP',
+    },
+    machine_to_machine: {
+      title: 'Machine-to-Machine',
+      subtitle: 'リソースに直接アクセスするアプリケーション（通常はサービス）',
+      description: '例：バックエンドサービス',
+    },
+    protected: {
+      title: 'Protected App',
+      subtitle: 'Logto によって保護されたアプリ',
+      description: 'N/A',
+    },
+    saml: {
+      title: 'SAML アプリ',
+      subtitle: 'SAML IdP コネクターとして使用されるアプリ',
+      description: '例：SAML',
+    },
+    third_party: {
+      title: 'Third-party App',
+      subtitle: 'サードパーティ IdP コネクターとして使用されるアプリ',
+      description: '例：OIDC、SAML',
+    },
+  },
+  authorization_flow: {
+    title: '認可フロー',
+    tooltip: 'アプリケーションの認可フローを選択してください。一度設定すると変更できません。',
+    authorization_code: {
+      title: 'Authorization code',
+      description:
+        'デフォルトで最も一般的な認可タイプです。ユーザーはサインインページにリダイレクトされ、直接アクセスを認可します。',
+    },
+    device_flow: {
+      title: 'Device flow',
+      description:
+        '入力制限のあるデバイスやヘッドレスアプリ（テレビ、CLIなど）向けです。ユーザーはデバイスコードの入力または QR コードのスキャンにより、別のデバイスでログインを完了します。',
+    },
+  },
+  placeholder_title: '続行するにはアプリケーションタイプを選択してください',
+  placeholder_description:
+    'Logto は OIDC のためにアプリケーションエンティティを使用して、アプリケーションの識別、サインインの管理、監査ログの作成などのタスクをサポートします。',
+  third_party_application_placeholder_description:
+    'Logto を ID プロバイダーとして使用して、サードパーティのサービスに OAuth 承認を提供します。 \n リソースアクセスのための事前構築されたユーザー同意画面が含まれています。<a>詳細を確認</a>',
+  dynamic_app: {
+    title: 'ダイナミックアプリ',
+    subtitle: 'CIMD',
+    description: 'ダイナミックアプリを使用すると、OAuth クライアントは事前登録なしで接続できます。',
+    settings_description:
+      'ダイナミックアプリを使用すると、OAuth クライアントは事前登録なしで接続できます。OAuth Client ID Metadata Document (CIMD) 仕様を利用します。',
+    beta_notice:
+      'ダイナミックアプリは現在ベータ版です。お試しいただき、<ContactLink>フィードバックを共有</ContactLink>してください。',
+    app_id_placeholder: '各クライアントから動的に提供されます',
+    enable_confirm_modal: {
+      title: '動的クライアントアクセスを有効にしますか？',
+      content:
+        '有効な公開HTTPSクライアントID URLを持つOAuthクライアントは、事前登録なしでこのテナントへの認可を開始できます。アクセス範囲は、設定した最大権限とユーザーの同意によって引き続き制限されます。',
+      beta_pricing_notice:
+        'ダイナミックアプリはベータ期間中は無料でご利用いただけます。ベータ終了後はアドオン料金が発生する可能性があります。事前にお知らせしますので、いつでも無効にできます。',
+    },
+    enabled: 'ダイナミックアプリを有効にしました。',
+    disable_confirm_modal: {
+      title: 'ダイナミックアプリを無効にしますか？',
+      content:
+        'CIMD クライアントは新しい認可リクエストを開始できなくなります。既存の許可は保持され、発行済みのアクセストークンは有効期限まで有効な場合があります。',
+    },
+    disabled: 'ダイナミックアプリを無効にしました。',
+    permissions: {
+      user_title: 'ユーザー',
+      user_description:
+        '特定のユーザーデータにアクセスするために OAuth クライアントが要求する権限を選択します。',
+      grant_user_level_permissions: 'ユーザー権限を付与する',
+      organization_title: '組織',
+      organization_description:
+        '特定の組織データにアクセスするために OAuth クライアントが要求する権限を選択します。',
+      grant_organization_level_permissions: '組織権限を付与する',
+      permission_delete_confirm:
+        'この操作により、ダイナミックアプリからこの権限が削除され、OAuth クライアントはこの権限に対するユーザー認可を要求できなくなります。続行してもよろしいですか？',
+    },
+    client_compatibility: {
+      title: 'クライアントの互換性',
+      description:
+        'OpenID Connect をまだ完全にはサポートしていない OAuth クライアントからの認可リクエストを、Logto がどのように処理するかを調整します。これらの設定は試験的なもので、変更または削除される可能性があります。',
+      add_consent_prompt_for_offline_access: 'オフラインアクセスに同意プロンプトを追加',
+      add_consent_prompt_for_offline_access_description:
+        'OAuth クライアントが `prompt=consent` なしで `offline_access` を要求した場合、Logto は同意プロンプトを追加し、クライアントがリフレッシュトークンを受け取れるようにします。ChatGPT や Codex などのクライアントでの利用を推奨します。',
+    },
+  },
+  guide: {
+    third_party: {
+      title: 'サードパーティアプリケーションを統合する',
+      description:
+        'Logto を ID プロバイダーとして使用して、サードパーティのサービスに OAuth 承認を提供します。安全なリソースアクセスのための事前構築されたユーザー同意画面が含まれています。<a>詳細はこちら</a>',
+    },
+  },
+};
+
+export default Object.freeze(applications);

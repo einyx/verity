@@ -1,0 +1,58 @@
+import { InteractionEvent, interaction, SignInIdentifier } from '@logto/schemas';
+import { assert } from '@silverhand/essentials';
+
+import { deleteUser } from '#src/api/admin-user.js';
+import { getAuditLogs } from '#src/api/logs.js';
+import { initExperienceClient } from '#src/helpers/client.js';
+import { enableAllPasswordSignInMethods } from '#src/helpers/sign-in-experience.js';
+import { generateNewUserProfile } from '#src/helpers/user.js';
+import { parseInteractionCookie } from '#src/utils.js';
+
+describe('audit logs for interaction', () => {
+  beforeAll(async () => {
+    await enableAllPasswordSignInMethods({
+      identifiers: [SignInIdentifier.Username],
+      password: true,
+      verify: false,
+    });
+  });
+
+  it('should insert log after interaction started and ended', async () => {
+    const client = await initExperienceClient({
+      interactionEvent: InteractionEvent.Register,
+    });
+    const interactionCookie = client.parsedCookies.get('_interaction');
+
+    assert(interactionCookie, new Error('No interaction found in cookie'));
+    console.debug('Testing interaction', interactionCookie);
+
+    const interactionId = parseInteractionCookie(interactionCookie)['demo-app'];
+
+    // Expect interaction create log
+    const createLogs = await getAuditLogs(
+      new URLSearchParams({ logKey: `${interaction.prefix}.${interaction.Action.Create}` })
+    );
+    expect(createLogs.some((value) => value.payload.interactionId === interactionId)).toBeTruthy();
+
+    // Process interaction with minimum effort
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+
+    await client.updateProfile({ type: SignInIdentifier.Username, value: username });
+    await client.updateProfile({ type: 'password', value: password });
+    await client.identifyUser();
+
+    const response = await client.submitInteraction();
+    await client.processSession(response.redirectTo);
+
+    // Expect interaction end log
+    const endLogs = await getAuditLogs(
+      new URLSearchParams({ logKey: `${interaction.prefix}.${interaction.Action.End}` })
+    );
+    expect(endLogs.some((value) => value.payload.interactionId === interactionId)).toBeTruthy();
+
+    // Clean up
+    const { sub: userId } = await client.getIdTokenClaims();
+    await client.signOut();
+    await deleteUser(userId);
+  });
+});

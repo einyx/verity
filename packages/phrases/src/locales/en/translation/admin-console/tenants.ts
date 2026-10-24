@@ -1,0 +1,199 @@
+const tenants = {
+  title: 'Settings',
+  description: 'Efficiently manage tenant settings and customize your domain.',
+  oss_description:
+    'Change your account settings and manage your personal information here to ensure your account security.',
+  tabs: {
+    settings: 'Settings',
+    members: 'Members',
+    domains: 'Domains',
+    oidc_configs: 'OIDC configs',
+    subscription: 'Plan and billing',
+    billing_history: 'Billing history',
+    license: 'License',
+  },
+  license: {
+    purchase_title: 'SELF-HOSTED PLANS',
+    purchase_description:
+      'Self-hosted Pro and Enterprise unlock paid features on your own instance, such as hiding the MeshX branding, bringing your own UI, Console collaboration, and unlimited SAML applications. Buy a plan to get your license key.',
+    purchase_button: 'View self-hosted plans',
+    install_title: 'INSTALL LICENSE',
+    install_description: 'Paste the license key you got after purchasing a self-hosted plan.',
+    install_button: 'Install license',
+    key_field: 'License key',
+    key_field_description:
+      'The key is verified on your instance and never leaves it. Contact MeshX for a fresh key if the one you have has expired.',
+    key_placeholder: 'Paste your license key here',
+    installed_toast: 'License installed successfully.',
+    details_title: 'LICENSE',
+    details_description: 'The license installed on this instance and what it grants.',
+    plan_field: 'Plan',
+    environment_field: 'Environment',
+    environment_production: 'Production',
+    environment_non_production: 'Non-production',
+    expires_at_field: 'Expires on',
+    installed_at_field: 'Installed on',
+    last_refreshed_at_field: 'Last refreshed on',
+    grace_ends_at_field: 'Grace period ends on',
+    refresh_expired_description:
+      'The license key expired on {{expiresAt}}. Licensed features remain available until {{graceEndsAt}} while MeshX tries to refresh it.',
+    refresh_refused_description:
+      'The license refresh was refused because the license is {{reason}}. Licensed features remain available until {{graceEndsAt}}.',
+    refusal_reason_canceled: 'canceled',
+    refusal_reason_unpaid: 'unpaid',
+    refusal_reason_expired: 'expired',
+    refusal_reason_revoked: 'revoked',
+    refusal_reason_unknown: 'not available',
+    grace_expired_description:
+      'The license grace period ended on {{graceEndsAt}}. This deployment has reverted to OSS defaults. Contact MeshX for a fresh license key and install it again.',
+    get_fresh_key_button: 'Get a fresh license key',
+    replace_button: 'Replace license',
+  },
+  members: {
+    card_title: 'Manage tenants more securely with MeshX Cloud',
+    card_description:
+      'Add admins or collaborators to your tenant without sharing a single admin account.',
+    card_action: 'Explore MeshX Cloud',
+    self_hosted_card_title: 'Manage tenants more securely with self-hosted plans',
+    self_hosted_card_description:
+      'Add admins or collaborators to your tenant without sharing a single admin account.',
+    self_hosted_card_action: 'Explore self-hosted plans',
+  },
+  settings: {
+    title: 'SETTINGS',
+    description: 'Set the tenant name and view your data hosted region and tenant type.',
+    tenant_id: 'Tenant ID',
+    tenant_name: 'Tenant name',
+    tenant_instance: 'Select your instance',
+    tenant_instance_description:
+      'Select where your tenant will be hosted. Choose MeshX Cloud for public shared infrastructure, or a private instance for dedicated resources.',
+    tenant_region: 'Data region',
+    tenant_region_description:
+      'The physical location where your tenant resources (users, apps, etc.) are hosted. This cannot be changed after creation.',
+    tenant_region_tip: 'Your tenant resources are hosted in {{region}}. <a>Learn more</a>',
+    environment_tag_development: 'Dev',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Tenant type',
+    development_description:
+      "For testing only and shouldn't be used in production. No subscription is required. It has all the pro features but has limitations like a sign-in banner.",
+    production_description:
+      'Intended for apps that are being used by end-users and may require a paid subscription.',
+    tenant_info_saved: 'Tenant information saved successfully.',
+    tenant_mfa: 'Multi-factor authentication',
+    tenant_mfa_description:
+      'Require your members to set up multi-factor authentication to access this tenant.',
+    oss_description: 'Manage how members access Console on this instance.',
+    tenant_mfa_confirm_title: 'Require MFA for all members?',
+    tenant_mfa_confirm_description:
+      'These members have not set up MFA yet. They stay signed in, and will be asked to set it up the next time they sign in:',
+    tenant_mfa_confirm_self:
+      'You have not set up MFA either. Set it up in your account settings before your next sign-in.',
+    tenant_mfa_confirm_button: 'Require MFA',
+    tenant_mfa_setup_required:
+      'This tenant requires multi-factor authentication. Set it up now, or you will be asked to at your next sign-in.',
+    tenant_mfa_setup_action: 'Set up MFA',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      "Available on paid plans. Contact us to enable enterprise SSO so all members can sign in to the MeshX Cloud Console using your organization's identity provider.",
+  },
+  full_env_tag: {
+    development: 'Development',
+    production: 'Production',
+  },
+  view_only: {
+    tag: 'View only',
+    notification:
+      'You have view-only access to this tenant. Ask a tenant admin if you need to make changes.',
+    hidden: 'Hidden for viewers',
+  },
+  deletion_card: {
+    title: 'DELETE',
+    tenant_deletion: 'Delete tenant',
+    tenant_deletion_description:
+      'Deleting the tenant will result in the permanent removal of all associated user data and configuration. Please proceed with caution.',
+    tenant_deletion_button: 'Delete tenant',
+  },
+  leave_tenant_card: {
+    title: 'LEAVE',
+    leave_tenant: 'Leave tenant',
+    leave_tenant_description:
+      'Any resources in the tenant will remain but you no longer have access to this tenant.',
+    last_admin_note: 'To leave this tenant, ensure at least one more member has the Admin role.',
+  },
+  create_modal: {
+    title: 'Create tenant',
+    subtitle: 'Create a new tenant that has isolated resources and users.',
+    tenant_id: 'Tenant ID',
+    tenant_usage_purpose: 'What do you want to use this tenant for?',
+    development_description:
+      "For testing only and shouldn't be used in production. No subscription is required.",
+    development_description_for_private_regions:
+      "For testing only and shouldn't be used in production.",
+    development_hint: 'It has all the pro features but has limitations like a sign-in banner.',
+    production_description: 'For use by end-users and may require a paid subscription.',
+    available_plan: 'Available plan:',
+    create_button: 'Create tenant',
+    tenant_name_placeholder: 'My tenant',
+    tenant_created: 'Tenant created successfully.',
+    invitation_failed:
+      'Some invitation failed to send. Please try again in Settings -> Members later.',
+    tenant_type_description: 'This cannot be changed after creation.',
+    tenant_id_invalid:
+      'Tenant ID can only contain lowercase letters, numbers, and hyphens, and must not exceed {{max}} characters.',
+    tenant_id_placeholder: 'Your tenant ID',
+    tenant_id_tip:
+      'Customize the Tenant ID. If left empty, MeshX will generate a default ID. The Tenant ID cannot be changed after creation.',
+  },
+  dev_tenant_migration: {
+    title: 'You can now try our Pro features for free by creating a new "Development tenant"!',
+    affect_title: 'How does this affect you?',
+    hint_1:
+      'We are replacing the old <strong>environment tags</strong> with two new tenant types: <strong>“Development”</strong> and <strong>“Production”</strong>.',
+    hint_2:
+      'To ensure a seamless transition and uninterrupted functionality, all early-created tenants will be elevated to the <strong>Production</strong> tenant type along with your previous subscription.',
+    hint_3: "Don't worry, all your other settings will remain the same.",
+    about_tenant_type: 'About tenant type',
+  },
+  delete_modal: {
+    title: 'Delete tenant',
+    description_line1:
+      'Are you sure you want to delete your tenant "<span>{{name}}</span>" with environment suffix tag "<span>{{tag}}</span>"? This action cannot be undone, and will result in the permanent deletion of all your data and tenant information.',
+    description_line2:
+      'Before deleting tenant, maybe we can help you. <span><a>Contact us via Email</a></span>',
+    description_line3:
+      'If you would like to proceed, please enter the tenant name "<span>{{name}}</span>" to confirm.',
+    delete_button: 'Permanently delete',
+    cannot_delete_title: 'Cannot delete this tenant',
+    cannot_delete_description:
+      "Sorry, you can't delete this tenant right now. Please make sure you're on the Free plan and have paid all outstanding billings.",
+  },
+  leave_tenant_modal: {
+    description: 'Are you sure you want to leave this tenant?',
+    leave_button: 'Leave',
+  },
+  tenant_landing_page: {
+    title: "You haven't created a tenant yet",
+    description:
+      'To start configuring your project with MeshX, please create a new tenant. If you need to log out or delete your account, just click on the avatar button in the top right corner.',
+    create_tenant_button: 'Create tenant',
+  },
+  status: {
+    mau_exceeded: 'MAU exceeded',
+    token_exceeded: 'Token exceeded',
+    suspended: 'Suspended',
+    overdue: 'Overdue',
+  },
+  tenant_suspended_page: {
+    title: 'Tenant suspended. Contact us to restore access.',
+    description_1:
+      'We deeply regret to inform you that your tenant account has been temporarily suspended due to improper use, including exceeding MAU limits, overdue payments, or other unauthorized actions.',
+    description_2:
+      'If you require further clarification, have any concerns, or wish to restore full functionality and unblock your tenants, please do not hesitate to contact us immediately.',
+  },
+  production_tenant_notification: {
+    text: "You're in a dev tenant for free testing. Create a production tenant to go live.",
+    action: 'Create tenant',
+  },
+};
+
+export default Object.freeze(tenants);

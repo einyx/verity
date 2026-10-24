@@ -1,0 +1,394 @@
+/* eslint-disable max-lines -- The Kubo proxy keeps its routes in one file, next to the portal calls they forward. */
+import { array, boolean, number, object, string } from 'zod';
+
+import koaGuard from '#src/middleware/koa-guard.js';
+import { safeParseJson } from '#src/utils/json.js';
+
+import { kuboPortalUrl } from './kubo-portal-url.js';
+import type { ManagementApiRouter, ManagementApiRouterContext, RouterInitArgs } from './types.js';
+
+// Proxy to the Kubo operator portal running in the same cluster.
+// Mounted on the management API router, so Logto's admin auth applies.
+const maxResponseBytes = 5 * 1024 * 1024;
+
+// Kubernetes DNS label: lowercase letters, digits, and dashes, up to 63 characters.
+const kubeName = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
+
+const createStackBody = object({
+  template: string(),
+  tenant: string(),
+  mode: string().optional(),
+  authProvider: string().optional(),
+  exclude: array(string()).optional(),
+  operators: object({}).catchall(boolean()).optional(),
+  bootstrapM2M: boolean().optional(),
+});
+
+const upstreamError = (ctx: ManagementApiRouterContext, message: string) => {
+  ctx.status = 502;
+  ctx.body = { code: 'kubo.upstream_error', message };
+};
+
+type KshowsNode = { name: string; hourlyUSD?: number; instanceType?: string };
+
+const azurePriceResponse = object({
+  Items: array(
+    object({ retailPrice: number(), productName: string(), meterName: string() })
+  ).optional(),
+});
+
+// The capacity map needs the whole node (allocatable, pods, usage, disk). Keep unknown fields so the
+// pricing step only adds hourlyUSD and does not strip the rest of the snapshot.
+const kshowsSnapshot = object({
+  nodes: array(
+    object({
+      name: string(),
+      hourlyUSD: number().optional(),
+      instanceType: string().optional(),
+    }).passthrough()
+  ).optional(),
+}).passthrough();
+
+// Azure list prices per VM size, cached so the capacity poll does not hit the
+// retail API every time. Prices change rarely, so six hours is plenty.
+const azurePriceTtlMs = 6 * 60 * 60 * 1000;
+const azurePriceCache = new Map<string, { usd: number; at: number }>();
+
+const azureRegion = () => process.env.KUBO_COST_AZURE_REGION ?? 'uaenorth';
+
+/** Linux pay-as-you-go hourly price for a VM size, or undefined when Azure has no match. */
+const azureHourlyUsd = async (sku: string): Promise<number | undefined> => {
+  const cached = azurePriceCache.get(sku);
+  if (cached && Date.now() - cached.at < azurePriceTtlMs) {
+    return cached.usd;
+  }
+  const filter = `serviceName eq 'Virtual Machines' and armSkuName eq '${sku}' and armRegionName eq '${azureRegion()}' and priceType eq 'Consumption'`;
+  const url = new URL('https://prices.azure.com/api/retail/prices');
+  url.searchParams.set('$filter', filter);
+  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) {
+    return undefined;
+  }
+  const body = azurePriceResponse.parse(safeParseJson(await response.text()));
+  const item = (body.Items ?? []).find(
+    ({ productName, meterName }) =>
+      !productName.includes('Windows') &&
+      !meterName.includes('Spot') &&
+      !meterName.includes('Low Priority')
+  );
+  if (!item) {
+    return undefined;
+  }
+  azurePriceCache.set(sku, { usd: item.retailPrice, at: Date.now() });
+  return item.retailPrice;
+};
+
+/** Prices each node from its Azure VM size; nodes without a match keep the portal's rate. */
+const priceKshowsNodes = async (snapshot: { nodes?: KshowsNode[] }) => {
+  const nodes = await Promise.all(
+    (snapshot.nodes ?? []).map(async (node) => {
+      if (!node.instanceType) {
+        return node;
+      }
+      const usd = await azureHourlyUsd(node.instanceType).catch((): undefined => undefined);
+      return usd === undefined ? node : { ...node, hourlyUSD: usd };
+    })
+  );
+  return { ...snapshot, nodes };
+};
+
+// Approve or reject a demo request. Approval is what starts the tenant's provisioning, so these are the
+// operator's own actions; the request name is checked before it is passed on to the portal.
+const demoRequestAction =
+  (action: 'approve' | 'reject') =>
+  async (ctx: ManagementApiRouterContext, next: () => Promise<unknown>) => {
+    const name = typeof ctx.params.name === 'string' ? ctx.params.name : '';
+
+    if (!/^[\da-z-]{1,63}$/.test(name)) {
+      ctx.status = 400;
+      ctx.body = { message: 'Invalid demo request name.' };
+      return;
+    }
+
+    const response = await fetch(new URL(`/api/demorequests/${name}/${action}`, kuboPortalUrl()), {
+      method: 'POST',
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      upstreamError(ctx, `Kubo portal returned ${response.status}`);
+      return;
+    }
+
+    ctx.body = { ok: true };
+    return next();
+  };
+
+const forward = async (ctx: ManagementApiRouterContext, path: string) => {
+  const baseUrl = kuboPortalUrl();
+  const response = await fetch(new URL(path, baseUrl), {
+    headers: { accept: 'application/json' },
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!response.ok) {
+    upstreamError(ctx, `Kubo portal returned ${response.status}`);
+    return;
+  }
+
+  // Reject oversized responses early when the upstream declares a length.
+  // Chunked responses without content-length are still fully read before the check below.
+  const declaredLength = Number(response.headers.get('content-length'));
+  if (declaredLength > maxResponseBytes) {
+    upstreamError(ctx, 'Kubo portal response too large');
+    return;
+  }
+
+  const text = await response.text();
+  if (text.length > maxResponseBytes) {
+    upstreamError(ctx, 'Kubo portal response too large');
+    return;
+  }
+
+  ctx.body = JSON.parse(text);
+};
+
+export default function kuboRoutes<T extends ManagementApiRouter>(...[router]: RouterInitArgs<T>) {
+  router.get('/kubo/stacks', async (ctx, next) => {
+    await forward(ctx, '/api/stacks');
+    return next();
+  });
+
+  router.get('/kubo/cluster/economics', async (ctx, next) => {
+    await forward(ctx, '/api/cluster/economics');
+    return next();
+  });
+
+  router.post('/kubo/demorequests/:name/approve', demoRequestAction('approve'));
+  router.post('/kubo/demorequests/:name/reject', demoRequestAction('reject'));
+
+  router.get('/kubo/demorequests', async (ctx, next) => {
+    await forward(ctx, '/api/demorequests');
+    return next();
+  });
+
+  // Air-gapped bundle upload. The raw tar body is streamed to Kubo without buffering,
+  // because bundles can be several GB.
+  router.post('/kubo/airgap/bundle', async (ctx, next) => {
+    const name = typeof ctx.query.name === 'string' ? ctx.query.name : '';
+    if (!/^[\da-z][\da-z-]{0,62}$/.test(name)) {
+      ctx.status = 400;
+      ctx.body = { code: 'kubo.invalid_name', message: 'Name must be a lowercase label' };
+      return next();
+    }
+
+    const baseUrl = kuboPortalUrl();
+    const url = new URL('/api/airgap/bundle', baseUrl);
+    url.searchParams.set('name', name);
+
+    /* eslint-disable no-restricted-syntax -- Node request streams and duplex fetch are supported at runtime but missing from DOM types. */
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-tar' },
+      body: ctx.req as unknown as BodyInit,
+      duplex: 'half',
+      signal: AbortSignal.timeout(60 * 60 * 1000),
+    } as RequestInit);
+    /* eslint-enable no-restricted-syntax */
+
+    ctx.status = response.status;
+    ctx.body = { message: await response.text() };
+    return next();
+  });
+
+  router.get('/kubo/templates', async (ctx, next) => {
+    await forward(ctx, '/api/templates');
+    return next();
+  });
+
+  // Capacity map: node and pod usage snapshot (polled by the console).
+  router.get('/kubo/kshows', async (ctx, next) => {
+    await forward(ctx, '/api/kshows/snapshot');
+    const snapshot = kshowsSnapshot.safeParse(ctx.body);
+    if (snapshot.success) {
+      ctx.body = await priceKshowsNodes(snapshot.data);
+    }
+    return next();
+  });
+
+  // Stack detail with component-level status.
+  router.get('/kubo/stacks/:namespace/:name', async (ctx, next) => {
+    const namespace = ctx.params.namespace ?? '';
+    const name = ctx.params.name ?? '';
+    if (!kubeName.test(namespace) || !kubeName.test(name)) {
+      ctx.status = 400;
+      ctx.body = { code: 'kubo.invalid_name', message: 'Invalid stack name' };
+      return next();
+    }
+    await forward(ctx, `/api/stacks/${namespace}/${name}`);
+    return next();
+  });
+
+  router.delete('/kubo/stacks/:namespace/:name', async (ctx, next) => {
+    const namespace = ctx.params.namespace ?? '';
+    const name = ctx.params.name ?? '';
+    if (!kubeName.test(namespace) || !kubeName.test(name)) {
+      ctx.status = 400;
+      ctx.body = { code: 'kubo.invalid_name', message: 'Invalid stack name' };
+      return next();
+    }
+
+    const baseUrl = kuboPortalUrl();
+    const url = new URL(`/api/stacks/${namespace}/${name}`, baseUrl);
+    url.searchParams.set('confirm', namespace);
+    url.searchParams.set('purge', ctx.query.purge === 'true' ? 'true' : 'false');
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(30_000),
+    });
+    const text = await response.text();
+
+    if (!response.ok) {
+      upstreamError(ctx, text.slice(0, 500) || `Kubo portal returned ${response.status}`);
+      return next();
+    }
+
+    ctx.status = response.status;
+    ctx.body = safeParseJson(text);
+    return next();
+  });
+
+  // Partial update of a stack's spec: mode, bundle, exclusions, operators, feature flags,
+  // image tags, chart versions and component values. The portal applies it as a merge patch.
+  const patchFields = new Set([
+    'mode',
+    'bundle',
+    'exclude',
+    'operators',
+    'componentValues',
+    'featureFlags',
+    'imageTags',
+    'chartVersions',
+  ]);
+  router.patch(
+    '/kubo/stacks/:namespace/:name',
+    koaGuard({ body: object({}).passthrough(), status: [200, 400, 502] }),
+    async (ctx, next) => {
+      const namespace = ctx.params.namespace ?? '';
+      const name = ctx.params.name ?? '';
+      if (!kubeName.test(namespace) || !kubeName.test(name)) {
+        ctx.status = 400;
+        ctx.body = { code: 'kubo.invalid_name', message: 'Invalid stack name' };
+        return next();
+      }
+
+      const { body } = ctx.guard;
+      const unknown = Object.keys(body).filter((key) => !patchFields.has(key));
+      if (unknown.length > 0) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 'kubo.invalid_field',
+          message: `Unsupported fields: ${unknown.join(', ')}`,
+        };
+        return next();
+      }
+
+      const baseUrl = kuboPortalUrl();
+      const response = await fetch(new URL(`/api/stacks/${namespace}/${name}`, baseUrl), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        upstreamError(ctx, text.slice(0, 500) || `Kubo portal returned ${response.status}`);
+        return next();
+      }
+
+      ctx.body = safeParseJson(text);
+      return next();
+    }
+  );
+
+  // Trigger the stack's bootstrap job. Returns the created job name.
+  router.post('/kubo/stacks/:namespace/:name/bootstrap', async (ctx, next) => {
+    const namespace = ctx.params.namespace ?? '';
+    const name = ctx.params.name ?? '';
+    if (!kubeName.test(namespace) || !kubeName.test(name)) {
+      ctx.status = 400;
+      ctx.body = { code: 'kubo.invalid_name', message: 'Invalid stack name' };
+      return next();
+    }
+
+    const baseUrl = kuboPortalUrl();
+    const response = await fetch(new URL(`/api/stacks/${namespace}/${name}/bootstrap`, baseUrl), {
+      method: 'POST',
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok) {
+      upstreamError(ctx, `Kubo portal returned ${response.status}`);
+      return next();
+    }
+
+    ctx.body = safeParseJson(await response.text());
+    return next();
+  });
+
+  // Agent framework read-only views (aggregated across stack namespaces by the portal).
+  for (const view of ['products', 'stats', 'sessions', 'requests'] as const) {
+    router.get(`/kubo/agentfw/${view}`, async (ctx, next) => {
+      const query = new URLSearchParams(ctx.querystring);
+      await forward(ctx, `/agentfw/api/v1/${view}?${query.toString()}`);
+      return next();
+    });
+  }
+
+  // Rendered YAML for a template, shown to the user before anything is created.
+  // The upstream returns YAML text, so it is wrapped as JSON for the console.
+  router.get('/kubo/template', async (ctx, next) => {
+    const query = new URLSearchParams(ctx.querystring);
+    const baseUrl = kuboPortalUrl();
+    const response = await fetch(new URL(`/api/template?${query.toString()}`, baseUrl), {
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok) {
+      upstreamError(ctx, `Kubo portal returned ${response.status}`);
+      return next();
+    }
+
+    ctx.body = { yaml: await response.text() };
+    return next();
+  });
+
+  router.post(
+    '/kubo/stacks',
+    koaGuard({ body: createStackBody, status: [200, 201, 502] }),
+    async (ctx, next) => {
+      const baseUrl = kuboPortalUrl();
+      const response = await fetch(new URL('/api/stacks', baseUrl), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(ctx.guard.body),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        upstreamError(ctx, text.slice(0, 500) || `Kubo portal returned ${response.status}`);
+        return next();
+      }
+
+      ctx.status = response.status;
+      ctx.body = safeParseJson(text);
+      return next();
+    }
+  );
+}
+/* eslint-enable max-lines */

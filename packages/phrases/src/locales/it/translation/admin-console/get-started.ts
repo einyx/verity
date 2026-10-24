@@ -1,0 +1,106 @@
+const get_started = {
+  page_title: 'Inizia',
+  title: 'Esplora per avere successo',
+  subtitle: 'Alcune cose che puoi fare per ottenere rapidamente il valore di Logto',
+  greeting_morning: 'Buongiorno, {{name}}',
+  greeting_afternoon: 'Buon pomeriggio, {{name}}',
+  greeting_evening: 'Buonasera, {{name}}',
+  develop: {
+    title: 'Sviluppa: Dedica 5 minuti per integrare la tua app',
+    title_cloud: 'Sviluppa: Integra in modo sicuro la tua app in pochi minuti',
+    subtitle_cloud:
+      'Oppure impiega 5 minuti per integrare la tua app con i nostri SDK predefiniti e i tutorial.',
+    try_mcp: "Prova l'integrazione con un solo prompt con MCP",
+  },
+  customize: {
+    title: "Personalizza: Offri un'ottima esperienza di accesso",
+    preview: {
+      title:
+        "Controlla l'anteprima in tempo reale dell'esperienza di accesso appena personalizzata",
+      subtitle: "Prova subito l'esperienza di accesso a Logto per vedere come funziona",
+    },
+    connector: {
+      title: 'Aggiungi più connettori per supportare più metodi di accesso sociali',
+      subtitle:
+        "Prova l'accesso senza password e abilita un'esperienza sicura e senza attriti per i tuoi clienti",
+    },
+    continue_customizing: 'Continua la personalizzazione',
+    try_now: 'Prova ora',
+    add_more: 'Aggiungi altro',
+  },
+  secure: {
+    title: 'Sicurezza: Proteggi le tue risorse',
+  },
+  manage: {
+    title: 'Gestisci: Definisci il controllo di accesso per il tuo prodotto e gli utenti',
+    rbac: {
+      title: 'Aggiungi il controllo degli accessi basato sui ruoli per proteggere le tue risorse',
+      subtitle:
+        "Controlla le tue risorse attraverso l'autorizzazione basata sui ruoli scalabile per casi d'uso diversi.",
+    },
+    create_roles: 'Crea ruoli',
+  },
+  convert_to_production: {
+    card_title:
+      'Pronto per andare in diretta? Non dimenticare di avviare la configurazione di produzione!',
+    title: 'Non lasciare il tuo progetto bloccato in modalità sviluppo',
+    subtitle:
+      'Stai usando un tenant di sviluppo per il test gratuito. Per andare in diretta, crea o converti a un tenant di produzione. Hai bisogno di qualcosa di personalizzato? <a>Contattaci</a>',
+    convert_button: 'Converti a tenant di produzione',
+  },
+  oss_cloud: {
+    try: {
+      title: 'Evita il lavoro operativo e prova Logto Cloud gratis',
+      badge: 'Consigliato',
+      description:
+        'Ottieni un Logto completamente gestito senza manutenzione, oltre a integrazione rapida con MCP, supporto multi-tenant, collaborazione del team e tutte le funzionalità premium incluse. Inizia gratis, senza carta di credito.',
+      action: 'Esplora Logto Cloud',
+    },
+    private_cloud: {
+      title: 'Hai bisogno di compliance o di un deployment personalizzato?',
+      card_title: 'Cloud privato',
+      description:
+        'Ottieni un’istanza dedicata di Logto con isolamento completo dei dati, dominio personalizzato e garanzie SLA. Perfetto per le aziende con rigidi requisiti di residenza dei dati o compliance. Gestiamo noi l’infrastruttura così puoi concentrarti sul tuo prodotto.',
+    },
+    sidebar: {
+      title: 'Concentrati sullo sviluppo, non sull’hosting.',
+      description: 'Lascia che Logto Cloud gestisca per te l’infrastruttura di autenticazione.',
+      action: 'Prova Logto Cloud',
+    },
+  },
+  header: {
+    docs: 'Documentazione',
+    create_app: 'Crea applicazione',
+  },
+  resources: {
+    title: 'Risorse',
+    open_docs: 'Apri documentazione',
+    integrate: {
+      title: 'Integra la tua app',
+      description: 'Aggiungi l’accesso alla tua app con guide per i framework più diffusi.',
+    },
+    sign_in: {
+      title: 'Personalizza l’accesso',
+      description: 'Adatta l’esperienza di accesso al tuo prodotto.',
+    },
+    rbac: {
+      title: 'Gestisci ruoli e permessi',
+      description: 'Controlla a cosa può accedere ogni utente e applicazione.',
+    },
+    api: {
+      title: 'Usa l’API di gestione',
+      description: 'Automatizza la configurazione e gestisci le risorse via codice.',
+    },
+  },
+  models: {
+    title: 'Avvio rapido',
+    create: 'Crea',
+  },
+  footer: {
+    help: 'Aiuto e supporto',
+    feedback: 'Feedback',
+  },
+  view_all: 'Visualizza tutto →',
+};
+
+export default Object.freeze(get_started);

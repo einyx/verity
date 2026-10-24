@@ -1,0 +1,886 @@
+/* Demo chat on the landing page. Colors inherit from the enclosing section so the chat follows the page theme. */
+.demo-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 42rem;
+  color: inherit;
+}
+
+.demo-chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 12px;
+}
+
+.demo-chat-message {
+  max-width: 80%;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.demo-chat-message[data-role='user'] {
+  align-self: flex-end;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.demo-chat-form {
+  display: flex;
+  gap: 8px;
+}
+
+.demo-chat-input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.demo-chat-input:disabled,
+.demo-chat-send:disabled {
+  opacity: 0.5;
+}
+
+.demo-chat-send {
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--chat-text);
+  color: var(--chat-surface);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.demo-chat-status {
+  min-height: 1.25em;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.demo-chat-input:focus-visible,
+.demo-chat-send:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-message {
+    animation: demo-chat-in 180ms ease-out;
+  }
+}
+
+@keyframes demo-chat-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Modal shell. The dialog uses the page's canvas colors so it reads on both light and dark themes. */
+.demo-chat-dialog {
+  width: min(42rem, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 24px;
+  border: 0;
+  border-radius: 16px;
+  margin: auto;
+  background: var(--chat-surface);
+  color: var(--chat-text);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.3);
+}
+
+.demo-chat-dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.demo-chat-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.demo-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.demo-chat-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+
+.demo-chat-lede {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.demo-chat-close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demo-chat-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.demo-chat-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.demo-chat-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  font-size: 0.9rem;
+}
+
+.demo-chat-steps li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.demo-chat-steps span {
+  opacity: 0.75;
+}
+
+/* assistant-ui thread: the viewport is the scrolling message log, the composer sits under it. */
+.demo-chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.demo-chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Pending reply: three dots that pulse in turn. Motion is dropped for reduced-motion users. */
+.demo-chat-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.demo-chat-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-typing span {
+    animation: demo-chat-dot 1.2s ease-in-out infinite;
+  }
+
+  .demo-chat-typing span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .demo-chat-typing span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes demo-chat-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}
+
+.demo-chat-error {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* The intro copy and steps take room the chat needs, so the dialog shows just the title and the conversation. */
+.demo-chat-lede,
+.demo-chat-steps {
+  display: none;
+}
+
+/* Small screens: the steps repeat the page's own copy, so they make room for the chat. */
+@media (max-width: 560px) {
+  .demo-chat-dialog {
+    padding: 20px;
+  }
+
+  .demo-chat-steps {
+    display: none;
+  }
+
+  .demo-chat-log {
+    min-height: 160px;
+    max-height: 50vh;
+  }
+}
+
+.demo-chat-jump {
+  align-self: center;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 999px;
+  background: var(--chat-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Bubbles size to their text and never stretch across the thread. */
+.demo-chat-message {
+  width: fit-content;
+  max-width: 80%;
+}
+
+.demo-chat-message:empty {
+  display: none;
+}
+
+/* Only the typing indicator's own dots take the dot styling; message spans keep their text styling. */
+.demo-chat-typing > span {
+  width: 6px;
+  height: 6px;
+}
+
+/* Quick replies under the greeting: one tap sends a common answer. */
+.demo-chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.demo-chat-chip {
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 999px;
+  background: var(--chat-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.demo-chat-chip:hover {
+  border-color: currentColor;
+}
+
+/* The options fade in with the reply that offers them, instead of appearing all at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-options {
+    animation: demo-chat-in 180ms ease-out;
+  }
+}
+
+.demo-chat-chip:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Composer: a single-line field that grows with the text and lines up with the Send button. */
+.demo-chat-form {
+  align-items: stretch;
+}
+
+.demo-chat-input {
+  resize: none;
+  height: auto;
+  min-height: 40px;
+  padding: 9px 12px;
+  line-height: 1.4;
+}
+
+.demo-chat-send {
+  min-height: 40px;
+}
+
+.demo-chat-send:disabled {
+  cursor: not-allowed;
+}
+
+/* Reference: a calm, warm surface with one large composer card, a toolbar under the text, and
+   suggestions as plain list rows. Light values are set explicitly; dark mode follows the system. */
+.demo-chat-dialog {
+  background: #fcfbf9;
+  border-radius: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .demo-chat-dialog {
+    background: #1f1e1c;
+  }
+}
+
+.demo-chat-form {
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 10px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 18px;
+  background: var(--chat-surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05);
+}
+
+.demo-chat-form .demo-chat-input {
+  border: 0;
+  padding: 4px 0;
+  border-radius: 0;
+  font-size: 1rem;
+  background: transparent;
+}
+
+.demo-chat-form .demo-chat-input:focus-visible {
+  outline: none;
+}
+
+.demo-chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.demo-chat-hint {
+  font-size: 0.75rem;
+  opacity: 0.55;
+}
+
+.demo-chat-form .demo-chat-send {
+  height: 34px;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+}
+
+.demo-chat-chips-label {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.demo-chat-chips {
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.demo-chat-chip {
+  display: block;
+  width: 100%;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.demo-chat-chip:hover {
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* Layout as in the reference: the conversation has no box of its own, the composer card sits in the
+   flow, and the ideas list follows it while the conversation is empty. */
+.demo-chat-log {
+  border: 0;
+  padding: 0;
+  max-height: 46vh;
+}
+
+.demo-chat-form {
+  min-height: 112px;
+}
+
+.demo-chat-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* The composer card uses explicit surfaces so it matches the modal in light and dark mode. */
+.demo-chat-form {
+  background: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .demo-chat-form {
+    background: #2a2926;
+    border-color: rgb(255 255 255 / 0.12);
+  }
+
+  .demo-chat-form .demo-chat-send {
+    background: #f4f2ee;
+    color: #1f1e1c;
+  }
+}
+
+/* Theme tokens: set explicitly so the modal reads the same whatever colour scheme the page uses. */
+.demo-chat-dialog {
+  --chat-surface: #fcfbf9;
+  --chat-text: #1f1e1c;
+  color: var(--chat-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  .demo-chat-dialog {
+    --chat-surface: #1f1e1c;
+    --chat-text: #f4f2ee;
+  }
+}
+
+/* ---- Refined layout, after the reference: one warm light surface in every system theme, a centred
+   serif welcome, the composer card, then idea rows. Later rules override the earlier drafts. ---- */
+.demo-chat-dialog,
+:root .demo-chat-dialog {
+  --chat-surface: #faf9f6;
+  --chat-text: #1f1e1c;
+  --chat-muted: #6f6c66;
+  --chat-line: #e7e4de;
+  --chat-accent: #c4291c;
+  width: min(46rem, calc(100vw - 32px));
+  padding: 40px 48px 32px;
+  background: var(--chat-surface);
+  color: var(--chat-text);
+  color-scheme: light;
+  border-radius: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .demo-chat-dialog {
+    --chat-surface: #faf9f6;
+    --chat-text: #1f1e1c;
+    background: #faf9f6;
+  }
+
+  .demo-chat-form {
+    background: #ffffff;
+    border-color: var(--chat-line);
+  }
+
+  .demo-chat-form .demo-chat-send {
+    background: var(--chat-text);
+    color: #ffffff;
+  }
+}
+
+/* The page title stays for screen readers; the welcome heading is the visible title. */
+.demo-chat-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.demo-chat-lede,
+.demo-chat-steps {
+  display: none;
+}
+
+.demo-chat-header {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.demo-chat-close {
+  border: 0;
+  border-radius: 999px;
+  color: var(--chat-muted);
+}
+
+.demo-chat-close:hover {
+  background: rgb(0 0 0 / 0.05);
+  color: var(--chat-text);
+}
+
+.demo-chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 20px;
+  text-align: center;
+}
+
+.demo-chat-welcome-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: ui-serif, Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.demo-chat-mark {
+  color: var(--chat-accent);
+  font-size: 0.9em;
+}
+
+.demo-chat-welcome-text {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--chat-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.demo-chat-log {
+  max-height: 44vh;
+}
+
+.demo-chat-form {
+  min-height: 0;
+  padding: 18px 20px 12px;
+  border-color: var(--chat-line);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 30px rgb(0 0 0 / 0.06);
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.demo-chat-form:focus-within {
+  border-color: #cfcac1;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 36px rgb(0 0 0 / 0.08);
+}
+
+.demo-chat-form .demo-chat-input {
+  min-height: 52px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.demo-chat-form .demo-chat-input::placeholder {
+  color: #9b978f;
+}
+
+.demo-chat-hint {
+  color: var(--chat-muted);
+  opacity: 1;
+}
+
+.demo-chat-form .demo-chat-send {
+  background: var(--chat-text);
+  color: #ffffff;
+}
+
+.demo-chat-form .demo-chat-send:disabled {
+  background: #d9d5ce;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.demo-chat-ideas {
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.demo-chat-chips-label {
+  margin: 0 0 2px 12px;
+  color: var(--chat-muted);
+  font-size: 0.85rem;
+  opacity: 1;
+}
+
+.demo-chat-chips {
+  gap: 2px;
+  border: 0;
+}
+
+.demo-chat-chip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: background 120ms ease;
+}
+
+.demo-chat-chip:hover,
+.demo-chat-chip:focus-visible {
+  background: #efede8;
+}
+
+.demo-chat-idea-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--chat-line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #55524c;
+}
+
+.demo-chat-idea-label {
+  flex: 1;
+}
+
+.demo-chat-idea-tag {
+  color: var(--chat-muted);
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.demo-chat-chip:hover .demo-chat-idea-tag,
+.demo-chat-chip:focus-visible .demo-chat-idea-tag {
+  opacity: 1;
+}
+
+/* Conversation bubbles in the refined palette. */
+.demo-chat-message[data-role='assistant'] {
+  background: transparent;
+  padding-left: 0;
+}
+
+.demo-chat-message[data-role='user'] {
+  background: #efede8;
+}
+
+@media (max-width: 560px) {
+  .demo-chat-dialog {
+    padding: 32px 20px 20px;
+  }
+}
+
+/* The log only takes space once there are messages, so the welcome sits right above the composer. */
+.demo-chat-log {
+  min-height: 0;
+}
+
+/* Open motion: the panel rises and fades in. Dropped entirely for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-dialog[open] {
+    animation: demo-chat-open 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .demo-chat-dialog[open]::backdrop {
+    animation: demo-chat-fade 220ms ease-out;
+  }
+}
+
+@keyframes demo-chat-open {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+@keyframes demo-chat-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The meshX mark beside the welcome heading, sized to the heading's cap height. */
+.demo-chat-mark {
+  width: 0.62em;
+  height: 0.62em;
+  flex: none;
+  color: var(--chat-accent);
+}
+
+/* In the column composer the textarea must take the card's width; otherwise it sizes to its own
+   column count and the text and placeholder run past the right edge. */
+.demo-chat-form .demo-chat-input {
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* One fixed window: the modal keeps its size from the welcome screen through the whole conversation.
+   The conversation scrolls inside it and the composer stays where it is. */
+.demo-chat-dialog[open] {
+  height: min(680px, calc(100vh - 32px));
+}
+
+.demo-chat-dialog > .demo-chat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-width: none;
+  min-height: 0;
+}
+
+.demo-chat-thread {
+  flex: 1;
+}
+
+.demo-chat-log {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Before the first message the welcome sits just above the composer, as in the reference. */
+.demo-chat-log:has(.demo-chat-welcome) {
+  justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+  .demo-chat-dialog[open] {
+    height: calc(100vh - 32px);
+  }
+
+  .demo-chat-log {
+    max-height: none;
+  }
+}
+
+/* Markdown in assistant replies: calm spacing, a bold ask, compact lists. */
+.demo-chat-md > :first-child {
+  margin-top: 0;
+}
+
+.demo-chat-md > :last-child {
+  margin-bottom: 0;
+}
+
+.demo-chat-md p {
+  margin: 0 0 10px;
+}
+
+.demo-chat-md strong {
+  font-weight: 600;
+}
+
+.demo-chat-md ul,
+.demo-chat-md ol {
+  margin: 4px 0 10px;
+  padding-left: 1.2em;
+}
+
+.demo-chat-md li {
+  margin: 2px 0;
+}
+
+.demo-chat-md a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Markdown replies keep their own line breaks; the bubble's pre-wrap would double them. */
+.demo-chat-message[data-role='assistant'] {
+  white-space: normal;
+}
+
+/* Thinking status: a pulsing dot and a line that cycles through what the assistant is doing. */
+.demo-chat-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--chat-muted, #6f6c66);
+  font-size: 0.9rem;
+}
+
+.demo-chat-thinking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.demo-chat-thinking-text {
+  animation: demo-chat-fade-in 300ms ease-out;
+}
+
+@keyframes demo-chat-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-chat-thinking-dot,
+  .demo-chat-thinking-text {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo-chat-thinking-dot {
+    animation: demo-chat-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes demo-chat-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

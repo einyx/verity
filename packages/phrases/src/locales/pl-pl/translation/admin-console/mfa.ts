@@ -1,0 +1,99 @@
+const mfa = {
+  title: 'Wielopoziomowe uwierzytelnianie',
+  description:
+    'Dodaj wielopoziomowe uwierzytelnianie, aby zwiększyć bezpieczeństwo swojego doświadczenia z logowaniem.',
+  factors: 'Czynniki',
+  multi_factors: 'Wieloczynniki',
+  multi_factors_description:
+    'Użytkownicy muszą zweryfikować jeden z włączonych czynników podczas dwustopniowej weryfikacji.',
+  totp: 'Aplikacja autentykacyjna',
+  otp_description: 'Połącz Google Authenticator itp., aby zweryfikować jednorazowe hasła.',
+  webauthn: 'Passkeys',
+  webauthn_description:
+    'Zweryfikuj za pomocą metody obsługiwanej przez przeglądarkę: biometria, skanowanie telefonem lub klucz zabezpieczeń, itp.',
+  webauthn_domain_tip:
+    'WebAuthn łączy klucze publiczne z konkretną domeną. Modyfikacja domeny usługi zablokuje użytkowników przed uwierzytelnianiem za pomocą istniejących kluczy przechodnich.',
+  backup_code: 'Kody zapasowe',
+  backup_code_description:
+    'Generuj 10 jednorazowych kodów zapasowych po skonfigurowaniu dowolnej metody MFA przez użytkowników.',
+  backup_code_setup_hint:
+    'Gdy użytkownicy nie mogą zweryfikować powyższych czynników MFA, skorzystaj z opcji kopii zapasowej.',
+  backup_code_error_hint:
+    'Aby użyć kodu zapasowego, potrzebujesz co najmniej jednej kolejnej metody MFA do pomyślnego uwierzytelniania użytkownika.',
+  email_verification_code: 'Kod weryfikacyjny e-mail',
+  email_verification_code_description:
+    'Połącz adres e-mail, aby otrzymywać i weryfikować kody weryfikacyjne.',
+  phone_verification_code: 'Kod weryfikacyjny SMS',
+  phone_verification_code_description:
+    'Połącz numer telefonu, aby otrzymywać i weryfikować kody weryfikacyjne SMS.',
+  policy: 'Polityka',
+  policy_description: 'Ustaw politykę MFA dla procesów logowania i rejestracji.',
+  two_step_sign_in_policy: 'Polityka weryfikacji dwuetapowej podczas logowania',
+  user_controlled: 'Użytkownicy mogą samodzielnie włączać lub wyłączać MFA',
+  user_controlled_tip:
+    'Użytkownicy mogą pominąć konfigurację MFA podczas pierwszego logowania lub rejestracji lub włączyć/wyłączyć ją w ustawieniach konta.',
+  mandatory: 'Użytkownicy zawsze muszą korzystać z MFA podczas logowania',
+  mandatory_tip:
+    'Użytkownicy muszą skonfigurować MFA podczas pierwszego logowania lub rejestracji i używać go przy każdym kolejnym logowaniu.',
+  require_mfa: 'Wymagaj MFA',
+  require_mfa_label:
+    'Włącz to, aby weryfikacja dwuetapowa była obowiązkowa do uzyskania dostępu do aplikacji. Jeśli jest wyłączona, użytkownicy mogą zdecydować, czy włączyć MFA dla siebie.',
+  require_mfa_optional:
+    'Opcjonalne MFA: pozwól użytkownikom zdecydować o włączeniu MFA dla bezpieczeństwa własnego konta',
+  require_mfa_adaptive:
+    'Adaptacyjne MFA: wymagaj MFA tylko wtedy, gdy logowanie wydaje się ryzykowne (np. nowy kraj / długi okres nieaktywności)',
+  require_mfa_mandatory:
+    'Obowiązkowe MFA: wymaga od wszystkich użytkowników ukończenia MFA przy każdym logowaniu',
+  set_up_prompt: 'Monit o skonfigurowanie MFA',
+  no_prompt: 'Nie pytaj użytkowników o skonfigurowanie MFA',
+  prompt_at_sign_in_and_sign_up:
+    'Zapytaj użytkowników o skonfigurowanie MFA podczas rejestracji (można pominąć, jednorazowy monit)',
+  prompt_only_at_sign_in:
+    'Zapytaj użytkowników o skonfigurowanie MFA przy następnym logowaniu po rejestracji (można pominąć, jednorazowy monit)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Poproś użytkowników o skonfigurowanie MFA podczas rejestracji. (nie można pominąć)',
+  prompt_only_at_sign_in_mandatory:
+    'Poproś użytkowników o skonfigurowanie MFA przy następnym logowaniu po rejestracji. (nie można pominąć)',
+  set_up_organization_required_mfa_prompt:
+    'Monit o konfigurację MFA dla organizacji wymagającej MFA',
+  prompt_at_sign_in_non_skippable:
+    'Wymagaj od użytkowników skonfigurowania MFA przy następnym logowaniu (nie można pominąć)',
+  email_primary_method_tip:
+    'Kod weryfikacyjny e-mail jest już twoją główną metodą logowania. Aby utrzymać bezpieczeństwo, nie można go ponownie używać do MFA.',
+  phone_primary_method_tip:
+    'Kod weryfikacyjny SMS jest już twoją główną metodą logowania. Aby utrzymać bezpieczeństwo, nie można go ponownie używać do MFA.',
+  no_email_connector_warning:
+    'Łącznik e-mail nie został jeszcze skonfigurowany. Przed zakończeniem konfiguracji użytkownicy nie będą mogli używać kodów weryfikacyjnych e-mail do MFA. <a>{{link}}</a> w "Łączniki".',
+  no_sms_connector_warning:
+    'Łącznik SMS nie został jeszcze skonfigurowany. Przed zakończeniem konfiguracji użytkownicy nie będą mogli używać kodów weryfikacyjnych SMS do MFA. <a>{{link}}</a> w "Łączniki".',
+  no_email_connector_error:
+    'Nie można włączyć MFA z kodem weryfikacyjnym e-mail bez łącznika e-mail. Proszę najpierw skonfigurować łącznik e-mail.',
+  no_sms_connector_error:
+    'Nie można włączyć MFA z kodem weryfikacyjnym SMS bez łącznika SMS. Proszę najpierw skonfigurować łącznik SMS.',
+  setup_link: 'Skonfiguruj',
+  trusted_device: {
+    title: 'Zaufane urządzenia',
+    description:
+      'Pozwól zaufanym przeglądarkom automatycznie ukończyć weryfikację MFA, gdy wymaga jej bieżący proces MFA.',
+    enable_title: 'Włącz zaufane urządzenia',
+    enable_description: 'Pozwól zaufać tej przeglądarce po ukończeniu odpowiedniego czynnika MFA.',
+    duration_title: 'Okres zaufania (dni)',
+    duration_error: 'Wprowadź liczbę całkowitą od {{min}} do {{max}}.',
+    duration_note: 'Zmiany okresu dotyczą tylko urządzeń uznanych za zaufane później.',
+    organization_allow_title: 'Zezwól na zaufane urządzenia',
+    organization_allow_tip:
+      'Organizacja może tylko ograniczyć zasadę tenanta i nie może jej włączyć, gdy jest globalnie wyłączona.',
+    organization_allow_description:
+      'Zezwól członkom tej organizacji na weryfikację za pomocą zaufanych urządzeń.',
+    organization_global_disabled: 'Najpierw włącz zaufane urządzenia w ustawieniach MFA tenanta.',
+    management_description:
+      'Zarządzaj przeglądarkami, którym ten użytkownik zaufał po ukończeniu MFA. Po usunięciu przeglądarka ponownie zażąda MFA przy następnym logowaniu.',
+    management_hint: 'Ostatnia lokalizacja ma charakter wyłącznie informacyjny.',
+    management_empty: 'Ten użytkownik nie ma aktywnych zaufanych urządzeń.',
+    management_deletion_confirmation:
+      'Usunąć {{name}}? Ta przeglądarka ponownie zażąda MFA przy następnym logowaniu.',
+    management_removed: 'Zaufane urządzenie zostało usunięte.',
+  },
+};
+
+export default Object.freeze(mfa);

@@ -1,0 +1,3 @@
+# Use upstream detectors without repository-specific allowlists or baselines.
+[extend]
+useDefault = true

@@ -1,0 +1,53 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: `{{types, list(type: disjunction;)}} is required`,
+  general_invalid: `The {{types, list(type: disjunction;)}} is invalid`,
+  invalid_min_max_input: 'The input value should be between {{minValue}} and {{maxValue}}',
+  invalid_min_max_length:
+    'The length of the input value should be between {{minLength}} and {{maxLength}}',
+  username_required: 'Username is required',
+  password_required: 'Password is required',
+  username_exists: 'Username already exists',
+  username_should_not_start_with_number: 'Username should not start with a number',
+  username_invalid_charset: 'Username should only contain letters, numbers, or underscores.',
+  username_too_short: 'Username must be at least {{min}} characters long.',
+  username_too_long: 'Username must be at most {{max}} characters long.',
+  username_uppercase_not_allowed: 'Uppercase letters are not allowed in usernames.',
+  username_lowercase_not_allowed: 'Lowercase letters are not allowed in usernames.',
+  username_numbers_not_allowed: 'Numbers are not allowed in usernames.',
+  username_underscore_not_allowed: 'Underscores are not allowed in usernames.',
+  invalid_email: 'The email is invalid',
+  invalid_phone: 'The phone number is invalid',
+  passwords_do_not_match: 'Your passwords don’t match.',
+  invalid_passcode: 'The verification code is invalid.',
+  device_code_required: 'Code is required.',
+  invalid_device_code: 'The device code is invalid.',
+  device_flow_aborted: 'The sign-in request was interrupted.',
+  invalid_connector_auth: 'The authorization is invalid',
+  invalid_connector_request: 'The connector data is invalid',
+  unknown: 'Unknown error.',
+  invalid_session: 'Session not found. Please go back and sign in again.',
+  timeout: 'Request timeout.',
+  password_rejected,
+  sso_not_enabled: 'Single Sign-On is not enabled for this email account.',
+  invalid_link: 'Invalid link',
+  invalid_link_description: 'Your one-time token may have expired or is no longer valid.',
+  captcha_verification_failed: 'Failed to perform captcha verification.',
+  send_verification_code_failed: 'Failed to send the verification code. Please try again later.',
+  send_verification_code_failed_use_password:
+    'Failed to send the verification code. Please sign in with your password instead.',
+  terms_acceptance_required: 'Terms acceptance required',
+  terms_acceptance_required_description: 'You must agree to the terms to continue.',
+  something_went_wrong: 'Something went wrong',
+  account_suspended: 'Account suspended',
+  account_suspended_description:
+    'This account has been suspended. Please contact the administrator for assistance.',
+  access_denied: 'Access denied',
+  application_access_denied:
+    'You do not have permission to access this application.\nPlease contact your administrator for assistance.',
+  feature_not_enabled:
+    'You do not have permission to access this feature. Please contact your administrator for assistance.',
+};
+
+export default Object.freeze(error);

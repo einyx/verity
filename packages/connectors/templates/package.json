@@ -1,0 +1,44 @@
+{
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "exports": "./lib/index.js",
+  "license": "MPL-2.0",
+  "type": "module",
+  "files": [
+    "lib",
+    "docs",
+    "logo.svg",
+    "logo-dark.svg"
+  ],
+  "scripts": {
+    "precommit": "lint-staged",
+    "check": "tsc --noEmit",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint --ext .ts src",
+    "lint:report": "pnpm lint --format json --output-file report.json",
+    "test": "vitest run src",
+    "test:watch": "vitest src --watch",
+    "test:ci": "pnpm run test --silent --coverage",
+    "prepublishOnly": "pnpm build"
+  },
+  "engines": {
+    "node": "^22.14.0 || ^26.0.0"
+  },
+  "eslintConfig": {
+    "extends": "@silverhand",
+    "settings": {
+      "import/core-modules": [
+        "@silverhand/essentials",
+        "got",
+        "nock",
+        "snakecase-keys",
+        "zod"
+      ]
+    }
+  },
+  "prettier": "@silverhand/eslint-config/.prettierrc",
+  "publishConfig": {
+    "access": "public"
+  }
+}

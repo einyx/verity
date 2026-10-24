@@ -1,0 +1,108 @@
+import {
+  SessionGrantRevokeTarget,
+  getUserSessionResponseGuard,
+  getUserSessionsResponseGuard,
+} from '@logto/schemas';
+import { assert } from '@silverhand/essentials';
+import { nativeEnum, object, string } from 'zod';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import koaGuard from '#src/middleware/koa-guard.js';
+
+import { type ManagementApiRouter, type RouterInitArgs } from '../types.js';
+
+export default function adminUserSessionRoutes<T extends ManagementApiRouter>(
+  ...[router, tenant]: RouterInitArgs<T>
+) {
+  const {
+    provider,
+    libraries: { session: sessionLibrary },
+  } = tenant;
+
+  router.get(
+    '/users/:userId/sessions',
+    koaGuard({
+      params: object({ userId: string() }),
+      response: getUserSessionsResponseGuard,
+      status: [200, 500],
+    }),
+    async (ctx, next) => {
+      const {
+        params: { userId },
+      } = ctx.guard;
+
+      const sessions = await sessionLibrary.findUserActiveSessionsWithExtensions(userId);
+
+      ctx.body = {
+        sessions,
+      };
+
+      return next();
+    }
+  );
+
+  router.get(
+    '/users/:userId/sessions/:sessionId',
+    koaGuard({
+      params: object({ userId: string(), sessionId: string() }),
+      response: getUserSessionResponseGuard,
+      status: [200, 404, 500],
+    }),
+    async (ctx, next) => {
+      const { userId, sessionId } = ctx.guard.params;
+
+      const extendedSession = await sessionLibrary.findUserActiveSessionWithExtension(
+        userId,
+        sessionId
+      );
+
+      assert(extendedSession, new RequestError({ code: 'oidc.session_not_found', status: 404 }));
+
+      ctx.body = extendedSession;
+
+      return next();
+    }
+  );
+
+  router.delete(
+    '/users/:userId/sessions/:sessionId',
+    koaGuard({
+      query: object({
+        revokeGrantsTarget: nativeEnum(SessionGrantRevokeTarget).optional(),
+      }),
+      params: object({
+        userId: string(),
+        sessionId: string(),
+      }),
+      status: [204, 404, 500],
+    }),
+    async (ctx, next) => {
+      const { sessionId, userId } = ctx.guard.params;
+
+      const session = await provider.Session.findByUid(sessionId);
+
+      assert(session, new RequestError({ code: 'oidc.session_not_found', status: 404 }));
+
+      assert(
+        session.accountId === userId,
+        new RequestError({ code: 'oidc.invalid_session_account_id', status: 404 })
+      );
+
+      const { revokeGrantsTarget } = ctx.guard.query;
+
+      if (revokeGrantsTarget) {
+        await sessionLibrary.revokeSessionAssociatedGrants({
+          provider,
+          authorizations: session.authorizations ?? {},
+          target: revokeGrantsTarget,
+        });
+      }
+
+      await session.destroy();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+}

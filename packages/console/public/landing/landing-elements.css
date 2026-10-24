@@ -1,0 +1,75 @@
+/* Editor styles for the landing page preview. Loaded as a file because the page's content security
+   policy allows same-origin stylesheets but not inline style blocks. */
+
+/* The site draws its own focus ring with `outline`, and Tailwind's element utilities out-specify a
+   plain attribute selector. The marker therefore repeats the attribute to win the specificity, and
+   uses `box-shadow` as well, which the focus ring does not set. */
+html body a[data-cms-selected][data-cms-selected][data-cms-selected],
+html body button[data-cms-selected][data-cms-selected][data-cms-selected],
+html body [data-cms-selected][data-cms-selected][data-cms-selected] {
+  outline: 2px solid #d92d20 !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px #d92d20 !important;
+}
+
+.cms-context-menu {
+  position: fixed;
+  z-index: 2147483646;
+  display: grid;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  background: #fff;
+  color: #292524;
+  box-shadow: 0 8px 24px #0002;
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+.cms-context-menu button {
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cms-context-menu button:hover,
+.cms-context-menu button:focus-visible {
+  outline: none;
+  background: #f5f5f4;
+}
+
+.cms-context-menu button:focus-visible {
+  outline: 2px solid #d92d20;
+}
+
+.cms-context-menu button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cms-element-actions {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 2147483002;
+  padding: 8px 12px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  background: #fff;
+  color: #292524;
+  font: 14px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.cms-element-actions:focus-visible {
+  outline: 2px solid #d92d20;
+  outline-offset: 2px;
+}

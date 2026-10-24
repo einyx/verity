@@ -1,0 +1,411 @@
+{
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Endpoints for user management. Including creating, updating, deleting, and querying users with flexible filters. In addition to the endpoints, see [🧑‍🚀 Manage users](https://docs.meshx.io/docs/recipes/manage-users/) for more insights."
+    }
+  ],
+  "paths": {
+    "/api/users/{userId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "includeSsoIdentities",
+            "description": "If it's provided with a truthy value (`true`, `1`, `yes`), each user in the response will include a `ssoIdentities` property containing a list of SSO identities associated with the user."
+          },
+          {
+            "in": "query",
+            "name": "includePasswordHash",
+            "description": "If it's provided with a truthy value (`true`, `1`, `yes`), the response will include the `passwordDigest` and `passwordAlgorithm` fields. These fields are omitted by default for security reasons, and always omitted when the request carries the `logto-read-only-access: true` header."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User data for the given ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "ssoIdentities": {
+                      "description": "List of SSO identities associated with the user. Only available when the `includeSsoIdentities` query parameter is provided with a truthy value."
+                    },
+                    "passwordDigest": {
+                      "description": "The hashed password of the user. Only present when `includePasswordHash` is provided with a truthy value. `null` if the user has no password set."
+                    },
+                    "passwordAlgorithm": {
+                      "description": "The algorithm used to hash the password. Only present when `includePasswordHash` is provided with a truthy value. `null` if the user has no password set."
+                    },
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get user",
+        "description": "Get user data for the given ID."
+      },
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "primaryPhone": {
+                    "description": "Updated primary phone number for the user. It should be unique across all users."
+                  },
+                  "primaryEmail": {
+                    "description": "Updated primary email address for the user. It should be unique across all users."
+                  },
+                  "username": {
+                    "description": "Updated username for the user. It should be unique across all users."
+                  },
+                  "customData": {
+                    "description": "Custom data object to update for the given user ID. Note this will replace the entire custom data object.\n\nIf you want to perform a partial update, use the `PATCH /api/users/{userId}/custom-data` endpoint instead."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user data for the given ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update user",
+        "description": "Update user data for the given ID. This method performs a partial update."
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "User deleted successfully."
+          }
+        },
+        "summary": "Delete user",
+        "description": "Delete user with the given ID. Note all associated data will be deleted cascadingly."
+      }
+    },
+    "/api/users/{userId}/custom-data": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Custom data in JSON for the given user ID."
+          }
+        },
+        "summary": "Get user custom data",
+        "description": "Get custom data for the given user ID."
+      },
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "customData": {
+                    "description": "Partial custom data object to update for the given user ID."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated custom data in JSON for the given user ID."
+          }
+        },
+        "summary": "Update user custom data",
+        "description": "Update custom data for the given user ID. This method performs a partial update of the custom data object."
+      }
+    },
+    "/api/users/{userId}/logto-configs": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Returns the exposed user logto config fields, including MFA states (enabled, skipped, skipMfaOnSignIn) and passkey sign-in states (skipped)."
+          }
+        },
+        "summary": "Get user logto config",
+        "description": "Retrieve the exposed portion of a user's logto config. Includes MFA states (enabled, skipped, skipMfaOnSignIn) and passkey sign-in states (skipped)."
+      },
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "mfa": {
+                    "properties": {
+                      "enabled": {
+                        "description": "Set whether MFA is enabled for the user."
+                      },
+                      "skipped": {
+                        "description": "Set whether the user is marked as having skipped MFA binding."
+                      },
+                      "skipMfaOnSignIn": {
+                        "description": "Set whether the user has opted to skip MFA verification on sign-in. This is ignored when the MFA policy is mandatory."
+                      }
+                    }
+                  },
+                  "passkeySignIn": {
+                    "properties": {
+                      "skipped": {
+                        "description": "Set whether the user has persistently skipped binding a passkey for sign-in."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The exposed logto config fields were updated successfully."
+          }
+        },
+        "summary": "Update user logto config",
+        "description": "Update the exposed portion of a user's logto config. Supports updating MFA states (enabled, skipped, skipMfaOnSignIn) and passkey sign-in states (skipped). All fields are optional — only provided fields will be updated."
+      }
+    },
+    "/api/users/{userId}/profile": {
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "profile": {
+                    "description": "Partial profile object to update for the given user ID."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated profile in JSON for the given user ID."
+          }
+        },
+        "summary": "Update user profile",
+        "description": "Update profile for the given user ID. This method performs a partial update of the profile object."
+      }
+    },
+    "/api/users": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "User data to create a new user. All properties are optional.",
+                "properties": {
+                  "id": {
+                    "description": "The unique ID for the user, up to 128 characters of letters, numbers, and `_ - . @ : + = |`, excluding `.` and `..`. If not provided, a random ID will be generated. Useful for keeping existing user IDs when migrating from another identity provider."
+                  },
+                  "primaryPhone": {
+                    "description": "Primary phone number for the user. It should be unique across all users."
+                  },
+                  "primaryEmail": {
+                    "description": "Primary email address for the user. It should be unique across all users."
+                  },
+                  "username": {
+                    "description": "Username for the user. It should be unique across all users."
+                  },
+                  "password": {
+                    "description": "Plain text password for the user."
+                  },
+                  "passwordDigest": {
+                    "description": "In case you already have the password digests and not the passwords, you can use them for the newly created user via this property. The algorithm can be specified using the `passwordAlgorithm` property. For `Legacy`, pass a JSON string in the format `[algorithm, args, encryptedPassword]`, where `args` is a string array that MUST contain an `@` placeholder, which will be replaced by the plain text password at runtime. For PBKDF2 under `Legacy`, `args` is expected to be in the order `[salt, iterations, keylen, digest, '@']`. The salt supports a plain string or a `hex:`-prefixed hex string (for binary salt bytes)."
+                  },
+                  "passwordAlgorithm": {
+                    "description": "The hash algorithm used for the password. It should be one of the supported algorithms, including `Legacy` for custom legacy expressions. Should the encryption algorithm differ from `Argon2i`, it will automatically be upgraded to `Argon2i` upon the user's next sign-in."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User data for the newly created user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create user",
+        "description": "Create a new user with the given data."
+      }
+    },
+    "/api/users/{userId}/password": {
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "password": {
+                    "description": "New password for the user."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User password updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update user password",
+        "description": "Update user password for the given ID."
+      }
+    },
+    "/api/users/{userId}/password/expiration": {
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "isExpired": {
+                    "description": "Whether the user's password should be marked as expired."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User password expiration state has been updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password expiration policy is not enabled in the sign-in experience settings."
+          }
+        },
+        "summary": "Update user password expiration",
+        "description": "Update the user's password expiration state for the next sign-in attempt."
+      }
+    },
+    "/api/users/{userId}/password/verify": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "password": {
+                    "description": "Password to verify."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "User password matches."
+          },
+          "422": {
+            "description": "User password does not match."
+          }
+        },
+        "summary": "Verify user password",
+        "description": "Test if the given password matches the user's password."
+      }
+    },
+    "/api/users/{userId}/has-password": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "The result of the check."
+          }
+        },
+        "summary": "Check if user has password",
+        "description": "Check if the user with the given ID has a password set."
+      }
+    },
+    "/api/users/{userId}/is-suspended": {
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "isSuspended": {
+                    "description": "New suspension status for the user."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User suspension status updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update user suspension status",
+        "description": "Update user suspension status for the given ID."
+      }
+    }
+  }
+}

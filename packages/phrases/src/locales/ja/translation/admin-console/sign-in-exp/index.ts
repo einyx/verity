@@ -1,0 +1,309 @@
+import content from './content.js';
+import custom_profile_fields from './custom-profile-fields.js';
+import sign_up_and_sign_in from './sign-up-and-sign-in.js';
+
+const sign_in_exp = {
+  page_title: 'サインインエクスペリエンス',
+  page_title_with_account: 'サインインとアカウント',
+  title: 'サインインとアカウント',
+  description:
+    '認証フローと UI をカスタマイズし、すぐに使えるエクスペリエンスをリアルタイムでプレビューします。',
+  tabs: {
+    branding: 'ブランディング',
+    sign_up_and_sign_in: 'サインアップとサインイン',
+    collect_user_profile: 'ユーザープロフィールを収集',
+    account_center: 'アカウントセンター',
+    content: '内容',
+    password_policy: 'パスワードポリシー',
+  },
+  welcome: {
+    title: 'サインインエクスペリエンスをカスタマイズ',
+    description:
+      '最初のサインイン設定をスムーズに始めましょう。このガイドでは、必要なすべての設定を説明します。',
+    get_started: '開始',
+    apply_remind:
+      'サインインエクスペリエンスは、このアカウントのすべてのアプリケーションに適用されます。',
+  },
+  color: {
+    title: 'カラー',
+    primary_color: 'ブランドカラー',
+    dark_primary_color: 'ブランドカラー（ダーク）',
+    dark_mode: 'ダークモードを有効にする',
+    dark_mode_description:
+      'あなたのアプリは、ブランドカラーと Logto アルゴリズムに基づいて自動生成されたダークモードのテーマを持っています。自由にカスタマイズしてください。',
+    dark_mode_reset_tip: 'ブランドカラーに基づいてダークモードの色を再計算します。',
+    reset: 'リセット',
+  },
+  branding: {
+    title: 'ブランディングエリア',
+    ui_style: 'スタイル',
+    with_light: '{{value}}',
+    with_dark: '{{value}} (ダーク)',
+    app_logo_and_favicon: 'アプリロゴとファビコン',
+    company_logo_and_favicon: '企業ロゴとファビコン',
+    organization_logo_and_favicon: '組織のロゴとファビコン',
+    hide_logto_branding: 'Logtoのブランディングを非表示にする',
+    hide_logto_branding_description:
+      '「Powered by Logto」を削除します。クリーンでプロフェッショナルなサインイン体験で自社ブランドだけを際立たせましょう。',
+    hide_logto_branding_oss_note:
+      'この機能は <a>Logto Cloud</a> または<selfHosted>セルフホストプラン</selfHosted>で利用できます。',
+  },
+  branding_uploads: {
+    app_logo: {
+      title: 'アプリロゴ',
+      url: 'アプリロゴ URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'アプリロゴ: {{error}}',
+    },
+    company_logo: {
+      title: '企業ロゴ',
+      url: '企業ロゴ URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: '企業ロゴ: {{error}}',
+    },
+    organization_logo: {
+      title: '画像をアップロード',
+      url: '組織ロゴ URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: '組織ロゴ: {{error}}',
+    },
+    connector_logo: {
+      title: '画像をアップロード',
+      url: 'コネクタロゴ URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'コネクタロゴ: {{error}}',
+    },
+    favicon: {
+      title: 'ファビコン',
+      url: 'ファビコン URL',
+      url_placeholder: 'https://your.cdn.domain/favicon.ico',
+      error: 'ファビコン: {{error}}',
+    },
+  },
+  custom_ui: {
+    title: 'カスタム UI',
+    cloud_tag: 'Cloud',
+    css_code_editor_title: 'カスタム CSS',
+    css_code_editor_field_title: 'CSS オーバーライド',
+    css_code_editor_description1: 'カスタム CSS の例をご覧ください。',
+    css_code_editor_description2: '<a>{{link}}</a>',
+    css_code_editor_description_link_content: '詳しくはこちら',
+    css_code_editor_content_placeholder:
+      'ここに CSS オーバーライドを入力して、あらゆる要素のスタイルを思いどおりに調整できます。創造性を表現し、UI を際立たせましょう。',
+    bring_your_ui_title: 'あなたの UI を持参',
+    bring_your_ui_upload_title: 'カスタム UI アセットをアップロード',
+    bring_your_ui_description:
+      '圧縮パッケージ (.zip) をアップロードして、Logto のビルトイン UI を独自のコードで置き換えます。<a>詳しくはこちら</a>',
+    bring_your_ui_oss_description: '独自のコードでサインイン UI をカスタマイズします。',
+    bring_your_ui_oss_card_description:
+      'カスタム UI のアップロードは <a>Logto Cloud</a> または<selfHosted>セルフホストプラン</selfHosted>で利用できます。フォークや再デプロイは不要です。',
+    bring_your_ui_oss_try_cloud: 'Cloud を試す',
+    preview_with_bring_your_ui_description:
+      'カスタム UI のアセットは正常にアップロードされ、現在提供されています。したがって、組み込みのプレビューウィンドウは無効になりました。\nパーソナライズされたサインイン UI をテストするには、「ライブプレビュー」ボタンをクリックして新しいブラウザタブで開きます。',
+    csp_description:
+      'カスタムサインイン UI に追加のソース式を許可します。これらの値は、カスタム UI アセットが提供される場合にのみ適用されます。',
+    csp_script_src: '許可された script-src',
+    csp_script_src_tip:
+      'カスタム UI が読み込むスクリプトに対して、https://scripts.example.com や https://*.example.com などの HTTPS ソース式を許可します。',
+    csp_connect_src: '許可された connect-src',
+    csp_connect_src_tip:
+      'カスタム UI が行うネットワークリクエストに対して、https://api.example.com や wss://events.example.com などの HTTPS または WSS ソース式を許可します。',
+    csp_source_invalid_error:
+      '有効なソース式を入力してください。https:// URL を使用してください。connect-src では wss:// もサポートされています。CSP キーワードとセミコロンはサポートされていません。',
+    csp_source_duplicate_error: 'このソース式はすでに一覧に含まれています。',
+  },
+  account_center: {
+    title: 'アカウントセンター',
+    description: 'Logto API を使用してアカウントセンターのフローをカスタマイズします。',
+    enable_account_api: 'アカウントセンターと Account API を有効化',
+    enable_account_api_description:
+      'エンドユーザー向けの Account API と Logto のすぐに使えるアカウントセンターを同時に有効にします。オフにすると、両方の機能が利用できなくなります。',
+    field_options: {
+      off: 'オフ',
+      edit: '編集',
+      read_only: '閲覧のみ',
+      enabled: '有効',
+      disabled: '無効',
+    },
+    sections: {
+      account_security: {
+        title: 'アカウントセキュリティ',
+        description:
+          'Account API へのアクセスを管理し、ユーザーがアプリにサインインした後に本人情報や認証要素を表示または編集できるようにします。',
+        security_verification: {
+          title: 'セキュリティ検証',
+          description:
+            'セキュリティ設定を変更する前に、ユーザーは本人確認を行い、有効期限 10 分の検証レコード ID を取得する必要があります。検証方法（メール、電話、パスワード）を有効にするには、下記の Account API 権限を<strong>閲覧のみ</strong>（最低限）または<strong>編集</strong>に設定し、ユーザーが設定済みかどうかをシステムが検出できるようにしてください。<a>詳細</a>',
+        },
+        groups: {
+          identifiers: {
+            title: '識別子',
+          },
+          authentication_factors: {
+            title: '認証要素',
+          },
+          session_management: {
+            title: 'セッション管理',
+          },
+          developer_settings: {
+            title: '開発者設定',
+          },
+        },
+      },
+      user_profile: {
+        title: 'ユーザープロフィール',
+        description:
+          'Account API へのアクセスを管理し、ユーザーがアプリにサインインした後に基本またはカスタムのプロフィールデータを表示・編集できるようにします。',
+        groups: {
+          profile_data: {
+            title: 'プロフィールデータ',
+          },
+        },
+      },
+      secret_vault: {
+        title: 'シークレットボルト',
+        description:
+          'ソーシャルおよびエンタープライズ連携向けに、サードパーティのアクセス トークンを安全に保管して、その API を呼び出します（例: Google カレンダーにイベントを追加）。',
+        third_party_token_storage: {
+          title: 'サードパーティトークン',
+          third_party_access_token_retrieval: 'サードパーティアクセス トークンの取得',
+          third_party_token_tooltip:
+            'トークンを保存するには、対応するソーシャルまたはエンタープライズ連携の設定でこの機能を有効にしてください。',
+          third_party_token_description:
+            'Account API を有効にすると、サードパーティトークンの取得が自動的に有効になります。',
+        },
+      },
+    },
+    fields: {
+      email: 'メールアドレス',
+      phone: '電話番号',
+      social: 'ソーシャル ID',
+      password: 'パスワード',
+      mfa: '多要素認証',
+      mfa_description: 'ユーザーがアカウントセンターから MFA 方法を管理できるようにします。',
+      passkey: 'Passkey',
+      username: 'ユーザー名',
+      name: '名前',
+      avatar: 'アバター',
+      profile: 'プロフィール',
+      profile_description: '構造化されたプロフィール属性へのアクセスを制御します。',
+      custom_data: 'カスタムデータ',
+      custom_data_description:
+        'ユーザーに保存されているカスタム JSON データへのアクセスを制御します。',
+      sessions: 'セッション',
+      trusted_devices: '信頼済みデバイス',
+      personal_access_tokens: '個人用アクセストークン',
+      personal_access_tokens_description:
+        'これを有効にすると、ユーザーはサインアウトやパスワードのリセット後も有効な長期の個人用アクセストークンを作成でき、トークン交換が有効な任意のファーストパーティアプリケーションでアクセストークンと交換できるようになります。',
+    },
+    profile_fields: {
+      title: 'ビルトインアカウントセンターのプロフィールフィールド',
+      add_profile_fields: 'プロフィールフィールドを追加',
+      hint: {
+        not_in_list: 'リストにない？',
+        set_up: '設定する',
+        go_to: '他のプロフィールフィールドを今すぐ。',
+      },
+      disabled_hint: {
+        name: 'このフィールドを追加するには、下のユーザープロフィールセクションで「名前」の権限を「編集/閲覧のみ」に設定してください。',
+        avatar:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「アバター」の権限を「編集/閲覧のみ」に設定してください。',
+        profile:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「プロフィール」の権限を「編集/閲覧のみ」に設定してください。',
+        custom_data:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「カスタムデータ」の権限を「編集/閲覧のみ」に設定してください。',
+      },
+    },
+    webauthn_related_origins: 'WebAuthn 関連オリジン',
+    webauthn_related_origins_description:
+      'Account API を通じてパスキーを登録できるフロントエンドアプリケーションのドメインを追加します。',
+    webauthn_related_origins_error: 'オリジンは https:// または http:// で始める必要があります',
+    delete_account_url: 'アカウントを削除',
+    delete_account_url_description:
+      '独自のロジックでアカウント削除を処理するためのエンドポイント URL を指定してください。',
+    prebuilt_ui: {
+      title: '組み込み UI を統合',
+      description:
+        '組み込み UI を使用して、すぐに使えるアカウントセンター、セキュリティ検証、または単一のプロフィール更新フローを迅速に統合します。ドメインとルートを組み合わせるだけで、アカウントセンター URL を形成できます（例: https://auth.foo.com/account/email）。',
+      permission_notice:
+        'これらのプリビルトフローを統合するには、以下の設定で関連するアカウント API の権限を<strong>編集</strong>に設定してください。',
+      account_center_title: 'すぐに使えるアカウントセンターを統合',
+      account_center_description:
+        'ユーザーをアカウントセンターにルーティングし、メールアドレス、電話番号、ユーザー名、パスワード、MFA、接続済みアカウントなどのセキュリティ設定を管理します。',
+      flows_title: 'すぐに使えるセキュリティ設定フローを統合',
+      single_task_flows_title: 'すぐに使える単一タスクフローを統合',
+      flows_description:
+        'ドメインとルートを組み合わせてアカウント設定 URL を形成します（例: https://auth.foo.com/account/email）。オプションで `redirect=` を追加して更新成功後にユーザーをアプリに戻したり、`show_success=true` で成功ページを表示し続けたり、`ui_locales=` でデフォルト言語を上書きしたり、`identifier=` で識別子入力フィールドを事前入力したりできます。',
+      single_task_flows_description:
+        'ユーザーを特定のフロー（例: メール連携）に直接ルーティングします。オプションで、成功した更新後にユーザーをアプリに戻すための `redirect=`、成功ページを表示し続けるための `show_success=true`、デフォルト言語を上書きするための `ui_locales=`、または識別子入力フィールドを事前入力するための `identifier=` を追加できます。',
+      tooltips: {
+        email: 'プライマリメールアドレスを更新',
+        phone: 'プライマリ電話番号を更新',
+        username: 'ユーザー名を更新',
+        password: '新しいパスワードを設定',
+        social: 'サインイン用にソーシャルアカウントを連携',
+        social_change: '別の連携済みソーシャルアカウントに変更',
+        social_remove: '連携済みのソーシャルアカウントを削除',
+        authenticator_app: '多要素認証のための新しい認証アプリを設定',
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
+        passkey_add: '新しいパスキーを登録',
+        passkey_manage: '既存のパスキーを管理または新しいものを追加',
+        backup_codes_generate: '新しいバックアップコード 10 セットを生成',
+        backup_codes_manage: '使用可能なバックアップコードを表示または新しいものを生成',
+        account_center:
+          'アカウントセンターにアクセスして、メールアドレス、電話番号、ユーザー名、パスワード、MFA、接続済みアカウントなどのセキュリティ設定を管理',
+        profile: '個人情報（名前、アバターなど）を管理する中央ハブ',
+        sessions: 'デバイス間のアクティブなセッションを表示・管理',
+      },
+      customize_note:
+        'すぐに使えるエクスペリエンスを望まない？ 代わりに Account API でフローを完全に',
+      customize_link: 'カスタマイズできます。',
+    },
+    custom_css: {
+      title: 'カスタム CSS',
+      description: 'カスタム CSS を使用してアカウントセンターの外観をカスタマイズします。',
+    },
+  },
+  sign_up_and_sign_in,
+  content,
+  setup_warning: {
+    no_connector_sms:
+      'まだ SMS コネクタが設定されていません。構成を完了する前に、この方法でのサインインはできません。<a>{{link}}</a>「コネクタ」に移動してください',
+    no_connector_email:
+      'まだメールコネクタが設定されていません。構成を完了する前に、この方法でのサインインはできません。<a>{{link}}</a>「コネクタ」に移動してください',
+    no_connector_social:
+      'まだソーシャルコネクタを設定していません。ソーシャルサインインの方法を適用するには、まずコネクタを追加してください。<a>{{link}}</a> の中で「コネクタ」をご覧ください。',
+    no_connector_email_account_center:
+      'メールコネクタがまだ設定されていません。<a>「メールおよびSMSコネクタ」</a>で設定してください。',
+    no_connector_sms_account_center:
+      'SMSコネクタがまだ設定されていません。<a>「メールおよびSMSコネクタ」</a>で設定してください。',
+    no_connector_social_account_center:
+      'ソーシャルコネクタがまだ設定されていません。<a>「ソーシャルコネクタ」</a>で設定してください。',
+    no_mfa_factor: 'まだ MFA ファクターが設定されていません。<a>{{link}}</a>で設定してください。',
+    setup_link: '設定',
+  },
+  save_alert: {
+    description:
+      '新しいサインイン方法やサインアップ手順を導入しています。すべてのユーザーに影響がある可能性があります。変更を実行する場合は、よろしいですか？',
+    before: '変更前',
+    after: '変更後',
+    sign_up: 'サインアップ',
+    sign_in: 'サインイン',
+    social: 'ソーシャル',
+    forgot_password_migration_notice:
+      'パスワードを忘れた場合の検証をカスタムメソッドをサポートするようにアップグレードしました。以前は、これはメールと SMS コネクタによって自動的に決定されていました。アップグレードを完了するには<strong>確認</strong>をクリックしてください。',
+  },
+  preview: {
+    title: 'サインインプレビュー',
+    live_preview: 'ライブプレビュー',
+    live_preview_tip: '変更を保存してプレビュー',
+    native: 'ネイティブ',
+    desktop_web: 'デスクトップ Web',
+    mobile_web: 'モバイル Web',
+    desktop: 'デスクトップ',
+    mobile: 'モバイル',
+  },
+  custom_profile_fields,
+};
+
+export default Object.freeze(sign_in_exp);

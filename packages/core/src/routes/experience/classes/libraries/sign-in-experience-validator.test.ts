@@ -1,0 +1,871 @@
+/* eslint-disable max-lines */
+import { TemplateType } from '@logto/connector-kit';
+import {
+  InteractionEvent,
+  MfaFactor,
+  MissingProfile,
+  type SignInExperience,
+  SignInIdentifier,
+  SignInMode,
+  VerificationType,
+} from '@logto/schemas';
+
+import { mockSignInExperience } from '#src/__mocks__/sign-in-experience.js';
+import RequestError from '#src/errors/RequestError/index.js';
+import { MockTenant } from '#src/test-utils/tenant.js';
+
+import {
+  createNewCodeVerificationRecord,
+  createSubjectCodeVerificationRecord,
+} from '../verifications/code-verification.js';
+import { EnterpriseSsoVerification } from '../verifications/enterprise-sso-verification.js';
+import { type VerificationRecord } from '../verifications/index.js';
+import { OneTimeTokenVerification } from '../verifications/one-time-token-verification.js';
+import { PasswordVerification } from '../verifications/password-verification.js';
+import { SocialVerification } from '../verifications/social-verification.js';
+import { SignInPasskeyVerification } from '../verifications/web-authn-verification.js';
+
+import { SignInExperienceValidator } from './sign-in-experience-validator.js';
+
+const { jest } = import.meta;
+
+const emailDomain = 'logto.io';
+
+const signInExperiences = {
+  findDefaultSignInExperience: jest.fn().mockResolvedValue(mockSignInExperience),
+};
+const ssoConnectors = {
+  getAvailableSsoConnectors: jest.fn().mockResolvedValue([]),
+};
+
+const mockTenant = new MockTenant(undefined, { signInExperiences }, undefined, { ssoConnectors });
+
+const buildValidatorWithSignInMode = (signInMode: SignInMode) => {
+  signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+    ...mockSignInExperience,
+    signInMode,
+  });
+
+  return new SignInExperienceValidator(mockTenant.libraries, mockTenant.queries);
+};
+
+const passwordVerificationRecords = Object.fromEntries(
+  Object.values(SignInIdentifier).map((identifier) => [
+    identifier,
+    PasswordVerification.create(mockTenant.libraries, mockTenant.queries, {
+      type: identifier,
+      value: identifier === SignInIdentifier.Email ? `foo@${emailDomain}` : 'value',
+    }),
+  ])
+) as Record<SignInIdentifier, PasswordVerification>;
+
+const verificationCodeVerificationRecords = Object.freeze({
+  [SignInIdentifier.Email]: createNewCodeVerificationRecord(
+    mockTenant.libraries,
+    mockTenant.queries,
+    {
+      type: SignInIdentifier.Email,
+      value: `foo@${emailDomain}`,
+    },
+    TemplateType.SignIn
+  ),
+  [SignInIdentifier.Phone]: createNewCodeVerificationRecord(
+    mockTenant.libraries,
+    mockTenant.queries,
+    {
+      type: SignInIdentifier.Phone,
+      value: 'value',
+    },
+    TemplateType.SignIn
+  ),
+});
+
+const subjectVerificationRecords = Object.freeze({
+  password: PasswordVerification.createForUser(
+    mockTenant.libraries,
+    mockTenant.queries,
+    'subject-user-id'
+  ),
+  [SignInIdentifier.Email]: createSubjectCodeVerificationRecord(
+    mockTenant.libraries,
+    mockTenant.queries,
+    { type: SignInIdentifier.Email, value: `subject@${emailDomain}` },
+    'subject-user-id'
+  ),
+  [SignInIdentifier.Phone]: createSubjectCodeVerificationRecord(
+    mockTenant.libraries,
+    mockTenant.queries,
+    { type: SignInIdentifier.Phone, value: 'value' },
+    'subject-user-id'
+  ),
+});
+
+const enterpriseSsoVerificationRecords = EnterpriseSsoVerification.create(
+  mockTenant.libraries,
+  mockTenant.queries,
+  'mock_connector_id'
+);
+
+const socialVerificationRecord = new SocialVerification(mockTenant.libraries, mockTenant.queries, {
+  id: 'social_verification_id',
+  type: VerificationType.Social,
+  connectorId: 'mock_connector_id',
+  socialUserInfo: {
+    id: 'user_id',
+    email: `foo@${emailDomain}`,
+  },
+});
+
+const oneTimeTokenVerificationRecord = new OneTimeTokenVerification(
+  mockTenant.libraries,
+  mockTenant.queries,
+  {
+    id: 'one_time_token_verification_id',
+    type: VerificationType.OneTimeToken,
+    identifier: { type: SignInIdentifier.Email, value: 'foo@logto.io' },
+    verified: true,
+  }
+);
+
+describe('SignInExperienceValidator', () => {
+  describe('guardInteractionEvent', () => {
+    it('SignInMode.Register', async () => {
+      const signInExperience = {
+        signInMode: SignInMode.Register,
+      };
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce(signInExperience);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.SignIn)
+      ).rejects.toMatchError(new RequestError({ code: 'auth.forbidden', status: 403 }));
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.Register)
+      ).resolves.not.toThrow();
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.ForgotPassword)
+      ).resolves.not.toThrow();
+    });
+
+    it('SignInMode.SignIn', async () => {
+      const signInExperience = {
+        signInMode: SignInMode.SignIn,
+      };
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce(signInExperience);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.Register)
+      ).rejects.toMatchError(new RequestError({ code: 'auth.forbidden', status: 403 }));
+
+      // Should not throw if there's a verified one-time token. In this case, even the registration
+      // is turned off, the user can still register.
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(
+          InteractionEvent.Register,
+          oneTimeTokenVerificationRecord.isVerified
+        )
+      ).resolves.not.toThrow();
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.SignIn)
+      ).resolves.not.toThrow();
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.ForgotPassword)
+      ).resolves.not.toThrow();
+    });
+
+    it('SignInMode.SignInAndRegister', async () => {
+      const signInExperience = {
+        signInMode: SignInMode.SignInAndRegister,
+      };
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce(signInExperience);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.Register)
+      ).resolves.not.toThrow();
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.SignIn)
+      ).resolves.not.toThrow();
+      await expect(
+        signInExperienceSettings.guardInteractionEvent(InteractionEvent.ForgotPassword)
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('getBindableMfaFactors', () => {
+    it('includes passkey-backed WebAuthn and excludes backup code', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        mfa: {
+          ...mockSignInExperience.mfa,
+          factors: [
+            MfaFactor.EmailVerificationCode,
+            MfaFactor.BackupCode,
+            MfaFactor.TOTP,
+            MfaFactor.WebAuthn,
+          ],
+        },
+        passkeySignIn: {
+          ...mockSignInExperience.passkeySignIn,
+          enabled: true,
+        },
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(signInExperienceValidator.getBindableMfaFactors()).resolves.toEqual([
+        MfaFactor.WebAuthn,
+        MfaFactor.TOTP,
+        MfaFactor.EmailVerificationCode,
+      ]);
+    });
+
+    it('does not include WebAuthn when both MFA factor and passkey are disabled', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        mfa: {
+          ...mockSignInExperience.mfa,
+          factors: [MfaFactor.TOTP, MfaFactor.BackupCode],
+        },
+        passkeySignIn: {
+          ...mockSignInExperience.passkeySignIn,
+          enabled: false,
+        },
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(signInExperienceValidator.getBindableMfaFactors()).resolves.toEqual([
+        MfaFactor.TOTP,
+      ]);
+    });
+
+    it('keeps enabled factor ordering after removing backup code', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        mfa: {
+          ...mockSignInExperience.mfa,
+          factors: [MfaFactor.EmailVerificationCode, MfaFactor.BackupCode, MfaFactor.TOTP],
+        },
+        passkeySignIn: {
+          ...mockSignInExperience.passkeySignIn,
+          enabled: true,
+        },
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      const enabledFactors = await signInExperienceValidator.getMfaFactorsEnabledForBinding();
+      const availableFactors = await signInExperienceValidator.getBindableMfaFactors();
+
+      expect(availableFactors).toEqual(
+        enabledFactors.filter((factor) => factor !== MfaFactor.BackupCode)
+      );
+    });
+  });
+
+  describe('getMfaFactorsEnabledForBinding', () => {
+    it('includes backup code and passkey-backed WebAuthn for factor validation', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        mfa: {
+          ...mockSignInExperience.mfa,
+          factors: [
+            MfaFactor.EmailVerificationCode,
+            MfaFactor.BackupCode,
+            MfaFactor.TOTP,
+            MfaFactor.WebAuthn,
+          ],
+        },
+        passkeySignIn: {
+          ...mockSignInExperience.passkeySignIn,
+          enabled: true,
+        },
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(signInExperienceValidator.getMfaFactorsEnabledForBinding()).resolves.toEqual([
+        MfaFactor.WebAuthn,
+        MfaFactor.TOTP,
+        MfaFactor.EmailVerificationCode,
+        MfaFactor.BackupCode,
+      ]);
+    });
+  });
+
+  describe('getConfiguredMfaFactors', () => {
+    it('excludes backup code and does not inject passkey-backed WebAuthn', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        mfa: {
+          ...mockSignInExperience.mfa,
+          factors: [MfaFactor.EmailVerificationCode, MfaFactor.BackupCode, MfaFactor.TOTP],
+        },
+        passkeySignIn: {
+          ...mockSignInExperience.passkeySignIn,
+          enabled: true,
+        },
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(signInExperienceValidator.getConfiguredMfaFactors()).resolves.toEqual([
+        MfaFactor.TOTP,
+        MfaFactor.EmailVerificationCode,
+      ]);
+    });
+  });
+
+  describe('verifyIdentificationMethod (SignIn)', () => {
+    const signInVerificationTestCases: Record<
+      string,
+      {
+        signInExperience: SignInExperience;
+        cases: Array<{ verificationRecord: VerificationRecord; accepted: boolean }>;
+      }
+    > = Object.freeze({
+      'password enabled for all identifiers': {
+        signInExperience: mockSignInExperience,
+        cases: [
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Username],
+            accepted: true,
+          },
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Email],
+            accepted: true,
+          },
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Phone],
+            accepted: true,
+          },
+        ],
+      },
+      'password disabled for email and phone': {
+        signInExperience: {
+          ...mockSignInExperience,
+          signIn: {
+            methods: mockSignInExperience.signIn.methods.map((method) =>
+              method.identifier === SignInIdentifier.Username
+                ? method
+                : { ...method, password: false }
+            ),
+          },
+        },
+        cases: [
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Username],
+            accepted: true,
+          },
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Email],
+            accepted: false,
+          },
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Phone],
+            accepted: false,
+          },
+        ],
+      },
+      'verification code enabled for email and phone': {
+        signInExperience: mockSignInExperience,
+        cases: [
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Email],
+            accepted: true,
+          },
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Phone],
+            accepted: true,
+          },
+        ],
+      },
+      'verification code disabled for email and phone': {
+        signInExperience: {
+          ...mockSignInExperience,
+          signIn: {
+            methods: mockSignInExperience.signIn.methods.map((method) =>
+              method.identifier === SignInIdentifier.Username
+                ? method
+                : { ...method, verificationCode: false }
+            ),
+          },
+        },
+        cases: [
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Email],
+            accepted: false,
+          },
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Phone],
+            accepted: false,
+          },
+        ],
+      },
+      'no sign-in methods is enabled': {
+        signInExperience: {
+          ...mockSignInExperience,
+          signIn: {
+            methods: [],
+          },
+        },
+        cases: [
+          {
+            verificationRecord: passwordVerificationRecords[SignInIdentifier.Username],
+            accepted: false,
+          },
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Email],
+            accepted: false,
+          },
+          {
+            verificationRecord: verificationCodeVerificationRecords[SignInIdentifier.Phone],
+            accepted: false,
+          },
+        ],
+      },
+      'subject-bound records with no sign-in methods enabled': {
+        signInExperience: {
+          ...mockSignInExperience,
+          signIn: {
+            methods: [],
+          },
+        },
+        cases: [
+          { verificationRecord: subjectVerificationRecords.password, accepted: true },
+          {
+            verificationRecord: subjectVerificationRecords[SignInIdentifier.Email],
+            accepted: true,
+          },
+          {
+            verificationRecord: subjectVerificationRecords[SignInIdentifier.Phone],
+            accepted: true,
+          },
+        ],
+      },
+      'single sign-on enabled': {
+        signInExperience: {
+          ...mockSignInExperience,
+          singleSignOnEnabled: true,
+        },
+        cases: [
+          {
+            verificationRecord: enterpriseSsoVerificationRecords,
+            accepted: true,
+          },
+        ],
+      },
+      'single sign-on disabled': {
+        signInExperience: {
+          ...mockSignInExperience,
+          singleSignOnEnabled: false,
+        },
+        cases: [
+          {
+            verificationRecord: enterpriseSsoVerificationRecords,
+            accepted: false,
+          },
+        ],
+      },
+    });
+
+    describe.each(Object.keys(signInVerificationTestCases))(`%s`, (testCase) => {
+      const { signInExperience, cases } = signInVerificationTestCases[testCase]!;
+
+      it.each(cases)('guard verification record %p', async ({ verificationRecord, accepted }) => {
+        signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce(signInExperience);
+
+        const signInExperienceSettings = new SignInExperienceValidator(
+          mockTenant.libraries,
+          mockTenant.queries
+        );
+
+        await (accepted
+          ? expect(
+              signInExperienceSettings.guardIdentificationMethod(
+                InteractionEvent.SignIn,
+                verificationRecord
+              )
+            ).resolves.not.toThrow()
+          : expect(
+              signInExperienceSettings.guardIdentificationMethod(
+                InteractionEvent.SignIn,
+                verificationRecord
+              )
+            ).rejects.toMatchError(
+              new RequestError({ code: 'user.sign_in_method_not_enabled', status: 422 })
+            ));
+      });
+    });
+  });
+
+  describe('guardSsoOnlyEmailIdentifier: identifier with SSO enabled domain should throw', () => {
+    const mockSsoConnector = {
+      domains: [emailDomain],
+    };
+
+    const expectError = new RequestError(
+      {
+        code: 'session.sso_enabled',
+        status: 422,
+      },
+      {
+        ssoConnectors: [mockSsoConnector],
+      }
+    );
+
+    it('email password verification record', async () => {
+      ssoConnectors.getAvailableSsoConnectors.mockResolvedValueOnce([mockSsoConnector]);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          passwordVerificationRecords[SignInIdentifier.Email]
+        )
+      ).rejects.toMatchError(expectError);
+    });
+
+    it('email verification code verification record', async () => {
+      ssoConnectors.getAvailableSsoConnectors.mockResolvedValueOnce([mockSsoConnector]);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          verificationCodeVerificationRecords[SignInIdentifier.Email]
+        )
+      ).rejects.toMatchError(expectError);
+    });
+
+    it('social verification record', async () => {
+      ssoConnectors.getAvailableSsoConnectors.mockResolvedValueOnce([mockSsoConnector]);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          socialVerificationRecord
+        )
+      ).rejects.toMatchError(expectError);
+    });
+
+    it('should not throw for subject-bound email verification code record', async () => {
+      ssoConnectors.getAvailableSsoConnectors.mockResolvedValueOnce([mockSsoConnector]);
+
+      const signInExperienceSettings = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceSettings.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          subjectVerificationRecords[SignInIdentifier.Email]
+        )
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw when SSO user tries to sign in with passkey', async () => {
+      const findUserSsoIdentitiesByUserId = jest.fn().mockResolvedValue([
+        {
+          id: 'sso-identity-id',
+          userId: 'mock_user_id',
+          connectorId: 'sso-connector',
+          identityId: 'sub-1',
+        },
+      ]);
+
+      const tenantWithSsoIdentities = new MockTenant(
+        undefined,
+        {
+          signInExperiences,
+          userSsoIdentities: { findUserSsoIdentitiesByUserId },
+        },
+        undefined,
+        { ssoConnectors }
+      );
+
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        passkeySignIn: { enabled: true, showPasskeyButton: true, allowAutofill: false },
+      });
+
+      const signInPasskeyVerification = new SignInPasskeyVerification(
+        tenantWithSsoIdentities.libraries,
+        tenantWithSsoIdentities.queries,
+        {
+          id: 'sign-in-passkey-id',
+          type: VerificationType.SignInPasskey,
+          verified: true,
+          userId: 'mock_user_id',
+          authenticationChallenge: 'challenge',
+          authenticationRpId: 'example.com',
+        }
+      );
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        tenantWithSsoIdentities.libraries,
+        tenantWithSsoIdentities.queries
+      );
+
+      await expect(
+        signInExperienceValidator.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          signInPasskeyVerification
+        )
+      ).rejects.toMatchError(new RequestError('session.passkey_sign_in.sso_users_not_allowed'));
+    });
+
+    it('should not throw when non-SSO user signs in with passkey', async () => {
+      const findUserSsoIdentitiesByUserId = jest.fn().mockResolvedValue([]);
+
+      const tenantWithSsoIdentities = new MockTenant(
+        undefined,
+        {
+          signInExperiences,
+          userSsoIdentities: { findUserSsoIdentitiesByUserId },
+        },
+        undefined,
+        { ssoConnectors }
+      );
+
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        passkeySignIn: { enabled: true, showPasskeyButton: true, allowAutofill: false },
+      });
+
+      const signInPasskeyVerification = new SignInPasskeyVerification(
+        tenantWithSsoIdentities.libraries,
+        tenantWithSsoIdentities.queries,
+        {
+          id: 'sign-in-passkey-id',
+          type: VerificationType.SignInPasskey,
+          verified: true,
+          userId: 'mock_user_id',
+          authenticationChallenge: 'challenge',
+          authenticationRpId: 'example.com',
+        }
+      );
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        tenantWithSsoIdentities.libraries,
+        tenantWithSsoIdentities.queries
+      );
+
+      await expect(
+        signInExperienceValidator.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          signInPasskeyVerification
+        )
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw when passkey sign-in user has no userId', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        passkeySignIn: { enabled: true, showPasskeyButton: true, allowAutofill: false },
+      });
+
+      const signInPasskeyVerification = new SignInPasskeyVerification(
+        mockTenant.libraries,
+        mockTenant.queries,
+        {
+          id: 'sign-in-passkey-id',
+          type: VerificationType.SignInPasskey,
+          verified: true,
+          authenticationChallenge: 'challenge',
+          authenticationRpId: 'example.com',
+        }
+      );
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      await expect(
+        signInExperienceValidator.guardIdentificationMethod(
+          InteractionEvent.SignIn,
+          signInPasskeyVerification
+        )
+      ).rejects.toMatchError(new RequestError('session.identifier_not_found'));
+    });
+  });
+
+  describe('getMandatoryUserProfileBySignUpMethods', () => {
+    const testCases: Array<[SignInExperience['signUp'], Set<MissingProfile>]> = [
+      [
+        {
+          identifiers: [SignInIdentifier.Username],
+          password: true,
+          verify: false,
+        },
+        new Set([MissingProfile.password, MissingProfile.username]),
+      ],
+      [
+        {
+          identifiers: [SignInIdentifier.Email],
+          password: false,
+          verify: true,
+        },
+        new Set([MissingProfile.email]),
+      ],
+      [
+        {
+          identifiers: [SignInIdentifier.Phone, SignInIdentifier.Email],
+          password: true,
+          verify: true,
+        },
+        new Set([MissingProfile.password, MissingProfile.emailOrPhone]),
+      ],
+    ];
+
+    it.each(testCases)('signUp: %p', async (signUp, expected) => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        signUp,
+      });
+
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      const result = await signInExperienceValidator.getMandatoryUserProfileBySignUpMethods();
+      expect(result).toEqual(expected);
+    });
+
+    it('should early return with unsupported signUp identifiers', async () => {
+      signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+        ...mockSignInExperience,
+        signUp: {
+          identifiers: [SignInIdentifier.Email, SignInIdentifier.Username],
+          password: true,
+          verify: true,
+        },
+      });
+      const signInExperienceValidator = new SignInExperienceValidator(
+        mockTenant.libraries,
+        mockTenant.queries
+      );
+
+      const result = await signInExperienceValidator.getMandatoryUserProfileBySignUpMethods();
+      expect(result).toEqual(new Set([MissingProfile.username, MissingProfile.password]));
+    });
+
+    describe('getMandatoryUserProfileBySignUpMethods with secondary identifiers provided', () => {
+      const testCases: Array<[SignInExperience['signUp'], Set<MissingProfile>]> = [
+        [
+          {
+            identifiers: [SignInIdentifier.Username],
+            password: true,
+            verify: true,
+            secondaryIdentifiers: [
+              { identifier: SignInIdentifier.Email },
+              { identifier: SignInIdentifier.Phone },
+            ],
+          },
+          new Set([
+            MissingProfile.username,
+            MissingProfile.password,
+            MissingProfile.email,
+            MissingProfile.phone,
+          ]),
+        ],
+        [
+          {
+            identifiers: [SignInIdentifier.Email],
+            password: false,
+            verify: true,
+            secondaryIdentifiers: [{ identifier: SignInIdentifier.Username }],
+          },
+          new Set([MissingProfile.email, MissingProfile.username]),
+        ],
+        [
+          {
+            identifiers: [SignInIdentifier.Phone, SignInIdentifier.Email],
+            password: true,
+            verify: true,
+            secondaryIdentifiers: [{ identifier: SignInIdentifier.Username }],
+          },
+          new Set([MissingProfile.password, MissingProfile.emailOrPhone, MissingProfile.username]),
+        ],
+      ];
+
+      it.each(testCases)('signUp: %p', async (signUp, expected) => {
+        signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+          ...mockSignInExperience,
+          signUp,
+        });
+
+        const signInExperienceValidator = new SignInExperienceValidator(
+          mockTenant.libraries,
+          mockTenant.queries
+        );
+
+        const result = await signInExperienceValidator.getMandatoryUserProfileBySignUpMethods();
+        expect(result).toEqual(expected);
+      });
+    });
+  });
+
+  describe('isRegistrationDisabled', () => {
+    it('returns true when the sign-in mode is sign-in only', async () => {
+      const validator = buildValidatorWithSignInMode(SignInMode.SignIn);
+
+      await expect(validator.isRegistrationDisabled()).resolves.toBe(true);
+    });
+
+    it('returns false when registration is enabled', async () => {
+      const validator = buildValidatorWithSignInMode(SignInMode.SignInAndRegister);
+
+      await expect(validator.isRegistrationDisabled()).resolves.toBe(false);
+    });
+  });
+});
+/* eslint-enable max-lines */

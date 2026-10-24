@@ -1,0 +1,130 @@
+import { type MfaFactor } from '../../foundations/index.js';
+import type { InteractionEvent } from '../interactions.js';
+import { type VerificationType } from '../verification-records/index.js';
+
+export type Prefix = 'Interaction';
+
+export const prefix: Prefix = 'Interaction';
+
+/** The interaction field to update. This is valid based on we only allow users update one field at a time. */
+export enum Field {
+  Event = 'Event',
+  Identifier = 'Identifier',
+  Profile = 'Profile',
+  BindMfa = 'BindMfa',
+  /** @deprecated */
+  Mfa = 'Mfa',
+  Verification = 'Verification',
+  Captcha = 'Captcha',
+  SignInPasskey = 'SignInPasskey',
+  /**
+   * A pure step-up submission: an authenticated session re-proved its subject to reach a requested
+   * authentication context class. Not a sign-in, so it never shares `SignIn.Submit`.
+   */
+  StepUp = 'StepUp',
+}
+
+/** Method to verify the identifier */
+export enum Method {
+  Password = 'Password',
+  VerificationCode = 'VerificationCode',
+  Social = 'Social',
+  SingleSignOn = 'SingleSignOn',
+}
+
+export enum Action {
+  /** Create a new entity. (E.g. create an interaction, create a verification code) */
+  Create = 'Create',
+  /** Update an existing entity. (E.g. change interaction type) */
+  Update = 'Update',
+  /** Submit updated info to an entity, or submit to the system. (E.g. submit an interaction, submit a verification code to get verified) */
+  Submit = 'Submit',
+  /** Delete a existing entity. (E.g delete profile ) */
+  Delete = 'Delete',
+  /** Change an entity to the end state. (E.g. end an interaction) */
+  End = 'End',
+}
+
+/**
+ * @deprecated Deprecated interaction log keys used in legacy interaction endpoints.
+ */
+export type DeprecatedInteractionLogKey =
+  // Profile update log keys used in legacy interaction endpoints
+  | `${Prefix}.${InteractionEvent}.${Field.Profile}.${Action.Create | Action.Delete}`
+  // Identifier verification log keys used in legacy interaction endpoints
+  | `${Prefix}.${Exclude<
+      InteractionEvent,
+      InteractionEvent.ForgotPassword
+    >}.${Field.Identifier}.${Exclude<Method, Method.Password>}.${Action.Create | Action.Submit}`
+  // Identifier password verification log keys used in legacy interaction endpoints
+  | `${Prefix}.${Exclude<
+      InteractionEvent,
+      InteractionEvent.ForgotPassword
+    >}.${Field.Identifier}.${Method.Password}.${Action.Submit}`
+  // Forgot password identifier verification log keys used in legacy interaction endpoints
+  | `${Prefix}.${InteractionEvent.ForgotPassword}.${Field.Identifier}.${Method.VerificationCode}.${
+      Action.Create | Action.Submit}`
+  // Create Bind MFA verification log keys used in legacy interaction endpoints
+  | `${Prefix}.${InteractionEvent}.${Field.BindMfa}.${MfaFactor}.${Action.Create}`
+  // Legacy SignIn MFA verification log keys used in legacy interaction endpoints
+  | `${Prefix}.${InteractionEvent.SignIn}.${Field.Mfa}.${MfaFactor}.${
+      Action.Submit | Action.Create}`;
+
+/**
+ * The union type of all available log keys for interaction.
+ * The key MUST describe an {@link Action}.
+ *
+ * ### Keys breakdown
+ *
+ * ```ts
+ * `Interaction.${Action.Create | Action.End}`
+ * ```
+ *
+ * - Indicates an interaction is started or ended. Normally it is performed by OIDC Provider.
+ *
+ * ```ts
+ * `Interaction.${InteractionEvent}.${Action.Update | Action.Submit}`
+ * ```
+ *
+ * Since {@link InteractionEvent} is the primary identifier of interaction type, most of log keys include this info for better query experience.
+ * The only exception is the initial creation of an interaction, which has a key of `Interaction.Create`,
+ * since we cannot know the type at that time.
+ *
+ * - When {@link Action} is `Update`, it indicates the type of interaction is updating to {@link InteractionEvent}.
+ * - When {@link Action} is `Submit`, it indicates the whole interaction is being submitted.
+ *
+ * ```ts
+ * `Interaction.${InteractionEvent}.${Field.Profile}.${Action.Update}`
+ * ```
+ *
+ * - Indicates the profile of an interaction is being updated. It may add or remove profile data.
+ *
+ * ```ts
+ * `Interaction.${InteractionEvent}.${Field.Identifier}.${Method}.${Action}`
+ * ```
+ *
+ * - Indicates an identifier method is being created or submitted to an interaction.
+ *   - When {@link Method} is `VerificationCode`, {@link Action} can be `Create` (generate and send a code) or `Submit` (verify and submit to the identifiers);
+ *   - Otherwise, {@link Action} is fixed to `Submit` (other methods can be verified on submitting).
+ *
+ * ```ts
+ * `Interaction.${InteractionEvent}.${Field.StepUp}.${Action.Submit}`
+ * ```
+ *
+ * - Indicates a pure step-up interaction is submitted: an authenticated session re-proved its
+ *   subject to reach the requested authentication context class. Its payload records the requested
+ *   and achieved classes and the factor families that were proved, never a credential.
+ */
+export type LogKey =
+  | `${Prefix}.${Action.Create | Action.End}`
+  | `${Prefix}.${Action.Create}.${Field.Captcha}`
+  | `${Prefix}.${InteractionEvent}.${Action.Create | Action.Update | Action.Submit}`
+  | `${Prefix}.${InteractionEvent}.${Field.Profile}.${Action.Update}`
+  | `${Prefix}.${InteractionEvent}.${Field.BindMfa}.${MfaFactor}.${Action.Submit}`
+  | `${Prefix}.${InteractionEvent}.${Field.SignInPasskey}.${Action.Submit}`
+  | `${Prefix}.${InteractionEvent}.${Field.Verification}.${VerificationType}.${Action}`
+  | `${Prefix}.${InteractionEvent}.${Field.Identifier}.${Action.Submit}`
+  | `${Prefix}.${InteractionEvent}.${Field.StepUp}.${Action.Submit}`
+  // IdpInitiatedSingleSignOn log, used upon receiving a SAML request from the IdP
+  | `${Prefix}.${InteractionEvent.SignIn}.${Field.Verification}.IdpInitiatedSso.${Action.Create}`
+  | DeprecatedInteractionLogKey;

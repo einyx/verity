@@ -1,0 +1,219 @@
+const security = {
+  page_title: 'セキュリティ',
+  title: 'セキュリティ',
+  subtitle: '高度な攻撃に対する高度な保護を構成します。',
+  tabs: {
+    captcha: 'CAPTCHA',
+    password_policy: 'パスワードポリシー',
+    blocklist: 'ブロックリスト',
+    general: '一般設定',
+  },
+  bot_protection: {
+    title: 'ボット保護',
+    description:
+      'サインアップ、サインイン、パスワード回復に CAPTCHA を有効にして、自動的な脅威をブロックします。',
+    captcha: {
+      title: 'CAPTCHA',
+      placeholder: 'CAPTCHA プロバイダーを選択し、統合を設定します。',
+      add: 'CAPTCHA を追加',
+    },
+    settings: '設定',
+    enable_captcha: 'CAPTCHA を有効化',
+    enable_captcha_description:
+      'サインアップ、サインイン、パスワード回復フローに CAPTCHA 検証を有効にします。',
+  },
+  create_captcha: {
+    setup_captcha: 'CAPTCHA をセットアップ',
+  },
+  captcha_providers: {
+    recaptcha_enterprise: {
+      name: 'reCAPTCHA Enterprise',
+      description:
+        'Google の企業向け CAPTCHA ソリューション。高度な脅威検出と詳細なセキュリティ分析を提供し、不正行為からウェブサイトを保護します。',
+    },
+    turnstile: {
+      name: 'Cloudflare Turnstile',
+      description:
+        'Cloudflare のスマート CAPTCHA 代替案。視覚的パズルを用いず、シームレスなユーザー体験を提供しながらボット保護を実現します。',
+    },
+    cap: {
+      name: 'Cap',
+      description:
+        '視覚的パズルやサードパーティサービスを使わない、オープンソースでセルフホスト型のプルーフ・オブ・ワーク CAPTCHA。他の CAPTCHA サービスにアクセスできない地域に最適です。',
+    },
+  },
+  captcha_details: {
+    back_to_security: 'セキュリティへ戻る',
+    page_title: 'CAPTCHA の詳細',
+    check_readme: 'README をチェック',
+    options_change_captcha: 'CAPTCHA プロバイダーを変更',
+    connection: '接続',
+    description: 'CAPTCHA 接続を構成します。',
+    site_key: 'サイトキー',
+    secret_key: 'シークレットキー',
+    project_id: 'プロジェクト ID',
+    domain: 'ドメイン（オプション）',
+    domain_placeholder: 'www.google.com（デフォルト）または recaptcha.net',
+    recaptcha_key_id: 'reCAPTCHA キー ID',
+    recaptcha_api_key: 'プロジェクトの API キー',
+    cap_endpoint: 'Cap エンドポイント',
+    cap_endpoint_placeholder: 'https://cap.example.com',
+    cap_endpoint_http_notice:
+      'このエンドポイントは HTTP を使用しており、ローカル開発にのみ適しています。ブラウザーは HTTPS のサインインページからの HTTP リクエストをブロックし、シークレットキーは暗号化されずに送信されます。本番環境では HTTPS を使用してください。',
+    deletion_description: 'この CAPTCHA プロバイダーを削除してもよろしいですか？',
+    captcha_deleted: 'CAPTCHA プロバイダーが正常に削除されました',
+    setup_captcha: 'CAPTCHA をセットアップ',
+    mode: '認証モード',
+    mode_invisible: '非表示',
+    mode_checkbox: 'チェックボックス',
+    mode_notice:
+      '認証モードは Google Cloud Console の reCAPTCHA キー設定で定義されています。ここでモードを変更するには、一致するキータイプが必要です。',
+    score_threshold: 'スコアしきい値',
+    score_threshold_description:
+      'しきい値を下回るスコアは拒否されます。0.0 はすべてを許可し、1.0 は完全なスコアのみを許可します。デフォルトは 0.5 です。',
+    score_threshold_error: 'スコアしきい値は 0 から 1 の間である必要があります。',
+  },
+  password_policy: {
+    password_requirements: 'パスワードの要件',
+    password_requirements_description:
+      '資格情報の詰め込み攻撃や弱いパスワード攻撃に対抗するため、パスワードの要件を強化します。',
+    minimum_length: '最小の長さ',
+    minimum_length_description:
+      'NISTは、Web製品に対して少なくとも8文字を使用することを提案しています。',
+    minimum_length_error: '最小の長さは {{min}} から {{max}}（両方含む）の間でなければなりません。',
+    minimum_required_char_types: '必要な文字の種類の最小数',
+    minimum_required_char_types_description:
+      '文字の種類：大文字（A-Z）、小文字（a-z）、数字（0-9）、特殊記号（{{symbols}}）。',
+    password_rejection: 'パスワードの拒否',
+    compromised_passwords: '危険なパスワードの拒否',
+    breached_passwords: '漏洩したパスワードの拒否',
+    breached_passwords_description:
+      '以前に漏洩したデータベースで見つかったパスワードを拒否します。',
+    restricted_phrases: '低セキュリティフレーズの制限',
+    restricted_phrases_tooltip:
+      'パスワードにこれらのフレーズを使用しないでください。ただし、追加の文字を3文字以上組み合わせる場合は例外です。',
+    repetitive_or_sequential_characters: '繰り返しまたは連続する文字',
+    repetitive_or_sequential_characters_description: '「AAAA」、「1234」、「abcd」などです。',
+    user_information: 'ユーザー情報',
+    user_information_description: '例: メールアドレス、電話番号、ユーザー名など。',
+    custom_words: 'カスタムワード',
+    custom_words_description:
+      '特定の文脈に関連するワードを、大文字小文字を区別せずに、1つの行に1つずつ追加します。',
+    custom_words_placeholder: 'サービス名、会社名など',
+    password_expiration: 'パスワードの有効期限',
+    password_expiration_description:
+      '設定した日数が経過した後にユーザーにパスワードのリセットを要求します。SSO またはパスキーでサインインするユーザーは影響を受けません。',
+    enable_password_expiration: 'パスワードの有効期限を有効にする',
+    enable_password_expiration_description:
+      'ユーザーに定期的なパスワードのリセットを要求します。パスワード変更日の記録がない既存のユーザーは、このポリシーが有効化された日を基準に評価されます。',
+    enable_password_expiration_tip:
+      'パスワードの有効期限は、サインイン体験で有効なコネクタを持つ「パスワードを忘れた場合」方法を少なくとも 1 つ設定した後でのみ有効にできます。',
+    expiration_period: 'パスワード有効期間 (日)',
+    expiration_period_description: 'パスワードが期限切れになるまでの有効日数。',
+    expiration_period_error:
+      'パスワードの有効期間は {{min}} 日から {{max}} 日の間である必要があります。',
+    password_expiration_recovery_reminder:
+      '一部のユーザーは、パスワード回復コードを受け取るためのメールアドレスや電話番号を持っていない場合があり、期限切れのパスワードをリセットできないことがあります。すべてのユーザーがパスワードを回復できるよう、サインアップ時にメールアドレスまたは電話番号を必須にしてください。',
+  },
+  verification_code_policy: {
+    card_title: '認証コード',
+    card_description:
+      'サインイン、サインアップ、パスワードリセットのフローで使用される認証コードの有効期限と最大再試行回数を設定します。',
+    enable: {
+      title: '認証コード設定をカスタマイズ',
+      description: '認証コードの有効期限と最大再試行回数のカスタマイズを許可します。',
+    },
+    expiration_duration: {
+      title: '有効期限（秒）',
+      description: '認証コードが送信後に有効である秒数です。',
+      error_message: '有効期限は 60 秒から 3600 秒の間である必要があります。',
+    },
+    max_retry_attempts: {
+      title: '最大再試行回数',
+      description: 'コードが無効になるまでに許可される認証失敗回数の上限です。',
+      error_message: '最大再試行回数は 1 から 100 の間である必要があります。',
+    },
+  },
+
+  sentinel_policy: {
+    card_title: '識別子によるロックアウト',
+    card_description:
+      'すべてのユーザーはデフォルト設定でロックアウトを利用できますが、カスタマイズすることでより多くの制御が可能です。\n\n複数の認証失敗（例えば、連続した間違ったパスワードや確認コード）後に識別子を一時的にロックし、ブルートフォースアクセスを防ぎます。',
+    enable_sentinel_policy: {
+      title: 'ロックアウト体験をカスタマイズ',
+      description:
+        'ロックアウト前の最大失敗ログイン試行回数、ロックアウト期間、および直ちに手動で解除する機能をカスタマイズできるようにします。',
+    },
+    max_attempts: {
+      title: '最大失敗試行回数',
+      description: '最大失敗ログイン試行回数に達した後に識別子を一時的にロックします。',
+      error_message: '最大失敗試行回数は 0 より大きくなければなりません。',
+    },
+    lockout_duration: {
+      title: 'ロックアウト期間（分）',
+      description: '最大の失敗試行回数を超えた後、一定期間サインインをブロックします。',
+      error_message: 'ロックアウト期間は少なくとも 1 分でなければなりません。',
+    },
+    manual_unlock: {
+      title: '手動での解除',
+      description: 'ユーザーの身元確認と識別子の入力により、即座にロックを解除します。',
+      unblock_by_identifiers: '識別子での解除',
+      modal_description_1:
+        '識別子はサインイン/サインアップの複数の失敗により一時的にロックされました。セキュリティを保護するため、ロックアウト期間後にアクセスが自動的に復元されます。',
+      modal_description_2:
+        'ユーザーの身元を確認し、無許可のアクセス試行がないことを確認した場合にのみ、手動でロックを解除してください。',
+      placeholder: '識別子を入力してください (メールアドレス / 電話番号 / ユーザー名)',
+      confirm_button_text: '今すぐ解除',
+      success_toast: '正常に解除されました',
+      duplicate_identifier_error: '識別子は既に追加されています',
+      empty_identifier_error: '少なくとも 1 つの識別子を入力してください',
+    },
+  },
+  blocklist: {
+    card_title: 'メールブロックリスト',
+    card_description:
+      'ハイリスクまたは不要なメールアドレスをブロックすることで、ユーザーベースを制御します。',
+    custom_email_allowlist: {
+      title: 'カスタムメールアドレスを許可',
+      description:
+        '新規登録および新しくリンクされるメールに対して、特定のメールドメイン、メールアドレス、またはワイルドカードパターンのみを許可するルールを追加します。例：bar@example.com、@example.com、foo*@example.com、*@example.com。gmail.com と googlemail.com のドメインは同等として扱われ、ローカル部分のドットは無視されるため、foo.bar@gmail.com は foobar@googlemail.com と一致します。',
+      placeholder: 'メールアドレス、ドメイン、またはワイルドカードパターンを入力',
+      duplicate_error:
+        'メールアドレス、ドメイン、またはワイルドカード付きメールアドレスパターンは既に追加されています',
+      invalid_format_error:
+        '有効なメールアドレス（bar@example.com）、ドメイン（@example.com）、またはワイルドカード付きメールアドレスパターン（foo*@example.com、*@example.com）である必要があります',
+      warnings: {
+        identical_entries:
+          '許可リストの一部の項目はブロックルールにも存在します。一致するメールは引き続きブロックされる可能性があります。',
+        blocked_exact_email:
+          '許可リストの一部の完全一致メールがブロックルールに一致しています。一致するメールは引き続きブロックされる可能性があります。',
+        blocked_subaddressing:
+          '許可リストの一部の項目にプラス記号（+）が含まれていますが、メールサブアドレッシングはブロックされています。',
+        effectively_unusable:
+          'これらのチェックに基づくと、現在の許可リストでは新しいメールを許可できない可能性があります。',
+      },
+    },
+    disposable_email: {
+      title: '使い捨てメールアドレスをブロック',
+      description:
+        'スパムを防止し、ユーザーの質を向上させるために、使い捨てや一時のメールアドレスを使用したサインアップ試行を拒否することを有効にします。',
+    },
+    email_subaddressing: {
+      title: 'メールサブアドレッシングをブロック',
+      description:
+        'メールサブアドレスをプラス記号（+）と追加の文字（例：user+alias@foo.com）で使用するサインアップ試行を拒否できるようにします。',
+    },
+    custom_email_address: {
+      title: 'カスタムメールアドレスをブロック',
+      description:
+        '特定のメールドメイン、メールアドレス、またはワイルドカードパターンが UI を介して登録またはリンクできないようにするルールを追加します。例：bar@example.com、@example.com、foo*@example.com、*@example.com。gmail.com と googlemail.com のドメインは同等として扱われ、ローカル部分のドットは無視されるため、foo.bar@gmail.com は foobar@googlemail.com と一致します。',
+      placeholder: 'メールアドレス、ドメイン、またはワイルドカードパターンを入力',
+      duplicate_error:
+        'メールアドレス、ドメイン、またはワイルドカード付きメールアドレスパターンは既に追加されています',
+      invalid_format_error:
+        '有効なメールアドレス（bar@example.com）、ドメイン（@example.com）、またはワイルドカード付きメールアドレスパターン（foo*@example.com、*@example.com）である必要があります',
+    },
+  },
+};
+
+export default Object.freeze(security);

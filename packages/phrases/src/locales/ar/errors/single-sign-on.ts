@@ -1,0 +1,24 @@
+const single_sign_on = {
+  forbidden_domains: 'لا يُسمح بنطاقات البريد الإلكتروني العامة.',
+  duplicated_domains: 'هناك نطاقات مكررة.',
+  invalid_domain_format: 'تنسيق النطاق غير صالح.',
+  duplicate_connector_name: 'اسم الموصل مكرر. يرجى اختيار اسم مختلف.',
+  idp_initiated_authentication_not_supported:
+    'المصادقة التي يبدأها IdP مدعومة حصريًا لموصلات SAML.',
+  idp_initiated_authentication_invalid_application_type:
+    'نوع التطبيق غير صالح. يُسمح فقط بتطبيقات {{type}}.',
+  idp_initiated_authentication_redirect_uri_not_registered:
+    'لم يتم تسجيل redirect_uri. يرجى التحقق من إعدادات التطبيق.',
+  idp_initiated_authentication_client_callback_uri_not_found:
+    'لم يتم العثور على URI لاستدعاء المصادقة الذي بدأه العميل IdP. يرجى التحقق من إعدادات الموصل.',
+  sso_signing_unavailable:
+    'تعذر إكمال تسجيل الدخول عبر موفر الهوية الخاص بك. يرجى التواصل مع المسؤول.',
+  can_not_delete_active_signing_key:
+    'لا يمكن حذف مفتاح التوقيع النشط. قم بتفعيل مفتاح آخر أو عطّل هذا المفتاح أولاً.',
+  can_not_deactivate_signing_key_in_use:
+    'لا يمكن تعطيل مفتاح التوقيع أثناء تفعيل طلبات المصادقة الموقعة. عطّل طلبات المصادقة الموقعة أولاً.',
+  active_signing_key_required:
+    'لم يتم العثور على مفتاح توقيع نشط. أنشئ مفتاح توقيع وفعّله قبل تفعيل طلبات المصادقة الموقعة.',
+};
+
+export default Object.freeze(single_sign_on);

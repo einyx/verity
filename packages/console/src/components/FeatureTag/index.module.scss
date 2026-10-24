@@ -1,0 +1,29 @@
+@use '@/scss/underscore' as _;
+
+.tag {
+  font: var(--font-label-3);
+  letter-spacing: normal;
+  display: inline-block;
+  background-color: var(--color-specific-tag-upsell);
+  border-radius: 10px;
+  padding: _.unit(0.5) _.unit(2);
+  color: var(--color-white);
+  text-transform: capitalize;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.beta {
+  background-color: var(--color-specific-tag-test);
+
+  &.addOn {
+    text-transform: none;
+  }
+}
+
+.cloud {
+  background:
+    linear-gradient(157deg, #5d34f2 0%, #bd31ff 100%),
+    var(--color-specific-tag-upsell);
+  text-transform: none;
+}

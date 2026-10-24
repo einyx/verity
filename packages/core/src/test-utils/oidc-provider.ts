@@ -1,0 +1,106 @@
+import { type KoaContextWithOIDC } from 'oidc-provider';
+import { Provider } from 'oidc-provider';
+import Sinon from 'sinon';
+
+import createMockContext from './jest-koa-mocks/create-mock-context.js';
+
+const { jest } = import.meta;
+
+const createTestProvider = (issuer: string) => {
+  // eslint-disable-next-line no-console
+  const originalWarn = console.warn;
+  const warn = jest.spyOn(console, 'warn').mockImplementation((...args) => {
+    if (typeof args[0] !== 'string' || !args[0].includes('oidc-provider')) {
+      originalWarn(...args);
+    }
+  });
+
+  try {
+    /**
+     * Mirror the production configuration: oidc-provider v9 enables DPoP by default, and the
+     * validation helper reads headers via `ctx.get()`, which the mock context does not implement.
+     */
+    return new Provider(issuer, { features: { dPoP: { enabled: false } } });
+  } finally {
+    warn.mockRestore();
+  }
+};
+
+export abstract class GrantMock {
+  static find: (id: string) => Promise<GrantMock | undefined>;
+
+  save: () => Promise<string>;
+  addOIDCScope: (scope: string) => void;
+  addResourceScope: (resource: string, scope: string) => undefined;
+
+  constructor() {
+    this.save = jest.fn(async () => 'finalGrantId');
+    this.addOIDCScope = jest.fn();
+    this.addResourceScope = jest.fn();
+  }
+}
+
+export const createMockProvider = (
+  interactionDetails?: jest.Mock,
+  Grant?: typeof GrantMock,
+  Client?: { find: (id: string) => Promise<unknown> }
+): Provider => {
+  const provider = createTestProvider('https://logto.test');
+
+  jest.spyOn(provider, 'interactionDetails').mockImplementation(
+    // @ts-expect-error for testing
+    interactionDetails ?? (async () => ({ params: {}, jti: 'jti', client_id: 'mockApplicationId' }))
+  );
+
+  jest.spyOn(provider, 'interactionResult').mockImplementation(async () => 'redirectTo');
+
+  if (Grant) {
+    Sinon.stub(provider, 'Grant').value(Grant);
+  }
+
+  if (Client) {
+    Sinon.stub(provider, 'Client').value(Client);
+  }
+
+  return provider;
+};
+
+/**
+ * Create an empty OIDC context with minimal required properties and a mock provider.
+ *
+ * @param override - Override the default OIDC context properties.
+ */
+export const createOidcContext = (override?: Partial<KoaContextWithOIDC['oidc']>) => {
+  const issuer = 'https://mock-issuer.com';
+  const provider = createTestProvider(issuer);
+  const oidc: KoaContextWithOIDC['oidc'] = {
+    route: '',
+    cookies: {
+      get: jest.fn(),
+      set: jest.fn(),
+    },
+    params: {},
+    entities: {},
+    claims: {},
+    issuer,
+    provider,
+    entity: jest.fn(),
+    promptPending: jest.fn(),
+    requestParamClaims: new Set(),
+    requestParamScopes: new Set(),
+    prompts: new Set(),
+    acr: '',
+    amr: [],
+    getAccessToken: jest.fn(),
+    clientJwtAuthExpectedAudience: jest.fn(),
+    ...override,
+  };
+  /**
+   * Koa exposes `cookies` (and other context members) through prototype accessors, so spreading
+   * the mock context into a plain object would silently drop them — attach `oidc` in place to
+   * keep the prototype and the top-level cookie jar reachable.
+   */
+  // eslint-disable-next-line @silverhand/fp/no-mutating-assign
+  const context: KoaContextWithOIDC = Object.assign(createMockContext(), { oidc });
+  return context;
+};

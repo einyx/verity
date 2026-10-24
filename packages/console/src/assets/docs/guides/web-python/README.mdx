@@ -1,0 +1,220 @@
+import UriInputField from '@/mdx-components/UriInputField';
+import Steps from '@/mdx-components/Steps';
+import Step from '@/mdx-components/Step';
+import CustomDomainEndpointNotice from '@/mdx-components/CustomDomainEndpointNotice';
+import RedirectUrisWeb, { defaultRedirectUri, defaultPostSignOutUri } from '../../fragments/_redirect-uris-web.mdx';
+import Checkpoint from '../../fragments/_checkpoint.md';
+
+<Steps>
+
+<Step title="Get started">
+
+This tutorial will show you how to integrate Logto into your Python web application.
+
+<ul>
+  <li>The example uses Flask, but the concepts are the same for other frameworks.</li>
+  <li>Logto SDK leverages coroutines, remember to use <code>await</code> when calling async functions.</li>
+</ul>
+
+```bash
+pip install logto # or `poetry add logto` or whatever you use
+```
+
+</Step>
+
+<Step title="Init LogtoClient">
+
+Insert the following code into your Python file:
+
+<Code title="main.py" className="language-python">
+{`from logto import LogtoClient, LogtoConfig
+
+client = LogtoClient(
+    LogtoConfig(
+        endpoint="${props.endpoint}",
+        appId="${props.app.id}",
+        appSecret="${props.secrets[0]?.value ?? props.app.secret}",
+    )
+)`}
+</Code>
+
+<br/>
+
+<CustomDomainEndpointNotice />
+
+Also replace the default memory storage with a persistent storage, for example:
+
+<Code title="main.py" className="language-python">
+{`from logto import LogtoClient, LogtoConfig, Storage
+from flask import session
+from typing import Union
+
+class SessionStorage(Storage):
+    def get(self, key: str) -> Union[str, None]:
+        return session.get(key, None)
+
+    def set(self, key: str, value: Union[str, None]) -> None:
+        session[key] = value
+
+    def delete(self, key: str) -> None:
+        session.pop(key, None)
+
+client = LogtoClient(
+    LogtoConfig(...),
+    storage=SessionStorage(),
+)`}
+</Code>
+
+</Step>
+
+<Step
+  title="Configure redirect URIs"
+  subtitle="2 URIs"
+>
+
+<RedirectUrisWeb />
+
+</Step>
+
+<Step title="Handle the callback">
+
+After the user signs in, Logto will redirect the user to the callback URL you set in the Logto Console. In this example, we use `/callback` as the callback URL:
+
+```python title="main.py"
+@app.route("/callback")
+async def callback():
+    try:
+        await client.handleSignInCallback(request.url) # Handle a lot of stuff
+        return redirect("/") # Redirect the user to the home page after a successful sign-in
+    except Exception as e:
+        # Change this to your error handling logic
+        return "Error: " + str(e)
+```
+
+</Step>
+
+<Step title="Implement sign-in and sign-out">
+
+There are various ways to invoke sign-in and sign-out in your application. For example, you can implement two routes in your Python application:
+
+<Code title="main.py" className="language-python">
+{`@app.route("/sign-in")
+async def sign_in():
+    # Get the sign-in URL and redirect the user to it
+    return redirect(await client.signIn(
+        redirectUri="${props.redirectUris[0] || defaultRedirectUri}",
+    ))`}
+</Code>
+
+If you want to show the sign-up page on the first screen, you can set `interactionMode` to `signUp`:
+
+<Code title="main.py" className="language-python">
+{`@app.route("/sign-in")
+async def sign_in():
+    # Get the sign-in URL and redirect the user to it
+    return redirect(await client.signIn(
+        redirectUri="${props.redirectUris[0] || defaultRedirectUri}",
+        interactionMode="signUp", # Show the sign-up page on the first screen
+    ))`}
+</Code>
+
+Now, whenever your users visit `/sign-in`, it will start a new sign-in attempt and redirect the user to the Logto sign-in page.
+
+To clean up the Python session and Logto session, we can designate a post sign-out redierct URI. This is where Logto will redirect users after they sign out.
+
+And a sign-out route can be implemented as follows:
+
+<Code title="main.py" className="language-python">
+{`@app.route("/sign-out")
+async def sign_out():
+    return redirect(
+        # Redirect the user to the home page after a successful sign-out
+        await client.signOut(postLogoutRedirectUri="${props.postLogoutRedirectUris[0] || defaultPostSignOutUri}")
+    )
+`}
+</Code>
+
+</Step>
+
+<Step title="Handle authentication status">
+
+In Logto SDK, we can use `client.isAuthenticated()` to check the authentication status, if the user is signed in, the value will be true, otherwise, the value will be false.
+
+Here we also implement a simple home page for demonstration:
+
+- If the user is not signed in, show a sign-in button;
+- If the user is signed in, show some basic information about the user.
+
+```python title="main.py"
+@app.route("/")
+async def home():
+    if client.isAuthenticated() is False:
+        return "Not authenticated <a href='/sign-in'>Sign in</a>"
+
+    return "Authenticated <a href='/sign-out'>Sign out</a>"
+```
+
+</Step>
+
+<Step title="Checkpoint: Test your application">
+
+<Checkpoint />
+
+</Step>
+
+<Step title="Display user information">
+
+To display the user's information, you can use either the `getIdTokenClaims` method or `fetchUserInfo` method to get user information. While `getIdTokenClaims` returns the user information contains in the ID token, `fetchUserInfo` fetches the user information from the userinfo endpoint.
+
+For example, you can implement an `@authenticated` decorator to protect the APIs from unauthorized access and store the user information in the Flask application context:
+
+```python title="authenticated.py"
+from functools import wraps
+from flask import g, jsonify, redirect
+from samples.client import client
+
+def authenticated(shouldRedirect: bool = False, fetchUserInfo: bool = False):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            if client.isAuthenticated() is False:
+                if shouldRedirect:
+                    return redirect("/sign-in")
+                return jsonify({"error": "Not authenticated"}), 401
+
+            # Store user info in Flask application context
+            g.user = (
+                await client.fetchUserInfo()
+                if fetchUserInfo
+                else client.getIdTokenClaims()
+            )
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+```
+
+Here's an API to show the user's information:
+
+```python title="main.py"
+@app.route("/protected/userinfo")
+@authenticated(shouldRedirect=True, fetchUserInfo=True)
+async def protectedUserinfo():
+    try:
+        return (
+            "<h2>User info</h2>"
+            + g.user.model_dump_json(indent=2, exclude_unset=True).replace("\n", "<br>")
+            + navigationHtml
+        )
+    except LogtoException as e:
+        return "<h2>Error</h2>" + str(e) + "<br>" + navigationHtml
+```
+
+Our data models are based on [pydantic](https://docs.pydantic.dev/), so you can use `model_dump_json` to dump the data model to JSON.
+
+Adding `exclude_unset=True` will exclude unset fields from the JSON output, which makes the output more precise.
+
+</Step>
+
+</Steps>

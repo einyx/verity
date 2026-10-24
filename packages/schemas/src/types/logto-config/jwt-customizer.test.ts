@@ -1,0 +1,166 @@
+import { pick } from '@silverhand/essentials';
+import { describe, expect, it } from 'vitest';
+
+import {
+  accessTokenJwtCustomizerGuard,
+  clientCredentialsJwtCustomizerGuard,
+} from './jwt-customizer.js';
+
+const allFields = [
+  'script',
+  'environmentVariables',
+  'contextSample',
+  'tokenSample',
+  'blockIssuanceOnError',
+] as const;
+const requiredFields = ['script'] as const;
+const optionalFields = [
+  'environmentVariables',
+  'contextSample',
+  'tokenSample',
+  'blockIssuanceOnError',
+] as const;
+
+const testClientCredentialsTokenPayload = {
+  script: '',
+  environmentVariables: {},
+  contextSample: {
+    application: {
+      id: 'my-app',
+      name: 'My M2M App',
+    },
+  },
+  tokenSample: {},
+  blockIssuanceOnError: false,
+};
+
+const testAccessTokenPayload = {
+  ...testClientCredentialsTokenPayload,
+  contextSample: {
+    user: {
+      id: '123',
+      username: 'foo',
+      primaryEmail: 'foo@logto.io',
+      primaryPhone: '+1234567890',
+      name: 'Foo Bar',
+      avatar: 'https://example.com/avatar.png',
+      customData: {},
+      identities: {},
+      profile: {},
+      applicationId: 'my-app',
+      ssoIdentities: [],
+      mfaVerificationFactors: [],
+      roles: [],
+      organizations: [],
+      organizationRoles: [],
+    },
+  },
+};
+
+describe('test token sample guard', () => {
+  it.each(optionalFields)(
+    'should pass guard with any of the optionalFields not specified',
+    (droppedField) => {
+      const resultAccessToken = accessTokenJwtCustomizerGuard.safeParse(
+        pick(testAccessTokenPayload, ...allFields.filter((field) => field !== droppedField))
+      );
+      if (!resultAccessToken.success) {
+        console.log('resultAccessToken.error', resultAccessToken.error);
+      }
+      expect(resultAccessToken.success).toBe(true);
+
+      const resultClientCredentials = clientCredentialsJwtCustomizerGuard.safeParse(
+        pick(
+          testClientCredentialsTokenPayload,
+          ...allFields.filter((field) => field !== droppedField)
+        )
+      );
+      if (!resultClientCredentials.success) {
+        console.log('resultClientCredentials.error', resultClientCredentials.error);
+      }
+      expect(resultClientCredentials.success).toBe(true);
+    }
+  );
+
+  it.each(requiredFields)('should throw when required field is not specified', (droppedField) => {
+    const resultAccessToken = accessTokenJwtCustomizerGuard.safeParse(
+      pick(testAccessTokenPayload, ...allFields.filter((field) => field !== droppedField))
+    );
+    expect(resultAccessToken.success).toBe(false);
+
+    const resultClientCredentials = clientCredentialsJwtCustomizerGuard.safeParse(
+      pick(
+        testClientCredentialsTokenPayload,
+        ...allFields.filter((field) => field !== droppedField)
+      )
+    );
+    expect(resultClientCredentials.success).toBe(false);
+  });
+
+  it.each(allFields)(
+    'should pass partial guard with any of the field not specified',
+    (droppedField) => {
+      const resultAccessToken = accessTokenJwtCustomizerGuard
+        .partial()
+        .safeParse(
+          pick(testAccessTokenPayload, ...allFields.filter((field) => field !== droppedField))
+        );
+      expect(resultAccessToken.success).toBe(true);
+
+      const resultClientCredentials = clientCredentialsJwtCustomizerGuard
+        .partial()
+        .safeParse(
+          pick(
+            testClientCredentialsTokenPayload,
+            ...allFields.filter((field) => field !== droppedField)
+          )
+        );
+      expect(resultClientCredentials.success).toBe(true);
+    }
+  );
+
+  it('should throw when unwanted fields presented (access token)', () => {
+    const result = accessTokenJwtCustomizerGuard.safeParse({
+      ...testAccessTokenPayload,
+      abc: 'abc',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should throw when unwanted fields presented (client credentials token)', () => {
+    const result = clientCredentialsJwtCustomizerGuard.safeParse({
+      ...testClientCredentialsTokenPayload,
+      abc: 'abc',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should allow access token sample without interaction context', () => {
+    const result = accessTokenJwtCustomizerGuard.safeParse(testAccessTokenPayload);
+
+    expect(result.success).toBe(true);
+  });
+
+  it('should keep sign-in context in interaction context sample', () => {
+    const interactionContext = {
+      signInContext: { country: 'US' },
+    };
+
+    const result = accessTokenJwtCustomizerGuard.safeParse({
+      ...testAccessTokenPayload,
+      contextSample: {
+        ...testAccessTokenPayload.contextSample,
+        interaction: interactionContext,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.contextSample?.interaction).toEqual(
+      expect.objectContaining(interactionContext)
+    );
+  });
+});

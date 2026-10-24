@@ -1,0 +1,53 @@
+const sign_in_experiences = {
+  empty_content_url_of_terms_of_use:
+    'Пустой URL-адрес контента "Условия использования". Пожалуйста, добавьте URL-адрес контента, если "Условия использования" включены.',
+  empty_social_connectors:
+    'Пустые социальные коннекторы. Пожалуйста, добавьте включенные социальные коннекторы, когда включен метод входа в систему через социальные сети.',
+  enabled_connector_not_found: 'Включенный коннектор {{type}} не найден.',
+  not_one_and_only_one_primary_sign_in_method:
+    'Должен быть один и только один первичный метод входа в систему. Пожалуйста, проверьте свой ввод.',
+  username_requires_password:
+    'Необходимо включить установку пароля для идентификатора создания имени пользователя.',
+  passwordless_requires_verify:
+    'Необходимо включить проверку для идентификатора создания учетной записи по электронной почте/телефону без пароля.',
+  miss_sign_up_identifier_in_sign_in:
+    'Методы входа в систему должны содержать идентификаторы создания учетной записи.',
+  password_sign_in_must_be_enabled:
+    'Вход в систему по паролю должен быть включен, когда для создания учетной записи требуется установка пароля.',
+  code_sign_in_must_be_enabled:
+    'Вход в систему по коду проверки должен быть включен, когда для создания учетной записи не требуется установка пароля.',
+  unsupported_default_language: 'Этот язык - {{language}} не поддерживается в данный момент.',
+  at_least_one_authentication_factor: 'Вы должны выбрать как минимум один фактор аутентификации.',
+  backup_code_cannot_be_enabled_alone: 'Резервный код не может быть включен самостоятельно.',
+  duplicated_mfa_factors: 'Факторы MFA не должны повторяться.',
+  email_verification_code_cannot_be_used_for_mfa:
+    'Код подтверждения электронной почты не может использоваться для MFA, когда проверка электронной почты включена для входа.',
+  phone_verification_code_cannot_be_used_for_mfa:
+    'Код подтверждения SMS не может использоваться для MFA, когда проверка SMS включена для входа.',
+  email_verification_code_cannot_be_used_for_sign_in:
+    'Код подтверждения электронной почты не может быть использован для входа в систему, когда он включен для MFA.',
+  phone_verification_code_cannot_be_used_for_sign_in:
+    'Код подтверждения SMS не может быть использован для входа в систему, когда он включен для MFA.',
+  adaptive_mfa_requires_mfa: 'Перед включением адаптивной MFA необходимо включить MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Адаптивная MFA требует политики, не допускающей пропуска. Используйте PromptOnlyAtSignInMandatory или PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Когда адаптивная MFA отключена, политика запроса MFA должна допускать пропуск. Не используйте PromptOnlyAtSignInMandatory или PromptAtSignInAndSignUpMandatory.',
+  duplicated_sign_up_identifiers: 'Обнаружены дублирующие идентификаторы создания учетной записи.',
+  missing_sign_up_identifiers:
+    'Основной идентификатор создания учетной записи не может быть пустым.',
+  invalid_custom_email_blocklist_format:
+    'Неверный формат пользовательского списка блокировки электронной почты: {{items, list(type:conjunction)}}. Каждый элемент должен быть действительным адресом электронной почты или доменом, например, foo@example.com или @example.com.',
+  forgot_password_method_requires_connector:
+    'Метод восстановления пароля требует настройки соответствующего коннектора {{method}}.',
+  password_expiration_requires_forgot_password:
+    'Для истечения срока действия пароля требуется как минимум один способ восстановления пароля с действительным коннектором.',
+  password_expiration_not_enabled:
+    'Политика истечения срока действия пароля не включена. Включите ее в настройках входа в систему перед истечением срока действия паролей.',
+  password_expiration_invalid_period_days:
+    'Срок действия в днях должен быть положительным целым числом, когда включено истечение срока действия пароля.',
+  username_policy_case_conflicts_exist:
+    'Невозможно переключиться на нечувствительные к регистру имена пользователей, пока существуют имена пользователей, отличающиеся только регистром. Устраните конфликты и повторите попытку.',
+};
+
+export default Object.freeze(sign_in_experiences);

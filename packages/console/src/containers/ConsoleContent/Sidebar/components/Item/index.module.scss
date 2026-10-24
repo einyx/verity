@@ -1,0 +1,65 @@
+@use '@/scss/underscore' as _;
+
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  // Foundation sidebar item: p-2 (8px), rounded-md (6px), gap-2.5 (10px).
+  padding: _.unit(2);
+  color: var(--ds-label-secondary);
+  border-radius: 6px;
+  text-decoration: none;
+  user-select: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  gap: 10px;
+  transition-property: background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+
+  .icon {
+    height: 16px;
+    flex: 0 0 16px;
+
+    svg {
+      color: var(--color-neutral-variant-50);
+      width: _.unit(5.5);
+      height: _.unit(5.5);
+    }
+
+    // Pixel-art menu icons are drawn at 32px and shown at 16px (an exact half size), unsmoothed.
+    img {
+      display: block;
+      width: 16px;
+      height: 16px;
+      image-rendering: pixelated;
+    }
+  }
+
+  .title {
+    font: var(--font-label-2);
+    font-weight: normal;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  // Foundation sidebar states: hover tints the row blue, the active row gets a neutral wash.
+  &:not(.active):hover {
+    background: var(--ds-highlight-tone);
+    color: var(--ds-label-secondary-hover);
+  }
+
+  &.active {
+    background: var(--ds-highlight-m);
+    color: var(--ds-label-primary);
+
+    .title {
+      font-weight: 500;
+    }
+  }
+}

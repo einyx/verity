@@ -1,0 +1,47 @@
+const inkeep_ai_bot = {
+  intro_message:
+    "Salut, je suis Logto AI!\n\nJe suis un assistant IA formé sur la documentation, les articles d'aide, et d'autres contenus.\n\nPose-moi toutes tes questions sur `Logto`.",
+  chat_placeholder: 'Posez votre question à Logto AI pour obtenir un guide étape par étape',
+  disclaimer_label: 'Avertissement Logto AI',
+  disclaimer_tooltip: "Les réponses sont générées par l'IA et peuvent nécessiter une vérification.",
+  example_questions_label: 'Exemples de questions',
+  example_questions: [
+    'Guide de démarrage rapide pour la configuration de Logto',
+    "Configurer l'architecture multi-locataire",
+    'Comment intégrer le profil utilisateur?',
+  ],
+  stop: 'Arrêter',
+  clear: 'Recommencer',
+  get_help: "Obtenir de l'aide",
+  copy_chat: 'Copier',
+  ask_ai_label: "Demander à l'IA",
+  contact: 'Contact',
+  discord: 'Discord',
+  action_proposed: 'Modification proposée : {{tool}}',
+  action_confirm: 'Confirmer',
+  action_cancel: 'Annuler',
+  action_running: 'Création en cours…',
+  action_done: 'Créé',
+  action_cancelled: 'Annulé',
+  action_failed: 'Non créé',
+  action_failed_detail:
+    'Cette modification n’a pas pu être effectuée. Elle a peut-être expiré ; redemandez-la.',
+  setup_prompt_copied: 'Prompt de configuration copié',
+  onboard_agent: 'Intégrez votre agent à MeshX',
+  attached_files_label: 'Fichiers joints',
+  attach_file: 'Joindre un fichier',
+  remove_file: 'Retirer {{name}}',
+  attachment_error: 'Seuls les fichiers texte de 100 Ko maximum peuvent être joints : {{names}}',
+  copy_you: 'Vous',
+  copy_assistant: 'MeshX AI',
+  file_label: 'Fichier : {{name}}',
+  enter_to_send: 'Entrée pour envoyer',
+  thinking_steps: [
+    'Réflexion…',
+    'Lecture de votre message…',
+    'Calcul de vos préférences…',
+    'Recherche de la bonne réponse meshX…',
+  ],
+};
+
+export default Object.freeze(inkeep_ai_bot);

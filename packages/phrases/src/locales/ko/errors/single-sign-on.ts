@@ -1,0 +1,22 @@
+const single_sign_on = {
+  forbidden_domains: '공개 이메일 도메인은 허용되지 않습니다.',
+  duplicated_domains: '중복된 도메인이 있습니다.',
+  invalid_domain_format: '도메인 형식이 잘못되었습니다.',
+  duplicate_connector_name: '커넥터 이름이 이미 존재합니다. 다른 이름을 선택해 주세요.',
+  idp_initiated_authentication_not_supported: 'IdP 시작 인증은 SAML 커넥터에서만 지원됩니다.',
+  idp_initiated_authentication_invalid_application_type:
+    '잘못된 애플리케이션 유형입니다. {{type}} 애플리케이션만 허용됩니다.',
+  idp_initiated_authentication_redirect_uri_not_registered:
+    'redirect_uri가 등록되지 않았습니다. 애플리케이션 설정을 확인해 주세요.',
+  idp_initiated_authentication_client_callback_uri_not_found:
+    '클라이언트 IdP 시작 인증 콜백 URI를 찾을 수 없습니다. 커넥터 설정을 확인해 주세요.',
+  sso_signing_unavailable: 'ID 공급자를 통한 로그인을 완료할 수 없습니다. 관리자에게 문의하세요.',
+  can_not_delete_active_signing_key:
+    '활성 서명 키는 삭제할 수 없습니다. 먼저 다른 키를 활성화하거나 이 키를 비활성화하세요.',
+  can_not_deactivate_signing_key_in_use:
+    '서명된 인증 요청이 활성화된 동안에는 서명 키를 비활성화할 수 없습니다. 먼저 서명된 인증 요청을 비활성화하세요.',
+  active_signing_key_required:
+    '활성 서명 키를 찾을 수 없습니다. 서명된 인증 요청을 활성화하기 전에 서명 키를 생성하고 활성화하세요.',
+};
+
+export default Object.freeze(single_sign_on);

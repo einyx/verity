@@ -1,0 +1,563 @@
+# Change Log
+
+## 1.15.0
+
+### Minor Changes
+
+- c377946617: add a user menu with sign out to the Account Center header
+- 7464c6a97a: add es-MX (Spanish, Mexico) support to the sign-in experience, with the phone input defaulting to the Mexico (+52) country code for users whose language is Spanish (Mexico)
+
+  also fix the list formatter placeholders and the remaining untranslated MFA message in the Spanish locales
+
+- 8b2aaab9b0: add dynamic app support (OAuth Client ID Metadata Documents)
+
+  The dynamic app lets compatible public clients, such as MCP clients, connect to your tenant without registering an application. Following the OAuth Client ID Metadata Documents (CIMD) draft, such a client presents a public HTTPS URL as its `client_id`, and Logto fetches the client metadata from that URL.
+
+  Enable it from the dynamic app card in the third-party app section on the create application page in Console. The switch is tenant-level and off by default, and requires the OIDC provider SSRF protection to be active. Control what dynamic app clients can request with the permission settings on the dynamic app page.
+
+### Patch Changes
+
+- Updated dependencies [ebfefb513d]
+- Updated dependencies [ab106cdb82]
+- Updated dependencies [7464c6a97a]
+- Updated dependencies [28c3c9283e]
+  - @logto/core-kit@2.13.0
+  - @logto/language-kit@1.4.0
+
+## 1.14.1
+
+### Patch Changes
+
+- Updated dependencies [af678dd84]
+- Updated dependencies [1650be05e]
+  - @logto/core-kit@2.12.0
+
+## 1.14.0
+
+### Minor Changes
+
+- d41082bd7d: add app-level access control for applications
+
+  Add a new application access control feature that allows administrators to restrict user access to applications. When enabled, users who do not have permission to access an application will see an access denied error message when they attempt to sign in or access the application. This feature can be configured in the Console Security settings.
+
+  Supported custom control rules include:
+
+  - User IDs
+  - User roles
+  - Organizations
+  - Organization roles
+
+  Refer to the documentation for more details: https://docs.meshx.io/integrate-logto/app-level-access-control
+
+- c2016a044c: add a configurable per-tenant password expiration policy
+
+  Operators can enable password expiration from Console → Security → Password policy and set the number of days a password stays valid. When a password reaches the end of its valid period — or is manually expired for a specific user — the end user is forced through the forgot-password flow on their next password sign-in before they can continue. Users signing in via SSO or passkey are not affected.
+
+  - **Console**: a new "Password expiration" card with an enable toggle and a valid-period (days) input, an inline reminder when sign-up requires no contact identifier to guarantee password recovery, and a per-user "Expire password" action on the user details page.
+  - **Core / API**: the policy is stored on the sign-in experience (`passwordExpiration`) and enforced after password verification. `PATCH /api/users/:userId/password/expiration` lets admins manually expire a user's password, and deleting the last forgot-password connector is rejected while the policy is enabled.
+  - **Experience**: an expired password prompts the user to reset it via the configured recovery method before sign-in completes.
+
+  Legacy users without a recorded password-change date are anchored to the timestamp the policy was enabled, so they get a full valid period instead of being expired immediately.
+
+- 67b99bba85: apply the tenant username policy in sign-in experience and account center username forms
+
+  Usernames entered during sign-up, profile fulfillment, and account center editing are validated against the tenant username policy with localized inline errors. The dedicated username pages (continue flow and account center) state the policy requirements in their page description, and the sign-up identifier form surfaces the full requirements sentence when an entered username violates the policy.
+
+### Patch Changes
+
+- Updated dependencies [e1fadfb1a]
+- Updated dependencies [a88413689]
+  - @logto/core-kit@2.11.0
+
+## 1.13.3
+
+### Patch Changes
+
+- Updated dependencies [e4eaa5aef5]
+  - @logto/core-kit@2.10.0
+
+## 1.13.2
+
+### Patch Changes
+
+- 32c40b1ad: clarify Account Center 2-step verification toggle label
+- 6b9944d01f: correct Chinese translation of Passkey in MFA experience phrases
+
+## 1.13.1
+
+### Patch Changes
+
+- Updated dependencies [93523a1ae0]
+  - @logto/core-kit@2.9.0
+
+## 1.13.0
+
+### Minor Changes
+
+- 7cee48bd97: support OAuth 2.0 Device Authorization Grant (device flow)
+
+  Device flow lets users sign in on input-limited devices such as smart TVs, CLI tools, IoT gadgets, and gaming consoles by completing authentication on a separate device like a phone or laptop.
+
+  How it works:
+
+  1. The device displays a short user code and a verification URL.
+  2. The user opens the URL on another device, enters the code, and signs in.
+  3. Once approved, the original device receives tokens and completes authentication.
+
+  To create a device flow application in Console:
+
+  - Select "Input-limited app / CLI" under the Native framework list, or
+  - Create an app without framework, then choose "Device flow" as the authorization flow, or
+  - Create a third-party Native app, then choose "Device flow" as the authorization flow.
+
+  The application settings page shows a device-flow-specific guide and a built-in demo you can try immediately.
+
+- 5ab931e7ac: add Czech language support to sign-in experience
+
+### Patch Changes
+
+- Updated dependencies [74c993a91e]
+- Updated dependencies [5ab931e7ac]
+  - @logto/core-kit@2.8.0
+  - @logto/language-kit@1.3.0
+
+## 1.12.2
+
+### Patch Changes
+
+- Updated dependencies [57b0008ee8]
+  - @logto/core-kit@2.7.1
+
+## 1.12.1
+
+### Patch Changes
+
+- Updated dependencies [ce65b07964]
+  - @logto/core-kit@2.7.0
+
+## 1.12.0
+
+### Minor Changes
+
+- 1fb8593659: add email/phone MFA via verification codes
+
+  Summary
+
+  - Add two new MFA factors: Email verification code and SMS (phone) verification code.
+  - Support binding these factors during registration or first sign-in when MFA is required.
+  - Support verifying these factors on subsequent sign-ins with dedicated MFA verification pages.
+  - Update Console to configure these factors and surface guidance/conflict warnings.
+  - Support customizing forgot password methods in Sign-in Experience (related).
+
+  To learn more about this feature, please refer to the documentation: https://docs.meshx.io/end-user-flows/mfa
+
+### Patch Changes
+
+- 147f257503: fix a bug that prevents terms agreement dialog from working properly when using magic link authentication
+
+## 1.11.0
+
+### Minor Changes
+
+- 8ae82d585e: add Thai translations to Logto Console and sign-in experience
+
+## 1.10.1
+
+### Patch Changes
+
+- Updated dependencies [4cc321dbb]
+  - @logto/core-kit@2.6.1
+
+## 1.10.0
+
+### Minor Changes
+
+- 2961d355d: bump node version to ^22.14.0
+- 0a76f3389: add captcha bot protection
+
+  You can now enable CAPTCHA bot protection for your sign-in experience with providers like Google reCAPTCHA enterprise and Cloudflare Turnstile.
+
+  To enable CAPTCHA bot protection, you need to:
+
+  1. Go to Console > Security > CAPTCHA > Bot protection.
+  2. Select the CAPTCHA provider you want to use.
+  3. Configure the CAPTCHA provider.
+  4. Save the settings.
+  5. Enable CAPTCHA in the Security page.
+
+  Then take a preview of your sign-in experience to see the CAPTCHA in action.
+
+### Patch Changes
+
+- Updated dependencies [2961d355d]
+  - @logto/language-kit@1.2.0
+  - @logto/core-kit@2.6.0
+
+## 1.9.1
+
+### Patch Changes
+
+- e11e57de8: bump dependencies for security update
+- Updated dependencies [e11e57de8]
+  - @logto/language-kit@1.1.1
+  - @logto/core-kit@2.5.4
+
+## 1.9.0
+
+### Minor Changes
+
+- 640425414: display support email and website info on experience error pages.
+
+  Added support email and website info to the error pages of the experience app. E.g. when a user tries to access a page that doesn't exist, or when the social session is not found in a social callback page. This will help users to contact support easily when they encounter an error.
+
+  You may configure the support email and website info in the sign-in experience settings page in the Logto console or through the management API.
+
+## 1.8.0
+
+### Minor Changes
+
+- 53060c203: add ar-SA language (credit to @zaaakher)
+
+## 1.7.0
+
+### Minor Changes
+
+- 061a30a87: support agree to terms polices for Logto’s sign-in experiences
+
+  - Automatic: Users automatically agree to terms by continuing to use the service
+  - ManualRegistrationOnly: Users must agree to terms by checking a box during registration, and don't need to agree when signing in
+  - Manual: Users must agree to terms by checking a box during registration or signing in
+
+## 1.6.1
+
+### Patch Changes
+
+- abffb9f95: full oidc standard claims support
+
+  We have added support for the remaining [OpenID Connect standard claims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims). Now, these claims are accessible in both ID tokens and the response from the `/me` endpoint.
+
+  Additionally, we adhere to the standard scopes - claims mapping. This means that you can retrieve most of the profile claims using the `profile` scope, and the `address` claim can be obtained by using the `address` scope.
+
+  For all newly introduced claims, we store them in the `user.profile` field.
+
+  > ![Note]
+  > Unlike other database fields (e.g. `name`), the claims stored in the `profile` field will fall back to `undefined` rather than `null`. We refrain from using `?? null` here to reduce the size of ID tokens, since `undefined` fields will be stripped in tokens.
+
+- Updated dependencies [abffb9f95]
+  - @logto/core-kit@2.4.0
+
+## 1.6.0
+
+### Minor Changes
+
+- 32df9acde: add all third-party related console, experience phrases
+
+  - Add new i18n phrases for the third-party application management pages on the Admin Console.
+  - Add new i18n phrases for the user consent page.
+  - Add new i18n phrases for the user scopes as the description for all the Logto user claim scopes. Will be displayed on the user consent page.
+
+- 31e60811d: use Node 20 LTS for engine requirement.
+
+  Note: We mark it as minor because Logto is shipping with Docker image and it's not a breaking change for users.
+
+### Patch Changes
+
+- 9089dbf84: upgrade TypeScript to 5.3.3
+- Updated dependencies [9089dbf84]
+- Updated dependencies [31e60811d]
+  - @logto/language-kit@1.1.0
+  - @logto/core-kit@2.3.0
+
+## 1.5.0
+
+### Minor Changes
+
+- 9a7b19e49: Add single sign-in (SSO) related experience phrases
+
+### Patch Changes
+
+- Updated dependencies [b4f702a86]
+  - @logto/core-kit@2.2.1
+
+## 1.4.0
+
+### Minor Changes
+
+- 6727f629d: feature: introduce multi-factor authentication
+
+  We're excited to announce that Logto now supports multi-factor authentication (MFA) for your sign-in experience. Navigate to the "Multi-factor auth" tab to configure how you want to secure your users' accounts.
+
+  In this release, we introduce the following MFA methods:
+
+  - Authenticator app OTP: users can add any authenticator app that supports the TOTP standard, such as Google Authenticator, Duo, etc.
+  - WebAuthn (Passkey): users can use the standard WebAuthn protocol to register a hardware security key, such as biometric keys, Yubikey, etc.
+  - Backup codes：users can generate a set of backup codes to use when they don't have access to other MFA methods.
+
+  For a smooth transition, we also support to configure the MFA policy to require MFA for sign-in experience, or to allow users to opt-in to MFA.
+
+## 1.3.1
+
+### Patch Changes
+
+- 6f5a0acad: fix a bug that prevents user from customizing i18n translations in Sign-in Experience config
+- Updated dependencies [6f5a0acad]
+  - @logto/core-kit@2.1.1
+
+## 1.3.0
+
+### Minor Changes
+
+- e8b0b1d02: feature: password policy
+
+  ### Summary
+
+  This feature enables custom password policy for users. Now it is possible to guard with the following rules when a user is creating a new password:
+
+  - Minimum length (default: `8`)
+  - Minimum character types (default: `1`)
+  - If the password has been pwned (default: `true`)
+  - If the password is exactly the same as or made up of the restricted phrases:
+    - Repetitive or sequential characters (default: `true`)
+    - User information (default: `true`)
+    - Custom words (default: `[]`)
+
+  If you are an existing Logto Cloud user or upgrading from a previous version, to ensure a smooth experience, we'll keep the original policy as much as possible:
+
+  > The original password policy requires a minimum length of 8 and at least 2 character types (letters, numbers, and symbols).
+
+  Note in the new policy implementation, it is not possible to combine lower and upper case letters into one character type. So the original password policy will be translated into the following:
+
+  - Minimum length: `8`
+  - Minimum character types: `2`
+  - Pwned: `false`
+  - Repetitive or sequential characters: `false`
+  - User information: `false`
+  - Custom words: `[]`
+
+  If you want to change the policy, you can do it:
+
+  - Logto Console -> Sign-in experience -> Password policy.
+  - Update `passwordPolicy` property in the sign-in experience via Management API.
+
+  ### Side effects
+
+  - All new users will be affected by the new policy immediately.
+  - Existing users will not be affected by the new policy until they change their password.
+  - We removed password restrictions when adding or updating a user via Management API.
+
+### Patch Changes
+
+- f8408fa77: rename the package `phrases-ui` to `phrases-experience`
+- f6723d5e2: rename the package `ui` to `experience`
+- Updated dependencies [e8b0b1d02]
+  - @logto/core-kit@2.1.0
+
+## 1.2.0
+
+### Minor Changes
+
+- ae6a54993: add it translation
+- 206fba2b5: add pl-PL translation
+
+## 1.1.0
+
+### Minor Changes
+
+- 37714d153: add ja language
+- f3d60a516: add es transaltion
+- 5c50957a9: add zh-HK and zh-TW translation
+
+### Patch Changes
+
+- e9e8a6e11: update fr translation
+
+## 1.0.0
+
+### Major Changes
+
+- 1c9160112: Packages are now ESM.
+
+### Minor Changes
+
+- 343b1090f: ### Update the password policy
+
+  Password policy description: Password requires a minimum of 8 characters and contains a mix of letters, numbers, and symbols.
+
+  - min-length updates: Password requires a minimum of 8 characters
+  - allowed characters updates: Password contains a mix of letters, numbers, and symbols
+    - digits: 0-9
+    - letters: a-z, A-Z
+    - symbols: !"#$%&'()\*+,./:;<=>?@[\]^\_`{|}~-
+  - At least two types of characters are required:
+    - letters and digits
+    - letters and symbols
+    - digits and symbols
+
+  > notice: The new password policy is applied to new users or new passwords only. Existing users are not affected by this change, users may still use their old password to sign-in.
+
+- 343b1090f: ### Add dynamic favicon and html title
+
+  - Add the favicon field in the sign-in-experience branding settings. Users would be able to upload their own favicon. Use local logto icon as a fallback
+
+  - Set different html title for different pages.
+    - sign-in
+    - register
+    - forgot-password
+    - logto
+
+- c12717412: ## Creating your social connector with ease
+
+  We’re excited to announce that Logto now supports standard protocols (SAML, OIDC, and OAuth2.0) for creating social connectors to integrate external identity providers. Each protocol can create multiple social connectors, giving you more control over your access needs.
+
+  To simplify the process of configuring social connectors, we’re replacing code-edit with simple forms. SAML already supports form configuration, with other connectors coming soon. This means you don’t need to compare documents or worry about code format.
+
+- 68f2d56a2: Add German language
+- 343b1090f: Allow admin tenant admin to create tenants without limitation
+- c12717412: Added Russian translation.
+- c12717412: ## Smart Identifier Input designed to streamline your sign-in experience
+
+  - Smart Contact Input
+  - Smart Identifier Input
+  - Intelligent Identifier Input Field
+
+  Content:
+  We have integrated the traditional input fields for username, phone number, and email into a single intelligent input box. This advanced input box automatically identifies the type of characters you’re entering, such as an @ sign or consecutive numbers, and provides relevant error feedback. By streamlining the sign-in process, users no longer need to waste time figuring out which button to click to switch their desired login method. This reduces the risk of errors and ensures a smoother sign-in experience.
+
+- 343b1090f: Implement a country code selector dropdown component with search box. Users may able to quick search for a country code by typing in the search box.
+- 1c9160112: ### Features
+
+  - Enhanced user search params #2639
+  - Web hooks
+
+  ### Improvements
+
+  - Refactored Interaction APIs and Audit logs
+
+## 1.0.0-rc.1
+
+### Minor Changes
+
+- c12717412: ## Creating your social connector with ease
+
+  We’re excited to announce that Logto now supports standard protocols (SAML, OIDC, and OAuth2.0) for creating social connectors to integrate external identity providers. Each protocol can create multiple social connectors, giving you more control over your access needs.
+
+  To simplify the process of configuring social connectors, we’re replacing code-edit with simple forms. SAML already supports form configuration, with other connectors coming soon. This means you don’t need to compare documents or worry about code format.
+
+- c12717412: Added Russian translation.
+- c12717412: ## Smart Identifier Input designed to streamline your sign-in experience
+
+  - Smart Contact Input
+  - Smart Identifier Input
+  - Intelligent Identifier Input Field
+
+  Content:
+  We have integrated the traditional input fields for username, phone number, and email into a single intelligent input box. This advanced input box automatically identifies the type of characters you’re entering, such as an @ sign or consecutive numbers, and provides relevant error feedback. By streamlining the sign-in process, users no longer need to waste time figuring out which button to click to switch their desired login method. This reduces the risk of errors and ensures a smoother sign-in experience.
+
+## 1.0.0-beta.17
+
+### Major Changes
+
+- 1c916011: Packages are now ESM.
+
+### Minor Changes
+
+- 1c916011: ### Features
+
+  - Enhanced user search params #2639
+  - Web hooks
+
+  ### Improvements
+
+  - Refactored Interaction APIs and Audit logs
+
+## 1.0.0-beta.13
+
+### Minor Changes
+
+- 68f2d56a: Add German language
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [1.0.0-beta.12](https://github.com/logto-io/logto/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2022-10-19)
+
+### Bug Fixes
+
+- make packages public ([e24fd04](https://github.com/logto-io/logto/commit/e24fd0479bc20c92bd38b5e214abe441404ce496))
+
+## [1.0.0-beta.11](https://github.com/logto-io/logto/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2022-10-19)
+
+### Features
+
+- **console:** manage language ([#1981](https://github.com/logto-io/logto/issues/1981)) ([48832e5](https://github.com/logto-io/logto/commit/48832e50548421b876deaf10b1d3379674e7f562))
+- **core,phrases:** add GET /phrase route ([#1959](https://github.com/logto-io/logto/issues/1959)) ([7ce55a8](https://github.com/logto-io/logto/commit/7ce55a8458166d1ca7453f3f637aed202860bf6c))
+- **ui:** add reset password error handling flow ([#2079](https://github.com/logto-io/logto/issues/2079)) ([afa2ac4](https://github.com/logto-io/logto/commit/afa2ac47ee461e3526f61594e456d484fd3166af))
+
+## [1.0.0-beta.10](https://github.com/logto-io/logto/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2022-09-28)
+
+### Features
+
+- **ui:** add forget password page ([#1943](https://github.com/logto-io/logto/issues/1943)) ([39d80d9](https://github.com/logto-io/logto/commit/39d80d991235c93346c26977541d3c7040379a13))
+- **ui:** add passwordless switch ([#1976](https://github.com/logto-io/logto/issues/1976)) ([ddb0e47](https://github.com/logto-io/logto/commit/ddb0e47950b3bd7f92af2a8a5e14b201e0a10ed7))
+- **ui:** add reset password page ([#1961](https://github.com/logto-io/logto/issues/1961)) ([ff81b0f](https://github.com/logto-io/logto/commit/ff81b0f83e86dd3686341d3612f3f5e8f075cba6))
+
+### Bug Fixes
+
+- bump react sdk and essentials toolkit to support CJK characters in idToken ([2f92b43](https://github.com/logto-io/logto/commit/2f92b438644bd330fa4b8cd3698d9129ecbae282))
+- **phrases:** phrases-ui typo and types ([#1948](https://github.com/logto-io/logto/issues/1948)) ([2f373db](https://github.com/logto-io/logto/commit/2f373db8e43bc243973d2171867ee6e2169d280f))
+
+## [1.0.0-beta.9](https://github.com/logto-io/logto/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2022-09-07)
+
+### Features
+
+- add Portuguese translation ([f268ecb](https://github.com/logto-io/logto/commit/f268ecb1a8d57d1e33225bec8852f3bc377dd478))
+
+## [1.0.0-beta.8](https://github.com/logto-io/logto/compare/v1.0.0-beta.6...v1.0.0-beta.8) (2022-09-01)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+## [1.0.0-beta.6](https://github.com/logto-io/logto/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2022-08-30)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+## [1.0.0-beta.5](https://github.com/logto-io/logto/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2022-08-19)
+
+### Features
+
+- **phrases:** add french language ([#1767](https://github.com/logto-io/logto/issues/1767)) ([0503b30](https://github.com/logto-io/logto/commit/0503b30121b724040b0b052a031c680b8853b25c))
+
+## [1.0.0-beta.4](https://github.com/logto-io/logto/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2022-08-11)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+## [1.0.0-beta.3](https://github.com/logto-io/logto/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2022-08-01)
+
+### Features
+
+- **phrases:** tr language ([#1707](https://github.com/logto-io/logto/issues/1707)) ([411a8c2](https://github.com/logto-io/logto/commit/411a8c2fa2bfb16c4fef5f0a55c3c1dc5ead1124))
+
+## [1.0.0-beta.2](https://github.com/logto-io/logto/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2022-07-25)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+## [1.0.0-beta.1](https://github.com/logto-io/logto/compare/v1.0.0-beta.0...v1.0.0-beta.1) (2022-07-19)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+## [1.0.0-beta.0](https://github.com/logto-io/logto/compare/v1.0.0-alpha.4...v1.0.0-beta.0) (2022-07-14)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+### [0.1.2-alpha.5](https://github.com/logto-io/logto/compare/v0.1.2-alpha.4...v0.1.2-alpha.5) (2022-07-03)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+### [0.1.2-alpha.1](https://github.com/logto-io/logto/compare/v0.1.2-alpha.0...v0.1.2-alpha.1) (2022-07-02)
+
+**Note:** Version bump only for package @logto/phrases-ui
+
+### [0.1.1-alpha.0](https://github.com/logto-io/logto/compare/v0.1.0-internal...v0.1.1-alpha.0) (2022-07-01)
+
+### Features
+
+- **shared,phrases-ui:** not allow hyphens in username ([#1319](https://github.com/logto-io/logto/issues/1319)) ([5e81966](https://github.com/logto-io/logto/commit/5e819665c7c1d584ff5cff25e4e0723122be78b2))

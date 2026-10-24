@@ -1,0 +1,1 @@
+import{t as e}from"./form-handoff.GG9AjiXK.js";var t=e(`contact`,[`firstName`]),n=document.getElementById(`sent-thanks`);n&&t?.firstName&&(n.textContent=`Thanks, ${t.firstName}.`);

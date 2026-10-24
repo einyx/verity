@@ -1,0 +1,253 @@
+import {
+  ConnectorType,
+  type ConnectorFactoryResponse,
+  type ConnectorResponse,
+} from '@logto/schemas';
+import { useMemo, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import Modal from 'react-modal';
+import useSWR from 'swr';
+
+import ExternalLink from '@/assets/icons/external-link.svg?react';
+import LogtoEmailLogoDark from '@/assets/icons/logto-email-service-dark.svg?url';
+import LogtoEmailLogo from '@/assets/icons/logto-email-service.svg?url';
+import ConnectorLogo from '@/components/ConnectorLogo';
+import { isCloud } from '@/consts/env';
+import Button from '@/ds-components/Button';
+import DangerousRaw from '@/ds-components/DangerousRaw';
+import DynamicT from '@/ds-components/DynamicT';
+import ModalLayout from '@/ds-components/ModalLayout';
+import TextLink from '@/ds-components/TextLink';
+import type { RequestError } from '@/hooks/use-api';
+import useDocumentationUrl from '@/hooks/use-documentation-url';
+import modalStyles from '@/scss/modal.module.scss';
+import { buildCloudUpsellUrl, buildSelfHostedPlansUrl, ossUpsellEntries } from '@/utils/oss-upsell';
+
+import { getConnectorGroups } from '../../pages/Connectors/utils';
+
+import ConnectorRadioGroup from './ConnectorRadioGroup';
+import Footer from './Footer';
+import PlatformSelector from './PlatformSelector';
+import Skeleton from './Skeleton';
+import styles from './index.module.scss';
+import {
+  compareConnectors,
+  getEmailConnectorUpsellCopyKeys,
+  getConnectorRadioGroupSize,
+  getModalTitle,
+  shouldShowEmailConnectorUpsellBanner,
+} from './utils';
+
+type Props = {
+  readonly isOpen: boolean;
+  readonly type?: ConnectorType;
+  readonly onClose?: (connectorId?: string) => void;
+};
+
+function EmailConnectorUpsellBanner() {
+  const { t } = useTranslation(undefined, {
+    keyPrefix: 'admin_console',
+  });
+  const copyKeys = getEmailConnectorUpsellCopyKeys();
+  const entry = ossUpsellEntries.connectorEmailBuiltinUpsellBanner;
+  const cloudUpsellUrl = buildCloudUpsellUrl(entry);
+  const selfHostedPlansUrl = buildSelfHostedPlansUrl(entry);
+
+  return (
+    <div className={styles.upsellBanner}>
+      <div className={styles.upsellInfo}>
+        <ConnectorLogo data={{ logo: LogtoEmailLogo, logoDark: LogtoEmailLogoDark }} />
+        <div className={styles.upsellContent}>
+          <div className={styles.upsellTitle}>
+            <DynamicT forKey={copyKeys.title} />
+          </div>
+          <div className={styles.upsellDescription}>
+            <DynamicT forKey={copyKeys.description} />
+          </div>
+        </div>
+      </div>
+      <div className={styles.upsellActions}>
+        <Button
+          className={styles.upsellButton}
+          type="primary"
+          title={<DangerousRaw>{t(copyKeys.action, { productName: 'Logto Cloud' })}</DangerousRaw>}
+          trailingIcon={<ExternalLink />}
+          onClick={() => {
+            window.open(cloudUpsellUrl, '_blank', 'noopener,noreferrer');
+          }}
+        />
+        <TextLink className={styles.cloudAction} to={selfHostedPlansUrl}>
+          {t(copyKeys.secondaryAction)}
+        </TextLink>
+      </div>
+    </div>
+  );
+}
+
+function CreateConnectorForm({ onClose, isOpen: isFormOpen, type }: Props) {
+  const { data: existingConnectors, error: connectorsError } = useSWR<
+    ConnectorResponse[],
+    RequestError
+  >('api/connectors');
+  const { data: factories, error: factoriesError } = useSWR<
+    ConnectorFactoryResponse[],
+    RequestError
+  >('api/connector-factories');
+  const isLoading = !factories && !existingConnectors && !connectorsError && !factoriesError;
+  const [activeGroupId, setActiveGroupId] = useState<string>();
+  const [activeFactoryId, setActiveFactoryId] = useState<string>();
+  const isCreatingSocialConnector = type === ConnectorType.Social;
+  const { getDocumentationUrl } = useDocumentationUrl();
+  const { t } = useTranslation(undefined, {
+    keyPrefix: 'admin_console',
+  });
+
+  const groups = useMemo(() => {
+    if (!factories || !existingConnectors) {
+      return [];
+    }
+
+    const allGroups = getConnectorGroups<ConnectorFactoryResponse>(
+      factories
+        .filter(({ type: factoryType, isDemo }) => factoryType === type && !isDemo)
+        // Hide the entrance of adding SAML social connectors, users should go to Enterprise SSO if they want to use SAML.
+        // Should not remove the SAML factory from GET /connector-factories API, since that could break the existing SAML connectors.
+        .filter(({ id }) => id !== 'saml')
+    );
+
+    return allGroups
+      .map((group) => ({
+        ...group,
+        connectors: group.connectors.map((connector) => ({
+          ...connector,
+          added:
+            !group.isStandard &&
+            existingConnectors.some(({ connectorId }) => connector.id === connectorId),
+        })),
+      }))
+      .filter(({ connectors }) => !connectors.every(({ added }) => added))
+      .slice()
+      .sort(compareConnectors);
+  }, [factories, type, existingConnectors]);
+
+  const shouldShowEmailConnectorUpsellBannerValue = shouldShowEmailConnectorUpsellBanner({
+    type,
+    isCloud,
+  });
+
+  const activeGroup = useMemo(
+    () => groups.find(({ id }) => id === activeGroupId),
+    [activeGroupId, groups]
+  );
+
+  const cardTitle = useMemo(() => getModalTitle(type), [type]);
+  const radioGroupSize = useMemo(
+    () => getConnectorRadioGroupSize(groups.length, type),
+    [groups.length, type]
+  );
+
+  const handleGroupChange = (groupId: string) => {
+    setActiveGroupId(groupId);
+
+    const group = groups.find(({ id }) => id === groupId);
+
+    if (!group) {
+      return;
+    }
+
+    const firstAvailableConnector = group.connectors.find(({ added }) => !added);
+
+    setActiveFactoryId(firstAvailableConnector?.id);
+  };
+
+  const defaultGroups = useMemo(
+    () => (isCreatingSocialConnector ? groups.filter((group) => !group.isStandard) : groups),
+    [groups, isCreatingSocialConnector]
+  );
+
+  const standardGroups = useMemo(() => groups.filter((group) => group.isStandard), [groups]);
+
+  if (!isFormOpen) {
+    return null;
+  }
+
+  return (
+    <Modal
+      shouldCloseOnEsc
+      isOpen={isFormOpen}
+      className={modalStyles.content}
+      overlayClassName={modalStyles.overlay}
+      onRequestClose={() => {
+        onClose?.();
+      }}
+    >
+      <ModalLayout
+        title={cardTitle}
+        subtitle={
+          <div className={styles.label}>
+            <Trans
+              components={{
+                a: (
+                  <TextLink
+                    href={getDocumentationUrl('/integrations')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            >
+              {t('connectors.create_form.third_party_connectors')}
+            </Trans>
+          </div>
+        }
+        footer={
+          existingConnectors && (
+            <Footer
+              isCreateButtonDisabled={!activeFactoryId}
+              onClickCreateButton={() => {
+                onClose?.(activeFactoryId);
+              }}
+            />
+          )
+        }
+        size={radioGroupSize}
+        onClose={onClose}
+      >
+        {isLoading && <Skeleton />}
+        {factoriesError?.message ?? connectorsError?.message}
+        {shouldShowEmailConnectorUpsellBannerValue && <EmailConnectorUpsellBanner />}
+
+        <ConnectorRadioGroup
+          name="group"
+          groups={defaultGroups}
+          value={activeGroupId}
+          size={radioGroupSize}
+          onChange={handleGroupChange}
+        />
+        {activeGroup && (
+          <PlatformSelector
+            connectorGroup={activeGroup}
+            connectorId={activeFactoryId}
+            onConnectorIdChange={setActiveFactoryId}
+          />
+        )}
+        {standardGroups.length > 0 && (
+          <>
+            <div className={styles.label}>
+              <DynamicT forKey="connectors.create_form.standard_connectors" />
+            </div>
+            <ConnectorRadioGroup
+              name="group"
+              groups={standardGroups}
+              value={activeGroupId}
+              size={radioGroupSize}
+              onChange={handleGroupChange}
+            />
+          </>
+        )}
+      </ModalLayout>
+    </Modal>
+  );
+}
+
+export default CreateConnectorForm;

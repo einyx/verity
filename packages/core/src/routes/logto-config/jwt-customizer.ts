@@ -1,0 +1,230 @@
+import {
+  LogtoJwtTokenKey,
+  LogtoJwtTokenKeyType,
+  accessTokenJwtCustomizerGuard,
+  adminTenantId,
+  clientCredentialsJwtCustomizerGuard,
+  jsonObjectGuard,
+  jwtCustomizerConfigsGuard,
+  jwtCustomizerTestRequestBodyGuard,
+} from '@logto/schemas';
+import { removeUndefinedKeys } from '@silverhand/essentials';
+import { ResponseError } from '@withtyped/client';
+import { ZodError, z } from 'zod';
+
+import { EnvSet } from '#src/env-set/index.js';
+import RequestError, { formatZodError } from '#src/errors/RequestError/index.js';
+import { JwtCustomizerLibrary } from '#src/libraries/jwt-customizer.js';
+import koaGuard, { parse } from '#src/middleware/koa-guard.js';
+import { koaQuotaGuard } from '#src/middleware/koa-quota-guard.js';
+import { getConsoleLogFromContext } from '#src/utils/console.js';
+import { isAccessDeniedError, parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
+
+import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
+
+const getJwtTokenKeyAndBody = (tokenPath: LogtoJwtTokenKeyType, body: unknown) => {
+  if (tokenPath === LogtoJwtTokenKeyType.AccessToken) {
+    return {
+      key: LogtoJwtTokenKey.AccessToken,
+      body: parse('body', accessTokenJwtCustomizerGuard, body),
+    };
+  }
+  return {
+    key: LogtoJwtTokenKey.ClientCredentials,
+    body: parse('body', clientCredentialsJwtCustomizerGuard, body),
+  };
+};
+
+export default function logtoConfigJwtCustomizerRoutes<T extends ManagementApiRouter>(
+  ...[router, { id: tenantId, queries, logtoConfigs, libraries }]: RouterInitArgs<T>
+) {
+  const { getRowsByKeys, deleteJwtCustomizer } = queries.logtoConfigs;
+  const { upsertJwtCustomizer, getJwtCustomizer, getJwtCustomizers, updateJwtCustomizer } =
+    logtoConfigs;
+
+  router.put(
+    '/configs/jwt-customizer/:tokenTypePath',
+    koaGuard({
+      params: z.object({
+        tokenTypePath: z.nativeEnum(LogtoJwtTokenKeyType),
+      }),
+      /**
+       * Use `z.unknown()` to guard the request body as a JSON object, since the actual guard depends
+       * on the `tokenTypePath` and we can not get the value of `tokenTypePath` before parsing the request body,
+       * we will do more specific guard as long as we can get the value of `tokenTypePath`.
+       *
+       * Should specify `body` in koaGuard, otherwise the request body is not accessible even via `ctx.request.body`.
+       */
+      body: z.unknown(),
+      response: accessTokenJwtCustomizerGuard.or(clientCredentialsJwtCustomizerGuard),
+      status: [200, 201, 400, 403],
+    }),
+    koaQuotaGuard({ key: 'customJwtEnabled', quota: libraries.quota }),
+    async (ctx, next) => {
+      const { isCloud, isIntegrationTest } = EnvSet.values;
+      if (tenantId === adminTenantId && isCloud && !isIntegrationTest) {
+        throw new RequestError({
+          code: 'jwt_customizer.can_not_create_for_admin_tenant',
+          status: 422,
+        });
+      }
+
+      const {
+        params: { tokenTypePath },
+        body: rawBody,
+      } = ctx.guard;
+
+      const { key, body } = getJwtTokenKeyAndBody(tokenTypePath, rawBody);
+
+      const { rows } = await getRowsByKeys([key]);
+
+      const jwtCustomizer = await upsertJwtCustomizer(key, body);
+
+      if (rows.length === 0) {
+        ctx.status = 201;
+      }
+
+      ctx.body = jwtCustomizer.value;
+
+      return next();
+    }
+  );
+
+  router.patch(
+    '/configs/jwt-customizer/:tokenTypePath',
+    // See comments in the `PUT /configs/jwt-customizer/:tokenTypePath` route, handle the request body manually.
+    koaGuard({
+      params: z.object({
+        tokenTypePath: z.nativeEnum(LogtoJwtTokenKeyType),
+      }),
+      body: z.unknown(),
+      response: accessTokenJwtCustomizerGuard.or(clientCredentialsJwtCustomizerGuard),
+      status: [200, 400, 404],
+    }),
+    koaQuotaGuard({ key: 'customJwtEnabled', quota: libraries.quota }),
+    async (ctx, next) => {
+      const {
+        params: { tokenTypePath },
+        body: rawBody,
+      } = ctx.guard;
+      const { key, body } = getJwtTokenKeyAndBody(tokenTypePath, rawBody);
+
+      ctx.body = await updateJwtCustomizer(key, body);
+
+      return next();
+    }
+  );
+
+  router.get(
+    '/configs/jwt-customizer',
+    koaGuard({
+      response: jwtCustomizerConfigsGuard.array(),
+      status: [200],
+    }),
+    async (ctx, next) => {
+      const jwtCustomizer = await getJwtCustomizers(getConsoleLogFromContext(ctx));
+      ctx.body = Object.values(LogtoJwtTokenKey)
+        .filter((key) => jwtCustomizer[key])
+        .map((key) => ({ key, value: jwtCustomizer[key] }));
+      return next();
+    }
+  );
+
+  router.get(
+    '/configs/jwt-customizer/:tokenTypePath',
+    koaGuard({
+      params: z.object({
+        tokenTypePath: z.nativeEnum(LogtoJwtTokenKeyType),
+      }),
+      response: accessTokenJwtCustomizerGuard.or(clientCredentialsJwtCustomizerGuard),
+      status: [200, 404],
+    }),
+    async (ctx, next) => {
+      const {
+        params: { tokenTypePath },
+      } = ctx.guard;
+      ctx.body = await getJwtCustomizer(
+        tokenTypePath === LogtoJwtTokenKeyType.AccessToken
+          ? LogtoJwtTokenKey.AccessToken
+          : LogtoJwtTokenKey.ClientCredentials
+      );
+      return next();
+    }
+  );
+
+  router.delete(
+    '/configs/jwt-customizer/:tokenTypePath',
+    koaGuard({
+      params: z.object({
+        tokenTypePath: z.nativeEnum(LogtoJwtTokenKeyType),
+      }),
+      status: [204, 404],
+    }),
+    async (ctx, next) => {
+      const {
+        params: { tokenTypePath },
+      } = ctx.guard;
+
+      const tokenKey =
+        tokenTypePath === LogtoJwtTokenKeyType.AccessToken
+          ? LogtoJwtTokenKey.AccessToken
+          : LogtoJwtTokenKey.ClientCredentials;
+
+      await deleteJwtCustomizer(tokenKey);
+      ctx.status = 204;
+      return next();
+    }
+  );
+
+  router.post(
+    '/configs/jwt-customizer/test',
+    koaGuard({
+      body: jwtCustomizerTestRequestBodyGuard,
+      response: jsonObjectGuard,
+      status: [200, 400, 403, 422],
+    }),
+    koaQuotaGuard({ key: 'customJwtEnabled', quota: libraries.quota }),
+    async (ctx, next) => {
+      const { body } = ctx.guard;
+
+      try {
+        ctx.body = EnvSet.values.isCloud
+          ? await libraries.jwtCustomizers.runScriptRemotely(body, true)
+          : removeUndefinedKeys(await JwtCustomizerLibrary.runScriptLocally(body, tenantId));
+      } catch (error: unknown) {
+        /**
+         * Both execution paths surface failures as a withtyped `ResponseError`:
+         *
+         * - Remote runs map the Cloud script-run failure onto a `ScriptExecutionError`, and any
+         *   other cloud connection failure throws `ResponseError` directly.
+         * - Local runs throw `ScriptExecutionError`, which extends `ResponseError`.
+         *
+         * In the admin console, we caught the error and recognized the error with the code `jwt_customizer.general`,
+         * and then we extract and show the error message to the user.
+         */
+        if (error instanceof ResponseError) {
+          const responseBody = await parseCustomJwtResponseError(error);
+          const { message, error: originalError } = responseBody;
+
+          const status = isAccessDeniedError(originalError) ? 403 : 422;
+
+          throw new RequestError(
+            { code: 'jwt_customizer.general', status },
+            { message, error: originalError }
+          );
+        }
+
+        if (error instanceof ZodError) {
+          throw new RequestError(
+            { code: 'jwt_customizer.general', status: 422 },
+            { message: formatZodError(error) }
+          );
+        }
+
+        throw error;
+      }
+
+      return next();
+    }
+  );
+}

@@ -1,0 +1,75 @@
+import { OneTimeTokenStatus, type InteractionEvent } from '@logto/schemas';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import type Queries from '#src/tenants/Queries.js';
+import assertThat from '#src/utils/assert-that.js';
+
+export const createOneTimeTokenLibrary = (queries: Queries) => {
+  const {
+    updateOneTimeTokenStatus: updateOneTimeTokenStatusQuery,
+    getOneTimeTokenById,
+    getOneTimeTokenByToken,
+  } = queries.oneTimeTokens;
+
+  const updateOneTimeTokenStatusById = async (id: string, status: OneTimeTokenStatus) => {
+    const oneTimeToken = await getOneTimeTokenById(id);
+
+    return updateOneTimeTokenStatus(oneTimeToken.token, status);
+  };
+  const updateOneTimeTokenStatus = async (token: string, status: OneTimeTokenStatus) => {
+    assertThat(status !== OneTimeTokenStatus.Active, 'one_time_token.cannot_reactivate_token');
+
+    return updateOneTimeTokenStatusQuery(token, status);
+  };
+
+  const checkOneTimeToken = async (
+    token: string,
+    email: string,
+    expectedInteractionEvent?: InteractionEvent
+  ) => {
+    const oneTimeToken = await getOneTimeTokenByToken(token);
+
+    assertThat(oneTimeToken.email === email, 'one_time_token.email_mismatch');
+
+    if (
+      oneTimeToken.expiresAt <= Date.now() ||
+      oneTimeToken.status === OneTimeTokenStatus.Expired
+    ) {
+      if (oneTimeToken.status === OneTimeTokenStatus.Active) {
+        void updateOneTimeTokenStatus(token, OneTimeTokenStatus.Expired);
+      }
+      throw new RequestError('one_time_token.token_expired');
+    }
+
+    assertThat(
+      oneTimeToken.status !== OneTimeTokenStatus.Consumed,
+      'one_time_token.token_consumed'
+    );
+    assertThat(oneTimeToken.status !== OneTimeTokenStatus.Revoked, 'one_time_token.token_revoked');
+    assertThat(
+      !expectedInteractionEvent ||
+        !oneTimeToken.context.interactionEvent ||
+        oneTimeToken.context.interactionEvent === expectedInteractionEvent,
+      'one_time_token.interaction_event_mismatch'
+    );
+
+    return oneTimeToken;
+  };
+
+  const verifyOneTimeToken = async (
+    token: string,
+    email: string,
+    expectedInteractionEvent?: InteractionEvent
+  ) => {
+    await checkOneTimeToken(token, email, expectedInteractionEvent);
+
+    return updateOneTimeTokenStatus(token, OneTimeTokenStatus.Consumed);
+  };
+
+  return {
+    checkOneTimeToken,
+    updateOneTimeTokenStatus,
+    updateOneTimeTokenStatusById,
+    verifyOneTimeToken,
+  };
+};

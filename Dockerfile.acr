@@ -1,0 +1,73 @@
+# syntax=docker/dockerfile:1.7
+
+###### [STAGE] Build ######
+FROM node:24-alpine AS builder
+ENV NODE_OPTIONS=--max-old-space-size=8192
+ENV NODE_OPTIONS=--max-old-space-size=8192
+ENV NODE_OPTIONS=--max-old-space-size=8192
+WORKDIR /etc/logto
+ENV CI=true
+
+# No need for Docker build
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+### Install toolchain ###
+RUN npm add --location=global pnpm@^11.0.0
+# https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#node-gyp-alpine
+RUN apk add --no-cache python3 make g++ rsync
+
+# Copy the workspace in one layer to avoid exhausting the ACR builder's layer depth.
+# This includes connector templates required by the install-time preset sync.
+# Source changes also invalidate the dependency-install cache.
+COPY . .
+
+### Install dependencies ###
+RUN pnpm i --frozen-lockfile
+
+### Set if dev features enabled ###
+ARG dev_features_enabled
+ENV DEV_FEATURES_ENABLED=${dev_features_enabled}
+
+ARG applicationinsights_connection_string
+ENV APPLICATIONINSIGHTS_CONNECTION_STRING=${applicationinsights_connection_string}
+
+ARG logto_oss_survey_endpoint=
+ENV LOGTO_OSS_SURVEY_ENDPOINT=${logto_oss_survey_endpoint}
+
+# Only what the image runs: core, its workspace dependencies (console, experience, account, cli, ...),
+# and the connectors. Packages outside this set (api, create, elements, translate, tunnel, integration
+# tests) are not needed at runtime. The `...` suffix also builds every dependency of core.
+# pnpm 11 checks the lockfile before every run and fails on the `pnpm` field in package.json, which
+# the install above already applied. The dependencies are installed, so skip only that check for the
+# rest of the image build.
+ENV pnpm_config_verify_deps_before_run=false
+# Cloud console build: the flag is used for this build step only and is not kept in the runtime environment.
+ARG is_cloud=1
+RUN IS_CLOUD=${is_cloud} pnpm -r --filter "@logto/core..." --filter "@meshx/cloud..." --filter "./packages/connectors/connector-*" build
+
+### Add official connectors ###
+ARG additional_connector_args
+ENV ADDITIONAL_CONNECTOR_ARGS=${additional_connector_args}
+RUN pnpm cli connector link $ADDITIONAL_CONNECTOR_ARGS -p .
+
+### Prune dependencies for production ###
+# Keep prune + production install in one layer to avoid extra transient disk usage.
+RUN \
+  rm -rf node_modules packages/**/node_modules && NODE_ENV=production pnpm i
+
+### Clean up ###
+RUN rm -rf .scripts pnpm-*.yaml
+
+###### [STAGE] Seal ######
+FROM node:24-alpine AS app
+WORKDIR /etc/logto
+ARG logto_oss_survey_endpoint=
+ARG private_key_rotation_grace_period=0
+# Default to empty so external survey relaying stays opt-in for controlled builds/environments.
+ENV LOGTO_OSS_SURVEY_ENDPOINT=${logto_oss_survey_endpoint}
+ENV PRIVATE_KEY_ROTATION_GRACE_PERIOD=${private_key_rotation_grace_period}
+COPY --from=builder /etc/logto .
+RUN mkdir -p /etc/logto/packages/cli/alteration-scripts && chmod g+w /etc/logto/packages/cli/alteration-scripts
+EXPOSE 3001
+ENTRYPOINT ["npm", "run"]
+CMD ["start"]

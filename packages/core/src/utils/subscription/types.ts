@@ -1,0 +1,211 @@
+import type router from '@logto/cloud/routes';
+import { type ToZodObject } from '@logto/connector-kit';
+import { type LicenseQuota, type ReservedPlanId, type SelfHostedPlanId } from '@logto/schemas';
+import { type RouterRoutes } from '@withtyped/client';
+import { z, type ZodType } from 'zod';
+
+type GetRoutes = RouterRoutes<typeof router>['get'];
+type PostRoutes = RouterRoutes<typeof router>['post'];
+
+type RouteResponseType<T extends { search?: unknown; body?: unknown; response?: ZodType }> =
+  z.infer<NonNullable<T['response']>>;
+type RouteRequestBodyType<T extends { search?: unknown; body?: ZodType; response?: unknown }> =
+  z.infer<NonNullable<T['body']>>;
+
+type CompleteSubscription = RouteResponseType<GetRoutes['/api/tenants/my/subscription']>;
+type CompleteSubscriptionUsage = RouteResponseType<GetRoutes['/api/tenants/my/subscription-usage']>;
+
+export const actionQuotaKey = 'actionsEnabled' satisfies keyof CompleteSubscription['quota'];
+
+export type SubscriptionQuota = Omit<
+  CompleteSubscriptionUsage['quota'],
+  | 'auditLogsRetentionDays'
+  // Drop once `@logto/cloud` no longer declares the legacy Actions quota key.
+  | 'inlineHooksEnabled'
+  // Since we are deprecating the `organizationsEnabled` key soon (use `organizationsLimit` instead), we exclude it from the usage keys for now to avoid confusion.
+  | 'organizationsEnabled'
+>;
+
+/**
+ * The subscription data is fetched from the Cloud API.
+ * All the dates are in ISO 8601 format, we need to manually fix the type to string here.
+ */
+export type Subscription = Omit<
+  CompleteSubscription,
+  | 'currentPeriodStart'
+  | 'currentPeriodEnd'
+  | 'quota'
+  /**
+   * Temporarily omit `quotaScope` for backward compatibility.
+   * When we require this field, implement the related logic here.
+   * TODO: @simeng-li
+   */
+  | 'quotaScope'
+> & {
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  quota: SubscriptionQuota;
+};
+
+/**
+ * The entitlements of a self-hosted deployment, derived from the license installed on it instead of
+ * fetched from the Cloud. Read through `SubscriptionLibrary.getSelfHostedSubscription()`; the Cloud
+ * shape stays with `SubscriptionLibrary.getSubscriptionData()`.
+ *
+ * The envelope mirrors {@link Subscription}, so a caller that only reads `planId`,
+ * `isEnterprisePlan` or `status` can treat either source the same. The quota deliberately does not:
+ * a license grants a small, fixed set of self-hosted entitlements rather than a Cloud SKU quota, and
+ * the two vocabularies are disjoint apart from `samlApplicationsLimit`. The names follow the license
+ * payload (`bringYourUi`, not `bringYourUiEnabled`), and `licenseQuotaGuard` in `@logto/schemas` is
+ * their single definition.
+ */
+export type SelfHostedSubscription = {
+  /** The self-hosted plan a license grants, or the OSS default without one. */
+  planId: SelfHostedPlanId | ReservedPlanId.Development;
+  /**
+   * When the installed key was signed, in ISO 8601 format. Without a license there is no period: both
+   * ends are the time of the read rather than a window, so no entitlement can be read out of them.
+   */
+  currentPeriodStart: string;
+  /** When the installed key expires, in ISO 8601 format. Without a license, the time of the read. */
+  currentPeriodEnd: string;
+  /** Whether the plan is the self-hosted Enterprise one. */
+  isEnterprisePlan: boolean;
+  /** An installed license keeps its entitlements until the refresh grace runs out. */
+  status: 'active';
+  /** The effective entitlements: the OSS defaults with the key's overrides applied. */
+  quota: LicenseQuota;
+  /** Empty: system limits only exist on Cloud. Carried so the envelope matches {@link Subscription}. */
+  systemLimit: SystemLimit;
+};
+
+export type SubscriptionUsage = Omit<
+  CompleteSubscriptionUsage['usage'],
+  // Drop once `@logto/cloud` no longer declares the legacy Actions quota key.
+  | 'inlineHooksEnabled'
+  // Since we are deprecating the `organizationsEnabled` key soon (use `organizationsLimit` instead), we exclude it from the usage keys for now to avoid confusion.
+  | 'organizationsEnabled'
+>;
+
+export type ReportSubscriptionUpdatesUsageKey = Exclude<
+  RouteRequestBodyType<PostRoutes['/api/tenants/my/subscription/item-updates']>['usageKey'],
+  // Since we are deprecating the `organizationsEnabled` key soon (use `organizationsLimit` instead), we exclude it from the usage keys for now to avoid confusion.
+  'organizationsEnabled'
+>;
+
+// Have to manually define this variable since we can only get the literal union from the @logto/cloud/routes module.
+export const allReportSubscriptionUpdatesUsageKeys = Object.freeze([
+  'machineToMachineLimit',
+  'resourcesLimit',
+  'mfaEnabled',
+  'organizationsLimit',
+  'tenantMembersLimit',
+  'enterpriseSsoLimit',
+  'hooksLimit',
+  'securityFeaturesEnabled',
+  'thirdPartyApplicationsLimit',
+  'userRolesLimit',
+  'machineToMachineRolesLimit',
+  'samlApplicationsLimit',
+  'customDomainsLimit',
+]) satisfies readonly ReportSubscriptionUpdatesUsageKey[];
+
+const subscriptionStatusGuard = z.enum([
+  'incomplete',
+  'incomplete_expired',
+  'trialing',
+  'active',
+  'past_due',
+  'canceled',
+  'unpaid',
+  'paused',
+]);
+
+const upcomingInvoiceGuard = z.object({
+  subtotal: z.number(),
+  subtotalExcludingTax: z.number().nullable(),
+  total: z.number(),
+  totalExcludingTax: z.number().nullable(),
+}) satisfies ToZodObject<Subscription['upcomingInvoice']>;
+
+const logtoSkuQuotaGuard = z.object({
+  mauLimit: z.number().nullable(),
+  applicationsLimit: z.number().nullable(),
+  thirdPartyApplicationsLimit: z.number().nullable(),
+  scopesPerResourceLimit: z.number().nullable(),
+  socialConnectorsLimit: z.number().nullable(),
+  userRolesLimit: z.number().nullable(),
+  machineToMachineRolesLimit: z.number().nullable(),
+  scopesPerRoleLimit: z.number().nullable(),
+  hooksLimit: z.number().nullable(),
+  auditLogsRetentionDays: z.number().nullable(),
+  customJwtEnabled: z.boolean(),
+  actionsEnabled: z.boolean(),
+  subjectTokenEnabled: z.boolean(),
+  bringYourUiEnabled: z.boolean(),
+  collectUserProfileEnabled: z.boolean(),
+  passkeySignInEnabled: z.boolean(),
+  tokenLimit: z.number().nullable(),
+  hostedEmailLimit: z.number().nullable(),
+  hostedEmailDailyLimit: z.number().nullable(),
+  machineToMachineLimit: z.number().nullable(),
+  resourcesLimit: z.number().nullable(),
+  enterpriseSsoLimit: z.number().nullable(),
+  consoleSsoConnectorLimit: z.number().nullable(),
+  tenantMembersLimit: z.number().nullable(),
+  mfaEnabled: z.boolean(),
+  organizationsEnabled: z.boolean(),
+  organizationsLimit: z.number().nullable(),
+  idpInitiatedSsoEnabled: z.boolean(),
+  samlApplicationsLimit: z.number().nullable(),
+  securityFeaturesEnabled: z.boolean(),
+  customDomainsLimit: z.number().nullable(),
+}) satisfies ToZodObject<SubscriptionQuota>;
+
+const systemLimitGuard = z
+  .object({
+    applicationsLimit: z.number(),
+    thirdPartyApplicationsLimit: z.number(),
+    scopesPerResourceLimit: z.number(),
+    socialConnectorsLimit: z.number(),
+    userRolesLimit: z.number(),
+    machineToMachineRolesLimit: z.number(),
+    scopesPerRoleLimit: z.number(),
+    hooksLimit: z.number(),
+    machineToMachineLimit: z.number(),
+    resourcesLimit: z.number(),
+    enterpriseSsoLimit: z.number(),
+    tenantMembersLimit: z.number(),
+    organizationsLimit: z.number(),
+    samlApplicationsLimit: z.number(),
+    usersPerOrganizationLimit: z.number(),
+    organizationUserRolesLimit: z.number(),
+    organizationMachineToMachineRolesLimit: z.number(),
+    organizationScopesLimit: z.number(),
+    customDomainsLimit: z.number(),
+  })
+  .partial() satisfies ToZodObject<Subscription['systemLimit']>;
+
+export type SystemLimit = z.infer<typeof systemLimitGuard>;
+
+/**
+ * Redis cache guard for the subscription data returned from the Cloud API `/api/tenants/my/subscription`.
+ * Logto core does not have access to the zod guard of the subscription data in Cloud,
+ * so we need to manually define the guard here,
+ * it should be kept in sync with the Cloud API response.
+ */
+export const subscriptionCacheGuard = z.object({
+  id: z.string().optional(),
+  planId: z.string(),
+  currentPeriodStart: z.string(),
+  currentPeriodEnd: z.string(),
+  isEnterprisePlan: z.boolean(),
+  // Optional so cache entries written before Cloud started returning `isDevPlan` still parse; the
+  // field is otherwise always present. Kept so a cached read preserves it for the hosted-email guard.
+  isDevPlan: z.boolean().optional(),
+  hasBillingCustomer: z.boolean().optional(),
+  status: subscriptionStatusGuard,
+  upcomingInvoice: upcomingInvoiceGuard.nullable().optional(),
+  quota: logtoSkuQuotaGuard,
+  systemLimit: systemLimitGuard,
+}) satisfies ToZodObject<Subscription>;

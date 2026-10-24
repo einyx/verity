@@ -1,0 +1,27 @@
+@use '@/scss/underscore' as _;
+
+.topbar {
+  flex: 0 0 64px;
+  width: 100%;
+  padding: 0 _.unit(6);
+  display: flex;
+  align-items: center;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    gap: 14px;
+  }
+
+  .mark {
+    width: auto;
+    height: 28px;
+  }
+
+  .logo {
+    width: auto;
+    height: 28px;
+    color: var(--color-text);
+  }
+}

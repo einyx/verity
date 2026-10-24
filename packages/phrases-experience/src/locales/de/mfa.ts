@@ -1,0 +1,90 @@
+const mfa = {
+  totp: 'Authenticator-App-OTP',
+  webauthn: 'Passkey',
+  backup_code: 'Backup-Code',
+  email_verification_code: 'E-Mail-Verifizierungscode',
+  phone_verification_code: 'SMS-Verifizierungscode',
+  link_totp_description: 'z.B. Google Authenticator usw.',
+  link_webauthn_description: 'Verknüpfen Sie Ihr Gerät oder USB-Hardware',
+  link_backup_code_description: 'Backup-Code generieren',
+  link_email_verification_code_description: 'Verknüpfen Sie Ihre E-Mail-Adresse',
+  link_email_2fa_description: 'Verknüpfen Sie Ihre E-Mail-Adresse für 2-Schritt-Verifizierung',
+  link_phone_verification_code_description: 'Verknüpfen Sie Ihre Telefonnummer',
+  link_phone_2fa_description: 'Verknüpfen Sie Ihre Telefonnummer für 2-Schritt-Verifizierung',
+  verify_totp_description: 'Geben Sie den Einmalcode in der App ein',
+  verify_webauthn_description: 'Verifizieren Sie Ihr Gerät oder Ihre USB-Hardware',
+  verify_backup_code_description: 'Fügen Sie den gespeicherten Backup-Code ein',
+  verify_email_verification_code_description: 'Geben Sie den an Ihre E-Mail gesendeten Code ein',
+  verify_phone_verification_code_description: 'Geben Sie den an Ihr Telefon gesendeten Code ein',
+  send_to_email: 'Senden an {{identifier}}',
+  send_to_phone: 'Senden an {{identifier}}',
+  onboarding: '2-Schritte-Verifizierung aktivieren',
+  onboarding_description:
+    'Schützen Sie Ihr Konto mit der 2-Schritte-Verifizierung. Wählen Sie eine oder mehrere Methoden: Passkey, Authentifizierungs-App (OTP), SMS-Bestätigungscode oder Backup-Codes.',
+  enable_mfa: '2-Schritte-Verifizierung aktivieren',
+  add_mfa_factors: '2-Schritte-Verifizierung hinzufügen',
+  add_mfa_description:
+    'Die Zwei-Faktor-Verifizierung ist aktiviert. Wählen Sie Ihre zweite Verifizierungsmethode für sicheres Anmelden aus.',
+  add_another_mfa_factor: 'Eine weitere 2-Schritte-Verifizierung hinzufügen',
+  add_another_mfa_description:
+    'Wählen Sie eine andere Methode zur Verifizierung Ihrer Identität bei der Anmeldung.',
+  verify_mfa_factors: '2-Schritte-Verifizierung',
+  verify_mfa_description:
+    'Die 2-Schritte-Verifizierung ist für dieses Konto aktiviert. Bitte wählen Sie die zweite Methode zur Verifizierung Ihrer Identität aus.',
+  add_authenticator_app: 'Authenticator-App hinzufügen',
+  replace_authenticator_app: 'Authenticator-App ersetzen',
+  step: 'Schritt {{step, number}}: {{content}}',
+  scan_qr_code: 'Scannen Sie diesen QR-Code',
+  scan_qr_code_description:
+    'Scannen Sie den folgenden QR-Code mit Ihrer Authenticator-App, wie z.B. Google Authenticator, Duo Mobile, Authy usw.',
+  qr_code_not_available: 'Kann den QR-Code nicht scannen?',
+  copy_and_paste_key: 'Schlüssel kopieren und einfügen',
+  copy_and_paste_key_description:
+    'Kopieren Sie den folgenden Schlüssel und fügen Sie ihn in Ihre Authenticator-App ein, wie z.B. Google Authenticator, Duo Mobile, Authy usw.',
+  want_to_scan_qr_code: 'Möchten Sie den QR-Code scannen?',
+  enter_one_time_code: 'Einmalcode eingeben',
+  enter_one_time_code_link_description:
+    'Geben Sie den 6-stelligen Verifizierungscode ein, der von der Authenticator-App generiert wurde.',
+  enter_one_time_code_description:
+    'Für dieses Konto wurde die Zwei-Faktor-Authentifizierung aktiviert. Bitte geben Sie den einmaligen Code ein, der in Ihrer verknüpften Authentifizierungs-App angezeigt wird.',
+  enter_email_verification_code: 'E-Mail‑Bestätigungscode eingeben',
+  enter_email_verification_code_description:
+    'Für dieses Konto ist die Zwei‑Faktor‑Authentifizierung aktiviert. Bitte geben Sie den an {{identifier}} gesendeten Bestätigungscode ein.',
+  enter_phone_verification_code: 'SMS‑Bestätigungscode eingeben',
+  enter_phone_verification_code_description:
+    'Für dieses Konto ist die Zwei‑Faktor‑Authentifizierung aktiviert. Bitte geben Sie den per SMS an {{identifier}} gesendeten Bestätigungscode ein.',
+  link_another_mfa_factor: 'Zu einer anderen Methode wechseln',
+  save_backup_code: 'Backup-Code speichern',
+  save_backup_code_description:
+    'Sie können einen dieser Backup-Codes verwenden, um auf Ihr Konto zuzugreifen, wenn Sie während der 2-Schritte-Verifizierung auf andere Weise Probleme haben. Jeder Code kann nur einmal verwendet werden.',
+  backup_code_hint:
+    'Stellen Sie sicher, dass Sie sie kopieren und an einem sicheren Ort speichern.',
+  new_backup_codes_generated:
+    'Neue Backup-Codes haben Ihre alten Codes ersetzt. Speichern Sie sie so schnell wie möglich an einem sicheren Ort.',
+  enter_a_backup_code: 'Backup-Code eingeben',
+  enter_backup_code_description:
+    'Geben Sie den Backup-Code ein, den Sie gespeichert haben, als die 2-Schritte-Verifizierung initial aktiviert wurde.',
+  create_a_passkey: 'Passkey erstellen',
+  create_passkey_description:
+    'Registrieren Sie Ihren Passkey mit biometrischen Daten, Sicherheitsschlüsseln (z.B. YubiKey) oder anderen verfügbaren Methoden.',
+  try_another_verification_method: 'Versuchen Sie eine andere Methode zur Verifizierung',
+  verify_via_passkey: 'Über Passkey verifizieren',
+  verify_via_passkey_description:
+    'Verwenden Sie den Passkey zur Verifizierung durch Ihr Gerätepasswort oder Biometrie, zum Scannen des QR-Codes oder zum Verwenden eines USB-Sicherheitsschlüssels wie YubiKey.',
+  trust_this_device_title: 'Diesem Gerät vertrauen',
+  trust_this_device_description:
+    'Bei zukünftigen Anmeldungen auf diesem Gerät können Sie die MFA-Verifizierung überspringen.',
+  trust_this_device_one: 'Diesem Gerät {{count}} Tag lang vertrauen',
+  trust_this_device_two: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_few: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_many: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_other: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  secret_key_copied: 'Geheimer Schlüssel kopiert.',
+  backup_code_copied: 'Backup-Code kopiert.',
+  webauthn_not_ready: 'WebAuthn ist noch nicht bereit. Bitte versuchen Sie es später erneut.',
+  webauthn_not_supported: 'WebAuthn wird in diesem Browser nicht unterstützt.',
+  webauthn_failed_to_create: 'Erstellung fehlgeschlagen. Bitte versuchen Sie es erneut.',
+  webauthn_failed_to_verify: 'Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.',
+};
+
+export default Object.freeze(mfa);

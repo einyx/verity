@@ -1,0 +1,101 @@
+const mfa = {
+  title: 'Çok faktörlü kimlik doğrulama',
+  description:
+    'Kimlik doğrulama deneyiminizin güvenliğini artırmak için çok faktörlü kimlik doğrulamayı ekleyin.',
+  factors: 'Faktörler',
+  multi_factors: 'Çoklu faktörler',
+  multi_factors_description:
+    'Kullanıcılar, 2 aşamalı doğrulama için etkinleştirilmiş faktörlerden birini doğrulamalıdır.',
+  totp: 'Authenticator uygulaması',
+  otp_description: 'Google Authenticator vb. bağlayarak tek kullanımlık şifreleri doğrulamak için.',
+  webauthn: 'Passkeys',
+  webauthn_description:
+    'Tarayıcı tarafından desteklenen yöntemle doğrulama yapın: biyometri, telefon tarama veya güvenlik anahtarı vb.',
+  webauthn_domain_tip:
+    'WebAuthn, genel anahtarları belirli bir alanla ilişkilendirir. Hizmet alanınızı değiştirmek, kullanıcıların mevcut geçiş anahtarları aracılığıyla kimlik doğrulamasını engeller.',
+  backup_code: 'Yedek kodlar',
+  backup_code_description:
+    'Kullanıcılar herhangi bir MFA yöntemini ayarladıktan sonra 10 tek kullanımlık yedek kod üretir.',
+  backup_code_setup_hint:
+    'Kullanıcılar yukarıdaki MFA faktörlerini doğrulayamadığında yedek seçeneğini kullanın.',
+  backup_code_error_hint:
+    'Bir yedek kodu kullanmak için başarılı kullanıcı kimlik doğrulaması için en az bir daha fazla MFA yönteme ihtiyacınız vardır.',
+  email_verification_code: 'E-posta doğrulama kodu',
+  email_verification_code_description:
+    'Doğrulama kodlarını almak ve doğrulamak için e-posta adresini bağlayın.',
+  phone_verification_code: 'SMS doğrulama kodu',
+  phone_verification_code_description:
+    'SMS doğrulama kodlarını almak ve doğrulamak için telefon numarasını bağlayın.',
+  policy: 'Politika',
+  policy_description: 'Giriş ve kaydolma akışları için MFA politikasını belirleyin.',
+  two_step_sign_in_policy: 'Girişte 2 aşamalı doğrulama politikası',
+  user_controlled:
+    "Kullanıcılar MFA'yı kendi başlarına etkinleştirebilir veya devre dışı bırakabilir",
+  user_controlled_tip:
+    'Kullanıcılar, giriş veya kayıt sırasında ilk kez MFA kurulumunu atlayabilir veya hesap ayarlarında etkinleştirebilir/devre dışı bırakabilir.',
+  mandatory: 'Kullanıcılar her zaman girişte MFA kullanmak zorundadır',
+  mandatory_tip:
+    'Kullanıcılar, ilk kez giriş veya kayıt sırasında MFA kurmalı ve tüm gelecekteki girişlerde kullanmalıdır.',
+  require_mfa: 'MFA Gerektir',
+  require_mfa_label:
+    "Uygulamalarınıza erişim için 2 aşamalı doğrulamayı zorunlu hale getirmek üzere bunu etkinleştirin. Eğer devre dışıysa, kullanıcılar MFA'yı kendileri için etkinleştirip etkinleştirmemeye karar verebilir.",
+  require_mfa_optional:
+    "İsteğe bağlı MFA: Kullanıcıların kendi hesap güvenlikleri için MFA'yı etkinleştirmeyi seçmelerine izin verin",
+  require_mfa_adaptive:
+    'Uyarlanabilir MFA: Yalnızca oturum açma riskli göründüğünde (ör. yeni ülke / uzun süreli hareketsizlik) MFA isteyin',
+  require_mfa_mandatory:
+    "Zorunlu MFA: Tüm kullanıcıların her oturum açışlarında MFA'yı tamamlamasını gerektirir",
+  set_up_prompt: 'MFA kurulum istemi',
+  no_prompt: 'Kullanıcılardan MFA kurmalarını istemeyin',
+  prompt_at_sign_in_and_sign_up:
+    'Kaydolurken kullanıcılardan MFA kurmalarını isteyin (atlanabilir, tek seferlik istek)',
+  prompt_only_at_sign_in:
+    'Kayıttan sonraki ilk giriş denemelerinde kullanıcılardan MFA kurmalarını isteyin (atlanabilir, tek seferlik istek)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Kayıt sırasında kullanıcılardan MFA kurmalarını isteyin. (atlanamaz)',
+  prompt_only_at_sign_in_mandatory:
+    'Kayıttan sonraki bir sonraki giriş denemesinde kullanıcılardan MFA kurmalarını isteyin. (atlanamaz)',
+  set_up_organization_required_mfa_prompt:
+    "Organizasyon MFA'yı etkinleştirdikten sonra kullanıcılardan MFA kurmalarını isteyin",
+  prompt_at_sign_in_non_skippable:
+    'Bir sonraki girişte kullanıcılardan MFA kurmalarını isteyin (atlanamaz)',
+  email_primary_method_tip:
+    'E-posta doğrulama kodu zaten birincil oturum açma yönteminizdir. Güvenliği sağlamak için MFA için tekrar kullanılamaz.',
+  phone_primary_method_tip:
+    'SMS doğrulama kodu zaten birincil oturum açma yönteminizdir. Güvenliği sağlamak için MFA için tekrar kullanılamaz.',
+  no_email_connector_warning:
+    'Henüz hiçbir e-posta bağlantısı kurulmamış. Yapılandırma tamamlanmadan önce, kullanıcılar MFA için e-posta doğrulama kodlarını kullanamayacaklar. "Bağlantılar"da <a>{{link}}</a>.',
+  no_sms_connector_warning:
+    'Henüz hiçbir SMS bağlantısı kurulmamış. Yapılandırma tamamlanmadan önce, kullanıcılar MFA için SMS doğrulama kodlarını kullanamayacaklar. "Bağlantılar"da <a>{{link}}</a>.',
+  no_email_connector_error:
+    'E-posta bağlantısı olmadan e-posta doğrulama kodu MFA etkinleştirilemez. Lütfen önce bir e-posta bağlantısı yapılandırın.',
+  no_sms_connector_error:
+    'SMS bağlantısı olmadan SMS doğrulama kodu MFA etkinleştirilemez. Lütfen önce bir SMS bağlantısı yapılandırın.',
+  setup_link: 'Kur',
+  trusted_device: {
+    title: 'Güvenilen cihazlar',
+    description:
+      'Güvenilen tarayıcıların, mevcut MFA akışı gerektirdiğinde MFA doğrulamasını otomatik olarak tamamlamasına izin verin.',
+    enable_title: 'Güvenilen cihazları etkinleştir',
+    enable_description:
+      'Uygun bir MFA faktörü tamamlandıktan sonra bu tarayıcıya güvenilmesine izin verin.',
+    duration_title: 'Güven süresi (gün)',
+    duration_error: '{{min}} ile {{max}} arasında bir tam sayı girin.',
+    duration_note: 'Güven süresi değişiklikleri yalnızca daha sonra güvenilen cihazlara uygulanır.',
+    organization_allow_title: 'Güvenilen cihazlara izin ver',
+    organization_allow_tip:
+      'Bir kuruluş yalnızca tenant ilkesini daraltabilir; özellik tenant düzeyinde kapalıyken etkinleştiremez.',
+    organization_allow_description:
+      'Bu kuruluşun üyeleri için güvenilen cihaz doğrulamasına izin verin.',
+    organization_global_disabled: 'Önce tenant MFA ayarlarında güvenilen cihazları etkinleştirin.',
+    management_description:
+      'Bu kullanıcının MFA işlemini tamamladıktan sonra güvendiği tarayıcıları yönetin. Kaldırılan tarayıcı bir sonraki oturum açmada yeniden MFA isteyecektir.',
+    management_hint: 'Son konum yalnızca bilgi amaçlıdır.',
+    management_empty: 'Bu kullanıcının etkin güvenilen cihazı yok.',
+    management_deletion_confirmation:
+      '{{name}} kaldırılsın mı? Bu tarayıcı bir sonraki oturum açmada yeniden MFA isteyecektir.',
+    management_removed: 'Güvenilen cihaz kaldırıldı.',
+  },
+};
+
+export default Object.freeze(mfa);

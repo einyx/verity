@@ -1,0 +1,206 @@
+import { LogtoOidcConfigKey, OidcSigningKeyStatus } from '@logto/schemas';
+import { generateStandardId } from '@logto/shared';
+import { createMockUtils, pickDefault } from '@logto/shared/esm';
+import Sinon from 'sinon';
+
+import { mockAdminConsoleData, mockCookieKeys, mockPrivateKeys } from '#src/__mocks__/index.js';
+import { EnvSet } from '#src/env-set/index.js';
+import { MockTenant } from '#src/test-utils/tenant.js';
+import { createRequester } from '#src/utils/test-utils.js';
+
+const { jest } = import.meta;
+
+const { mockEsm, mockEsmWithActual } = createMockUtils(jest);
+
+const newPrivateKey = {
+  id: generateStandardId(),
+  value: 'test-only-private-key\n',
+  createdAt: Math.floor(Date.now() / 1000),
+};
+const previousPrivateKey = {
+  id: generateStandardId(),
+  value: 'test-only-private-key\n',
+  createdAt: Math.floor(Date.now() / 1000) - 10,
+};
+const signingKeyRotationAt = 1_777_777_777_000;
+
+const { exportJWK } = await mockEsmWithActual('#src/utils/jwks.js', () => ({
+  exportJWK: jest.fn(async () => ({ kty: 'EC' })),
+}));
+
+await mockEsmWithActual('@logto/cli/lib/commands/database/utils.js', () => ({
+  generateOidcCookieKey: jest.fn(),
+  generateOidcPrivateKey: jest.fn(async () => newPrivateKey),
+}));
+
+/**
+ * Mock only `createPrivateKey` (the real one rejects the fake test keys) while keeping the
+ * rest of `node:crypto` intact — `formidable` (pulled in via `koa-body`) imports `createHash`
+ * by name, so the mock must preserve the module's named exports.
+ */
+const actualCrypto = await import('node:crypto');
+mockEsm('node:crypto', () => ({
+  ...actualCrypto,
+  default: {
+    ...actualCrypto.default,
+    createPrivateKey: jest.fn((value) => value),
+  },
+}));
+
+const logtoConfigQueries = {
+  getAdminConsoleConfig: async () => ({ value: mockAdminConsoleData }),
+  updateAdminConsoleConfig: async () => ({ value: mockAdminConsoleData }),
+  updatePrivateSigningKeysWithLock: jest.fn(),
+  updateOidcConfigsByKey: jest.fn(),
+  getSigningKeyRotationState: jest.fn(),
+};
+
+const logtoConfigLibraries = {
+  getOidcConfigs: jest.fn(async () => ({
+    [LogtoOidcConfigKey.PrivateKeys]: [
+      { ...mockPrivateKeys[0]!, status: OidcSigningKeyStatus.Current },
+    ],
+    [LogtoOidcConfigKey.CookieKeys]: mockCookieKeys,
+    [LogtoOidcConfigKey.Session]: {},
+  })),
+  getRedactedOidcKeyResponse: jest.fn(
+    async (
+      type: LogtoOidcConfigKey,
+      keys: Array<{ id: string; value: string; createdAt: number }>
+    ) => {
+      const signingKeyRotationState = (await (type === LogtoOidcConfigKey.PrivateKeys
+        ? logtoConfigQueries.getSigningKeyRotationState()
+        : undefined)) as { signingKeyRotationAt?: number } | undefined;
+
+      return Promise.all(
+        keys.map(async ({ id, value, createdAt, ...rest }) => {
+          if (type === LogtoOidcConfigKey.PrivateKeys) {
+            const jwk = await (exportJWK as (key: unknown) => Promise<{ kty: string }>)(value);
+            const status = ('status' in rest ? rest.status : undefined) as
+              OidcSigningKeyStatus | undefined;
+
+            return {
+              id,
+              createdAt,
+              effectiveAt:
+                status === OidcSigningKeyStatus.Next
+                  ? signingKeyRotationState?.signingKeyRotationAt
+                  : undefined,
+              signingKeyAlgorithm: jwk.kty,
+              status,
+            };
+          }
+
+          return { id, createdAt };
+        })
+      );
+    }
+  ),
+};
+
+const logtoConfigRoutes = await pickDefault(import('./index.js'));
+
+describe('configs routes staged rotation', () => {
+  const tenantContext = new MockTenant(undefined, { logtoConfigs: logtoConfigQueries });
+  Sinon.stub(tenantContext, 'logtoConfigs').value({
+    ...tenantContext.logtoConfigs,
+    getOidcConfigs: logtoConfigLibraries.getOidcConfigs,
+    getRedactedOidcKeyResponse: logtoConfigLibraries.getRedactedOidcKeyResponse,
+  });
+  const invalidateCache = Sinon.stub(tenantContext, 'invalidateCache').resolves();
+  const rotatePrivateSigningKeys = jest.fn();
+  Sinon.stub(tenantContext.libraries, 'oidcPrivateKeys').value({
+    ...tenantContext.libraries.oidcPrivateKeys,
+    rotatePrivateSigningKeys,
+  });
+
+  const routeRequester = createRequester({
+    authedRoutes: logtoConfigRoutes,
+    tenantContext,
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    invalidateCache.resetHistory();
+  });
+
+  it('POST /configs/oidc/:keyType/rotate supports staged private-key rotation', async () => {
+    rotatePrivateSigningKeys.mockResolvedValueOnce([
+      { ...newPrivateKey, status: OidcSigningKeyStatus.Next },
+      { ...mockPrivateKeys[0]!, status: OidcSigningKeyStatus.Current },
+      { ...previousPrivateKey, status: OidcSigningKeyStatus.Previous },
+    ]);
+    logtoConfigQueries.getSigningKeyRotationState.mockResolvedValueOnce({
+      signingKeyRotationAt,
+    });
+
+    const response = await routeRequester.post('/configs/oidc/private-keys/rotate').send({
+      rotationGracePeriod: 14_400,
+    });
+
+    expect(response.status).toEqual(200);
+    expect(rotatePrivateSigningKeys).toHaveBeenCalledWith(newPrivateKey, 14_400);
+    expect(logtoConfigQueries.updatePrivateSigningKeysWithLock).not.toHaveBeenCalled();
+    expect(invalidateCache.calledOnce).toBe(true);
+    expect(response.body).toEqual([
+      {
+        id: newPrivateKey.id,
+        createdAt: newPrivateKey.createdAt,
+        effectiveAt: signingKeyRotationAt,
+        signingKeyAlgorithm: 'EC',
+        status: OidcSigningKeyStatus.Next,
+      },
+      {
+        id: mockPrivateKeys[0]!.id,
+        createdAt: mockPrivateKeys[0]!.createdAt,
+        signingKeyAlgorithm: 'EC',
+        status: OidcSigningKeyStatus.Current,
+      },
+      {
+        id: previousPrivateKey.id,
+        createdAt: previousPrivateKey.createdAt,
+        signingKeyAlgorithm: 'EC',
+        status: OidcSigningKeyStatus.Previous,
+      },
+    ]);
+  });
+
+  it('replaces the staged Next key when rotating with another grace period', async () => {
+    const existingPreviousKey = {
+      id: generateStandardId(),
+      value: 'test-only-private-key\n',
+      createdAt: Math.floor(Date.now() / 1000) - 20,
+      status: OidcSigningKeyStatus.Previous,
+    };
+    rotatePrivateSigningKeys.mockResolvedValueOnce([
+      { ...newPrivateKey, status: OidcSigningKeyStatus.Next },
+      { ...mockPrivateKeys[0]!, status: OidcSigningKeyStatus.Current },
+      existingPreviousKey,
+    ]);
+
+    await expect(
+      routeRequester.post('/configs/oidc/private-keys/rotate').send({
+        rotationGracePeriod: 60,
+      })
+    ).resolves.toHaveProperty('status', 200);
+
+    expect(rotatePrivateSigningKeys).toHaveBeenCalledWith(newPrivateKey, 60);
+  });
+
+  it('rejects ML-DSA-65 rotation with 422 when dev features are disabled', async () => {
+    const stub = Sinon.stub(EnvSet, 'values').value({
+      ...EnvSet.values,
+      isDevFeaturesEnabled: false,
+    });
+
+    try {
+      await expect(
+        routeRequester.post('/configs/oidc/private-keys/rotate').send({
+          signingKeyAlgorithm: 'ML-DSA-65',
+        })
+      ).resolves.toHaveProperty('status', 422);
+    } finally {
+      stub.restore();
+    }
+  });
+});

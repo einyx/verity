@@ -1,0 +1,103 @@
+const profile = {
+  link_account: {
+    anonymous: 'Anonyme',
+  },
+
+  delete_account: {
+    title: 'Supprimer le compte',
+    label: 'Supprimer le compte',
+    description:
+      "La suppression de votre compte supprimera toutes vos informations personnelles, vos données d'utilisateur et votre configuration. Cette action ne peut pas être annulée.",
+    button: 'Supprimer le compte',
+    p: {
+      has_issue:
+        "Nous sommes désolés d'apprendre que vous souhaitez supprimer votre compte. Avant de pouvoir supprimer votre compte, vous devez résoudre les problèmes suivants.",
+      after_resolved:
+        "Une fois que vous avez résolu les problèmes, vous pouvez supprimer votre compte. N'hésitez pas à nous contacter si vous avez besoin d'aide.",
+      check_information:
+        "Nous sommes désolés d'apprendre que vous souhaitez supprimer votre compte. Veuillez vérifier les informations ci-dessous avant de continuer.",
+      remove_all_data:
+        'La suppression de votre compte supprimera définitivement toutes les données vous concernant dans Logto Cloud. Assurez-vous donc de sauvegarder toutes les données importantes avant de continuer.',
+      confirm_information:
+        'Veuillez confirmer que les informations ci-dessus correspondent à vos attentes. Une fois que vous aurez supprimé votre compte, nous ne pourrons pas le récupérer.',
+      has_admin_role:
+        'Étant donné que vous avez un rôle d’administrateur dans le locataire suivant, il sera supprimé en même temps que votre compte :',
+      has_admin_role_other:
+        'Étant donné que vous avez un rôle d’administrateur dans les locataires suivants, ils seront supprimés en même temps que votre compte :',
+      quit_tenant: 'Vous êtes sur le point de quitter le locataire suivant :',
+      quit_tenant_other: 'Vous êtes sur le point de quitter les locataires suivants :',
+    },
+    issues: {
+      paid_plan: 'Le locataire suivant a un plan payant, veuillez d’abord annuler l’abonnement :',
+      paid_plan_other:
+        'Les locataires suivants ont des plans payants, veuillez d’abord annuler l’abonnement :',
+      subscription_status: 'Le locataire suivant a un problème de statut d’abonnement :',
+      subscription_status_other:
+        'Les locataires suivants ont des problèmes de statut d’abonnement :',
+      open_invoice: 'Le locataire suivant a une facture ouverte :',
+      open_invoice_other: 'Les locataires suivants ont des factures ouvertes :',
+    },
+    error_occurred: 'Une erreur est survenue',
+    error_occurred_description:
+      "Désolé, quelque chose s'est mal passé lors de la suppression de votre compte :",
+    request_id: 'ID de la demande : {{requestId}}',
+    try_again_later:
+      "Veuillez réessayer plus tard. Si le problème persiste, veuillez contacter l'équipe Logto avec l'ID de la demande.",
+    final_confirmation: 'Confirmation finale',
+    about_to_start_deletion:
+      'Vous êtes sur le point de commencer le processus de suppression et cette action ne peut pas être annulée.',
+    permanently_delete: 'Supprimer définitivement',
+  },
+
+  fields: {
+    name: 'Nom',
+    name_description:
+      'Le nom complet de l\'utilisateur sous forme affichable, incluant tous les composants du nom (par exemple, "Jane Doe").',
+    avatar: 'Avatar',
+    avatar_description: "URL de l'image d'avatar de l'utilisateur.",
+    familyName: 'Nom de famille',
+    familyName_description: 'Le(s) nom(s) de famille de l\'utilisateur (par exemple, "Doe").',
+    givenName: 'Prénom',
+    givenName_description: 'Le(s) prénom(s) de l\'utilisateur (par exemple, "Jane").',
+    middleName: 'Deuxième prénom',
+    middleName_description: 'Le(s) deuxième(s) prénom(s) de l\'utilisateur (par exemple, "Marie").',
+    nickname: 'Surnom',
+    nickname_description:
+      "Nom familier ou surnom de l'utilisateur, qui peut différer de son nom légal.",
+    preferredUsername: "Nom d'utilisateur préféré",
+    preferredUsername_description:
+      "Identifiant abrégé par lequel l'utilisateur souhaite être référencé.",
+    profile: 'Profil',
+    profile_description:
+      "URL de la page de profil lisible par l'utilisateur (par exemple, profil de réseau social).",
+    website: 'Site web',
+    website_description: "URL du site web personnel ou du blog de l'utilisateur.",
+    gender: 'Genre',
+    gender_description:
+      'Le genre auto-identifié de l\'utilisateur (par exemple, "Femme", "Homme", "Non-binaire").',
+    birthdate: 'Date de naissance',
+    birthdate_description:
+      'La date de naissance de l\'utilisateur dans un format spécifié (par exemple, "MM-jj-aaaa").',
+    zoneinfo: 'Fuseau horaire',
+    zoneinfo_description:
+      'Le fuseau horaire de l\'utilisateur au format IANA (par exemple, "America/New_York" ou "Europe/Paris").',
+    locale: 'Langue',
+    locale_description:
+      'La langue de l\'utilisateur au format IETF BCP 47 (par exemple, "fr-FR" ou "zh-CN").',
+    address: {
+      formatted: 'Adresse',
+      streetAddress: 'Adresse postale',
+      locality: 'Ville',
+      region: 'Région',
+      postalCode: 'Code postal',
+      country: 'Pays',
+    },
+    address_description:
+      "L'adresse complète de l'utilisateur sous forme affichable, incluant tous les composants de l'adresse (par exemple, \"123 Rue Principale, Ville, France 12345\").",
+    fullname: 'Nom complet',
+    fullname_description:
+      'Combine de manière flexible familyName, givenName et middleName en fonction de la configuration.',
+  },
+};
+
+export default Object.freeze(profile);

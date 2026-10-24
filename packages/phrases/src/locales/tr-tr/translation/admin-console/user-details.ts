@@ -1,0 +1,206 @@
+const user_details = {
+  page_title: 'Kullanıcı detayları',
+  back_to_users: 'Kullanıcı Yönetimine Geri Dön',
+  created_title: 'Bu kullanıcı başarıyla oluşturuldu',
+  created_guide: 'Kullanıcının oturum açma sürecinde yardımcı olacak bilgiler burada.',
+  created_email: 'E-posta adresi:',
+  created_phone: 'Telefon numarası:',
+  created_username: 'Kullanıcı Adı:',
+  created_password: 'Şifre:',
+  menu_delete: 'Sil',
+  delete_description: 'Bu işlem geri alınamaz. Kullanıcıyı kalıcı olarak siler.',
+  deleted: 'Kullanıcı başarıyla silindi.',
+  reset_password: {
+    reset_title: 'Şifreyi sıfırlamak istediğinizden emin misiniz?',
+    generate_title: 'Şifre oluşturmak istediğinizden emin misiniz?',
+    content: 'Bu işlem geri alınamaz. Bu, kullanıcının oturum açma bilgilerini sıfırlayacaktır.',
+    reset_complete: 'Bu kullanıcı sıfırlandı',
+    generate_complete: 'Şifre oluşturuldu',
+    new_password: 'Yeni şifre:',
+    password: 'Şifre:',
+  },
+  expire_password: {
+    button: 'Süresini doldur',
+    title: 'Bu parolanın süresini doldurmak istediğinizden emin misiniz?',
+    content:
+      'Kullanıcının bir sonraki oturum açışında parolasını sıfırlaması gerekecektir. Bu işlem geri alınamaz.',
+    success: 'Kullanıcının parolasının süresi dolmuş olarak işaretlendi.',
+    not_enabled_tooltip: 'Parola sona erme politikası etkinleştirilmemiş.',
+  },
+  tab_settings: 'Ayarlar',
+  tab_roles: 'Kullanıcı rolleri',
+  tab_logs: 'Kullanıcı kayıtları',
+  tab_organizations: 'Organizasyonlar',
+  authentication: 'Kimlik doğrulama',
+  authentication_description:
+    'Her kullanıcının, temel veriler, sosyal kimlikler ve özel verilerden oluşan tüm kullanıcı bilgilerini içeren bir profil vardır.',
+  user_profile: 'Kullanıcı profili',
+  field_email: 'Eposta adresi',
+  field_phone: 'Telefon numarası',
+  field_username: 'Kullanıcı Adı',
+  field_password: 'Şifre',
+  field_name: 'İsim',
+  field_avatar: 'Avatar resmi URLi',
+  field_avatar_placeholder: 'https://your.cdn.domain/avatar.png',
+  field_custom_data: 'Özel veriler',
+  field_custom_data_tip:
+    'Kullanıcı tarafından tercih edilen renk ve dil gibi önceden tanımlanmış kullanıcı özelliklerinde listelenmeyen ek kullanıcı bilgileri.',
+  field_profile: 'Profil',
+  field_profile_tip:
+    'Kullanıcının özelliklerine dahil olmayan ek OpenID Connect standart talepleri. Tüm bilinmeyen özelliklerin kaldırılacağını unutmayın. Daha fazla bilgi için <a>profil özellik referansına</a> bakın.',
+  field_connectors: 'Sosyal bağlayıcılar',
+  field_sso_connectors: 'İş bağlantıları',
+  custom_data_invalid: 'Özel veriler geçerli bir JSON nesnesi olmalıdır',
+  profile_invalid: 'Profil geçerli bir JSON nesnesi olmalıdır',
+  password_already_set: 'Şifre zaten ayarlandı',
+  no_password_set: 'Şifre ayarlanmadı',
+  connectors: {
+    connectors: 'Bağlayıcılar',
+    user_id: 'Kullanıcı IDsi',
+    remove: 'Kaldır',
+    connected: 'Bu kullanıcı birden fazla sosyal bağlayıcıya bağlıdır.',
+    not_connected: 'Kullanıcı herhangi bir sosyal bağlayıcıya bağlı değil',
+    deletion_confirmation:
+      'Mevcut <name/> kimliğini kaldırıyorsunuz. Devam etmek istediğinizden emin misiniz?',
+  },
+  sso_connectors: {
+    connectors: 'Bağlayıcılar',
+    enterprise_id: 'Şirket ID',
+    connected:
+      'Bu kullanıcı, Tek Oturum Kimliği için birden çok kurumsal kimlik sağlayıcıya bağlıdır.',
+    not_connected:
+      'Kullanıcı, Tek Oturum Kimliği için herhangi bir kurumsal kimlik sağlayıcıya bağlı değil.',
+  },
+  mfa: {
+    field_name: 'Çok faktörlü kimlik doğrulama',
+    field_description: 'Bu kullanıcı 2 adımlı kimlik doğrulama faktörlerini etkinleştirdi.',
+    name_column: 'Çok Faktörlü Kimlik Doğrulama',
+    field_description_empty:
+      'Bu kullanıcı 2 aşamalı kimlik doğrulama faktörlerini etkinleştirmedi.',
+    deletion_confirmation:
+      'Varolan 2 aşamalı doğrulama için <name/> kaldırıyorsunuz. Devam etmek istediğinizden emin misiniz?',
+  },
+  passkey: {
+    field_name: "Passkey'ler",
+    field_description_empty: 'Bu kullanıcı passkey girişini etkinleştirmedi.',
+    deletion_confirmation:
+      'Passkey girişi için mevcut <name/> kaldırıyorsunuz. Devam etmek istediğinizden emin misiniz?',
+  },
+  suspended: 'Askıya alınmış',
+  suspend_user: 'Kullanıcıyı Askıya Al',
+  suspend_user_reminder:
+    'Bu kullanıcıyı askıya almak istediğinizden emin misiniz? Kullanıcı uygulamanıza giriş yapamayacak ve mevcut erişim belirteci süresi dolduktan sonra yeni bir erişim belirteci alamayacak. Ayrıca bu kullanıcı tarafından yapılan herhangi bir API isteği başarısız olacaktır.',
+  suspend_action: 'Askıya Al',
+  user_suspended: 'Kullanıcı askıya alındı.',
+  reactivate_user: 'Kullanıcıyı Yeniden Etkinleştir',
+  reactivate_user_reminder:
+    'Bu kullanıcının yeniden etkinleştirmek istediğinizden emin misiniz? Böyle yapmak, bu kullanıcı için giriş girişimlerine izin verecektir.',
+  reactivate_action: 'Yeniden Etkinleştir',
+  user_reactivated: 'Kullanıcı yeniden etkinleştirildi.',
+  roles: {
+    name_column: 'Kullanıcı rolü',
+    description_column: 'Açıklama',
+    assign_button: 'Rolleri ata',
+    delete_description:
+      'Bu işlem, bu rolü bu kullanıcıdan kaldıracaktır. Rol kendisi hala var olacaktır, ancak artık bu kullanıcıyla ilişkili olmayacaktır.',
+    deleted: '{{name}} bu kullanıcıdan başarıyla kaldırıldı.',
+    assign_title: "{{name}}'e rolleri ata",
+    assign_subtitle:
+      'İsim, açıklama veya rol kimliği ile arama yaparak uygun kullanıcı rollerini bulun.',
+    assign_role_field: 'Rolleri ata',
+    role_search_placeholder: 'Rol adına göre arama yapın',
+    added_text: '{{value, number}} eklendi',
+    assigned_user_count: '{{value, number}} kullanıcı',
+    confirm_assign: 'Rolleri ata',
+    role_assigned: 'Rol(ler) başarıyla atandı',
+    search: 'Rol adına, açıklamasına veya Kimliğine göre arama yapın',
+    empty: 'Uygun rol yok',
+  },
+  warning_no_sign_in_identifier:
+    'Kullanıcının giriş yapmak için en az bir oturum açma kimliği (kullanıcı adı, e-posta, telefon numarası, veya sosyal) olması gerekiyor. Devam etmek istediğinizden emin misiniz?',
+  personal_access_tokens: {
+    title: 'Kişisel erişim belirteci',
+    title_other: 'Kişisel erişim belirteçleri',
+    title_short: 'belirteç',
+    empty: 'Kullanıcının herhangi bir kişisel erişim belirteci yok.',
+    create: 'Yeni belirteç oluştur',
+    tip: 'Kişisel erişim belirteçleri (PATs), kullanıcıların kimlik bilgilerini veya interaktif oturum açmayı kullanmadan erişim belirteçleri vermesini sağlamak için güvenli bir yol sunar. Bu, kaynaklara programatik erişim gerektiren CI/CD, betikler veya uygulamalar için kullanışlıdır.',
+    value: 'Değer',
+    created_at: 'Oluşturulma tarihi',
+    expires_at: 'Son kullanma tarihi',
+    never: 'Hiçbir zaman',
+    create_new_token: 'Yeni belirteç oluştur',
+    delete_confirmation: 'Bu işlem geri alınamaz. Bu belirteci silmek istediğinizden emin misiniz?',
+    expired: 'Süresi dolmuş',
+    expired_tooltip: 'Bu belirtecin süresi {{date}} tarihinde dolmuştur.',
+    create_modal: {
+      title: 'Kişisel erişim belirteci oluştur',
+      expiration: 'Son kullanma tarihi',
+      expiration_description: 'Belirtecin süresi {{date}} tarihinde dolacak.',
+      expiration_description_never:
+        'Belirtecin süresi dolmayacak. Güvenliği artırmak için bir son kullanma tarihi belirlemenizi öneririz.',
+      days: '{{count}} gün',
+      days_other: '{{count}} gün',
+      created: 'Belirteç {{name}} başarıyla oluşturuldu.',
+    },
+    edit_modal: {
+      title: 'Kişisel erişim belirtecini düzenle',
+      edited: 'Belirteç {{name}} başarıyla düzenlendi.',
+    },
+  },
+  sessions: {
+    title: 'Oturumlar',
+    description:
+      'Logto Yetkilendirme Sunucusu tarafından sürdürülen oturumları yönetin. Burada bir Logto oturumunu iptal etmek, gelecekteki yetkilendirme isteklerinde otomatik onayı engeller.',
+    field_name: 'Oturumlar',
+    multiple_signed_in: 'Bu kullanıcı birden fazla cihaz veya tarayıcıdan oturum açtı.',
+    not_found:
+      'Aktif bir Logto oturumu bulunamadı. Kullanıcı şu anda herhangi bir cihazda oturum açmamıştır.',
+    name_column: 'İsim',
+    session_id_column: 'Oturum Kimliği',
+    location_column: 'Konum',
+    browser_on_os: '{{os}} üzerinde {{browser}}',
+    user: 'Kullanıcı',
+    applications: 'Uygulamalar',
+    signed_in_at: 'Son oturum açma',
+    ip: 'IP',
+    browser_name: 'Tarayıcı adı',
+    os_name: 'İşletim sistemi adı',
+    device_model: 'Cihaz modeli',
+    revoke_session: 'Oturumu iptal et',
+    revoke_session_confirmation:
+      'Bu oturumu kaldırırsanız, kullanıcıların yeniden kimlik doğrulaması gerekir.',
+  },
+  third_party_apps: {
+    title: 'Üçüncü taraf uygulamalar',
+    description:
+      "Üçüncü taraf uygulamaları yetkilendirmek için Logto'yu kimlik sağlayıcınız olarak kullanın. Bu kullanıcının erişim verdiği uygulamaları görüntüleyin ve yönetin.",
+    field_name: 'Yetkili üçüncü taraf uygulamalar',
+    multiple_authorized:
+      'Bu kullanıcı birden fazla üçüncü taraf uygulama ve hizmeti yetkilendirdi.',
+    not_authorized:
+      'Bu kullanıcı henüz herhangi bir üçüncü taraf uygulama veya hizmeti yetkilendirmedi.',
+    name_column: 'Ad',
+    app_id_column: 'Uygulama Kimliği',
+    access_created_at_column: 'Erişim oluşturulma zamanı',
+    revoke_access_title: 'Erişim iptal edilsin mi?',
+    revoke_access_description:
+      'Bu işlem uygulamanın bu kullanıcının hesabına tüm cihazlardaki erişimini iptal eder. Erişimi geri yüklemek için kullanıcı yeniden yetkilendirme yapmalıdır. Daha önce verilmiş erişim belirteçleri süreleri dolana kadar geçerli kalabilir.',
+  },
+  connections: {
+    title: 'Bağlantı',
+    description:
+      'Kullanıcı, sosyal giriş, kurumsal SSO veya kaynak erişimi için üçüncü taraf hesapları bağlar.',
+    token_status_column: 'Belirteç durumu',
+    token_status: {
+      active: 'Aktif',
+      expired: 'Süresi dolmuş',
+      inactive: 'Pasif',
+      not_applicable: 'Uygulanamaz',
+      available: 'Mevcut',
+      not_available: 'Mevcut değil',
+    },
+  },
+};
+
+export default Object.freeze(user_details);

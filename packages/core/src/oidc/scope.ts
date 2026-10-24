@@ -1,0 +1,217 @@
+import assert from 'node:assert';
+
+import type { UserClaim } from '@logto/core-kit';
+import {
+  extendedIdTokenClaimsByScope,
+  idTokenClaims,
+  userClaims,
+  UserScope,
+} from '@logto/core-kit';
+import { userProfileKeys, type User, type UserProfile } from '@logto/schemas';
+import { cond, pick } from '@silverhand/essentials';
+import { snakeCase } from 'snake-case';
+import { type SnakeCaseKeys } from 'snakecase-keys';
+
+import type Libraries from '#src/tenants/Libraries.js';
+import type Queries from '#src/tenants/Queries.js';
+
+type UserProfileClaimSnakeCase = keyof SnakeCaseKeys<UserProfile>;
+
+const claimToUserKey: Readonly<
+  Record<
+    Exclude<
+      UserClaim,
+      | 'email_verified'
+      | 'phone_number_verified'
+      | 'roles'
+      | 'organizations'
+      | 'organization_data'
+      | 'organization_roles'
+      | UserProfileClaimSnakeCase
+      | 'sso_identities'
+    >,
+    keyof User
+  >
+> = Object.freeze({
+  name: 'name',
+  picture: 'avatar',
+  username: 'username',
+  email: 'primaryEmail',
+  phone_number: 'primaryPhone',
+  custom_data: 'customData',
+  identities: 'identities',
+  created_at: 'createdAt',
+  updated_at: 'updatedAt',
+});
+
+const claimToUserProfileKey: Readonly<Record<UserProfileClaimSnakeCase, keyof UserProfile>> =
+  Object.freeze({
+    family_name: 'familyName',
+    given_name: 'givenName',
+    middle_name: 'middleName',
+    nickname: 'nickname',
+    preferred_username: 'preferredUsername',
+    profile: 'profile',
+    website: 'website',
+    gender: 'gender',
+    birthdate: 'birthdate',
+    zoneinfo: 'zoneinfo',
+    locale: 'locale',
+    address: 'address',
+  });
+
+const isUserProfileClaim = (claim: string): claim is UserProfileClaimSnakeCase =>
+  userProfileKeys.some((key) => snakeCase(key) === claim);
+
+/**
+ * Resolve the standard `preferred_username` claim. Falls back to `user.username` when the user has
+ * no explicit `profile.preferredUsername`, so standards-compliant clients (e.g. Gitea, Forgejo,
+ * Mealie) receive a usable value out of the box. The explicit profile value always wins. Falls back
+ * to `undefined` (not `null`) to keep it stripped from tokens, matching the other profile claims.
+ */
+const getPreferredUsername = (user: User): string | undefined =>
+  user.profile.preferredUsername ?? user.username ?? undefined;
+
+/**
+ * Get user claims data according to the claims.
+ *
+ * @param user The current user.
+ * @param claims The claims to be fulfilled.
+ * @param userLibrary The user library of the current tenant.
+ * @param organizationQueries The organization queries of the current tenant.
+ * @returns A Promise that resolves to an array of fulfilled claims.
+ */
+export const getUserClaimsData = async (
+  user: User,
+  claims: UserClaim[],
+  userLibrary: Libraries['users'],
+  organizationQueries: Queries['organizations']
+): Promise<ReadonlyArray<[UserClaim, unknown]>> => {
+  const organizations = cond(
+    claims.some((claim) => claim.startsWith('organization')) &&
+      (await organizationQueries.relations.users.getOrganizationsByUserId(user.id))
+  );
+
+  return Promise.all(
+    claims.map(async (claim) => {
+      switch (claim) {
+        case 'email_verified': {
+          // LOG-4165: Change to proper key/function once profile fulfilling implemented
+          return [claim, Boolean(user.primaryEmail)];
+        }
+        case 'phone_number_verified': {
+          // LOG-4165: Change to proper key/function once profile fulfilling implemented
+          return [claim, Boolean(user.primaryPhone)];
+        }
+        case 'roles': {
+          const roles = await userLibrary.findUserRoles(user.id);
+          return [claim, roles.map(({ name }) => name)];
+        }
+        case 'organizations': {
+          assert(organizations, 'organizations should be defined');
+          return [claim, organizations.map(({ id }) => id)];
+        }
+        case 'organization_roles': {
+          assert(organizations, 'organizations should be defined');
+          return [
+            claim,
+            organizations.flatMap(({ id, organizationRoles }) =>
+              organizationRoles.map(({ name }) => `${id}:${name}`)
+            ),
+          ];
+        }
+        case 'organization_data': {
+          assert(organizations, 'organizations should be defined');
+          return [
+            claim,
+            organizations.map((element) => pick(element, 'id', 'name', 'description')),
+          ];
+        }
+        case 'sso_identities': {
+          const ssoIdentities = await userLibrary.findUserSsoIdentities(user.id);
+          return [
+            claim,
+            ssoIdentities.map(({ issuer, identityId, detail }) => ({ issuer, identityId, detail })),
+          ];
+        }
+        case 'preferred_username': {
+          return [claim, getPreferredUsername(user)];
+        }
+        default: {
+          if (isUserProfileClaim(claim)) {
+            // Unlike other database fields (e.g. `name`), the claims stored in the `profile` field
+            // will fall back to `undefined` rather than `null`. We refrain from using `?? null`
+            // here to reduce the size of ID tokens, since `undefined` fields will be stripped in
+            // tokens.
+            //
+            // The only consideration here is the inconsistency for `name` and `picture`, which are
+            // also standard claims but they will fall back to `null`. While it's possible to align
+            // their behavior by having their fallback to `undefined`, it's better to maintain the
+            // current setup for now to prevent breaking changes.
+            return [claim, user.profile[claimToUserProfileKey[claim]]];
+          }
+
+          return [claim, user[claimToUserKey[claim]]];
+        }
+      }
+    })
+  );
+};
+
+type GetAcceptedUserClaimsOptions = {
+  /** Where the claims will be used. Either `id_token` or `userinfo`. */
+  use: 'id_token' | 'userinfo';
+  /** The scope of the request. Each scope will be expanded to the corresponding claims. */
+  scope: string;
+  /** Claims rejected by the user. */
+  rejected: string[];
+  /**
+   * An optional array of extended claims enabled in the tenant configuration.
+   * Only applicable for `id_token` use. When provided, only the extended claims in this array
+   * will be included.
+   */
+  enabledExtendedIdTokenClaims?: string[];
+};
+
+/**
+ * Get accepted user claims according to the context.
+ *
+ * @returns An array of accepted user claims.
+ */
+export const getAcceptedUserClaims = ({
+  use,
+  scope,
+  rejected,
+  enabledExtendedIdTokenClaims,
+}: GetAcceptedUserClaimsOptions): UserClaim[] => {
+  const scopes = scope.split(' ');
+  const isUserinfo = use === 'userinfo';
+  const allScopes = Object.values(UserScope);
+
+  return scopes
+    .flatMap((raw) => {
+      const scope = allScopes.find((value) => value === raw);
+
+      if (!scope) {
+        // Ignore invalid scopes
+        return [];
+      }
+
+      if (isUserinfo) {
+        // Userinfo always includes all claims regardless of config
+        return userClaims[scope];
+      }
+
+      // For id_token: get base claims and conditionally add extended claims
+      const baseClaims = idTokenClaims[scope];
+      const extendedClaims = extendedIdTokenClaimsByScope[scope] ?? [];
+
+      // If enabledExtendedIdTokenClaims is provided, filter extended claims based on the configuration
+      const filteredExtendedClaims = extendedClaims.filter((claim) =>
+        enabledExtendedIdTokenClaims?.includes(claim)
+      );
+
+      return [...baseClaims, ...filteredExtendedClaims];
+    })
+    .filter((claim) => !rejected.includes(claim));
+};

@@ -1,0 +1,397 @@
+import { adminTenantId, experience } from '@logto/schemas';
+import { ConsoleLog } from '@logto/shared';
+import { once } from '@silverhand/essentials';
+import type { MiddlewareType } from 'koa';
+import Koa from 'koa';
+import compose from 'koa-compose';
+import mount from 'koa-mount';
+import type { Provider } from 'oidc-provider';
+
+import { type CacheStore } from '#src/caches/types.js';
+import { WellKnownCache } from '#src/caches/well-known.js';
+import { AdminApps, EnvSet, UserApps } from '#src/env-set/index.js';
+import { createCloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
+import { createConnectorLibrary } from '#src/libraries/connector.js';
+import { createLogtoConfigLibrary } from '#src/libraries/logto-config.js';
+import koaAccountCenterSsr from '#src/middleware/koa-account-center-ssr.js';
+import koaAutoConsent from '#src/middleware/koa-auto-consent.js';
+import koaDeviceFlowShortcut from '#src/middleware/koa-device-flow-shortcut.js';
+import koaExperienceSsr from '#src/middleware/koa-experience-ssr.js';
+import koaInteractionDetails from '#src/middleware/koa-interaction-details.js';
+import { koaExperienceSecurityHeaders } from '#src/middleware/koa-security-headers.js';
+import koaServeDomainVerificationFiles from '#src/middleware/koa-serve-domain-verification-files.js';
+import koaSpaProxy from '#src/middleware/koa-spa-proxy.js';
+import koaSpaSessionGuard from '#src/middleware/koa-spa-session-guard.js';
+import initOidc from '#src/oidc/init.js';
+import { mountCallbackRouter } from '#src/routes/callback.js';
+import initApis, { initMcpRouter, initPublicWellKnownApis } from '#src/routes/init.js';
+import BasicSentinel from '#src/sentinel/basic-sentinel.js';
+
+import { redisCache } from '../caches/index.js';
+import { SubscriptionLibrary } from '../libraries/subscription.js';
+import koaConsentGuard from '../middleware/koa-consent-guard.js';
+
+import Libraries from './Libraries.js';
+import Queries from './Queries.js';
+import type TenantContext from './TenantContext.js';
+import { mountAdminRoutes } from './admin-routes.js';
+import { mountAdminTenantApps } from './admin-tenant-apps.js';
+import { mountBaseMiddleware } from './base-middleware.js';
+import {
+  getSigningKeyRotationState,
+  isTenantHealthy,
+  syncSigningKeyRotationStateCache,
+} from './signing-key-rotation-state.js';
+import { getTenantDatabaseDsn } from './utils.js';
+import { type WithDefaultTenant } from './with-default-tenant.js';
+
+const consoleLog = new ConsoleLog('tenant');
+// Keep tenant disposal draining longer than the HTTP server timeout (120s in app/init.ts) so
+// ordinary in-flight requests can finish before the database pool is closed.
+const tenantDisposeDrainTimeout = 130_000;
+
+/** Data for creating a tenant instance. */
+type CreateTenant = {
+  /** The unique identifier of the tenant. */
+  id: string;
+  /** The cache store for the tenant. */
+  redisCache: CacheStore;
+  /** The custom domain of the tenant, if applicable. */
+  customDomain?: string;
+  /**
+   * Run a task against the default tenant of this deployment. Injected by the tenant pool, which
+   * owns the tenant instances.
+   */
+  withDefaultTenant: WithDefaultTenant;
+};
+
+export default class Tenant implements TenantContext {
+  static async create({
+    id,
+    redisCache,
+    customDomain,
+    withDefaultTenant,
+  }: CreateTenant): Promise<Tenant> {
+    // Try to avoid unexpected "triggerUncaughtException" by using try-catch block
+    try {
+      // Treat the default database URL as the management URL
+      const tenantDatabaseDsn = await getTenantDatabaseDsn(id);
+      const envSet = new EnvSet(id, tenantDatabaseDsn);
+      // Custom endpoint is used for building OIDC issuer URL when the request is a custom domain
+      await envSet.load(customDomain);
+
+      return new Tenant(
+        envSet,
+        id,
+        customDomain,
+        withDefaultTenant,
+        new WellKnownCache(id, redisCache)
+      );
+    } catch (error) {
+      consoleLog.error('Failed to create tenant:', id, error);
+      throw error;
+    }
+  }
+
+  public readonly provider: Provider;
+  public readonly run: MiddlewareType;
+
+  private readonly app: Koa;
+
+  readonly #createdAt = Date.now();
+  #requestCount = 0;
+  #onRequestEmpty?: () => void;
+  /**
+   * Whether the database pool of this instance has been (or is about to be) ended by
+   * {@link dispose}. Once `true`, the instance must not serve new requests.
+   */
+  #disposed = false;
+
+  // eslint-disable-next-line max-params -- the constructor wires every tenant dependency; each default is one branch, and splitting it is tracked separately.
+  private constructor(
+    public readonly envSet: EnvSet,
+    public readonly id: string,
+    private readonly customDomain: string | undefined,
+    public readonly withDefaultTenant: WithDefaultTenant,
+    public readonly wellKnownCache: WellKnownCache,
+    public readonly queries = new Queries(envSet.pool, wellKnownCache),
+    public readonly logtoConfigs = createLogtoConfigLibrary({
+      logtoConfigs: queries.logtoConfigs,
+      pool: queries.pool,
+      wellKnownCache,
+      cloudApiOrigin: EnvSet.values.cloudUrlSet.endpoint.origin,
+    }),
+    public readonly cloudConnection = createCloudConnectionLibrary(logtoConfigs),
+    public readonly connectors = createConnectorLibrary(queries, cloudConnection),
+    public readonly subscription = new SubscriptionLibrary(
+      id,
+      queries,
+      cloudConnection,
+      redisCache
+    ),
+    public readonly libraries = new Libraries(
+      id,
+      queries,
+      connectors,
+      cloudConnection,
+      logtoConfigs,
+      subscription
+    ),
+    public readonly sentinel = new BasicSentinel(envSet.pool, queries)
+  ) {
+    const isAdminTenant = id === adminTenantId;
+    const mountedApps = [
+      ...Object.values(UserApps),
+      ...(isAdminTenant ? Object.values(AdminApps) : []),
+    ];
+
+    this.envSet = envSet;
+
+    // Init app
+    const app = new Koa();
+
+    mountBaseMiddleware(app, mountedApps, id);
+
+    // Mount OIDC
+    const provider = initOidc(id, envSet, queries, libraries, logtoConfigs, subscription);
+
+    app.use(koaDeviceFlowShortcut());
+    app.use(mount('/oidc', provider));
+
+    const tenantContext: TenantContext = {
+      id,
+      provider,
+      wellKnownCache: this.wellKnownCache,
+      queries,
+      logtoConfigs,
+      cloudConnection,
+      connectors,
+      libraries,
+      envSet,
+      sentinel,
+      subscription,
+      withDefaultTenant,
+      invalidateCache: this.invalidateCache.bind(this),
+      scheduleSigningKeyRotation: this.scheduleSigningKeyRotation.bind(this),
+    };
+
+    // Sign-in experience callback via form submission
+    mountCallbackRouter(app);
+
+    // MCP endpoints at the host root (portal hosts and Logto's own endpoint).
+    const mcpRouter = initMcpRouter(tenantContext);
+    app.use(mcpRouter.routes()).use(mcpRouter.allowedMethods());
+
+    // Mount global well-known APIs
+    app.use(mount('/.well-known', initPublicWellKnownApis(tenantContext)));
+
+    // Admin cloud routes: the dev stand-ins and, in production, the billing API.
+    mountAdminRoutes(app, id, envSet);
+
+    // Mount APIs
+    app.use(mount('/api', initApis(tenantContext)));
+
+    // Serve custom domain verification files when the request is on a custom domain.
+    if (this.customDomain) {
+      app.use(koaServeDomainVerificationFiles(this.customDomain, queries));
+    }
+
+    const { isMultiTenancy } = EnvSet.values;
+
+    // Mount admin tenant APIs and app
+    if (id === adminTenantId) {
+      mountAdminTenantApps(app, { tenantContext, mountedApps, queries });
+    }
+
+    // In OSS, no need for mounting demo app in the admin tenant since it may cause confusion
+    // while distinguishing "demo app from admin tenant" and "demo app from user tenant";
+    // on the cloud, we need to configure admin tenant sign-in experience, so a preview is needed for
+    // testing without signing out of the admin console.
+    // The demo apps are a dev feature: they are only mounted when dev features are enabled.
+    if ((id !== adminTenantId || isMultiTenancy) && EnvSet.values.isDevFeaturesEnabled) {
+      // Mount demo app
+      app.use(
+        mount(
+          '/' + UserApps.DemoApp,
+          koaSpaProxy({
+            mountedApps,
+            queries,
+            packagePath: UserApps.DemoApp,
+            port: 5003,
+            prefix: UserApps.DemoApp,
+          })
+        )
+      );
+
+      // Mount device demo app (same conditions as demo app)
+      app.use(
+        mount(
+          '/' + UserApps.DeviceDemoApp,
+          koaSpaProxy({
+            mountedApps,
+            queries,
+            packagePath: UserApps.DeviceDemoApp,
+            port: 5005,
+            prefix: UserApps.DeviceDemoApp,
+          })
+        )
+      );
+    }
+
+    // Mount account center for all tenants (including admin tenant for profile MFA management)
+    app.use(
+      mount(
+        '/' + UserApps.AccountCenter,
+        compose([
+          koaAccountCenterSsr(libraries),
+          koaSpaProxy({
+            mountedApps,
+            queries,
+            packagePath: UserApps.AccountCenter,
+            port: 5004,
+            prefix: UserApps.AccountCenter,
+          }),
+        ])
+      )
+    );
+
+    // Mount experience app
+    app.use(
+      compose([
+        koaExperienceSecurityHeaders(id, queries, mountedApps),
+        koaExperienceSsr(libraries, queries),
+        koaSpaSessionGuard(provider, queries),
+        mount(
+          `/${experience.routes.consent}`,
+          compose([
+            koaInteractionDetails(provider),
+            koaConsentGuard(libraries, queries),
+            koaAutoConsent(provider, envSet, queries, libraries),
+          ])
+        ),
+        koaSpaProxy({ mountedApps, queries }),
+      ])
+    );
+
+    this.app = app;
+    this.provider = provider;
+
+    const { isPathBasedMultiTenancy, adminUrlSet } = EnvSet.values;
+
+    this.run =
+      isPathBasedMultiTenancy &&
+      // If admin URL Set is specified, consider that URL first
+      !(adminUrlSet.deduplicated().length > 0 && this.id === adminTenantId)
+        ? mount('/' + this.id, this.app)
+        : mount(this.app);
+  }
+
+  /**
+   * Register the start of a request so that {@link dispose} waits for it to finish before
+   * ending the database pool.
+   *
+   * This is synchronous and must be called right after acquiring the instance (see
+   * {@link TenantPool.get}) to avoid a window where the instance is disposed while a request
+   * is about to use it.
+   *
+   * @returns `true` if the slot was reserved, or `false` if the instance has already been
+   * disposed and must not be used. Callers should acquire another instance when `false`.
+   */
+  public requestStart(): boolean {
+    if (this.#disposed) {
+      return false;
+    }
+
+    this.#requestCount += 1;
+    return true;
+  }
+
+  public requestEnd() {
+    if (this.#requestCount > 0) {
+      this.#requestCount -= 1;
+
+      if (this.#requestCount === 0) {
+        this.#onRequestEmpty?.();
+      }
+    }
+  }
+
+  /**
+   * Try to dispose the tenant resources. If there are any pending requests, this function
+   * waits up to the tenant disposal drain timeout for them to end.
+   *
+   * Currently this function only ends the database pool.
+   *
+   * @returns Resolves `true` for a normal disposal and `'timeout'` for a timeout.
+   */
+  public async dispose() {
+    // Mark as disposed *synchronously* (no `await` before this point) so a concurrent
+    // `requestStart()` cannot reserve a slot after we have decided to end the pool.
+    this.#disposed = true;
+
+    if (this.#requestCount <= 0) {
+      await this.envSet.end();
+
+      return true;
+    }
+
+    return new Promise<true | 'timeout'>((resolve, reject) => {
+      const endEnvSet = once((result: true | 'timeout', timeout: ReturnType<typeof setTimeout>) => {
+        this.#onRequestEmpty = undefined;
+        clearTimeout(timeout);
+
+        void (async () => {
+          try {
+            await this.envSet.end();
+            resolve(result);
+          } catch (error: unknown) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        })();
+      });
+
+      const timeout = setTimeout(() => {
+        endEnvSet('timeout', timeout);
+      }, tenantDisposeDrainTimeout);
+
+      this.#onRequestEmpty = () => {
+        endEnvSet(true, timeout);
+      };
+    });
+  }
+
+  /**
+   * Force the cached tenant instance to be recreated so the next bootstrap reloads OIDC config
+   * and lets the oidc-provider observe newly generated signing keys from storage.
+   */
+  public async invalidateCache() {
+    const tenantCacheExpiresAt = Date.now();
+    const signingKeyRotationState =
+      await this.queries.logtoConfigs.setTenantCacheExpiresAt(tenantCacheExpiresAt);
+    await syncSigningKeyRotationStateCache(this.wellKnownCache, signingKeyRotationState);
+  }
+
+  /**
+   * Schedule the delayed signing-key activation reload for a future timestamp.
+   *
+   * Unlike `invalidateCache()`, which forces the next request to rebuild the tenant immediately
+   * so newly generated keys are published to JWKS, this method records when the staged `Next` key
+   * should become active for signing. Once the scheduled time is reached, `checkHealth()` marks the
+   * cached tenant as stale and the next bootstrap promotes the signing-key statuses before loading
+   * OIDC config.
+   */
+  public async scheduleSigningKeyRotation(timestamp: number) {
+    const signingKeyRotationState =
+      await this.queries.logtoConfigs.setSigningKeyRotationAt(timestamp);
+    await syncSigningKeyRotationStateCache(this.wellKnownCache, signingKeyRotationState);
+  }
+
+  public async checkHealth() {
+    const signingKeyRotationState = await getSigningKeyRotationState({
+      wellKnownCache: this.wellKnownCache,
+      queries: this.queries.logtoConfigs,
+    });
+
+    return isTenantHealthy(this.#createdAt, signingKeyRotationState);
+  }
+}

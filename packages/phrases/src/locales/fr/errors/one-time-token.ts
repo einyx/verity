@@ -1,0 +1,11 @@
+const one_time_token = {
+  token_not_found: 'Jeton {{token}} introuvable.',
+  email_mismatch: "L'email ne correspond pas au jeton fourni.",
+  interaction_event_mismatch: 'Le jeton ne peut pas être utilisé pour cette interaction.',
+  token_expired: 'Le jeton est expiré.',
+  token_consumed: 'Le jeton a été consommé.',
+  token_revoked: 'Le jeton a été révoqué.',
+  cannot_reactivate_token: 'Impossible de réactiver le jeton.',
+};
+
+export default Object.freeze(one_time_token);

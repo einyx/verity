@@ -1,0 +1,117 @@
+{
+  "paths": {
+    "/api/users/{userId}/identities": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "connectorId": {
+                    "description": "The Logto connector ID."
+                  },
+                  "connectorData": {
+                    "description": "A json object constructed from the url query params returned by the social platform. Typically it contains `code`, `state` and `redirectUri` fields."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A new identity is linked to the user."
+          }
+        },
+        "summary": "Link social identity to user",
+        "description": "Link authenticated user identity from a social platform to a Logto user.\n\nThe usage of this API is usually coupled with `POST /connectors/:connectorId/authorization-uri`. With the help of these pair of APIs, you can implement a user profile page with the link social account feature in your application.\n\nNote: Currently due to technical limitations, this API does not support the following connectors that rely on Logto interaction session: `@logto/connector-apple`, `@logto/connector-saml`, `@logto/connector-oidc` and `@logto/connector-oauth`."
+      }
+    },
+    "/api/users/{userId}/identities/{target}": {
+      "delete": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The identity is deleted from the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cimdClientId": {
+                      "description": "The identifier of the CIMD (client ID metadata document) client from the user's first consent. `null` unless the user's first consent was granted to a CIMD client. Mutually exclusive with `applicationId`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete social identity from user",
+        "description": "Delete a social identity from the user."
+      },
+      "put": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The identity is updated."
+          },
+          "201": {
+            "description": "The identity is created."
+          }
+        },
+        "summary": "Update social identity of user",
+        "description": "Directly update a social identity of the user.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "userId": {
+                    "description": "The user's social identity ID."
+                  },
+                  "details": {
+                    "description": "The user's social identity details."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Retrieve a user's social identity and associated token storage .",
+        "description": "This API retrieves the social identity and its associated token set for the specified user from the Logto Secret Vault. The token set will only be available if token storage is enabled for the corresponding social connector.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "includeTokenSecret",
+            "description": "Whether to include the token secret in the response. Defaults to false. Token storage must be supported and enabled by the connector to return the token secret."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the user's social identity and associated token storage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "identity": {
+                      "description": "The user's social identity."
+                    },
+                    "tokenSecret": {
+                      "description": "The desensitized token set secret associated with the user's social identity.\nThis field is included only if the `includeTokenSecret` query parameter is provided and the corresponding connector has token storage enabled."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User social identity not found."
+          }
+        }
+      }
+    }
+  }
+}

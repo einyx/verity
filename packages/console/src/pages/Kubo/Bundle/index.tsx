@@ -1,0 +1,258 @@
+import { useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+
+import ConnectionIcon from '@/assets/icons/connection.svg?react';
+import KeyIcon from '@/assets/icons/key.svg?react';
+import ShieldIcon from '@/assets/icons/shield.svg?react';
+import bundleImage from '@/assets/images/wizard/bundle-pixel.png';
+import Button from '@/ds-components/Button';
+import Card from '@/ds-components/Card';
+import TextInput from '@/ds-components/TextInput';
+import useApi from '@/hooks/use-api';
+import getStartedStyles from '@/pages/GetStarted/index.module.scss';
+
+import styles from '../index.module.scss';
+
+// Air-gapped bundle upload, as a three-step wizard. Its layout follows the get-started page: a
+// header, stat cards, step cards with artwork, and the form in a card. The file goes through Logto
+// core to the Kubo portal.
+const namePattern = /^[\da-z]([\d.a-z-]{0,61}[\da-z])?$/;
+
+const formatSize = (bytes: number) =>
+  bytes > 1024 ** 3
+    ? `${(bytes / 1024 ** 3).toFixed(2)} GiB`
+    : `${(bytes / 1024 ** 2).toFixed(1)} MiB`;
+
+const steps = [
+  {
+    title: 'Choose a bundle file',
+    text: 'Pick the offline bundle (.tar) to upload for air-gapped installs.',
+    Icon: ConnectionIcon,
+  },
+  {
+    title: 'Name the bundle',
+    text: 'Use lowercase letters, digits, dots and hyphens.',
+    Icon: KeyIcon,
+  },
+  {
+    title: 'Review and upload',
+    text: 'Check the file and name, then upload to the Kubo portal.',
+    Icon: ShieldIcon,
+  },
+];
+
+// Maps a 1-based list position onto the three wizard steps.
+const toStep = (value: number): 1 | 2 | 3 => {
+  if (value >= 3) {
+    return 3;
+  }
+
+  return value <= 1 ? 1 : 2;
+};
+
+function Bundle() {
+  const api = useApi();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [name, setName] = useState('');
+  const [file, setFile] = useState<File>();
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<string>();
+  const [failed, setFailed] = useState(false);
+
+  const nameValid = namePattern.test(name);
+  const canContinue = step === 1 ? Boolean(file) : step === 2 ? nameValid : false;
+
+  const upload = async () => {
+    if (!file || !nameValid) {
+      return;
+    }
+    setUploading(true);
+    setMessage(undefined);
+    setFailed(false);
+    try {
+      const result = await api
+        .post(`api/kubo/airgap/bundle?name=${encodeURIComponent(name)}`, {
+          body: file,
+          headers: { 'content-type': 'application/x-tar' },
+          timeout: false,
+        })
+        .json<{ message: string }>();
+      setMessage(result.message || 'Bundle uploaded.');
+    } catch (error: unknown) {
+      setFailed(true);
+      setMessage(error instanceof Error ? error.message : 'Upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className={getStartedStyles.container}>
+      <Helmet title="MeshX · Bundle" />
+      <div className={getStartedStyles.pageHeader}>
+        <div className={getStartedStyles.header}>
+          <div className={getStartedStyles.title}>Upload an offline bundle</div>
+          <div className={getStartedStyles.subtitle}>
+            Air-gapped installs: choose the bundle, name it, then upload it to the Kubo portal.
+          </div>
+        </div>
+      </div>
+
+      <div className={getStartedStyles.statGrid}>
+        <div className={getStartedStyles.statCard}>
+          <div className={getStartedStyles.statLabel}>Step</div>
+          <div className={getStartedStyles.statValue}>{step} of 3</div>
+        </div>
+        <div className={getStartedStyles.statCard}>
+          <div className={getStartedStyles.statLabel}>File size</div>
+          <div className={getStartedStyles.statValue}>{file ? formatSize(file.size) : '—'}</div>
+        </div>
+      </div>
+
+      <div className={getStartedStyles.resources}>
+        <div className={getStartedStyles.sectionTitle}>Steps</div>
+        <ol className={getStartedStyles.modelGrid} aria-label={`Step ${step} of 3`}>
+          {steps.map(({ title, text, Icon }, index) => {
+            const number = index + 1;
+            const isActive = number === step;
+            const isDone = number < step;
+            return (
+              <li
+                key={title}
+                className={getStartedStyles.modelCard}
+                aria-current={isActive ? 'step' : undefined}
+              >
+                <div className={getStartedStyles.modelBand}>
+                  <img className={styles.bandArt} src={bundleImage} alt="" />
+                </div>
+                <div className={getStartedStyles.modelBody}>
+                  <div className={getStartedStyles.resourceHeader}>
+                    <div className={getStartedStyles.resourceIcon}>
+                      <Icon />
+                    </div>
+                    <div className={getStartedStyles.resourceTitle}>
+                      {number}. {title}
+                    </div>
+                  </div>
+                  <div className={getStartedStyles.resourceDescription}>{text}</div>
+                  {isDone && <span className={styles.muted}>Done</span>}
+                  {isActive && <span className={styles.muted}>In progress</span>}
+                  {number < step && (
+                    <Button
+                      title="general.back"
+                      type="outline"
+                      onClick={() => {
+                        setStep(toStep(number));
+                      }}
+                    />
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      <Card className={getStartedStyles.card}>
+        <div className={getStartedStyles.title}>{steps[step - 1]?.title}</div>
+
+        {step === 1 && (
+          <div className={styles.form}>
+            <input
+              ref={fileInput}
+              hidden
+              type="file"
+              accept=".tar"
+              onChange={(event) => {
+                setFile(event.currentTarget.files?.[0]);
+              }}
+            />
+            <Button
+              title="infrastructure.bundle_file"
+              type="outline"
+              onClick={() => {
+                fileInput.current?.click();
+              }}
+            />
+            {file ? (
+              <p className={styles.muted}>
+                {file.name} · {formatSize(file.size)}
+              </p>
+            ) : (
+              <p className={styles.muted}>No file chosen yet.</p>
+            )}
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className={styles.form}>
+            <TextInput
+              title="infrastructure.bundle_name"
+              placeholder="foundation-bundle-0-1-14"
+              value={name}
+              onChange={(event) => {
+                setName(event.currentTarget.value.trim().toLowerCase());
+              }}
+            />
+            {name && !nameValid && (
+              <p className={styles.error}>
+                Use lowercase letters, digits, dots and hyphens. Start and end with a letter or
+                digit.
+              </p>
+            )}
+          </div>
+        )}
+
+        {step === 3 && (
+          <>
+            <dl className={styles.budget}>
+              <dt>File</dt>
+              <dd>{file?.name}</dd>
+              <dt>Size</dt>
+              <dd>{file ? formatSize(file.size) : '—'}</dd>
+              <dt>Name</dt>
+              <dd>{name}</dd>
+            </dl>
+            {message && <p className={failed ? styles.error : styles.muted}>{message}</p>}
+          </>
+        )}
+
+        <div className={styles.actions}>
+          {step > 1 && (
+            <Button
+              title="general.back"
+              type="outline"
+              onClick={() => {
+                setStep(step === 3 ? 2 : 1);
+              }}
+            />
+          )}
+          {step < 3 && (
+            <Button
+              title="general.next"
+              type="primary"
+              disabled={!canContinue}
+              onClick={() => {
+                setStep(step === 1 ? 2 : 3);
+              }}
+            />
+          )}
+          {step === 3 && (
+            <Button
+              title="infrastructure.upload"
+              type="primary"
+              isLoading={uploading}
+              disabled={!file || !nameValid}
+              onClick={() => {
+                void upload();
+              }}
+            />
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export default Bundle;

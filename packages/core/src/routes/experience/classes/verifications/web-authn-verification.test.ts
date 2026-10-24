@@ -1,0 +1,243 @@
+import { MfaFactor, VerificationType } from '@logto/schemas';
+import { createMockUtils } from '@logto/shared/esm';
+
+import { mockUser, mockUserWebAuthnMfaVerification } from '#src/__mocks__/user.js';
+import { mockWebAuthnVerificationPayload } from '#src/__mocks__/webauthn.js';
+import RequestError from '#src/errors/RequestError/index.js';
+import type { WithLogContext } from '#src/middleware/koa-audit-log.js';
+import { createMockLogContext } from '#src/test-utils/koa-audit-log.js';
+import { MockTenant } from '#src/test-utils/tenant.js';
+import { createContextWithRouteParameters } from '#src/utils/test-utils.js';
+
+const { jest } = import.meta;
+const { mockEsmWithActual } = createMockUtils(jest);
+
+// Mock the underlying @simplewebauthn/server to return successful verification
+await mockEsmWithActual('@simplewebauthn/server', () => ({
+  generateRegistrationOptions: jest.fn().mockResolvedValue({ challenge: 'challenge' }),
+  verifyRegistrationResponse: jest.fn().mockResolvedValue({
+    verified: true,
+    registrationInfo: {
+      credential: {
+        id: 'credentialId',
+        publicKey: new Uint8Array([0xfb, 0xff]),
+        counter: 0,
+      },
+    },
+  }),
+  generateAuthenticationOptions: jest
+    .fn()
+    .mockResolvedValue({ challenge: 'auth-challenge', allowCredentials: [] }),
+  verifyAuthenticationResponse: jest
+    .fn()
+    .mockResolvedValue({ verified: true, authenticationInfo: { newCounter: 2 } }),
+}));
+
+const { WebAuthnVerification, SignInPasskeyVerification } =
+  await import('./web-authn-verification.js');
+
+describe('WebAuthnVerification', () => {
+  const userId = mockUser.id;
+  const rpId = 'example.com';
+
+  const findUserById = jest.fn().mockResolvedValue(mockUser);
+  const updateUserById = jest.fn();
+  const findDefaultAccountCenter = jest
+    .fn()
+    .mockResolvedValue({ webauthnRelatedOrigins: [] as string[] });
+
+  const tenant = new MockTenant(undefined, {
+    users: { findUserById, updateUserById },
+    accountCenters: { findDefaultAccountCenter },
+  });
+
+  const baseCtx: WithLogContext = {
+    ...createContextWithRouteParameters({
+      url: 'https://example.com/path',
+      encrypted: true,
+      host: rpId,
+    }),
+    ...createMockLogContext(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('verifyWebAuthnRegistration', () => {
+    it('should throw when registrationRpId is missing', async () => {
+      const verification = new WebAuthnVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        userId,
+        type: VerificationType.WebAuthn,
+        verified: false,
+        registrationChallenge: 'challenge-only',
+      });
+
+      await expect(
+        verification.verifyWebAuthnRegistration(baseCtx, {
+          id: 'id',
+          rawId: 'id',
+          response: { clientDataJSON: 'a', attestationObject: 'b' },
+          clientExtensionResults: {},
+        })
+      ).rejects.toEqual(new RequestError('session.mfa.pending_info_not_found'));
+    });
+
+    it('should verify and produce BindWebAuthn with rpId', async () => {
+      const verification = new WebAuthnVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        userId,
+        type: VerificationType.WebAuthn,
+        verified: false,
+        registrationChallenge: 'challenge',
+        registrationRpId: rpId,
+      });
+
+      const ctx: WithLogContext = {
+        ...createContextWithRouteParameters({
+          url: 'https://example.com/any',
+          encrypted: true,
+          host: rpId,
+          headers: { 'user-agent': 'agent-x' },
+        }),
+        ...createMockLogContext(),
+      } as unknown as WithLogContext;
+
+      await verification.verifyWebAuthnRegistration(ctx, {
+        id: 'id',
+        rawId: 'id',
+        response: {
+          clientDataJSON: 'a',
+          attestationObject: 'b',
+          transports: ['internal', 'hybrid'],
+        },
+        clientExtensionResults: {},
+      });
+
+      expect(verification.isVerified).toBe(true);
+      expect(verification.toBindMfa()).toMatchObject({
+        type: MfaFactor.WebAuthn,
+        rpId,
+        credentialId: 'credentialId',
+        publicKey: '-_8',
+        counter: 0,
+        agent: 'agent-x',
+        transports: ['internal', 'hybrid'],
+      });
+    });
+  });
+
+  describe('verifyWebAuthnAuthentication', () => {
+    it('should backfill rpId', async () => {
+      // User with an existing WebAuthn MFA missing rpId
+      findUserById.mockResolvedValueOnce({
+        ...mockUser,
+        mfaVerifications: [mockUserWebAuthnMfaVerification],
+      });
+
+      const verification = new WebAuthnVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        userId,
+        type: VerificationType.WebAuthn,
+        verified: false,
+        authenticationChallenge: 'auth-challenge',
+      });
+
+      await verification.verifyWebAuthnAuthentication(baseCtx, {
+        ...mockWebAuthnVerificationPayload,
+        id: mockUserWebAuthnMfaVerification.credentialId,
+      });
+
+      // Persisted backfill: rpId set to hostname and counter updated
+      expect(updateUserById).toHaveBeenCalledWith(userId, {
+        mfaVerifications: [
+          expect.objectContaining({
+            id: mockUserWebAuthnMfaVerification.id,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            rpId: expect.any(String),
+            counter: 2,
+            type: MfaFactor.WebAuthn,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            lastUsedAt: expect.any(String),
+          }),
+        ],
+      });
+    });
+  });
+});
+
+describe('SignInPasskeyVerification', () => {
+  const rpId = 'example.com';
+
+  const findUserById = jest.fn().mockResolvedValue(mockUser);
+  const updateUserById = jest.fn();
+  const findUserByWebAuthnCredential = jest.fn().mockResolvedValue({
+    ...mockUser,
+    mfaVerifications: [mockUserWebAuthnMfaVerification],
+  });
+  const findDefaultAccountCenter = jest
+    .fn()
+    .mockResolvedValue({ webauthnRelatedOrigins: [] as string[] });
+
+  const tenant = new MockTenant(undefined, {
+    users: { findUserById, updateUserById, findUserByWebAuthnCredential },
+    accountCenters: { findDefaultAccountCenter },
+  });
+
+  const baseCtx: WithLogContext = {
+    ...createContextWithRouteParameters({
+      url: '/path',
+      encrypted: true,
+      host: rpId,
+    }),
+    ...createMockLogContext(),
+    URL: new URL(`https://${rpId}/path`),
+  } as unknown as WithLogContext;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findUserByWebAuthnCredential.mockResolvedValue({
+      ...mockUser,
+      mfaVerifications: [mockUserWebAuthnMfaVerification],
+    });
+  });
+
+  describe('verifyWebAuthnAuthentication', () => {
+    it('should succeed for passkey sign-in verification', async () => {
+      const verification = new SignInPasskeyVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        type: VerificationType.SignInPasskey,
+        verified: false,
+        authenticationChallenge: 'auth-challenge',
+        authenticationRpId: rpId,
+      });
+
+      await verification.verifyWebAuthnAuthentication(baseCtx, {
+        ...mockWebAuthnVerificationPayload,
+        id: mockUserWebAuthnMfaVerification.credentialId,
+      });
+
+      expect(verification.isVerified).toBe(true);
+      expect(updateUserById).toHaveBeenCalled();
+    });
+
+    it('should throw 409 identity conflict when user id does not match verification record', async () => {
+      const verification = new SignInPasskeyVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        type: VerificationType.SignInPasskey,
+        userId: 'different-user-id',
+        verified: false,
+        authenticationChallenge: 'auth-challenge',
+        authenticationRpId: rpId,
+      });
+
+      await expect(
+        verification.verifyWebAuthnAuthentication(baseCtx, {
+          ...mockWebAuthnVerificationPayload,
+          id: mockUserWebAuthnMfaVerification.credentialId,
+        })
+      ).rejects.toMatchError(new RequestError({ code: 'session.identity_conflict', status: 409 }));
+    });
+  });
+});

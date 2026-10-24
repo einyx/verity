@@ -1,0 +1,45 @@
+.muted {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.notice {
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.messageVisitor,
+.messageAssistant {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.messageVisitor {
+  align-self: flex-end;
+  background: var(--color-layer-2);
+}
+
+.messageAssistant {
+  align-self: flex-start;
+  border: 1px solid var(--color-border);
+}
+
+.messageRole {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}

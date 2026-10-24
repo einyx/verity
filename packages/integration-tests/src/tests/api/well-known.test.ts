@@ -1,0 +1,256 @@
+import {
+  type SignInExperience,
+  type Translation,
+  type SsoConnectorMetadata,
+  type CustomProfileField,
+  type AccountCenter,
+} from '@logto/schemas';
+import { HTTPError } from 'ky';
+
+import { fullnameData } from '#src/__mocks__/profile-fields-mock.js';
+import api, { adminTenantApi, authedAdminApi } from '#src/api/api.js';
+import { createOrUpdateCustomPhrase, deleteCustomPhrase } from '#src/api/custom-phrase.js';
+import {
+  createCustomProfileField,
+  deleteCustomProfileFieldByName,
+  getSignInExperience,
+  updateSignInExperience,
+} from '#src/api/index.js';
+import { createSsoConnector, deleteSsoConnectorById } from '#src/api/sso-connector.js';
+import { newOidcSsoConnectorPayload } from '#src/constants.js';
+import { setLanguage } from '#src/helpers/sign-in-experience.js';
+import { generateSsoConnectorName } from '#src/utils.js';
+
+describe('.well-known api', () => {
+  it('should return tenant endpoint URL for any given tenant id', async () => {
+    const { user } = await adminTenantApi.get(`.well-known/endpoints/123`).json<{ user: string }>();
+    expect(user).not.toBeNull();
+  });
+
+  it('should not found API route in non-admin tenant', async () => {
+    const response = await api.get('.well-known/endpoints/123').catch((error: unknown) => error);
+    expect(response instanceof HTTPError && response.response.status === 404).toBe(true);
+  });
+
+  it('should return request id in headers', async () => {
+    const { headers } = await adminTenantApi.get(`.well-known/endpoints/123`);
+    expect(headers.has('logto-core-request-id')).toBe(true);
+  });
+
+  it('get /.well-known/sign-in-exp for console', async () => {
+    const response = await adminTenantApi.get('.well-known/sign-in-exp').json<SignInExperience>();
+
+    expect(response).toMatchObject({
+      signUp: {
+        identifiers: ['username'],
+        password: true,
+        verify: false,
+      },
+      signIn: {
+        methods: [
+          {
+            identifier: 'username',
+            password: true,
+            verificationCode: false,
+            isPasswordPrimary: true,
+          },
+        ],
+      },
+      signInMode: 'SignInAndRegister',
+    });
+    expect(response).toHaveProperty('adaptiveMfa');
+  });
+
+  it('should not expose email access policies in public sign-in experience', async () => {
+    const { emailBlocklistPolicy } = await getSignInExperience();
+
+    try {
+      await updateSignInExperience({
+        emailBlocklistPolicy: {
+          blockSubaddressing: true,
+          customAllowlist: ['@allowed.com'],
+          customBlocklist: ['@blocked.com'],
+        },
+      });
+
+      const response = await api.get('.well-known/sign-in-exp').json<Record<string, unknown>>();
+
+      expect(response).not.toHaveProperty('emailBlocklistPolicy');
+    } finally {
+      await updateSignInExperience({
+        emailBlocklistPolicy,
+      });
+    }
+  });
+
+  // Also test for Redis cache invalidation
+  it('should be able to return updated phrases', async () => {
+    const and = '&';
+    const original = await api
+      .get('.well-known/phrases?lng=en')
+      .json<{ translation: Translation }>();
+
+    expect(original.translation.list).not.toHaveProperty('and', and);
+
+    await authedAdminApi.put('custom-phrases/en', { json: { list: { and } } });
+    const updated = await api
+      .get('.well-known/phrases?lng=en')
+      .json<{ translation: Translation }>();
+    expect(updated.translation.list).toHaveProperty('and', and);
+  });
+
+  describe('manual language phrases', () => {
+    const manualLanguageTag = 'vi-VN';
+    const customConfirmLabel = 'integration-test-vi-VN-confirm';
+
+    it('should resolve manual language from lng query and fallback language settings', async () => {
+      const { languageInfo: originalLanguageInfo } = await getSignInExperience();
+
+      try {
+        await createOrUpdateCustomPhrase(manualLanguageTag, {
+          action: { confirm: customConfirmLabel },
+        });
+        await setLanguage(manualLanguageTag, false);
+
+        const explicitLanguageResponse = await api.get(
+          `.well-known/phrases?lng=${manualLanguageTag}`
+        );
+        expect(explicitLanguageResponse.headers.get('content-language')).toBe(manualLanguageTag);
+
+        const explicitLanguagePhrases = await explicitLanguageResponse.json<{
+          translation: Translation;
+        }>();
+        expect(explicitLanguagePhrases.translation).toMatchObject({
+          action: { confirm: customConfirmLabel },
+        });
+
+        const fallbackLanguageResponse = await api.get('.well-known/phrases');
+        expect(fallbackLanguageResponse.headers.get('content-language')).toBe(manualLanguageTag);
+
+        const fallbackLanguagePhrases = await fallbackLanguageResponse.json<{
+          translation: Translation;
+        }>();
+        expect(fallbackLanguagePhrases.translation).toMatchObject({
+          action: { confirm: customConfirmLabel },
+        });
+      } finally {
+        await deleteCustomPhrase(manualLanguageTag).catch(() => {
+          // Ignore cleanup errors when the phrase was never created.
+        });
+        await updateSignInExperience({ languageInfo: originalLanguageInfo });
+      }
+    });
+  });
+
+  describe('sso connectors in sign-in experience', () => {
+    // Enabled single-sign-on
+    beforeAll(async () => {
+      await updateSignInExperience({
+        singleSignOnEnabled: true,
+      });
+    });
+
+    it('should get the sso connectors in sign-in experience', async () => {
+      const { id } = await createSsoConnector({
+        ...newOidcSsoConnectorPayload,
+        connectorName: generateSsoConnectorName(),
+      });
+
+      const signInExperience = await api
+        .get('.well-known/sign-in-exp')
+        .json<SignInExperience & { ssoConnectors: SsoConnectorMetadata[] }>();
+
+      expect(signInExperience.ssoConnectors.length).toBeGreaterThan(0);
+
+      const newCreatedConnector = signInExperience.ssoConnectors.find(
+        (connector) => connector.id === id
+      );
+
+      expect(newCreatedConnector).toMatchObject({
+        id,
+        connectorName: newOidcSsoConnectorPayload.branding.displayName,
+        logo: newOidcSsoConnectorPayload.branding.logo,
+        darkLogo: newOidcSsoConnectorPayload.branding.darkLogo,
+      });
+
+      await deleteSsoConnectorById(id);
+    });
+
+    it('should filter out the sso connectors with invalid config', async () => {
+      const { id } = await createSsoConnector({
+        ...newOidcSsoConnectorPayload,
+        connectorName: generateSsoConnectorName(),
+        config: undefined,
+      });
+
+      const signInExperience = await api
+        .get('.well-known/sign-in-exp')
+        .json<SignInExperience & { ssoConnectors: SsoConnectorMetadata[] }>();
+
+      const { ssoConnectors } = signInExperience;
+
+      expect(ssoConnectors.find((connector) => connector.id === id)).toBeUndefined();
+
+      await deleteSsoConnectorById(id);
+    });
+
+    it('should filter out the sso connectors with empty domains', async () => {
+      const { id } = await createSsoConnector({
+        ...newOidcSsoConnectorPayload,
+        connectorName: generateSsoConnectorName(),
+        domains: [],
+      });
+
+      const signInExperience = await api
+        .get('.well-known/sign-in-exp')
+        .json<SignInExperience & { ssoConnectors: SsoConnectorMetadata[] }>();
+
+      const { ssoConnectors } = signInExperience;
+
+      expect(ssoConnectors.find((connector) => connector.id === id)).toBeUndefined();
+
+      await deleteSsoConnectorById(id);
+    });
+
+    it('should return empty array if single-sign-on is disabled', async () => {
+      await updateSignInExperience({
+        singleSignOnEnabled: false,
+      });
+
+      const { id } = await createSsoConnector({
+        ...newOidcSsoConnectorPayload,
+        connectorName: generateSsoConnectorName(),
+      });
+
+      const signInExperience = await api
+        .get('.well-known/sign-in-exp')
+        .json<SignInExperience & { ssoConnectors: SsoConnectorMetadata[] }>();
+
+      expect(signInExperience.ssoConnectors.length).toBe(0);
+
+      await deleteSsoConnectorById(id);
+    });
+  });
+
+  describe('custom profile fields', () => {
+    it('should get the custom profile fields in sign-in experience', async () => {
+      const fullnameField = await createCustomProfileField(fullnameData);
+      const signInExperience = await api
+        .get('.well-known/sign-in-exp')
+        .json<SignInExperience & { customProfileFields: CustomProfileField[] }>();
+
+      expect(signInExperience.customProfileFields.length).toBeGreaterThan(0);
+      expect(signInExperience.customProfileFields).toContainEqual(fullnameField);
+
+      await deleteCustomProfileFieldByName(fullnameData.name);
+    });
+  });
+
+  describe('account center', () => {
+    it('get /.well-known/account-center', async () => {
+      const response = await api.get('.well-known/account-center').json<AccountCenter>();
+      expect(response.enabled).toEqual(expect.any(Boolean));
+      expect(response.fields).toEqual(expect.any(Object));
+    });
+  });
+});

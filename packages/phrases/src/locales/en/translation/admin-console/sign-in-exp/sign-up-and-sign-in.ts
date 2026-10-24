@@ -1,0 +1,148 @@
+const sign_up_and_sign_in = {
+  identifiers_email: 'Email address',
+  identifiers_phone: 'Phone number',
+  identifiers_username: 'Username',
+  identifiers_email_or_sms: 'Email address or phone number',
+  identifiers_none: 'Not applicable',
+  and: 'and',
+  or: 'or',
+  sign_up: {
+    title: 'SIGN UP',
+    sign_up_identifier: 'Sign-up identifiers',
+    identifier_description:
+      'All selected sign-up identifiers are required when creating a new account.',
+    sign_up_authentication: 'Authentication setting for sign-up',
+    verification_tip:
+      'Users must verify the email or phone number you’ve configured by entering a verification code during sign-up.',
+    authentication_description:
+      'All selected actions will be obligatory for users to complete the flow.',
+    set_a_password_option: 'Create your password',
+    verify_at_sign_up_option: 'Verify at sign-up',
+    social_only_creation_description: '(This apply to social only account creation)',
+    collect_user_profile: 'Collect user profile',
+    add_profile_fields: 'Add profile fields',
+    profile_fields_hint: {
+      not_in_list: 'Not in the list?',
+      set_up: 'Set up',
+      go_to: 'other profile fields now.',
+    },
+  },
+  sign_in: {
+    title: 'SIGN IN',
+    sign_in_identifier_and_auth: 'Identifier and authentication settings for sign-in',
+    description: 'Users can sign in using any of the options available.',
+    add_sign_in_method: 'Add sign-in method',
+    add_sign_up_method: 'Add sign-up method',
+    password_auth: 'Password',
+    verification_code_auth: 'Verification code',
+    auth_swap_tip: 'Swap the options below to determine which appears first in the flow.',
+    require_auth_factor: 'You have to select at least one authentication factor.',
+    forgot_password: 'Forgot password',
+    forgot_password_description:
+      'Users can reset their password using any available verification method.',
+    add_verification_method: 'Add verification method',
+    email_verification_code: 'Email verification code',
+    phone_verification_code: 'Phone verification code',
+  },
+  social_sign_in: {
+    title: 'SOCIAL SIGN-IN',
+    social_sign_in: 'Social sign-in',
+    description:
+      'Depending on the mandatory identifier you set up, your user may be asked to provide an identifier when signing up via social connector.',
+    add_social_connector: 'Add Social Connector',
+    set_up_hint: {
+      not_in_list: 'Not in the list?',
+      set_up_more: 'Set up',
+      go_to: 'other social connectors now.',
+    },
+    settings_title: 'Social sign-in experience',
+    automatic_account_linking: 'Automatically link accounts with the same identifier',
+    automatic_account_linking_tip:
+      'When enabled, if a user signs in with a new social identity and there is exactly one existing account with the same identifier (e.g., an email address), MeshX will automatically link the social identity to that account. The user will not be asked to choose whether to link accounts.',
+    required_sign_up_identifiers: 'Require users to provide missing sign-up identifier',
+    required_sign_up_identifiers_tip:
+      'When enabled, users logging in via social providers must fill in any missing required sign-up identifier (such as email) before completing their login. \n\nIf disabled, users can proceed without providing missing identifiers, even if the social account didn’t sync them.',
+  },
+  passkey_sign_in: {
+    title: 'PASSKEY SIGN-IN',
+    passkey_sign_in: 'Passkey sign-in',
+    enable_passkey_sign_in_description:
+      'Enable users to quickly and securely access the application via Passkey (WebAuthn), using biometrics or security key, etc.',
+    prompts: 'Passkey prompts',
+    show_passkey_button: 'Show “Continue with passkey” button on the sign-in page',
+    show_passkey_button_tip:
+      'Disabling “Continue with passkey” button makes the sign-in flow identifier-first, showing password and passkey options on the next step.',
+    allow_autofill: 'Allow prompting and autofill of registered passkeys in identifier fields',
+  },
+  tip: {
+    set_a_password: 'A unique set of a password to your username is a must.',
+    verify_at_sign_up:
+      'We currently only support verified email and phone. Your user base may contain a large number of poor-quality email addresses or phone numbers if no validation.',
+    password_auth:
+      'This is essential as you have enabled the option to set a password during the sign-up process.',
+    verification_code_auth:
+      "This is essential as you have only enabled the option to provide verification code when signing up. You're free to uncheck the box when password set-up is allowed at the sign-up process.",
+    email_mfa_enabled:
+      "Email verification code is already enabled for MFA, so it can't be reused as the primary sign-in method for security.",
+    phone_mfa_enabled:
+      "Phone verification code is already enabled for MFA, so it can't be reused as the primary sign-in method for security.",
+    delete_sign_in_method:
+      'This is essential as you have selected {{identifier}} as a required identifier.',
+    password_disabled_notification:
+      'The "Create your password" option is disabled for username sign-up, which may prevent users from signing in. Confirm to proceed with saving.',
+  },
+  advanced_options: {
+    title: 'ADVANCED OPTIONS',
+    enable_single_sign_on: 'Enable enterprise Single Sign-On (SSO)',
+    enable_single_sign_on_description:
+      'Enable users to sign-in to the application using Single Sign-On with their enterprise identities.',
+    single_sign_on_hint: {
+      prefix: 'Go to ',
+      link: '"Enterprise SSO"',
+      suffix: 'section to set up more enterprise connectors.',
+    },
+    enable_user_registration: 'Enable user registration',
+    enable_user_registration_description:
+      'Enable or disallow user registration. Once disabled, users can still be added in the admin console but users can no longer establish accounts through the sign-in UI.',
+    unknown_session_redirect_url: 'Unknown session redirect URL',
+    unknown_session_redirect_url_tip:
+      'Sometimes, MeshX may not recognize a user’s session on the sign-in page, like when a session expires or the user bookmarks or shares the sign-in link. By default, an “unknown session” 404 error appears. To enhance user experience, set a fallback URL to redirect users back to your app and restart authentication.',
+  },
+  username_policy: {
+    title: 'Username policy',
+    description:
+      'Customize username requirements, including length, allowed characters, and case sensitivity.',
+    manage_button: 'Manage',
+    modal_title: 'Username policy',
+    modal_description: 'Customize username requirements for your end-users.',
+    length: {
+      title: 'Username length',
+      minimum: 'Minimum',
+      maximum: 'Maximum',
+      min_greater_than_max: 'The minimum length cannot be greater than the maximum length.',
+    },
+    allowed_chars: {
+      title: 'Allowed character types',
+      uppercase: 'Uppercase letters (A-Z)',
+      lowercase: 'Lowercase letters (a-z)',
+      numbers: 'Numbers (0-9)',
+      underscore: 'Underscores (_)',
+      no_valid_leading_char:
+        'Numbers alone aren’t allowed. Enable at least one of uppercase, lowercase, or underscores.',
+      no_char_selected: 'Select at least one character type.',
+    },
+    case_sensitive: {
+      title: 'Case-sensitive usernames',
+      description:
+        'Treat uppercase and lowercase letters as distinct. ‘user123’ and ‘User123’ are treated as different usernames.',
+    },
+    case_conflicts: {
+      title: 'Existing username conflicts detected',
+      description:
+        'Some usernames would collide if case sensitivity is turned off. Resolve the {{count}} conflicting group(s) below before saving.',
+      sample_title: 'Conflicting usernames',
+    },
+  },
+};
+
+export default Object.freeze(sign_up_and_sign_in);

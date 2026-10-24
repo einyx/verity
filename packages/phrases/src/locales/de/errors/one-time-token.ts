@@ -1,0 +1,11 @@
+const one_time_token = {
+  token_not_found: 'Token {{token}} wurde nicht gefunden.',
+  email_mismatch: 'E-Mail stimmt nicht mit dem angegebenen Token überein.',
+  interaction_event_mismatch: 'Das Token kann für diese Interaktion nicht verwendet werden.',
+  token_expired: 'Das Token ist abgelaufen.',
+  token_consumed: 'Das Token wurde verbraucht.',
+  token_revoked: 'Das Token wurde widerrufen.',
+  cannot_reactivate_token: 'Das Token kann nicht reaktiviert werden.',
+};
+
+export default Object.freeze(one_time_token);

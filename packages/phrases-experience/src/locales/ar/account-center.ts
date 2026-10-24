@@ -1,0 +1,295 @@
+const account_center = {
+  home: {
+    title: 'الصفحة غير موجودة',
+    description: 'هذه الصفحة غير متاحة.',
+  },
+  page: {
+    title: 'الحساب',
+    security_title: 'الأمان',
+    security_description: 'غيّر إعدادات حسابك هنا لضمان أمان حسابك.',
+    profile_title: 'المعلومات الشخصية',
+    profile_description: 'قم بتغيير معلوماتك الشخصية هنا.',
+    sidebar_personal_info: 'المعلومات الشخصية',
+    sidebar_security: 'الأمان',
+    sidebar_sessions: 'الجلسات',
+    support: 'الدعم',
+    user_menu: 'قائمة المستخدم',
+    sign_out: 'تسجيل الخروج',
+  },
+  verification: {
+    title: 'التحقق الأمني',
+    description:
+      'تحقق من أنك الشخص المقصود لحماية أمان حسابك. يرجى اختيار الطريقة للتحقق من هويتك.',
+    error_send_failed: 'فشل إرسال رمز التحقق. يرجى المحاولة لاحقًا.',
+    error_invalid_code: 'رمز التحقق غير صالح أو منتهي الصلاحية.',
+    error_verify_failed: 'فشل التحقق. يرجى إدخال الرمز مرة أخرى.',
+    verification_required: 'انتهت صلاحية التحقق. يرجى التحقق من هويتك مرة أخرى.',
+    try_another_method: 'جرّب طريقة أخرى للتحقق',
+    no_available_methods_title: 'لا توجد طرق تحقق متاحة',
+    no_available_methods_description:
+      'لم تقم بإعداد أي طرق للتحقق. يرجى إضافة كلمة مرور أو بريد إلكتروني أو رقم هاتف إلى حسابك أولًا.',
+  },
+  password_verification: {
+    title: 'التحقق من كلمة المرور',
+    description: 'لحماية أمان حسابك، أدخل كلمة المرور للتحقق من هويتك.',
+    error_failed: 'كلمة المرور غير صحيحة. يرجى التحقق من المدخلات.',
+  },
+  verification_method: {
+    password: {
+      name: 'كلمة المرور',
+      description: 'تحقق من كلمة المرور الخاصة بك',
+    },
+    email: {
+      name: 'رمز التحقق عبر البريد الإلكتروني',
+      description: 'أرسل رمز التحقق إلى بريدك الإلكتروني',
+    },
+    phone: {
+      name: 'رمز التحقق عبر الهاتف',
+      description: 'أرسل رمز التحقق إلى رقم هاتفك',
+    },
+  },
+  email: {
+    title: 'ربط البريد الإلكتروني',
+    description: 'اربط بريدك الإلكتروني لتسجيل الدخول أو للمساعدة في استعادة الحساب.',
+    verification_title: 'أدخل رمز التحقق من البريد الإلكتروني',
+    verification_description: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني {{email_address}}.',
+    success: 'تم ربط البريد الإلكتروني الأساسي بنجاح.',
+    verification_required: 'انتهت صلاحية التحقق. يرجى التحقق من هويتك مرة أخرى.',
+  },
+  phone: {
+    title: 'ربط رقم الهاتف',
+    description: 'اربط رقم هاتفك لتسجيل الدخول أو للمساعدة في استعادة الحساب.',
+    verification_title: 'أدخل رمز التحقق عبر الرسائل القصيرة',
+    verification_description: 'تم إرسال رمز التحقق إلى هاتفك {{phone_number}}.',
+    success: 'تم ربط الهاتف الأساسي بنجاح.',
+    verification_required: 'انتهت صلاحية التحقق. يرجى التحقق من هويتك مرة أخرى.',
+  },
+  username: {
+    title: 'تعيين اسم المستخدم',
+    description: 'يجب أن يحتوي اسم المستخدم على أحرف وأرقام وشرطات سفلية فقط.',
+    policy_description: '{{requirements}}',
+    success: 'تم تحديث اسم المستخدم بنجاح.',
+  },
+  security: {
+    add: 'إضافة',
+    change: 'تغيير',
+    remove: 'إزالة',
+    not_set: 'غير محدد',
+    social_sign_in: 'تسجيل الدخول الاجتماعي',
+    social_not_linked: 'غير مرتبط',
+    email_phone: 'البريد الإلكتروني / الهاتف',
+    email: 'البريد الإلكتروني',
+    phone: 'الهاتف',
+    password: 'كلمة المرور',
+    configured: 'تم الإعداد',
+    not_configured: 'غير معدّ',
+    two_step_verification: 'التحقق بخطوتين',
+    authenticator_app: 'تطبيق المصادقة',
+    passkeys: 'مفاتيح المرور',
+    backup_codes: 'رموز النسخ الاحتياطي',
+    email_verification_code: 'رمز التحقق عبر البريد الإلكتروني',
+    phone_verification_code: 'رمز التحقق عبر الهاتف',
+    passkeys_count_one: '{{count}} مفتاح مرور',
+    passkeys_count_other: '{{count}} مفاتيح مرور',
+    backup_codes_count_one: '{{count}} رمز متبقٍ',
+    backup_codes_count_other: '{{count}} رموز متبقية',
+    view: 'عرض',
+    manage: 'إدارة',
+    turn_on_2_step_verification_description:
+      'أضف طبقة أمان إضافية. ستتم مطالبتك بخطوة تحقق ثانية عند تسجيل الدخول.',
+    turn_off_2_step_verification: 'إيقاف التحقق بخطوتين',
+    turn_off_2_step_verification_description:
+      'سيؤدي تعطيل التحقق بخطوتين إلى إزالة طبقة الحماية الإضافية من حسابك عند تسجيل الدخول. هل أنت متأكد أنك تريد المتابعة؟',
+    disable_2_step_verification: 'تعطيل',
+    no_verification_method_warning:
+      'لم تقم بإضافة طريقة تحقق ثانية. أضف طريقة واحدة على الأقل لتفعيل التحقق بخطوتين عند تسجيل الدخول.',
+    passkey_sign_in_prompt: 'مطالبة بإعداد مفتاح مرور',
+    passkey_sign_in_prompt_description:
+      'عند التفعيل، سيُطلب منك إعداد مفتاح مرور لتسجيل دخول أسرع وأكثر أمانًا.',
+    account_removal: 'حذف الحساب',
+    delete_your_account: 'احذف حسابك',
+    delete_account: 'حذف الحساب',
+    remove_username_confirmation_title: 'إزالة اسم المستخدم',
+    remove_username_confirmation_description:
+      'بعد الإزالة، لن تتمكن بعد ذلك من تسجيل الدخول باستخدام اسم المستخدم هذا. هل أنت متأكد أنك تريد المتابعة؟',
+    remove_email_confirmation_title: 'إزالة عنوان البريد الإلكتروني',
+    remove_email_confirmation_description:
+      'بعد الإزالة، لن تتمكن بعد ذلك من تسجيل الدخول باستخدام عنوان البريد الإلكتروني هذا. هل أنت متأكد أنك تريد المتابعة؟',
+    remove_phone_confirmation_title: 'إزالة رقم الهاتف',
+    remove_phone_confirmation_description:
+      'بعد الإزالة، لن تتمكن بعد ذلك من تسجيل الدخول باستخدام رقم الهاتف هذا. هل أنت متأكد أنك تريد المتابعة؟',
+    email_removed: 'تمت إزالة عنوان البريد الإلكتروني بنجاح.',
+    phone_removed: 'تمت إزالة رقم الهاتف بنجاح.',
+    username_removed: 'تمت إزالة اسم المستخدم بنجاح.',
+    trusted_devices: {
+      title: 'الأجهزة الموثوقة للمصادقة متعددة العوامل',
+      current_device: 'الجهاز الحالي',
+      expires_on: 'تنتهي الصلاحية في {{date}}',
+      unknown_location: 'موقع غير معروف',
+      remove: 'إزالة',
+      removed: 'تمت إزالة الجهاز الموثوق بنجاح.',
+      loading: 'جارٍ التحميل...',
+      empty: 'لا توجد أجهزة موثوقة.',
+      load_failed: 'فشل تحميل الأجهزة الموثوقة. يُرجى المحاولة مرة أخرى.',
+      retry: 'إعادة المحاولة',
+      remove_confirmation_title: 'هل تريد إزالة الجهاز الموثوق؟',
+      remove_confirmation_description:
+        'ستحتاج إلى إكمال المصادقة متعددة العوامل مرة أخرى على هذا الجهاز في المرة القادمة التي تسجل فيها الدخول. ستظل جلستك الحالية نشطة.',
+    },
+  },
+  social: {
+    linked: 'تم ربط {{connector}} بنجاح.',
+    not_enabled:
+      'طريقة تسجيل الدخول الاجتماعي هذه غير مفعلة. يُرجى التواصل مع المسؤول للحصول على المساعدة.',
+    removed: 'تمت إزالة {{connector}} بنجاح.',
+    remove_confirmation_title: 'إزالة الحساب الاجتماعي',
+    remove_confirmation_description:
+      'إذا أزلت {{connector}}، فقد لا تتمكن من تسجيل الدخول به حتى تقوم بإضافته مرة أخرى.',
+  },
+  password: {
+    title: 'تعيين كلمة المرور',
+    description: 'أنشئ كلمة مرور جديدة لحماية حسابك.',
+    success: 'تم تحديث كلمة المرور بنجاح.',
+  },
+  code_verification: {
+    send: 'إرسال رمز التحقق',
+    resend: 'لم تستلمه بعد؟ <a>إعادة إرسال رمز التحقق</a>',
+    resend_countdown: 'لم تستلمه بعد؟ أعد الإرسال بعد {{seconds}} ث.',
+  },
+  email_verification: {
+    title: 'تحقق من بريدك الإلكتروني',
+    prepare_description: 'تحقق من هويتك لحماية أمان حسابك. أرسل رمز التحقق إلى بريدك الإلكتروني.',
+    email_label: 'عنوان البريد الإلكتروني',
+    send: 'إرسال رمز التحقق',
+    description: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني {{email}}. أدخل الرمز للمتابعة.',
+    resend: 'لم تستلمه بعد؟ <a>إعادة إرسال رمز التحقق</a>',
+    not_received: 'لم تستلمه بعد؟',
+    resend_action: 'إعادة إرسال رمز التحقق',
+    resend_countdown: 'لم تستلمه بعد؟ أعد الإرسال بعد {{seconds}} ث.',
+    error_send_failed: 'فشل إرسال رمز التحقق. يرجى المحاولة لاحقًا.',
+    error_verify_failed: 'فشل التحقق. يرجى إدخال الرمز مرة أخرى.',
+    error_invalid_code: 'رمز التحقق غير صالح أو منتهي الصلاحية.',
+  },
+  phone_verification: {
+    title: 'تحقق من هاتفك',
+    prepare_description: 'تحقق من هويتك لحماية أمان حسابك. أرسل رمز التحقق إلى هاتفك.',
+    phone_label: 'رقم الهاتف',
+    send: 'إرسال رمز التحقق',
+    description: 'تم إرسال رمز التحقق إلى هاتفك {{phone}}. أدخل الرمز للمتابعة.',
+    resend: 'لم تستلمه بعد؟ <a>إعادة إرسال رمز التحقق</a>',
+    resend_countdown: 'لم تستلمه بعد؟ أعد الإرسال بعد {{seconds}} ث.',
+    error_send_failed: 'فشل إرسال رمز التحقق. يرجى المحاولة لاحقًا.',
+    error_verify_failed: 'فشل التحقق. يرجى إدخال الرمز مرة أخرى.',
+    error_invalid_code: 'رمز التحقق غير صالح أو منتهي الصلاحية.',
+  },
+  mfa: {
+    totp_already_added: 'لقد أضفت تطبيق مصادقة بالفعل. يرجى إزالة التطبيق الحالي أولاً.',
+    totp_not_enabled: 'تطبيق المصادقة OTP غير مفعّل. يرجى الاتصال بالمسؤول للحصول على المساعدة.',
+    backup_code_already_added:
+      'لديك بالفعل رموز احتياطية نشطة. يرجى استخدامها أو إزالتها قبل إنشاء رموز جديدة.',
+    backup_code_not_enabled:
+      'رمز النسخ الاحتياطي غير ممكّن. يرجى الاتصال بالمسؤول للحصول على المساعدة.',
+    backup_code_requires_other_mfa: 'تتطلب رموز النسخ الاحتياطي إعداد طريقة MFA أخرى أولاً.',
+    passkey_not_enabled: 'مفتاح المرور غير مفعّل. يرجى الاتصال بالمسؤول للحصول على المساعدة.',
+    passkey_already_registered:
+      'مفتاح المرور هذا مسجّل بالفعل في حسابك. يرجى استخدام أداة مصادقة مختلفة.',
+  },
+  update_success: {
+    default: {
+      title: 'تم التحديث!',
+      description: 'تم تحديث معلوماتك.',
+    },
+    email: {
+      title: 'تم تحديث البريد الإلكتروني!',
+      description: 'تم تحديث عنوان بريدك الإلكتروني بنجاح.',
+    },
+    phone: {
+      title: 'تم تحديث رقم الهاتف!',
+      description: 'تم تحديث رقم هاتفك بنجاح.',
+    },
+    username: {
+      title: 'تم تغيير اسم المستخدم!',
+      description: 'تم تحديث اسم المستخدم الخاص بك بنجاح.',
+    },
+    password: {
+      title: 'تم تغيير كلمة المرور!',
+      description: 'تم تحديث كلمة المرور الخاصة بك بنجاح.',
+    },
+    totp: {
+      title: 'تمت إضافة تطبيق المصادقة!',
+      description: 'تم ربط تطبيق المصادقة بحسابك بنجاح.',
+    },
+    totp_replaced: {
+      title: 'تم استبدال تطبيق المصادقة!',
+      description: 'تم استبدال تطبيق المصادقة الخاص بك بنجاح.',
+    },
+    backup_code: {
+      title: 'تم إنشاء رموز النسخ الاحتياطي!',
+      description: 'تم حفظ رموز النسخ الاحتياطي الخاصة بك. احتفظ بها في مكان آمن.',
+    },
+    passkey: {
+      title: 'تمت إضافة مفتاح المرور!',
+      description: 'تم ربط مفتاح المرور بحسابك بنجاح.',
+    },
+    social: {
+      title: 'تم ربط الحساب الاجتماعي!',
+      description: 'تم ربط حسابك الاجتماعي بنجاح.',
+    },
+  },
+  backup_code: {
+    title: 'رموز النسخ الاحتياطي',
+    description:
+      'يمكنك استخدام أحد رموز النسخ الاحتياطي هذه للوصول إلى حسابك إذا واجهت مشكلة أثناء التحقق بخطوتين بطرق أخرى. يمكن استخدام كل رمز مرة واحدة فقط.',
+    copy_hint: 'تأكد من نسخها وحفظها في مكان آمن.',
+    generate_new_title: 'إنشاء رموز نسخ احتياطي جديدة',
+    generate_new: 'إنشاء رموز نسخ احتياطي جديدة',
+  },
+  passkey: {
+    title: 'مفاتيح المرور',
+    added: 'تمت الإضافة: {{date}}',
+    last_used: 'آخر استخدام: {{date}}',
+    never_used: 'أبدًا',
+    unnamed: 'مفتاح مرور بدون اسم',
+    renamed: 'تم تغيير اسم مفتاح المرور بنجاح.',
+    deleted: 'تم حذف مفتاح المرور بنجاح.',
+    add_another_title: 'إضافة مفتاح مرور آخر',
+    add_another_description:
+      'قم بتسجيل مفتاح المرور الخاص بك باستخدام المقاييس الحيوية للجهاز أو مفاتيح الأمان (مثل YubiKey) أو الطرق الأخرى المتاحة.',
+    add_passkey: 'إضافة مفتاح مرور',
+    delete_confirmation_title: 'إزالة مفتاح المرور الخاص بك',
+    delete_confirmation_description:
+      'إذا قمت بإزالة مفتاح المرور هذا، فلن تتمكن من التحقق باستخدامه.',
+    rename_passkey: 'إعادة تسمية مفتاح المرور',
+    rename_description: 'أدخل اسمًا جديدًا لمفتاح المرور هذا.',
+    name_this_passkey: 'تسمية مفتاح المرور لهذا الجهاز',
+    name_passkey_description:
+      'لقد نجحت في التحقق من هذا الجهاز للمصادقة بخطوتين. خصص الاسم للتعرف عليه إذا كان لديك مفاتيح متعددة.',
+    name_input_label: 'الاسم',
+  },
+  sessions: {
+    page_title: 'الجلسات',
+    page_description: 'إدارة جلساتك النشطة والتطبيقات المعتمدة من جهات خارجية.',
+    title: 'الجلسات',
+    current_session: 'الجلسة الحالية',
+    signed_in_at: 'تم تسجيل الدخول {{date}}',
+    revoke_session: 'تسجيل الخروج',
+    revoke_session_title: 'تسجيل الخروج من الجلسة',
+    revoke_session_description:
+      'سيؤدي هذا إلى تسجيل الخروج من الجلسة وإلغاء جميع الوصول المرتبط. هل أنت متأكد أنك تريد المتابعة؟',
+    no_other_sessions: 'لا توجد جلسات نشطة أخرى.',
+    loading: 'جارٍ التحميل...',
+    third_party_apps_title: 'تطبيقات الطرف الثالث',
+    no_third_party_apps: 'لا توجد تطبيقات طرف ثالث معتمدة.',
+    third_party_apps_load_failed: 'فشل تحميل تطبيقات الطرف الثالث. يُرجى المحاولة مرة أخرى.',
+    granted_at: 'تم التفويض {{date}}',
+    dynamic_app: 'تطبيق ديناميكي',
+    client_id: 'معرف العميل: {{clientId}}',
+    revoke_grant: 'إزالة',
+    revoke_grant_title: 'إزالة وصول تطبيق الطرف الثالث',
+    revoke_grant_description:
+      'سيؤدي هذا إلى إلغاء الوصول الممنوح لهذا التطبيق. قد تظل رموز الوصول التي أُصدرت سابقًا صالحة حتى انتهاء صلاحيتها. هل أنت متأكد أنك تريد المتابعة؟',
+    revoke_grant_failed: 'فشل إلغاء بعض التفويضات. يرجى المحاولة مرة أخرى.',
+  },
+};
+
+export default Object.freeze(account_center);

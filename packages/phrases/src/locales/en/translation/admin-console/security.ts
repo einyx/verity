@@ -1,0 +1,222 @@
+const security = {
+  page_title: 'Security',
+  title: 'Security',
+  subtitle: 'Configure advanced protection against sophisticated attacks.',
+  tabs: {
+    captcha: 'CAPTCHA',
+    password_policy: 'Password policy',
+    blocklist: 'Blocklist',
+    general: 'General',
+  },
+  bot_protection: {
+    title: 'Bot protection',
+    description:
+      'Enable CAPTCHA for sign-up, sign-in, and password recovery to block automated threats.',
+    captcha: {
+      title: 'CAPTCHA',
+      placeholder: 'Select a CAPTCHA provider and set up integration.',
+      add: 'Add CAPTCHA',
+    },
+    settings: 'Settings',
+    enable_captcha: 'Enable CAPTCHA',
+    enable_captcha_description:
+      'Enable CAPTCHA verification for sign-up, sign-in, and password recovery flows.',
+    custom_ui_captcha_notice:
+      'You are using Bring your UI. Additional configuration is required to enable CAPTCHA in your custom UI. <a>View setup guide</a>.',
+  },
+  create_captcha: {
+    setup_captcha: 'Setup CAPTCHA',
+  },
+  captcha_providers: {
+    recaptcha_enterprise: {
+      name: 'reCAPTCHA Enterprise',
+      description:
+        "Google's enterprise-grade CAPTCHA solution that provides advanced threat detection and detailed security analytics to protect your website from fraudulent activities.",
+    },
+    turnstile: {
+      name: 'Cloudflare Turnstile',
+      description:
+        "Cloudflare's smart CAPTCHA alternative that provides non-intrusive bot protection while ensuring a seamless user experience without visual puzzles.",
+    },
+    cap: {
+      name: 'Cap',
+      description:
+        'Open-source, self-hosted proof-of-work CAPTCHA without visual puzzles or third-party services, ideal for regions where other CAPTCHA services are unreachable.',
+    },
+  },
+  captcha_details: {
+    back_to_security: 'Back to security',
+    page_title: 'CAPTCHA details',
+    check_readme: 'Check README',
+    options_change_captcha: 'Change CAPTCHA provider',
+    connection: 'Connection',
+    description: 'Configure your captcha connections.',
+    site_key: 'Site key',
+    secret_key: 'Secret key',
+    project_id: 'Project ID',
+    domain: 'Domain (optional)',
+    domain_placeholder: 'www.google.com (default) or recaptcha.net',
+    recaptcha_key_id: 'reCAPTCHA key ID',
+    recaptcha_api_key: 'API key of the project',
+    cap_endpoint: 'Cap endpoint',
+    cap_endpoint_placeholder: 'https://cap.example.com',
+    cap_endpoint_http_notice:
+      'This endpoint uses HTTP, which is only suitable for local development. Browsers block HTTP requests from an HTTPS sign-in page, and the secret key would be sent unencrypted. Use HTTPS in production.',
+    deletion_description: 'Are you sure you want to delete this CAPTCHA provider?',
+    captcha_deleted: 'CAPTCHA provider deleted successfully',
+    setup_captcha: 'Setup CAPTCHA',
+    mode: 'Verification mode',
+    mode_invisible: 'Invisible',
+    mode_checkbox: 'Checkbox',
+    mode_notice:
+      'The verification mode is defined in your reCAPTCHA key settings in Google Cloud Console. Changing the mode here requires a matching key type.',
+    score_threshold: 'Score threshold',
+    score_threshold_description:
+      'Scores below the threshold are rejected. 0.0 allows all, 1.0 only allows perfect scores. Default is 0.5.',
+    score_threshold_error: 'Score threshold must be between 0 and 1.',
+  },
+  password_policy: {
+    password_requirements: 'Password requirements',
+    password_requirements_description:
+      'Enhance password requirements to defend against credential stuffing and weak password attacks. ',
+    minimum_length: 'Minimum length',
+    minimum_length_description:
+      'NIST suggests using <a>at least 8 characters</a> for web products.',
+    minimum_length_error: 'Minimum length must be between {{min}} and {{max}} (inclusive).',
+    minimum_required_char_types: 'Minimum required character types',
+    minimum_required_char_types_description:
+      'Character types: uppercase (A-Z), lowercase (a-z), numbers (0-9), and special symbols ({{symbols}}).',
+    password_rejection: 'Password rejection',
+    compromised_passwords: 'Reject compromised password',
+    breached_passwords: 'Breached passwords',
+    breached_passwords_description: 'Reject passwords previously found in breach databases.',
+    restricted_phrases: 'Restrict low-security phrases',
+    restricted_phrases_tooltip:
+      'Your password should avoid these phrases unless you combine with 3 or more extra characters.',
+    repetitive_or_sequential_characters: 'Repetitive or sequential characters',
+    repetitive_or_sequential_characters_description: 'E.g., "AAAA", "1234", and "abcd".',
+    user_information: 'User information',
+    user_information_description: 'E.g., email address, phone number, username, etc.',
+    custom_words: 'Custom words',
+    custom_words_description:
+      'Personalize context-specific words, case-insensitive, and one per line.',
+    custom_words_placeholder: 'Your service name, company name, etc.',
+    password_expiration: 'Password expiration',
+    password_expiration_description:
+      'Require users to reset their password after a set number of days. Users signing in via SSO or passkey are not affected.',
+    enable_password_expiration: 'Enable password expiration',
+    enable_password_expiration_description:
+      'Require users to periodically reset their password. Existing users without a recorded password change date will be evaluated from the date this policy is enabled.',
+    enable_password_expiration_tip:
+      'Password expiration can only be enabled after you configure at least one forgot password method with a valid connector in sign-in experience.',
+    expiration_period: 'Password valid period (days)',
+    expiration_period_description: 'Number of days a password remains valid before it expires.',
+    expiration_period_error: 'Password valid period must be between {{min}} and {{max}} days.',
+    password_expiration_recovery_reminder:
+      "Some users may not have an email address or phone number to receive a password recovery code, so they won't be able to reset an expired password. Require an email or phone number at sign-up to make sure every user can recover their password.",
+  },
+  verification_code_policy: {
+    card_title: 'Verification code',
+    card_description:
+      'Configure the expiration duration and maximum retry attempts for verification codes used in sign-in, sign-up, and password reset flows.',
+    enable: {
+      title: 'Customize verification code settings',
+      description:
+        'Allow customization of the verification code expiration duration and maximum retry attempts.',
+    },
+    expiration_duration: {
+      title: 'Expiration duration (seconds)',
+      description:
+        'The duration in seconds that a verification code remains valid after being sent.',
+      error_message: 'Expiration duration must be between 60 and 3600 seconds.',
+    },
+    max_retry_attempts: {
+      title: 'Maximum retry attempts',
+      description:
+        'Maximum number of failed verification attempts allowed before the code is invalidated.',
+      error_message: 'Maximum retry attempts must be between 1 and 100.',
+    },
+  },
+
+  sentinel_policy: {
+    card_title: 'Identifier lockout',
+    card_description:
+      'Lockout is available to all users with default settings, but you can customize it for more control.\n\nTemporarily lock an identifier after multiple failed authentication attempts (e.g., consecutive incorrect password or verification code) to prevent brute force access.',
+    enable_sentinel_policy: {
+      title: 'Customize lockout experience',
+      description:
+        'Allow customization of the maximum failed login attempts before lockout, lockout duration, and immediate manual unlock.',
+    },
+    max_attempts: {
+      title: 'Maximum failed attempts',
+      description:
+        'Temporarily lock an identifier after reaching the maximum number of failed login attempts in an hour.',
+      error_message: 'Maximum failed attempts must be greater than 0.',
+    },
+    lockout_duration: {
+      title: 'Lockout duration (minutes)',
+      description: 'Block sign-ins for a period after exceeding the maximum failed attempts limit.',
+      error_message: 'Lockout duration must be at least 1 minute.',
+    },
+    manual_unlock: {
+      title: 'Manual unlock',
+      description:
+        'Unlock users immediately by confirming their identity and entering their identifier.',
+      unblock_by_identifiers: 'Unblock by identifier',
+      modal_description_1:
+        'An identifier was temporarily locked due to multiple failed sign-in/sign-up attempts. To protect security, access will automatically restore after the lockout duration.',
+      modal_description_2:
+        ' Only unlock manually if you’ve confirmed the user’s identity and ensured no unauthorized access attempts.',
+      placeholder: 'Enter identifiers (email address / phone number / username)',
+      confirm_button_text: 'Unlock now',
+      success_toast: 'Unlocked successfully',
+      duplicate_identifier_error: 'Identifier already added',
+      empty_identifier_error: 'Please enter at least one identifier',
+    },
+  },
+  blocklist: {
+    card_title: 'Email blocklist',
+    card_description:
+      'Take control of your user base by blocking high-risk or unwanted email addresses.',
+    custom_email_allowlist: {
+      title: 'Allow custom email addresses',
+      description:
+        'Add rules to allow only specific email domains, email addresses, or wildcard patterns for new sign-ups and newly linked emails. Examples: bar@example.com, @example.com, foo*@example.com, *@example.com. The gmail.com and googlemail.com domains are treated as equivalent, and dots in the local part are ignored, so foo.bar@gmail.com matches foobar@googlemail.com.',
+      placeholder: 'Enter an email address, domain, or wildcard pattern',
+      duplicate_error: 'Email address, domain, or wildcard email address pattern already added',
+      invalid_format_error:
+        'Must be a valid email address (bar@example.com), domain (@example.com), or wildcard email address pattern (foo*@example.com, *@example.com)',
+      warnings: {
+        identical_entries:
+          'Some allowlist entries also exist in the block rules. Matching emails may still be blocked.',
+        blocked_exact_email:
+          'Some exact allowlist emails match a block rule. Matching emails may still be blocked.',
+        blocked_subaddressing:
+          'Some allowlist entries contain a plus sign (+), but email subaddressing is blocked.',
+        effectively_unusable:
+          'Based on these checks, the current allowlist may not allow any new emails to pass.',
+      },
+    },
+    disposable_email: {
+      title: 'Block disposable email addresses',
+      description:
+        'Enable to reject any sign-up attempts using a disposable or throwaway email address, which can prevent spam and improve user quality.',
+    },
+    email_subaddressing: {
+      title: 'Block email subaddressing',
+      description:
+        'Enable to reject any sign-up attempts from using email subaddresses with a plus sign (+) and additional characters (e.g., user+alias@foo.com).',
+    },
+    custom_email_address: {
+      title: 'Block custom email addresses',
+      description:
+        'Add rules to block specific email domains, email addresses, or wildcard patterns from registering or linking via the UI. Examples: bar@example.com, @example.com, foo*@example.com, *@example.com. The gmail.com and googlemail.com domains are treated as equivalent, and dots in the local part are ignored, so foo.bar@gmail.com matches foobar@googlemail.com.',
+      placeholder: 'Enter an email address, domain, or wildcard pattern',
+      duplicate_error: 'Email address, domain, or wildcard email address pattern already added',
+      invalid_format_error:
+        'Must be a valid email address (bar@example.com), domain (@example.com), or wildcard email address pattern (foo*@example.com, *@example.com)',
+    },
+  },
+};
+
+export default Object.freeze(security);

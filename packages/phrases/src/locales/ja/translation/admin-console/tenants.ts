@@ -1,0 +1,200 @@
+const tenants = {
+  title: '設定',
+  description: 'テナントの設定を効率的に管理し、ドメインをカスタマイズします。',
+  oss_description:
+    'こちらでアカウント設定を変更し、個人情報を管理して、アカウントの安全性を確保してください。',
+  tabs: {
+    settings: '設定',
+    members: 'メンバー',
+    domains: 'ドメイン',
+    oidc_configs: 'OIDC 設定',
+    subscription: 'プランと請求',
+    billing_history: '請求履歴',
+    license: 'ライセンス',
+  },
+  license: {
+    purchase_title: 'セルフホストプラン',
+    purchase_description:
+      'セルフホストプロおよびエンタープライズプランでは、Logto ブランディングの非表示、独自 UI の利用、コンソールの共同管理、SAML アプリケーションの無制限利用など、有料機能を自分のインスタンスで利用できます。プランを購入してライセンスキーを取得してください。',
+    purchase_button: 'セルフホストプランを見る',
+    install_title: 'ライセンスのインストール',
+    install_description: 'セルフホストプランの購入後に受け取ったライセンスキーを貼り付けます。',
+    install_button: 'ライセンスをインストール',
+    key_field: 'ライセンスキー',
+    key_field_description:
+      'キーはインスタンス上で検証され、外部に送信されることはありません。お持ちのキーの有効期限が切れている場合は、新しいキーの発行について Logto にお問い合わせください。',
+    key_placeholder: 'ここにライセンスキーを貼り付けてください',
+    installed_toast: 'ライセンスをインストールしました。',
+    details_title: 'ライセンス',
+    details_description: 'このインスタンスにインストールされているライセンスと、その内容です。',
+    plan_field: 'プラン',
+    environment_field: '環境',
+    environment_production: '本番',
+    environment_non_production: '非本番',
+    expires_at_field: '有効期限',
+    installed_at_field: 'インストール日',
+    last_refreshed_at_field: '最終更新日時',
+    grace_ends_at_field: '猶予期間の終了日',
+    refresh_expired_description:
+      'ライセンスキーは {{expiresAt}} に期限切れになりました。Logto が更新を試みている間、ライセンス機能は {{graceEndsAt}} まで利用できます。',
+    refresh_refused_description:
+      'ライセンスが{{reason}}のため、更新が拒否されました。ライセンス機能は {{graceEndsAt}} まで利用できます。',
+    refusal_reason_canceled: 'キャンセル済み',
+    refusal_reason_unpaid: '未払い',
+    refusal_reason_expired: '期限切れ',
+    refusal_reason_revoked: '取り消し済み',
+    refusal_reason_unknown: '利用できない状態',
+    grace_expired_description:
+      'ライセンスの猶予期間は {{graceEndsAt}} に終了しました。このインスタンスは OSS のデフォルトに戻っています。Logto にお問い合わせのうえ、新しいライセンスキーを取得して再インストールしてください。',
+    get_fresh_key_button: '新しいライセンスキーを取得',
+    replace_button: 'ライセンスを差し替える',
+  },
+  members: {
+    card_title: 'Logto Cloud でテナントをより安全に管理',
+    card_description:
+      '1つの管理者アカウントを共有せずに、テナントに管理者やコラボレーターを追加できます。',
+    card_action: 'Logto Cloud を見る',
+    self_hosted_card_title: 'セルフホストプランでテナントをより安全に管理',
+    self_hosted_card_description:
+      '1つの管理者アカウントを共有せずに、テナントに管理者やコラボレーターを追加できます。',
+    self_hosted_card_action: 'セルフホストプランを見る',
+  },
+  settings: {
+    title: '設定',
+    description: 'テナント名を設定し、ホストされているデータの地域とテナントタイプを表示します。',
+    tenant_id: 'テナントID',
+    tenant_name: 'テナント名',
+    tenant_instance: 'インスタンスを選択してください',
+    tenant_instance_description:
+      'テナントをホストする場所を選択してください。パブリック共有インフラストラクチャの Logto Cloud を選択するか、専用リソース用のプライベートインスタンスを選択します。',
+    tenant_region: 'データがホストされている地域',
+    tenant_region_description:
+      'テナントリソース（ユーザー、アプリなど）がホストされている物理的な場所です。作成後に変更することはできません。',
+    tenant_region_tip: 'テナントのリソースは {{region}} にホストされています。 <a>詳細</a>',
+    environment_tag_development: '開発',
+    environment_tag_production: '本番',
+    tenant_type: 'テナントタイプ',
+    development_description:
+      'テスト用であり、本番で使用すべきではありません。サブスクリプションは必要ありません。すべてのプロの機能がありますが、サインインバナーなどの制限があります。',
+    production_description:
+      'エンドユーザーに使用することを意図しており、有料のサブスクリプションが必要なアプリ向け。',
+    tenant_info_saved: 'テナント情報は正常に保存されました。',
+    tenant_mfa: '多要素認証',
+    tenant_mfa_description:
+      'メンバーがこのテナントにアクセスするために多要素認証を設定することを要求します。',
+    oss_description: 'このインスタンスでメンバーがコンソールにアクセスする方法を管理します。',
+    tenant_mfa_confirm_title: 'すべてのメンバーに MFA を必須にしますか？',
+    tenant_mfa_confirm_description:
+      '以下のメンバーはまだ MFA を設定していません。サインイン状態は維持され、次回のサインイン時に設定を求められます：',
+    tenant_mfa_confirm_self:
+      'あなたもまだ MFA を設定していません。次回のサインインまでにアカウント設定で設定してください。',
+    tenant_mfa_confirm_button: 'MFA を必須にする',
+    tenant_mfa_setup_required:
+      'このテナントでは多要素認証が必須です。今すぐ設定してください。設定しない場合、次回のサインイン時に求められます。',
+    tenant_mfa_setup_action: 'MFA を設定',
+    enterprise_sso: 'エンタープライズ SSO',
+    enterprise_sso_description:
+      '有料プランで利用可能です。お問い合わせいただくと、すべてのメンバーが組織のアイデンティティプロバイダーを使用して Logto Cloud コンソールにサインインできるようになります。',
+  },
+  full_env_tag: {
+    development: '開発',
+    production: '本番',
+  },
+  view_only: {
+    tag: '閲覧のみ',
+    notification:
+      'このテナントへのアクセスは閲覧のみです。変更が必要な場合は、テナント管理者に依頼してください。',
+    hidden: '閲覧者には非表示',
+  },
+  deletion_card: {
+    title: '削除',
+    tenant_deletion: 'テナントの削除',
+    tenant_deletion_description:
+      'テナントの削除は、関連するすべてのユーザーデータと設定の永久的な削除につながります。十分に注意して操作してください。',
+    tenant_deletion_button: 'テナントを削除する',
+  },
+  leave_tenant_card: {
+    title: '退出',
+    leave_tenant: 'テナントを退出する',
+    leave_tenant_description:
+      'テナント内のリソースは保持されますが、これ以上このテナントにアクセスできません。',
+    last_admin_note:
+      'このテナントを退出するには、少なくとも1人の他のメンバーが管理者の役割を持つことを確認してください。',
+  },
+  create_modal: {
+    title: 'テナントを作成する',
+    subtitle: '隔離されたリソースとユーザーを持つ新しいテナントを作成します。',
+    tenant_id: 'テナントID',
+    tenant_usage_purpose: 'このテナントを使用する目的は何ですか？',
+    development_description:
+      'テスト用であり、本番で使用すべきではありません。サブスクリプションは必要ありません。',
+    development_description_for_private_regions: 'テスト用であり、本番で使用すべきではありません。',
+    development_hint: 'すべてのプロの機能がありますが、サインインバナーなどの制限があります。',
+    production_description:
+      'エンドユーザーに使用することを意図しており、有料のサブスクリプションが必要なアプリ向け。',
+    available_plan: '利用可能なプラン:',
+    create_button: 'テナントを作成する',
+    tenant_name_placeholder: '私のテナント',
+    tenant_created: 'テナントが正常に作成されました。',
+    invitation_failed:
+      '一部の招待を送信できませんでした。後で設定 -> メンバーで再試行してください。',
+    tenant_type_description: '作成後に変更することはできません。',
+    tenant_id_invalid:
+      'テナントIDには小文字、数字、ハイフンのみ使用でき、{{max}}文字を超えることはできません。',
+    tenant_id_placeholder: 'テナントID',
+    tenant_id_tip:
+      'テナントIDをカスタマイズします。空のままにすると、Logtoがデフォルトのidを生成します。テナントIDは作成後に変更できません。',
+  },
+  dev_tenant_migration: {
+    title: '新しい「開発テナント」を作成して、プロの機能を無料でお試しできます！',
+    affect_title: 'これはあなたにどのように影響しますか？',
+    hint_1:
+      '古い<strong> 環境タグ </strong>が2つの新しいテナントタイプ<strong> 「開発」</strong>および<strong> 「本番」</strong>に置き換えられます。',
+    hint_2:
+      'シームレスな移行と機能の連続性を保証するため、すべての早期に作成されたテナントは、前のサブスクリプションとともに<strong> 本番 </strong>テナントタイプに昇格されます。',
+    hint_3: 'ご安心ください、他のすべての設定は変わりません。',
+    about_tenant_type: 'テナントタイプについて',
+  },
+  delete_modal: {
+    title: 'テナントを削除します',
+    description_line1:
+      'あなたはテナント "<span>{{name}}</span>" を環境接尾辞タグ "<span>{{tag}}</span>" と共に削除してもよろしいでしょうか？ この操作は取り消すことができず、すべてのデータとテナント情報が永久に削除されます。',
+    description_line2:
+      'テナントを削除する前に、お手伝いできることがあるかもしれません。 <span><a>電子メールでお問い合わせ</a></span>',
+    description_line3:
+      '続行する場合は、テナント名 "<span>{{name}}</span>" を入力して確認してください。',
+    delete_button: '完全に削除する',
+    cannot_delete_title: 'このテナントは削除できません',
+    cannot_delete_description:
+      '申し訳ありませんが、現時点ではこのテナントを削除できません。無料プランに登録しており、未払いの請求がないことを確認してください。',
+  },
+  leave_tenant_modal: {
+    description: 'このテナントを退出してもよろしいですか？',
+    leave_button: '退出',
+  },
+  tenant_landing_page: {
+    title: 'まだテナントを作成していません',
+    description:
+      'Logto でプロジェクトを設定するには、新しいテナントを作成してください。ログアウトまたはアカウントを削除する必要がある場合は、右上隅のアバターボタンをクリックしてください。',
+    create_tenant_button: 'テナントを作成',
+  },
+  status: {
+    mau_exceeded: 'MAUの制限を超えました',
+    token_exceeded: 'トークンを超えました',
+    suspended: '一時停止中',
+    overdue: '期限切れ',
+  },
+  tenant_suspended_page: {
+    title: 'テナントが一時停止されました。アクセスを復元するにはお問い合わせください。',
+    description_1:
+      '誠に申し訳ありませんが、ご利用のテナントアカウントが一時的に停止されました。MAU制限を超えた、支払いの遅延、その他の不正な操作などが原因です。',
+    description_2:
+      '詳細な説明や懸念事項がある場合、または機能を完全に復元しテナントをアンブロックする場合は、直ちにお問い合わせください。',
+  },
+  production_tenant_notification: {
+    text: '無料テスト用の開発テナントにいます。本番テナントを作成して本稼働に移行してください。',
+    action: 'テナントを作成する',
+  },
+};
+
+export default Object.freeze(tenants);

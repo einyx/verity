@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "isolatedModules": false,
+    "allowJs": true,
+    "rootDir": "src",
+    "sourceMap": true,
+  },
+  "include": [
+    "src/"
+  ]
+}

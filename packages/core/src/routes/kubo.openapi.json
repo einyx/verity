@@ -1,0 +1,485 @@
+{
+  "tags": [
+    {
+      "name": "Kubo",
+      "description": "Stacks and capacity served by the Kubo portal."
+    }
+  ],
+  "paths": {
+    "/api/kubo/stacks": {
+      "get": {
+        "summary": "List Kubo stacks",
+        "description": "List the stacks in the Kubo portal.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "listKuboStacks"
+      },
+      "post": {
+        "summary": "Create a Kubo stack",
+        "description": "Create a stack in the Kubo portal from the request body.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "createKuboStack",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KuboCreateStackBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubo/cluster/economics": {
+      "get": {
+        "summary": "Get cluster economics",
+        "description": "Return the cluster cost and capacity figures from the Kubo portal.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/demorequests": {
+      "get": {
+        "summary": "List demo requests",
+        "description": "List the demo requests known to the Kubo portal.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/airgap/bundle": {
+      "post": {
+        "summary": "Upload an air-gapped bundle",
+        "description": "Stream a tar bundle to Kubo for an air-gapped install. The `name` query parameter must be a lowercase label.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/templates": {
+      "get": {
+        "summary": "List stack templates",
+        "description": "List the stack templates available to create stacks from.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "listKuboTemplates"
+      }
+    },
+    "/api/kubo/kshows": {
+      "get": {
+        "summary": "Get the capacity snapshot",
+        "description": "Return the node and pod usage snapshot that the console polls.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/stacks/{namespace}/{name}": {
+      "get": {
+        "summary": "Get a Kubo stack",
+        "description": "Return one stack with its component-level status.",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "getKuboStack"
+      },
+      "delete": {
+        "summary": "Delete a Kubo stack",
+        "description": "Delete a stack. Pass `purge=true` to also remove its data.",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Also delete the tenant namespace."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "deleteKuboStack"
+      },
+      "patch": {
+        "summary": "Update a Kubo stack",
+        "description": "Update a stack from the request body.",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "updateKuboStack",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KuboPatchStackBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubo/stacks/{namespace}/{name}/bootstrap": {
+      "post": {
+        "summary": "Bootstrap a Kubo stack",
+        "description": "Trigger the stack bootstrap job. Returns the name of the created job.",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "bootstrapKuboStack"
+      }
+    },
+    "/api/kubo/agentfw/products": {
+      "get": {
+        "summary": "List agent framework products",
+        "description": "Return the agent framework products, aggregated across stack namespaces.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/agentfw/stats": {
+      "get": {
+        "summary": "Get agent framework stats",
+        "description": "Return agent framework statistics, aggregated across stack namespaces.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/agentfw/sessions": {
+      "get": {
+        "summary": "List agent framework sessions",
+        "description": "Return agent framework sessions, aggregated across stack namespaces.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/agentfw/requests": {
+      "get": {
+        "summary": "List agent framework requests",
+        "description": "Return agent framework requests, aggregated across stack namespaces.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        }
+      }
+    },
+    "/api/kubo/template": {
+      "get": {
+        "summary": "Render a stack template",
+        "description": "Return the rendered YAML of a template, shown before anything is created. The YAML is wrapped as JSON.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The request is invalid."
+          },
+          "404": {
+            "description": "The resource was not found."
+          }
+        },
+        "operationId": "renderKuboTemplate"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "KuboCreateStackBody": {
+        "type": "object",
+        "required": ["template", "tenant", "mode", "exclude", "operators"],
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "The stack template to render, for example 'full'."
+          },
+          "tenant": {
+            "type": "string",
+            "description": "Lowercase RFC-1123 tenant slug (a-z, 0-9, '-')."
+          },
+          "mode": {
+            "type": "string",
+            "description": "The install mode from the template."
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Components to leave out."
+          },
+          "bootstrapM2M": {
+            "type": "boolean",
+            "description": "Create the tenant's non-interactive Auth0 client. Defaults to true."
+          },
+          "bundleVersion": {
+            "type": "string",
+            "description": "Pin this tenant's foundation bundle."
+          },
+          "authProvider": {
+            "type": "string",
+            "enum": ["auth0", "logto"],
+            "description": "Identity provider. Defaults to auth0."
+          },
+          "operators": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Operators to enable or disable."
+          }
+        }
+      },
+      "KuboPatchStackBody": {
+        "type": "object",
+        "description": "Partial update. Only the fields present are applied.",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "bundle": {
+            "type": "string",
+            "description": "Send an empty string to clear the bundle."
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operators": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "componentValues": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Per-component Helm overrides. null removes one."
+          },
+          "featureFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
+          },
+          "imageTags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
+          },
+          "chartVersions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the whole map."
+          }
+        }
+      }
+    }
+  }
+}

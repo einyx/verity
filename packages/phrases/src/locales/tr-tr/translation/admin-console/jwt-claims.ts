@@ -1,0 +1,117 @@
+const jwt_claims = {
+  title: 'Özel JWT',
+  description:
+    'Erişim belgesini veya kimlik belgesini özelleştirerek uygulamanıza ek bilgi sağlayın.',
+  access_token: {
+    card_title: 'Erişim belgesi',
+    card_description:
+      "Erişim belgesi, API'ler tarafından istekleri yetkilendirmek için kullanılan kimlik bilgisidir ve yalnızca erişim kararları için gerekli iddialari içerir.",
+  },
+  user_jwt: {
+    card_field: 'Kullanıcı erişim belgesi',
+    card_description: 'Erişim belgesi verilirken kullanıcıya özgü veri ekleyin.',
+    for: 'kullanıcı için',
+  },
+  machine_to_machine_jwt: {
+    card_field: 'Makine-makine erişim belgesi',
+    card_description: 'Makine-makine belgesi verilirken ek veri ekleyin.',
+    for: 'M2M için',
+  },
+  id_token: {
+    card_title: 'Kimlik belgesi',
+    card_description:
+      'Kimlik belgesi, oturum açma sonrasında alınan bir kimlik ifadesidir ve istemcinin görüntüleme veya oturum oluşturma için kullanabileceği kullanıcı kimlik iddialarını içerir.',
+    card_field: 'Kullanıcı kimlik belgesi',
+    card_field_description:
+      "'sub', 'email', 'phone', 'profile' ve 'address' iddiaları her zaman kullanılabilir. Diğer iddiaların önce burada etkinleştirilmesi gerekir. Tüm durumlarda, uygulamanız bunları almak için entegrasyon sırasında eşleşen kapsamları talep etmelidir.",
+  },
+  code_editor_title: 'Özel {{token}} iddialarını özelleştirin',
+  custom_jwt_create_button: 'Özel iddialar ekle',
+  custom_jwt_item: 'Özel iddialar {{for}}',
+  delete_modal_title: 'Özel iddiaları sil',
+  delete_modal_content: 'Özel iddiaları silmek istediğinizden emin misiniz?',
+  clear: 'Temizle',
+  cleared: 'Temizlendi',
+  restore: 'Varsayılanları geri yükle',
+  restored: 'Geri yüklendi',
+  data_source_tab: 'Veri kaynağı',
+  error_handling_tab: 'Hata yönetimi',
+  test_tab: 'Test bağlamı',
+  jwt_claims_description:
+    "Varsayılan iddialar JWT'de otomatik olarak dahil edilir ve geçersiz kılınabilir.",
+  user_data: {
+    title: 'Kullanıcı verisi',
+    subtitle:
+      '`veri.kullanıcı` giriş parametresini kullanarak önemli kullanıcı bilgilerini sağlayın.',
+  },
+  grant_data: {
+    title: 'Yetki verisi',
+    subtitle:
+      '`veri.yetki` giriş parametresini kullanarak önemli yetki bilgilerini sağlayın, sadece belge değişimi için kullanılabilir.',
+  },
+  interaction_data: {
+    title: 'Kullanıcı etkileşim bağlamı',
+    subtitle:
+      'Kullanıcının etkileşim ayrıntılarına, mevcut kimlik doğrulama oturumu için `context.interaction` parametresini kullanarak erişin.',
+  },
+  application_data: {
+    title: 'Uygulama bağlamı',
+    subtitle:
+      'Token ile ilişkili uygulama bilgilerini sağlamak için `context.application` giriş parametresini kullanın.',
+  },
+  organization_data: {
+    title: 'Kuruluş bağlamı',
+    subtitle:
+      'Hedef kuruluş bilgilerini sağlamak için `context.organization` giriş parametresini kullanın, yalnızca kuruluş tokenları için kullanılabilir.',
+  },
+  token_data: {
+    title: 'Belge verisi',
+    subtitle: '`belge` giriş parametresini mevcut erişim belgesi yükü için kullanın. ',
+  },
+  api_context: {
+    title: 'API bağlamı: erişim kontrolü',
+    subtitle: '`api.denyAccess` yöntemini kullanarak belge isteğini reddedin.',
+  },
+  error_handling: {
+    title: 'Hata yönetimi',
+    subtitle:
+      'Betik başarısız olduğunda token verilmesinin engellenip engellenmeyeceğini kontrol eder.',
+    input_field_title: 'Betik hatasında token verme davranışı',
+    block_issuance_switch: 'Betik hata verdiğinde token verilmesini engelle',
+    default_hint_create:
+      "Yeni özel claim script'leri, script başarısız olduğunda varsayılan olarak token verilmesini engeller. API zaten bir değer sağlıyorsa bunun yerine kaydedilmiş değer kullanılır.",
+    default_hint_edit:
+      "Bu ayara sahip olmayan mevcut özel claim script'leri, siz açıkça bir değer kaydedene kadar bu seçeneği eski varsayılan olan kapalı durumda tutar.",
+    warning:
+      'Etkinleştirildiğinde, betik çalışma zamanı hataları token isteğini `invalid_request` (400) ve yerelleştirilmiş bir `error_description` ile reddeder. `api.denyAccess` çağrıları ise hâlâ `access_denied` döndürür.',
+  },
+  fetch_external_data: {
+    title: 'Harici veri al',
+    subtitle: "Harici API'larınızdan verileri doğrudan iddialara dahil edin.",
+    description:
+      "`fetch` işlevini kullanarak harici API'larınızı çağırın ve verileri özel iddialarınıza dahil edin. Örnek: ",
+  },
+  environment_variables: {
+    title: 'Ortam değişkenlerini ayarla',
+    subtitle: 'Hassas bilgileri depolamak için ortam değişkenlerini kullanın.',
+    input_field_title: 'Ortam değişkenleri ekle',
+    sample_code: 'Özel JWT iddialarınızı ele alan ortam değişkenlerine erişim. Örnek: ',
+  },
+  jwt_claims_hint:
+    "Özel iddiaları 50KB'ın altında tutun. Varsayılan JWT iddiaları otomatik olarak belgeye dahil edilir ve geçersiz kılınamazlar.",
+  tester: {
+    subtitle: 'Test için sahte belge ve kullanıcı verilerini ayarlayın.',
+    run_button: 'Testi Çalıştır',
+    result_title: 'Test sonucu',
+  },
+  sandbox_warning: {
+    title: 'Komut dosyaları sunucu ayrıcalıklarıyla çalışır',
+    description:
+      'Kendi barındırılan Logto’da bu komut dosyası, Logto’nun kendisiyle aynı ortamda çalışır: sunucu ortam değişkenlerini okuyabilir ve iç ağınızdaki hizmetlere erişebilir. Sandbox’lanmamıştır. Bu sayfaya yalnızca sunucuya erişim vereceğiniz kişilere erişim verin.',
+  },
+  form_error: {
+    invalid_json: 'Geçersiz JSON biçimi',
+  },
+};
+
+export default Object.freeze(jwt_claims);

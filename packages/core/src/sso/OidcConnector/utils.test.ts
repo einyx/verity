@@ -1,0 +1,235 @@
+import { createMockUtils } from '@logto/shared/esm';
+import camelcaseKeys from 'camelcase-keys';
+import { type CamelCaseKeys } from 'camelcase-keys';
+
+import {
+  SsoConnectorConfigErrorCodes,
+  SsoConnectorError,
+  SsoConnectorErrorCodes,
+} from '../types/error.js';
+import {
+  oidcConfigResponseGuard,
+  oidcAuthorizationResponseGuard,
+  oidcTokenResponseGuard,
+  type BasicOidcConnectorConfig,
+  type BaseOidcConfig,
+  type OidcConfigResponse,
+} from '../types/oidc.js';
+
+const { jest } = import.meta;
+const { mockEsm } = createMockUtils(jest);
+const getMock = jest.fn();
+const postMock = jest.fn();
+
+class MockHttpError {
+  constructor(public response: { body: unknown; statusCode: number }) {}
+}
+
+const gotMock = {
+  get: getMock,
+  post: postMock,
+  // `outbound-request.js` derives its SSRF-protected instance from `got.extend()`.
+  extend: () => gotMock,
+};
+
+mockEsm('got', () => ({
+  got: gotMock,
+  HTTPError: MockHttpError,
+}));
+
+const { fetchOidcConfig, fetchToken } = await import('./utils.js');
+
+const issuer = 'https://example.com';
+const oidcConfig: Required<BasicOidcConnectorConfig> = {
+  clientId: 'clientId',
+  clientSecret: 'clientSecret',
+  scope: 'openid',
+  trustUnverifiedEmail: false,
+  issuer,
+};
+const oidcConfigResponse = {
+  token_endpoint: 'https://example.com/token',
+  authorization_endpoint: 'https://example.com/authorize',
+  userinfo_endpoint: 'https://example.com/userinfo',
+  jwks_uri: 'https://example.com/jwks',
+  issuer,
+};
+const oidcConfigResponseCamelCase: CamelCaseKeys<OidcConfigResponse> =
+  camelcaseKeys(oidcConfigResponse);
+
+const baseOidcConfig: BaseOidcConfig = {
+  ...oidcConfig,
+  ...oidcConfigResponseCamelCase,
+};
+
+describe('fetchOidcConfig', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should throw connector error if the discovery endpoint is not found', async () => {
+    getMock.mockRejectedValueOnce(new MockHttpError({ body: 'invalid endpoint', statusCode: 404 }));
+
+    await expect(fetchOidcConfig(issuer)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.InvalidConfig, {
+        config: { issuer },
+        message: SsoConnectorConfigErrorCodes.FailToFetchConfig,
+        error: { statusCode: 404, body: 'invalid endpoint' },
+      })
+    );
+    expect(getMock).toBeCalledWith(`${issuer}/.well-known/openid-configuration`);
+  });
+
+  it('should keep a transport error readable instead of serializing it to an empty object', async () => {
+    getMock.mockRejectedValueOnce(new Error('hostname resolves to a special-use IP address'));
+
+    await expect(fetchOidcConfig(issuer)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.InvalidConfig, {
+        config: { issuer },
+        message: SsoConnectorConfigErrorCodes.FailToFetchConfig,
+        error: 'Error: hostname resolves to a special-use IP address',
+      })
+    );
+  });
+
+  it('should not double the slash when the issuer ends with one', async () => {
+    getMock.mockResolvedValueOnce({ body: JSON.stringify(oidcConfigResponse) });
+
+    await expect(fetchOidcConfig(`${issuer}/`)).resolves.toEqual(oidcConfigResponseCamelCase);
+    expect(getMock).toBeCalledWith(`${issuer}/.well-known/openid-configuration`);
+  });
+
+  it('should keep the issuer path when appending the discovery path', async () => {
+    getMock.mockResolvedValueOnce({ body: JSON.stringify(oidcConfigResponse) });
+
+    await expect(fetchOidcConfig(`${issuer}/tenant/`)).resolves.toEqual(
+      oidcConfigResponseCamelCase
+    );
+    expect(getMock).toBeCalledWith(`${issuer}/tenant/.well-known/openid-configuration`);
+  });
+
+  it('should throw connector error if the discovery endpoint returns invalid config', async () => {
+    const body = {
+      token_endpoint: 'https://example.com/token',
+    };
+
+    getMock.mockResolvedValueOnce({
+      body: JSON.stringify(body),
+    });
+
+    const result = oidcConfigResponseGuard.safeParse(body);
+
+    if (result.success) {
+      throw new Error('invalid test case');
+    }
+
+    await expect(fetchOidcConfig(issuer)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.InvalidConfig, {
+        config: { issuer },
+        message: SsoConnectorConfigErrorCodes.InvalidConfigResponse,
+        error: result.error.flatten(),
+      })
+    );
+  });
+
+  it('should return the config if the discovery endpoint returns valid config', async () => {
+    getMock.mockResolvedValueOnce({
+      body: JSON.stringify(oidcConfigResponse),
+    });
+
+    await expect(fetchOidcConfig(issuer)).resolves.toEqual(oidcConfigResponseCamelCase);
+  });
+});
+
+describe('fetchToken', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const redirectUri = 'https://example.com/callback';
+  const data = {
+    code: 'code',
+    state: 'state',
+  };
+  const tokenResponse = {
+    id_token: 'id_token',
+    access_token: 'access_token',
+    expires_in: 3600,
+  };
+
+  it('should throw connector error if the authorization response data is not valid', async () => {
+    const data = {};
+    const result = oidcAuthorizationResponseGuard.safeParse(data);
+
+    if (result.success) {
+      throw new Error('invalid test case');
+    }
+
+    await expect(fetchToken(baseOidcConfig, data, redirectUri)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.InvalidRequestParameters, {
+        url: oidcConfigResponseCamelCase.tokenEndpoint,
+        params: data,
+        error: result.error.flatten(),
+      })
+    );
+
+    expect(postMock).not.toBeCalled();
+  });
+
+  it('should throw connector error if the token endpoint throws HTTPError', async () => {
+    postMock.mockRejectedValueOnce(
+      new MockHttpError({ body: 'invalid response', statusCode: 400 })
+    );
+
+    await expect(fetchToken(baseOidcConfig, data, redirectUri)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.AuthorizationFailed, {
+        message: 'Fail to fetch token',
+        error: { statusCode: 400, body: 'invalid response' },
+      })
+    );
+
+    expect(postMock).toBeCalledWith(oidcConfigResponseCamelCase.tokenEndpoint, {
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: data.code,
+        redirect_uri: redirectUri,
+      }).toString(),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(
+          `${oidcConfig.clientId}:${oidcConfig.clientSecret}`,
+          'utf8'
+        ).toString('base64')}`,
+      },
+    });
+  });
+
+  it('should throw connector error if the token endpoint does not return id_token', async () => {
+    const body = { refresh_token: 'refresh_token' };
+    const result = oidcTokenResponseGuard.safeParse(body);
+
+    if (result.success) {
+      throw new Error('invalid test case');
+    }
+
+    postMock.mockResolvedValueOnce({
+      body: JSON.stringify(body),
+    });
+
+    await expect(fetchToken(baseOidcConfig, data, redirectUri)).rejects.toMatchError(
+      new SsoConnectorError(SsoConnectorErrorCodes.AuthorizationFailed, {
+        message: 'Invalid token response',
+        response: JSON.stringify(body),
+        error: result.error.flatten(),
+      })
+    );
+  });
+
+  it('should return the token response if the token endpoint returns valid response', async () => {
+    postMock.mockResolvedValueOnce({
+      body: JSON.stringify(tokenResponse),
+    });
+
+    await expect(fetchToken(baseOidcConfig, data, redirectUri)).resolves.toEqual(tokenResponse);
+  });
+});

@@ -1,0 +1,182 @@
+const tenants = {
+  title: '设置',
+  description: '高效管理租户设置并自定义您的域名。',
+  oss_description: '在此更改账户设置并管理您的个人信息，以确保账户安全。',
+  tabs: {
+    settings: '设置',
+    members: '成员',
+    domains: '域名管理',
+    oidc_configs: 'OIDC 配置',
+    subscription: '套餐与计费',
+    billing_history: '历史账单',
+    license: '许可证',
+  },
+  license: {
+    purchase_title: '自托管计划',
+    purchase_description:
+      '自托管专业计划和企业计划可在你自己的实例上解锁付费功能，例如隐藏 Logto 品牌标识、使用自定义 UI、控制台多人协作以及不限量的 SAML 应用。购买计划即可获得许可证密钥。',
+    purchase_button: '查看自托管计划',
+    install_title: '安装许可证',
+    install_description: '粘贴你购买自托管计划后获得的许可证密钥。',
+    install_button: '安装许可证',
+    key_field: '许可证密钥',
+    key_field_description:
+      '密钥在你的实例上校验，不会离开实例。如果现有密钥已过期，请联系 Logto 获取新的密钥。',
+    key_placeholder: '在此粘贴你的许可证密钥',
+    installed_toast: '许可证安装成功。',
+    details_title: '许可证',
+    details_description: '当前实例上安装的许可证及其授予的权益。',
+    plan_field: '计划',
+    environment_field: '环境',
+    environment_production: '生产',
+    environment_non_production: '非生产',
+    expires_at_field: '到期时间',
+    installed_at_field: '安装时间',
+    last_refreshed_at_field: '上次刷新时间',
+    grace_ends_at_field: '宽限期结束时间',
+    refresh_expired_description:
+      '许可证密钥已于 {{expiresAt}} 过期。在 Logto 尝试刷新密钥期间，许可证功能仍可使用至 {{graceEndsAt}}。',
+    refresh_refused_description:
+      '许可证刷新被拒绝，因为许可证{{reason}}。许可证功能仍可使用至 {{graceEndsAt}}。',
+    refusal_reason_canceled: '已取消',
+    refusal_reason_unpaid: '未付款',
+    refusal_reason_expired: '已过期',
+    refusal_reason_revoked: '已撤销',
+    refusal_reason_unknown: '不可用',
+    grace_expired_description:
+      '许可证宽限期已于 {{graceEndsAt}} 结束。此实例已恢复为 OSS 默认设置。请联系 Logto 获取新的许可证密钥并重新安装。',
+    get_fresh_key_button: '获取新的许可证密钥',
+    replace_button: '更换许可证',
+  },
+  members: {
+    card_title: '通过 Logto Cloud 更安全地管理租户',
+    card_description: '无需共享单一管理员账户，也能为您的租户添加管理员或协作者。',
+    card_action: '探索 Logto Cloud',
+    self_hosted_card_title: '通过自托管套餐更安全地管理租户',
+    self_hosted_card_description: '无需共享单一管理员账户，也能为您的租户添加管理员或协作者。',
+    self_hosted_card_action: '探索自托管套餐',
+  },
+  settings: {
+    title: '设置',
+    description: '设置租户名称并查看您的数据托管地区和租户类型。',
+    tenant_id: '租户 ID',
+    tenant_name: '租户名称',
+    tenant_instance: '选择您的实例',
+    tenant_instance_description:
+      '选择您的租户将在哪里托管。选择 Logto Cloud 作为公共共享基础设施，或选择私人实例以获得专用资源。',
+    tenant_region: '数据托管地区',
+    tenant_region_description: '托管您的租户资源（用户、应用程序等）的物理位置。创建后无法更改。',
+    tenant_region_tip: '您的租户资源托管在 {{region}}。 <a>了解更多</a>',
+    environment_tag_development: '开发',
+    environment_tag_production: '产品',
+    tenant_type: '租户类型',
+    development_description:
+      '仅用于测试，不应在生产环境中使用。不需要订阅。它具有所有专业功能，但有像登录横幅之类的限制。',
+    production_description: '适用于由最终用户使用且可能需要付费订阅的应用程序。',
+    tenant_info_saved: '租户信息成功保存。',
+    tenant_mfa: '多因素认证',
+    tenant_mfa_description: '要求成员设置多因素认证才能访问此租户。',
+    oss_description: '管理成员访问此实例控制台的方式。',
+    tenant_mfa_confirm_title: '要求所有成员启用 MFA？',
+    tenant_mfa_confirm_description:
+      '以下成员尚未设置 MFA。他们会保持登录状态，并在下次登录时被要求设置：',
+    tenant_mfa_confirm_self: '你也尚未设置 MFA。请在下次登录前到账户设置中完成设置。',
+    tenant_mfa_confirm_button: '要求 MFA',
+    tenant_mfa_setup_required: '此租户要求多因素认证。请立即设置，否则将在下次登录时被要求设置。',
+    tenant_mfa_setup_action: '设置 MFA',
+    enterprise_sso: '企业 SSO',
+    enterprise_sso_description:
+      '仅限付费计划。联系我们启用企业 SSO，让所有成员可以使用您组织的身份提供商登录 Logto Cloud 控制台。',
+  },
+  full_env_tag: {
+    development: '开发',
+    production: '产品',
+  },
+  view_only: {
+    tag: '仅查看',
+    notification: '您对此租户只有查看权限。如需更改，请联系租户管理员。',
+    hidden: '对查看者隐藏',
+  },
+  deletion_card: {
+    title: '删除',
+    tenant_deletion: '删除租户',
+    tenant_deletion_description: '删除租户将导致永久删除所有相关的用户数据和配置。请谨慎操作。',
+    tenant_deletion_button: '删除租户',
+  },
+  leave_tenant_card: {
+    title: '离开',
+    leave_tenant: '离开租户',
+    leave_tenant_description: '租户中的任何资源将保留，但您将不再能访问此租户。',
+    last_admin_note: '要离开此租户，请确保至少还有一名成员具有管理员角色。',
+  },
+  create_modal: {
+    title: '创建租户',
+    subtitle: '创建一个拥有独立资源和用户的新租户。',
+    tenant_id: '租户 ID',
+    tenant_usage_purpose: '您想要使用此租户做什么?',
+    development_description: '仅用于测试，不应在生产环境中使用。不需要订阅。',
+    development_description_for_private_regions: '仅用于测试，不应在生产环境中使用。',
+    development_hint: '它具有所有专业功能，但有像登录横幅之类的限制。',
+    production_description: '用于最终用户使用，可能需要付费订阅。',
+    available_plan: '可用方案：',
+    create_button: '创建租户',
+    tenant_name_placeholder: '我的租户',
+    tenant_created: '租户创建成功。',
+    invitation_failed: '某些邀请未能发送。请稍后在设置 -> 成员中重试。',
+    tenant_type_description: '创建后将无法更改。',
+    tenant_id_invalid: '租户 ID 只能包含小写字母、数字和连字符，且不能超过 {{max}} 个字符。',
+    tenant_id_placeholder: '你的租户 ID',
+    tenant_id_tip: '自定义租户 ID。如果留空，Logto 将生成默认 ID。租户 ID 在创建后无法更改。',
+  },
+  dev_tenant_migration: {
+    title: '您现在可以通过创建新的“开发租户”免费尝试我们的专业功能！',
+    affect_title: '这对您有什么影响?',
+    hint_1:
+      '我们正在用两个新的租户类型：<strong>“开发”</strong>和<strong>“产品”</strong>替换旧的<strong>环境标签</strong>。',
+    hint_2:
+      '为了确保顺畅过渡和功能不中断，所有早期创建的租户将被提升到<strong>产品</strong>租户类型，同时保留之前的订阅。',
+    hint_3: '不用担心，您的所有其他设置将保持不变。',
+    about_tenant_type: '关于租户类型',
+  },
+  delete_modal: {
+    title: '删除租户',
+    description_line1:
+      '您确定要删除您的租户 "<span>{{name}}</span>" 以及环境后缀标签 "<span>{{tag}}</span>" 吗？此操作无法撤销，将永久删除您的所有数据和租户信息。',
+    description_line2:
+      '在删除租户之前，也许我们可以帮助您。<span><a>通过电子邮件与我们联系</a></span>',
+    description_line3: '如果您确定要继续，请输入租户名称 "<span>{{name}}</span>" 确认。',
+    delete_button: '永久删除',
+    cannot_delete_title: '无法删除此租户',
+    cannot_delete_description:
+      '抱歉，您现在无法删除此租户。请确保您处于免费计划并已支付所有未结账单。',
+  },
+  leave_tenant_modal: {
+    description: '确定要离开此租户吗?',
+    leave_button: '离开',
+  },
+  tenant_landing_page: {
+    title: '您还没有创建租户',
+    description:
+      '要开始使用 Logto 配置项目，请创建一个新的租户。如果您需要注销或删除您的帐户，只需单击右上角的头像按钮。',
+    create_tenant_button: '创建租户',
+  },
+  status: {
+    mau_exceeded: '超出 MAU 限制',
+    token_exceeded: '超出 Token 限制',
+    suspended: '已暂停',
+    overdue: '逾期',
+  },
+  tenant_suspended_page: {
+    title: '租户已暂停，请联系我们以恢复访问。',
+    description_1:
+      '我们非常遗憾地通知您，由于不当使用，包括超出 MAU 限制、逾期付款或其他未经授权的操作，您的租户帐户已被临时停用。',
+    description_2:
+      '如果您需要进一步澄清、有任何疑虑或希望恢复全部功能并解锁您的租户，请立即联系我们。',
+  },
+  production_tenant_notification: {
+    text: '你在一个用于免费测试的开发租户中。创建一个生产租户以投入使用。',
+    action: '创建租户',
+  },
+};
+
+export default Object.freeze(tenants);

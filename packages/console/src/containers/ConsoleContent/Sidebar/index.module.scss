@@ -1,0 +1,93 @@
+@use '@/scss/underscore' as _;
+
+.sidebar {
+  // Matches the foundation-frontend sidebar: w-70 (280px), surface-layer-cp fill, border-r.
+  width: 280px;
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--ds-surface);
+  border-right: 1px solid var(--ds-border);
+  // Rounded top-right corner, to match the rounded content card beside it.
+  border-top-right-radius: 24px;
+}
+
+.toggleRow {
+  // Expanded: sit in the top row beside the first heading, taking no vertical space.
+  position: absolute;
+  top: _.unit(6);
+  right: _.unit(6);
+}
+
+.toggleRowCollapsed {
+  // Collapsed: back in the flow, left-aligned with the icons (they start at 32px).
+  position: static;
+  justify-content: flex-start;
+  margin-bottom: _.unit(4);
+  padding-left: _.unit(2);
+}
+
+.toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--ds-border);
+  border-radius: 6px;
+  background: var(--ds-surface);
+  color: var(--ds-label-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--ds-focus-ring, currentColor);
+  outline-offset: 2px;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 1;
+}
+
+.resizeHandle:focus-visible {
+  outline: 2px solid var(--ds-focus-ring, currentColor);
+  outline-offset: -2px;
+}
+
+.menu {
+  flex: 1;
+  min-height: 0;
+}
+
+.menuContent {
+  // Foundation sidebar: p-6 (24px) inset around the nav.
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: _.unit(6);
+  box-sizing: border-box;
+}
+
+.menuContentCollapsed {
+  // Icon rail: keep the expanded left inset so icons don't shift when collapsing.
+  padding: _.unit(3) 0 _.unit(3) _.unit(6);
+}
+
+.skeleton {
+  width: 280px;
+  height: 100%;
+  @include _.shimmering-animation;
+}

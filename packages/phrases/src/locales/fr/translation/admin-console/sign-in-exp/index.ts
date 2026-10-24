@@ -1,0 +1,314 @@
+import content from './content.js';
+import custom_profile_fields from './custom-profile-fields.js';
+import sign_up_and_sign_in from './sign-up-and-sign-in.js';
+
+const sign_in_exp = {
+  page_title: 'Expérience de connexion',
+  page_title_with_account: 'Connexion et compte',
+  title: 'Connexion et compte',
+  description:
+    "Personnalisez les flux d'authentification et l'interface utilisateur, et prévisualisez l'expérience prête à l'emploi en temps réel.",
+  tabs: {
+    branding: 'Image de marque',
+    sign_up_and_sign_in: 'Inscription et connexion',
+    collect_user_profile: 'Collecter le profil utilisateur',
+    account_center: 'Centre de compte',
+    content: 'Contenu',
+    password_policy: 'Politique de mot de passe',
+  },
+  welcome: {
+    title: "Personnaliser l'expérience de connexion",
+    description:
+      'Démarrez rapidement avec la première configuration de connexion. Ce guide vous guide à travers tous les paramètres nécessaires',
+    get_started: 'Commencer',
+    apply_remind:
+      "Veuillez noter que l'expérience de connexion s'appliquera à toutes les applications sous ce compte.",
+  },
+  color: {
+    title: 'COULEUR',
+    primary_color: 'Couleur de la marque',
+    dark_primary_color: 'Couleur de la marque (Sombre)',
+    dark_mode: 'Activer le mode sombre',
+    dark_mode_description:
+      "Votre application aura un thème en mode sombre généré automatiquement en fonction de la couleur de votre marque et de l'algorithme de Logto. Vous êtes libre de le personnaliser.",
+    dark_mode_reset_tip:
+      'Recalculer la couleur du mode sombre en fonction de la couleur de la marque.',
+    reset: 'Recalculer',
+  },
+  branding: {
+    title: 'ZONE DE MARQUE',
+    ui_style: 'Style',
+    with_light: '{{value}}',
+    with_dark: '{{value}} (dark)',
+    app_logo_and_favicon: "Logo de l'app et favicon",
+    company_logo_and_favicon: 'Logo de la société et favicon',
+    organization_logo_and_favicon: "Logo de l'organisation et favicon",
+    hide_logto_branding: 'Masquer la marque Logto',
+    hide_logto_branding_description:
+      'Supprimez "Powered by Logto". Mettez uniquement votre marque en avant avec une expérience de connexion claire et professionnelle.',
+    hide_logto_branding_oss_note:
+      'Cette fonctionnalité est disponible dans <a>Logto Cloud</a> ou avec les <selfHosted>plans auto-hébergés</selfHosted>.',
+  },
+  branding_uploads: {
+    app_logo: {
+      title: "Logo de l'app",
+      url: "URL du logo de l'app",
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: "Logo de l'app: {{error}}",
+    },
+    company_logo: {
+      title: 'Logo de la société',
+      url: 'URL du logo de la société',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'Logo de la société: {{error}}',
+    },
+    organization_logo: {
+      title: "Télécharger l'image",
+      url: "URL du logo de l'organisation",
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: "Logo de l'organisation: {{error}}",
+    },
+    connector_logo: {
+      title: "Télécharger l'image",
+      url: 'URL du logo du connecteur',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'Logo du connecteur: {{error}}',
+    },
+    favicon: {
+      title: 'Favicon',
+      url: 'URL du favicon',
+      url_placeholder: 'https://your.cdn.domain/favicon.ico',
+      error: 'Favicon : {{error}}',
+    },
+  },
+  custom_ui: {
+    title: 'UI personnalisée',
+    cloud_tag: 'Cloud',
+    css_code_editor_title: 'CSS personnalisé',
+    css_code_editor_field_title: 'Surcharge CSS',
+    css_code_editor_description1: "Voir l'exemple de CSS personnalisé.",
+    css_code_editor_description2: '<a>{{link}}</a>',
+    css_code_editor_description_link_content: 'En savoir plus',
+    css_code_editor_content_placeholder:
+      "Saisissez ici vos surcharges CSS pour adapter les styles de n'importe quel élément exactement à vos besoins. Exprimez votre créativité et démarquez votre UI.",
+    bring_your_ui_title: 'Apportez votre UI',
+    bring_your_ui_upload_title: 'Téléverser des ressources UI personnalisées',
+    bring_your_ui_description:
+      "Téléchargez un package compressé (.zip) pour remplacer l'UI préconstruite de Logto par votre propre code. <a>En savoir plus</a>",
+    bring_your_ui_oss_description: 'Personnalisez l’interface de connexion avec votre propre code.',
+    bring_your_ui_oss_card_description:
+      'Le téléversement d’une interface personnalisée est disponible dans <a>Logto Cloud</a> ou avec les <selfHosted>plans auto-hébergés</selfHosted>. Aucun fork ni redéploiement nécessaires.',
+    bring_your_ui_oss_try_cloud: 'Essayer Cloud',
+    preview_with_bring_your_ui_description:
+      'Vos ressources UI personnalisées ont été téléchargées avec succès et sont maintenant servies. En conséquence, la fenêtre de prévisualisation intégrée a été désactivée.\nPour tester votre UI de connexion personnalisée, cliquez sur le bouton "Aperçu en direct" pour l\'ouvrir dans un nouvel onglet du navigateur.',
+    csp_description:
+      'Autorisez des expressions de source supplémentaires pour votre interface de connexion personnalisée. Ces valeurs ne sont appliquées que lorsque les ressources UI personnalisées sont servies.',
+    csp_script_src: 'script-src autorisé',
+    csp_script_src_tip:
+      'Autorisez les expressions de source HTTPS pour les scripts chargés par votre UI personnalisée, comme https://scripts.example.com ou https://*.example.com.',
+    csp_connect_src: 'connect-src autorisé',
+    csp_connect_src_tip:
+      'Autorisez les expressions de source HTTPS ou WSS pour les requêtes réseau effectuées par votre UI personnalisée, comme https://api.example.com ou wss://events.example.com.',
+    csp_source_invalid_error:
+      'Saisissez une expression de source valide. Utilisez des URL https:// ; connect-src prend également en charge wss://. Les mots-clés CSP et les points-virgules ne sont pas pris en charge.',
+    csp_source_duplicate_error: 'Cette expression de source figure déjà dans la liste.',
+  },
+  account_center: {
+    title: 'CENTRE DE COMPTE',
+    description: 'Personnalisez les parcours de votre centre de compte à l’aide des API Logto.',
+    enable_account_api: 'Activer le centre de compte et l’API Account',
+    enable_account_api_description:
+      'Active à la fois l’API Account destinée aux utilisateurs finaux et le centre de compte prêt à l’emploi de Logto. Lorsqu’elle est désactivée, ces deux fonctionnalités ne sont pas disponibles.',
+    field_options: {
+      off: 'Désactivé',
+      edit: 'Modifier',
+      read_only: 'Lecture seule',
+      enabled: 'Activé',
+      disabled: 'Désactivé',
+    },
+    sections: {
+      account_security: {
+        title: 'SÉCURITÉ DU COMPTE',
+        description:
+          "Gérez l'accès à l'API Account afin de permettre aux utilisateurs, après leur connexion à l'application, d'afficher ou de modifier leurs informations d'identité et leurs facteurs d'authentification.",
+        security_verification: {
+          title: 'Vérification de sécurité',
+          description:
+            "Avant de modifier les paramètres de sécurité, les utilisateurs doivent vérifier leur identité pour obtenir un identifiant d'enregistrement de vérification valable 10 minutes. Pour activer une méthode de vérification (e-mail, téléphone, mot de passe), définissez l'autorisation de l'API Account ci-dessous sur <strong>Lecture seule</strong> (minimum) ou <strong>Modifier</strong> afin que le système puisse détecter si l'utilisateur l'a configurée. <a>En savoir plus</a>",
+        },
+        groups: {
+          identifiers: {
+            title: 'Identifiants',
+          },
+          authentication_factors: {
+            title: 'Facteurs d’authentification',
+          },
+          session_management: {
+            title: 'Gestion des sessions',
+          },
+          developer_settings: {
+            title: 'Paramètres développeur',
+          },
+        },
+      },
+      user_profile: {
+        title: 'PROFIL UTILISATEUR',
+        description:
+          'Gérez l’accès à l’API Account afin de permettre aux utilisateurs d’afficher ou de modifier leurs données de profil de base ou personnalisées après leur connexion à l’application.',
+        groups: {
+          profile_data: {
+            title: 'Données du profil',
+          },
+        },
+      },
+      secret_vault: {
+        title: 'COFFRE SECRET',
+        description:
+          'Pour les connecteurs sociaux et d’entreprise, stockez en toute sécurité les jetons d’accès de tiers pour appeler leurs API (par exemple ajouter des événements au Google Agenda).',
+        third_party_token_storage: {
+          title: 'Jeton tiers',
+          third_party_access_token_retrieval: 'Récupération de jeton d’accès tiers',
+          third_party_token_tooltip:
+            'Pour stocker des jetons, activez cette option dans la configuration du connecteur social ou d’entreprise concerné.',
+          third_party_token_description:
+            'Une fois l’API Account activée, la récupération des jetons tiers est automatiquement activée.',
+        },
+      },
+    },
+    fields: {
+      email: 'Adresse e-mail',
+      phone: 'Numéro de téléphone',
+      social: 'Identités sociales',
+      password: 'Mot de passe',
+      mfa: 'Authentification multifacteur',
+      mfa_description:
+        'Permettez aux utilisateurs de gérer leurs méthodes MFA depuis le centre de compte.',
+      passkey: 'Passkey',
+      username: "Nom d'utilisateur",
+      name: 'Nom',
+      avatar: 'Avatar',
+      profile: 'Profil',
+      profile_description: 'Contrôlez l’accès aux attributs structurés du profil.',
+      custom_data: 'Données personnalisées',
+      custom_data_description:
+        'Contrôlez l’accès aux données JSON personnalisées stockées sur l’utilisateur.',
+      sessions: 'Sessions',
+      trusted_devices: 'Appareils de confiance',
+      personal_access_tokens: "Jetons d'accès personnels",
+      personal_access_tokens_description:
+        "Activer cette option permet aux utilisateurs de créer des jetons d'accès personnels de longue durée qui restent actifs après une déconnexion ou une réinitialisation de mot de passe, et qui peuvent être échangés contre des jetons d'accès par toute application interne ayant activé l'échange de jetons.",
+    },
+    profile_fields: {
+      title: 'Champs de profil pour le centre de compte prédéfini',
+      add_profile_fields: 'Ajouter des champs de profil',
+      hint: {
+        not_in_list: 'Pas dans la liste ?',
+        set_up: 'Configurer',
+        go_to: "d'autres champs de profil maintenant.",
+      },
+      disabled_hint: {
+        name: "Pour ajouter ce champ, définissez d'abord l'autorisation « Nom » sur « Modifier/Lecture seule » dans la section Profil utilisateur ci-dessous.",
+        avatar:
+          "Pour ajouter ce champ, définissez d'abord l'autorisation « Avatar » sur « Modifier/Lecture seule » dans la section Profil utilisateur ci-dessous.",
+        profile:
+          "Pour ajouter ce champ, définissez d'abord l'autorisation « Profil » sur « Modifier/Lecture seule » dans la section Profil utilisateur ci-dessous.",
+        custom_data:
+          "Pour ajouter ce champ, définissez d'abord l'autorisation « Données personnalisées » sur « Modifier/Lecture seule » dans la section Profil utilisateur ci-dessous.",
+      },
+    },
+    webauthn_related_origins: 'Origines associées à WebAuthn',
+    webauthn_related_origins_description:
+      'Ajoutez les domaines de vos applications front-end autorisés à enregistrer des passkeys via l’API Account.',
+    webauthn_related_origins_error: "L'origine doit commencer par https:// ou http://",
+    delete_account_url: 'Supprimer le compte',
+    delete_account_url_description:
+      'Fournissez votre propre URL de point de terminaison pour gérer la suppression du compte avec une logique personnalisée.',
+    prebuilt_ui: {
+      title: "INTÉGRER L'INTERFACE UTILISATEUR PRÉCONSTRUITE",
+      description:
+        "Intégrez rapidement un centre de compte, une vérification de sécurité ou un flux de mise à jour de profil unique prêts à l'emploi avec une interface utilisateur préconstruite. Combinez simplement votre domaine avec le chemin pour former l'URL de votre centre de compte (par exemple, https://auth.foo.com/account/email).",
+      permission_notice:
+        "Pour intégrer ces flux préconstruits, définissez les autorisations de l'API de compte associées sur <strong>Modifier</strong> dans les paramètres ci-dessous.",
+      account_center_title: "Intégrer le centre de compte prêt à l'emploi",
+      account_center_description:
+        "Dirigez les utilisateurs vers le centre de compte pour gérer les paramètres de sécurité tels que l'e-mail, le téléphone, le nom d'utilisateur, le mot de passe, la MFA et les comptes connectés.",
+      flows_title: "Intégrer des flux de paramètres de sécurité prêts à l'emploi",
+      single_task_flows_title: "Intégrer un flux de tâche unique prêt à l'emploi",
+      flows_description:
+        'Combinez votre domaine avec le chemin pour former votre URL de paramètres de compte (par exemple, https://auth.foo.com/account/email). Ajoutez éventuellement `redirect=` pour renvoyer les utilisateurs à votre application après une mise à jour réussie, `show_success=true` pour garder la page de succès visible, `ui_locales=` pour remplacer la langue par défaut, ou `identifier=` pour pré-remplir le champ de saisie de l’identifiant.',
+      single_task_flows_description:
+        "Dirigez les utilisateurs directement vers un flux spécifique (par exemple, la liaison d'email). Vous pouvez éventuellement ajouter `redirect=` pour renvoyer les utilisateurs à votre application après une mise à jour réussie, `show_success=true` pour garder la page de succès visible, `ui_locales=` pour remplacer la langue par défaut, ou `identifier=` pour pré-remplir le champ de saisie de l'identifiant.",
+      tooltips: {
+        email: 'Mettre à jour votre adresse e-mail principale',
+        phone: 'Mettre à jour votre numéro de téléphone principal',
+        username: "Mettre à jour votre nom d'utilisateur",
+        password: 'Définir un nouveau mot de passe',
+        social: 'Lier un compte social pour la connexion',
+        social_change: 'Passer à un autre compte social lié',
+        social_remove: 'Supprimer un compte social lié',
+        authenticator_app:
+          "Configurer une nouvelle application d'authentification pour l'authentification multifacteur",
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
+        passkey_add: 'Enregistrer une nouvelle clé de passe',
+        passkey_manage: 'Gérer vos clés de passe existantes ou en ajouter de nouvelles',
+        backup_codes_generate: 'Générer un nouvel ensemble de 10 codes de sauvegarde',
+        backup_codes_manage: 'Voir vos codes de sauvegarde disponibles ou en générer de nouveaux',
+        account_center:
+          "Accédez au centre de compte pour gérer les paramètres de sécurité tels que l'e-mail, le téléphone, le nom d'utilisateur, le mot de passe, la MFA et les comptes connectés",
+        profile:
+          'Le centre névralgique pour gérer vos informations personnelles (par exemple, nom, avatar)',
+        sessions: 'Consultez et gérez vos sessions actives sur tous les appareils',
+      },
+      customize_note:
+        "Vous ne voulez pas d'une expérience prête à l'emploi ? Vous pouvez pleinement",
+      customize_link: "personnaliser vos flux avec l'API Account à la place.",
+    },
+    custom_css: {
+      title: 'CSS personnalisé',
+      description:
+        "Personnalisez l'apparence du centre de compte en utilisant du CSS personnalisé.",
+    },
+  },
+  sign_up_and_sign_in,
+  content,
+  setup_warning: {
+    no_connector_sms:
+      'Aucun connecteur SMS n\'a été configuré. Avant de terminer la configuration, les utilisateurs ne pourront pas se connecter avec cette méthode. <a>{{link}}</a> dans "Connecteurs"',
+    no_connector_email:
+      'Aucun connecteur d\'email n\'a été configuré. Avant de terminer la configuration, les utilisateurs ne pourront pas se connecter avec cette méthode. <a>{{link}}</a> dans "Connecteurs"',
+    no_connector_social:
+      'Vous n\'avez pas encore configuré de connecteur social. Ajoutez d\'abord des connecteurs pour appliquer des méthodes de connexion sociale. <a>{{link}}</a> dans "Connecteurs".',
+    no_connector_email_account_center:
+      'Aucun connecteur e-mail configuré. Configurez-le dans <a>"Connecteurs e-mail et SMS"</a>.',
+    no_connector_sms_account_center:
+      'Aucun connecteur SMS configuré. Configurez-le dans <a>"Connecteurs e-mail et SMS"</a>.',
+    no_connector_social_account_center:
+      'Aucun connecteur social configuré. Configurez-le dans <a>"Connecteurs sociaux"</a>.',
+    no_mfa_factor: "Aucun facteur MFA n'a été configuré. Configurez-le dans <a>{{link}}</a>.",
+    setup_link: 'Configurer',
+  },
+  save_alert: {
+    description:
+      "Vous implémentez de nouvelles procédures d'inscription et de connexion. Tous vos utilisateurs peuvent être affectés par la nouvelle configuration. Voulez-vous vous engager dans le changement?",
+    before: 'Avant',
+    after: 'Après',
+    sign_up: 'Inscription',
+    sign_in: 'Connexion',
+    social: 'Social',
+    forgot_password_migration_notice:
+      'Nous avons mis à niveau la vérification du mot de passe oublié pour prendre en charge des méthodes personnalisées. Auparavant, cela était automatiquement déterminé par vos connecteurs Email et SMS. Cliquez sur <strong>Confirmer</strong> pour terminer la mise à niveau.',
+  },
+  preview: {
+    title: "Aperçu de l'expérience de connexion",
+    live_preview: 'Aperçu en direct',
+    live_preview_tip: 'Enregistrez pour prévisualiser les modifications',
+    native: 'Natif',
+    desktop_web: 'Site web pour ordinateur de bureau',
+    mobile_web: 'Site web mobile',
+    desktop: 'Bureau',
+    mobile: 'Mobile',
+  },
+  custom_profile_fields,
+};
+
+export default Object.freeze(sign_in_exp);

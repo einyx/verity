@@ -1,0 +1,54 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: `{{types, list(type: disjunction;)}}が必要です`,
+  general_invalid: `{{types, list(type: disjunction;)}}が無効です`,
+  invalid_min_max_input: '{{minValue}} と {{maxValue}} の間の値を入力してください',
+  invalid_min_max_length:
+    '入力値の長さは {{minLength}} から {{maxLength}} の間である必要があります',
+  username_required: 'ユーザー名が必要です',
+  password_required: 'パスワードが必要です',
+  username_exists: 'ユーザー名が既に存在しています',
+  username_should_not_start_with_number: 'ユーザー名は数字で始めることはできません',
+  username_invalid_charset:
+    'ユーザー名は文字、数字、またはアンダースコアのみを含める必要があります。',
+  username_too_short: 'ユーザー名は少なくとも {{min}} 文字である必要があります。',
+  username_too_long: 'ユーザー名は最大で {{max}} 文字である必要があります。',
+  username_uppercase_not_allowed: 'ユーザー名に大文字は使用できません。',
+  username_lowercase_not_allowed: 'ユーザー名に小文字は使用できません。',
+  username_numbers_not_allowed: 'ユーザー名に数字は使用できません。',
+  username_underscore_not_allowed: 'ユーザー名にアンダースコアは使用できません。',
+  invalid_email: 'メールアドレスが無効です',
+  invalid_phone: '電話番号が無効です',
+  passwords_do_not_match: 'パスワードが一致しません。もう一度お試しください。',
+  invalid_passcode: '検証コードが無効です。',
+  device_code_required: 'コードが必要です。',
+  invalid_device_code: 'デバイスコードが無効です。',
+  device_flow_aborted: 'サインインリクエストが中断されました。',
+  invalid_connector_auth: '認証が無効です',
+  invalid_connector_request: 'コネクターデータが無効です',
+  unknown: '不明なエラーが発生しました。後でもう一度お試しください。',
+  invalid_session: 'セッションが見つかりません。もう一度サインインしてください。',
+  timeout: 'リクエストタイムアウト。後でもう一度お試しください。',
+  password_rejected,
+  sso_not_enabled: 'このメールアカウントではシングルサインオンが有効になっていません。',
+  invalid_link: '無効なリンク',
+  invalid_link_description: 'ワンタイムトークンの有効期限が切れているか、無効になっています。',
+  captcha_verification_failed: 'キャプチャーの検証に失敗しました。',
+  send_verification_code_failed:
+    '認証コードの送信に失敗しました。しばらくしてからもう一度お試しください。',
+  send_verification_code_failed_use_password:
+    '認証コードの送信に失敗しました。代わりにパスワードでサインインしてください。',
+  terms_acceptance_required: '利用規約の同意が必要です',
+  terms_acceptance_required_description:
+    '続行するには利用規約に同意する必要があります。もう一度お試しください。',
+  something_went_wrong: '問題が発生しました',
+  account_suspended: 'アカウントが停止されています',
+  account_suspended_description: 'このアカウントは停止されています。管理者にお問い合わせください。',
+  access_denied: 'アクセスが拒否されました',
+  application_access_denied:
+    'このアプリケーションにアクセスする権限がありません。\n管理者にお問い合わせください。',
+  feature_not_enabled: 'この機能にアクセスする権限がありません。管理者にお問い合わせください。',
+};
+
+export default Object.freeze(error);

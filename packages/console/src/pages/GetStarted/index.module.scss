@@ -1,0 +1,484 @@
+@use '@/scss/underscore' as _;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  gap: _.unit(6);
+  padding-bottom: _.unit(6);
+}
+
+.title {
+  font: var(--font-title-1);
+  color: var(--color-text);
+}
+
+.subtitle {
+  font: var(--font-body-2);
+  color: var(--color-text-secondary);
+}
+
+.bodyText {
+  font: var(--font-body-2);
+  color: var(--color-text-secondary);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: _.unit(1);
+
+  .subtitle {
+    margin-bottom: _.unit(-3);
+  }
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: _.unit(4);
+
+  .title {
+    font-family: ui-serif, Georgia, 'Times New Roman', serif;
+    font-size: 36px;
+    font-weight: normal;
+    line-height: 1.2;
+  }
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: _.unit(2);
+}
+
+.resources {
+  display: flex;
+  flex-direction: column;
+  gap: _.unit(3);
+}
+
+.sectionTitle {
+  font: var(--font-title-2);
+  color: var(--color-text);
+}
+
+.resourceGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: _.unit(4);
+
+  @media (max-width: 1080px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 680px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.resourceCard {
+  display: flex;
+  flex-direction: column;
+  gap: _.unit(3);
+  padding: _.unit(5);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-layer-1);
+}
+
+.resourceHeader {
+  display: flex;
+  align-items: center;
+  gap: _.unit(3);
+}
+
+.resourceIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-layer-2);
+  color: var(--color-text);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.resourceTitle {
+  font: var(--font-title-3);
+  color: var(--color-text);
+}
+
+.resourceDescription {
+  flex: 1;
+  font: var(--font-body-2);
+  color: var(--color-text-secondary);
+}
+
+.bookIcon {
+  width: 16px;
+  height: 16px;
+  margin-right: _.unit(1.5);
+  vertical-align: middle;
+}
+
+.resourceAction {
+  margin-top: _.unit(2);
+}
+
+.developActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: _.unit(4);
+}
+
+.mcpTag {
+  padding: 0;
+  border-radius: 999px;
+  background: var(--color-overlay-primary-hover);
+}
+
+.mcpLink {
+  display: inline-flex;
+  align-items: center;
+  padding: _.unit(1.5) _.unit(3);
+  border-radius: inherit;
+  font: var(--font-label-2);
+  color: var(--color-text-link);
+
+  &:active {
+    background: var(--color-overlay-primary-pressed);
+    color: var(--color-text-link);
+  }
+
+  &:not(:disabled):hover {
+    color: var(--color-text-link);
+    text-decoration: none;
+  }
+}
+
+.mcpLinkIcon {
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.ossCloudBanner {
+  position: relative;
+  border: 1px solid rgba(93, 52, 242, 20%);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(93, 52, 242, 6%) 0%, rgba(250, 171, 255, 8%) 100%);
+}
+
+.card.ossCloudBanner {
+  padding: _.unit(4.5);
+}
+
+.ossCloudBannerContent {
+  display: flex;
+  align-items: center;
+  gap: _.unit(6);
+  min-height: 88px;
+}
+
+.ossCloudBannerMain {
+  display: flex;
+  align-items: center;
+  gap: _.unit(6);
+  flex: 1;
+  min-width: 0;
+}
+
+.ossCloudBannerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: _.unit(2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  :global(svg) {
+    display: block;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.ossCloudBannerTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: _.unit(2);
+  margin-bottom: _.unit(1);
+}
+
+.bannerTitle {
+  font: var(--font-title-2);
+  color: var(--color-text);
+}
+
+.recommendedTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: _.unit(0.5) _.unit(2);
+  border-radius: 999px;
+  color: var(--color-text-link);
+  background: var(--color-function-n-overlay-primary-focused);
+  gap: _.unit(1);
+  font: var(--font-label-3);
+}
+
+.recommendedTagIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.ossCloudBannerDescription {
+  max-width: 852px;
+  font: var(--font-body-2);
+  color: var(--color-text);
+  opacity: 35%;
+}
+
+.ossCloudBannerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: _.unit(2);
+  margin-left: auto;
+  margin-right: _.unit(4.5);
+  flex-shrink: 0;
+}
+
+.bannerActionIcon {
+  width: 20px;
+  height: 20px;
+  opacity: 70%;
+}
+
+.selfHostedPlansLink {
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.dismissButton {
+  position: absolute;
+  top: _.unit(3);
+  right: _.unit(3);
+  flex-shrink: 0;
+}
+
+.dismissButtonIcon {
+  &.dismissButtonIcon > svg {
+    color: var(--color-text);
+    opacity: 35%;
+  }
+}
+
+.dismissIcon {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: _.unit(6);
+  gap: _.unit(6);
+  container-type: inline-size;
+
+  .borderBox {
+    display: flex;
+    align-items: center;
+    padding: _.unit(6) _.unit(8);
+    border: 1px solid var(--color-divider);
+    border-radius: 16px;
+    gap: _.unit(6);
+
+    .icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    .title {
+      font: var(--font-title-2);
+    }
+  }
+
+  .rowWrapper {
+    display: flex;
+    align-items: center;
+    gap: _.unit(6);
+  }
+
+  .columnWrapper {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .grid {
+    width: 100%;
+    display: grid;
+    gap: _.unit(4) _.unit(3);
+  }
+
+  @container (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @container (min-width: 961px) {
+    .grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @container (max-width: 720px) {
+    .buttons {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: _.unit(4);
+    }
+  }
+}
+
+.privateCloudIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+
+@media screen and (max-width: 960px) {
+  .ossCloudBannerContent {
+    align-items: stretch;
+  }
+
+  .ossCloudBannerActions {
+    margin-right: _.unit(8);
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .ossCloudBannerContent,
+  .ossCloudBannerMain {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ossCloudBannerActions {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: _.unit(4);
+
+  @media (max-width: 680px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: _.unit(2);
+  padding: _.unit(5);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-2);
+}
+
+.statLabel {
+  font: var(--font-body-2);
+  color: var(--color-text-secondary);
+}
+
+.statValue {
+  font: var(--font-title-1);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.modelGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: _.unit(4);
+
+  @media (max-width: 1080px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 680px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.modelCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-2);
+}
+
+.modelBand {
+  height: 96px;
+  background: var(--color-function-n-overlay-primary-focused);
+}
+
+/* Brand-coloured bands cycled across the model cards, matching the reference layout. */
+.modelCard:nth-child(4n + 1) .modelBand {
+  background: #7ca5e6;
+}
+
+.modelCard:nth-child(4n + 2) .modelBand {
+  background: #e59c7c;
+}
+
+.modelCard:nth-child(4n + 3) .modelBand {
+  background: #f0eee8;
+}
+
+.modelCard:nth-child(4n + 4) .modelBand {
+  background: #bfd3cb;
+}
+
+.modelBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: _.unit(2);
+  padding: _.unit(4);
+}
+
+.footerLinks {
+  display: flex;
+  justify-content: center;
+  gap: _.unit(6);
+  padding-top: _.unit(2);
+}

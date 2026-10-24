@@ -1,0 +1,55 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: 'Введите {{types, list(type: disjunction;)}}',
+  general_invalid: 'Проверьте {{types, list(type: disjunction;)}}',
+  invalid_min_max_input: 'Значение должно быть между {{minValue}} и {{maxValue}}',
+  invalid_min_max_length: 'Длина значения должна быть между {{minLength}} и {{maxLength}}',
+  username_required: 'Введите имя пользователя',
+  password_required: 'Введите пароль',
+  username_exists: 'Имя пользователя занято',
+  username_should_not_start_with_number: 'Имя пользователя не должно начинаться с цифры',
+  username_invalid_charset:
+    'Имя пользователя должно содержать только буквы, цифры или символы подчеркивания',
+  username_too_short: 'Имя пользователя должно быть длиной не менее {{min}} символов.',
+  username_too_long: 'Имя пользователя должно быть длиной не более {{max}} символов.',
+  username_uppercase_not_allowed: 'Заглавные буквы не разрешены в именах пользователя.',
+  username_lowercase_not_allowed: 'Строчные буквы не разрешены в именах пользователя.',
+  username_numbers_not_allowed: 'Цифры не разрешены в именах пользователя.',
+  username_underscore_not_allowed: 'Подчеркивания не разрешены в именах пользователя.',
+  invalid_email: 'Электронная почта указана неправильно',
+  invalid_phone: 'Номер телефона указан неправильно',
+  passwords_do_not_match: 'Пароли не совпадают. Пожалуйста, попробуйте еще раз.',
+  invalid_passcode: 'Неправильный код подтверждения.',
+  device_code_required: 'Введите код.',
+  invalid_device_code: 'Код устройства недействителен.',
+  device_flow_aborted: 'Запрос на вход был прерван.',
+  invalid_connector_auth: 'Авторизация недействительна',
+  invalid_connector_request: 'Данные коннектора недействительны.',
+  unknown: 'Неизвестная ошибка.',
+  invalid_session: 'Сессия не найдена. Пожалуйста, войдите снова.',
+  timeout: 'Время ожидания истекло.',
+  password_rejected,
+  sso_not_enabled: 'Односторонняя авторизация не включена для этого аккаунта электронной почты.',
+  invalid_link: 'Неверная ссылка',
+  invalid_link_description:
+    'Ваш одноразовый токен мог истечь или больше не является действительным.',
+  captcha_verification_failed: 'Не удалось проверить капчу.',
+  send_verification_code_failed: 'Не удалось отправить код подтверждения. Попробуйте позже.',
+  send_verification_code_failed_use_password:
+    'Не удалось отправить код подтверждения. Войдите с помощью пароля.',
+  terms_acceptance_required: 'Требуется согласие с условиями',
+  terms_acceptance_required_description:
+    'Вы должны согласиться с условиями, чтобы продолжить. Пожалуйста, попробуйте снова.',
+  something_went_wrong: 'Что-то пошло не так',
+  account_suspended: 'Аккаунт заблокирован',
+  account_suspended_description:
+    'Этот аккаунт заблокирован. Обратитесь к администратору за помощью.',
+  access_denied: 'Доступ запрещен',
+  application_access_denied:
+    'У вас нет прав на доступ к этому приложению.\nОбратитесь к администратору за помощью.',
+  feature_not_enabled:
+    'У вас нет прав на доступ к этой функции. Обратитесь к администратору за помощью.',
+};
+
+export default Object.freeze(error);

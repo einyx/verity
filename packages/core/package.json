@@ -1,0 +1,207 @@
+{
+  "name": "@logto/core",
+  "version": "1.46.0",
+  "description": "The open source identity solution.",
+  "main": "build/index.js",
+  "author": "Silverhand Inc. <contact@silverhand.io>",
+  "license": "MPL-2.0",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#src/*": "./build/*"
+  },
+  "scripts": {
+    "precommit": "lint-staged",
+    "copy:apidocs": "rsync -a -m --include '*/' --include '*.openapi.json' --exclude '*' src/routes/ build/routes/ && node scripts/copy-brief-fonts.mjs",
+    "check": "tsc --noEmit",
+    "build": "tsup",
+    "build:test": "rm -rf build/ && tsc -p tsconfig.test.json && pnpm copy:apidocs",
+    "build:instrument": "rm -rf build/ && tsc -p tsconfig.integration.json && nyc instrument build/ --in-place && pnpm copy:apidocs",
+    "lint": "eslint --ext .ts --ext .json src",
+    "lint:report": "pnpm lint --format json --output-file report.json",
+    "dev": "tsup --config tsup.dev.config.ts",
+    "start": "NODE_ENV=production node .",
+    "test:only": "NODE_OPTIONS=\"--experimental-vm-modules --max_old_space_size=4096\" jest --logHeapUsage",
+    "test": "pnpm build:test && pnpm test:only",
+    "test:ci": "pnpm test:only --coverage --silent",
+    "test:report": "codecov -F core"
+  },
+  "dependencies": {
+    "@authenio/samlify-node-xmllint": "^2.0.0",
+    "@aws-sdk/client-s3": "^3.556.0",
+    "@azure/storage-blob": "^12.17.0",
+    "@google-cloud/storage": "^7.10.0",
+    "@koa/cors": "^5.0.0",
+    "@langchain/langgraph": "^0.2.74",
+    "@logto/account": "workspace:*",
+    "@logto/app-insights": "workspace:^",
+    "@logto/cli": "workspace:^",
+    "@logto/connector-kit": "workspace:^",
+    "@logto/console": "workspace:*",
+    "@logto/core-kit": "workspace:^",
+    "@logto/demo-app": "workspace:*",
+    "@logto/device-demo-app": "workspace:*",
+    "@logto/experience": "workspace:*",
+    "@logto/js": "^5.1.0",
+    "@logto/language-kit": "workspace:^",
+    "@logto/mcp-portal": "workspace:^",
+    "@logto/phrases": "workspace:^",
+    "@logto/phrases-experience": "workspace:^",
+    "@logto/schemas": "workspace:^",
+    "@logto/shared": "workspace:^",
+    "@logto/tenant-seed": "workspace:^",
+    "@meshx/cloud": "workspace:^",
+    "@modelcontextprotocol/sdk": "1.20.2",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@silverhand/essentials": "^2.9.1",
+    "@silverhand/slonik": "31.0.0-beta.2",
+    "@simplewebauthn/server": "^13.3.2",
+    "@withtyped/client": "^0.8.8",
+    "adm-zip": "^0.6.1",
+    "camelcase": "^8.0.0",
+    "camelcase-keys": "^9.1.3",
+    "chalk": "^5.3.0",
+    "clean-deep": "^3.4.0",
+    "date-fns": "^2.29.3",
+    "decamelize": "^6.0.0",
+    "deepmerge": "^4.2.2",
+    "dotenv": "^16.4.5",
+    "etag": "^1.8.1",
+    "fast-xml-parser": "^5.3.4",
+    "find-up": "^7.0.0",
+    "got": "^14.0.0",
+    "hash-wasm": "^4.11.0",
+    "haversine-distance": "1.2.4",
+    "helmet": "^7.1.0",
+    "http-errors": "^2.0.0",
+    "i18next": "^22.4.15",
+    "iconv-lite": "0.6.3",
+    "jose": "^6.2.3",
+    "koa": "^3.2.1",
+    "koa-body": "^8.0.0",
+    "koa-compose": "^4.1.0",
+    "koa-compress": "5.1.1",
+    "koa-logger": "^4.0.0",
+    "koa-mount": "^4.0.0",
+    "koa-proxies": "^0.12.4",
+    "koa-router": "^12.0.1",
+    "koa-send": "^5.0.1",
+    "ky": "^1.2.3",
+    "lru-cache": "^11.0.0",
+    "mime": "^4.0.4",
+    "nanoid": "^5.0.9",
+    "node-forge": "^1.3.1",
+    "oidc-provider": "github:logto-io/node-oidc-provider#513c523c0e68ee6112da8c871cce86204a136163",
+    "openapi-types": "^12.1.3",
+    "otplib": "^12.0.1",
+    "p-map": "^7.0.2",
+    "p-retry": "^6.0.0",
+    "pdf-lib": "^1.17.1",
+    "pg-protocol": "^1.6.0",
+    "pkg-dir": "^8.0.0",
+    "pluralize": "^8.0.0",
+    "pptxgenjs": "^4.0.1",
+    "qrcode": "^1.5.3",
+    "raw-body": "^3.0.0",
+    "redis": "^4.6.14",
+    "roarr": "^7.11.0",
+    "samlify": "^2.13.0",
+    "semver": "^7.3.8",
+    "snake-case": "^4.0.0",
+    "snakecase-keys": "^8.0.1",
+    "tinypool": "^2.1.2",
+    "ua-parser-js": "^2.0.3",
+    "zod": "3.24.3"
+  },
+  "devDependencies": {
+    "@logto/cloud": "0.2.5-006dcd0",
+    "@silverhand/eslint-config": "6.0.1",
+    "@silverhand/ts-config": "6.0.0",
+    "@types/adm-zip": "^0.5.5",
+    "@types/debug": "^4.1.7",
+    "@types/etag": "^1.8.1",
+    "@types/http-errors": "^2.0.4",
+    "@types/jest": "^29.4.0",
+    "@types/koa": "^3.0.3",
+    "@types/koa-compose": "^3.2.5",
+    "@types/koa-compress": "^4.0.3",
+    "@types/koa-logger": "^3.1.1",
+    "@types/koa-mount": "^4.0.0",
+    "@types/koa-send": "^4.1.3",
+    "@types/koa__cors": "^5.0.0",
+    "@types/node": "^22.14.0",
+    "@types/node-forge": "^1.3.11",
+    "@types/oidc-provider": "^9.5.0",
+    "@types/pluralize": "^0.0.33",
+    "@types/qrcode": "^1.5.2",
+    "@types/semver": "^7.3.12",
+    "@types/sinon": "^17.0.0",
+    "@types/supertest": "^6.0.2",
+    "@types/ua-parser-js": "^0.7.39",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "jest-matcher-specific-error": "^1.0.0",
+    "jsonc-eslint-parser": "^2.4.0",
+    "lint-staged": "^15.0.0",
+    "nock": "^14.0.0-beta.5",
+    "node-mocks-http": "^1.12.1",
+    "nodemon": "^3.1.7",
+    "nyc": "^18.0.0",
+    "prettier": "^3.5.3",
+    "sinon": "^19.0.0",
+    "supertest": "^7.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": "^24.7.0 || ^26.0.0"
+  },
+  "eslintConfig": {
+    "extends": "@silverhand",
+    "rules": {
+      "no-console": "error",
+      "import/no-unused-modules": [
+        "error",
+        {
+          "unusedExports": true
+        }
+      ]
+    },
+    "overrides": [
+      {
+        "files": [
+          "*.d.ts",
+          "*.config.ts"
+        ],
+        "rules": {
+          "import/no-unused-modules": "off"
+        }
+      },
+      {
+        "files": [
+          "*.openapi.json"
+        ],
+        "rules": {
+          "max-lines": "off"
+        }
+      },
+      {
+        "files": [
+          "src/include.d/oidc-provider/**/*"
+        ],
+        "rules": {
+          "unicorn/filename-case": "off"
+        }
+      },
+      {
+        "files": [
+          "*.json",
+          "*.json5",
+          "*.jsonc"
+        ],
+        "parser": "jsonc-eslint-parser"
+      }
+    ]
+  },
+  "prettier": "@silverhand/eslint-config/.prettierrc"
+}

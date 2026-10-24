@@ -1,0 +1,15 @@
+const auth = {
+  authorization_header_missing: 'O cabeçalho de autorização está ausente.',
+  authorization_token_type_not_supported: 'O tipo de autorização não é suportado.',
+  unauthorized: 'Não autorizado. Verifique as credenciais e o scope.',
+  forbidden: 'Proibido. Verifique os seus cargos e permissões.',
+  expected_role_not_found: 'Role esperado não encontrado. Verifique os seus cargos e permissões.',
+  jwt_sub_missing: 'Campo `sub` está ausente no JWT.',
+  require_re_authentication: 'É necessária uma nova autenticação para executar uma ação protegida.',
+  exceed_token_limit: 'Limite de token excedido. Por favor, contacte o seu administrador.',
+  third_party_application_forbidden:
+    'Aplicações de terceiros não podem modificar dados da conta através desta API.',
+  read_only_access: 'Este pedido não é permitido com acesso só de leitura.',
+};
+
+export default Object.freeze(auth);

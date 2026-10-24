@@ -1,0 +1,619 @@
+{
+  "tags": [
+    {
+      "name": "Configs",
+      "description": "Endpoints for managing Logto global configurations for the tenant, such as admin console config and OIDC signing keys.\n\nSee [🔑 Signing keys](https://docs.meshx.io/docs/recipes/signing-keys-rotation/) to learn more about signing keys and key rotation."
+    }
+  ],
+  "paths": {
+    "/api/configs/admin-console": {
+      "get": {
+        "summary": "Get admin console config",
+        "description": "Get the global configuration object for Logto Console.",
+        "responses": {
+          "200": {
+            "description": "The configuration object."
+          },
+          "404": {
+            "description": "Configuration not found."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update admin console config",
+        "description": "Update the global configuration object for Logto Console. This method performs a partial update.",
+        "responses": {
+          "200": {
+            "description": "The updated configuration object."
+          },
+          "404": {
+            "description": "Configuration not found."
+          }
+        }
+      }
+    },
+    "/api/configs/oidc/{keyType}": {
+      "get": {
+        "summary": "Get OIDC keys",
+        "description": "Get OIDC signing keys by key type. The actual key will be redacted from the result.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyType",
+            "description": "Private keys are used to sign OIDC JWTs. Cookie keys are used to sign OIDC cookies. For clients, they do not need to know private keys to verify OIDC JWTs; they can use public keys from the JWKS endpoint instead."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array of OIDC signing keys for the given key type."
+          }
+        }
+      }
+    },
+    "/api/configs/oidc/{keyType}/{keyId}": {
+      "delete": {
+        "summary": "Delete OIDC key",
+        "description": "Delete an OIDC signing key by key type and key ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyType",
+            "description": "Private keys are used to sign OIDC JWTs. Cookie keys are used to sign OIDC cookies. For clients, they do not need to know private keys to verify OIDC JWTs; they can use public keys from the JWKS endpoint instead."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The key was deleted successfully."
+          },
+          "404": {
+            "description": "The key was not found."
+          },
+          "422": {
+            "description": "At least one key must be kept."
+          }
+        }
+      }
+    },
+    "/api/configs/oidc/{keyType}/rotate": {
+      "post": {
+        "summary": "Rotate OIDC keys",
+        "description": "A new key will be generated and prepend to the list of keys.\n\nOnly two recent keys will be kept. The oldest key will be automatically removed if there are more than two keys.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyType",
+            "description": "Private keys are used to sign OIDC JWTs. Cookie keys are used to sign OIDC cookies. For clients, they do not need to know private keys to verify OIDC JWTs; they can use public keys from the JWKS endpoint instead."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "signingKeyAlgorithm": {
+                    "description": "The signing key algorithm the new generated private key is using.\n\nOnly applicable when `keyType` is `private-keys`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "An array of OIDC signing keys after rotation."
+          }
+        }
+      }
+    },
+    "/api/configs/oidc/session": {
+      "get": {
+        "summary": "Get OIDC session config",
+        "description": "Get the OIDC session configuration for the tenant. ",
+        "responses": {
+          "200": {
+            "description": "The OIDC session configuration. Returns empty object if the configuration does not exist."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update OIDC session config",
+        "description": "Update the OIDC session configuration for the tenant. This method performs a partial update. If the configuration does not exist, it will be created.",
+        "responses": {
+          "200": {
+            "description": "The updated OIDC session configuration."
+          }
+        }
+      }
+    },
+    "/api/configs/jwt-customizer": {
+      "get": {
+        "summary": "Get all JWT customizers",
+        "description": "Get all JWT customizers for the tenant.",
+        "responses": {
+          "200": {
+            "description": "The JWT customizers."
+          }
+        }
+      }
+    },
+    "/api/configs/jwt-customizer/{tokenTypePath}": {
+      "put": {
+        "summary": "Create or update JWT customizer",
+        "description": "Create or update a JWT customizer for the given token type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenTypePath",
+            "description": "The token type to create a JWT customizer for."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "script": {
+                    "description": "The script of the JWT customizer."
+                  },
+                  "environmentVariables": {
+                    "description": "The environment variables for the JWT customizer."
+                  },
+                  "contextSample": {
+                    "description": "The sample context for the JWT customizer script testing purpose."
+                  },
+                  "tokenSample": {
+                    "description": "The sample raw token payload for the JWT customizer script testing purpose."
+                  },
+                  "blockIssuanceOnError": {
+                    "description": "Whether to block token issuance when the JWT customizer script fails."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated JWT customizer."
+          },
+          "201": {
+            "description": "The created JWT customizer."
+          },
+          "400": {
+            "description": "The request body is invalid."
+          },
+          "403": {
+            "description": "Permission denied."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update JWT customizer",
+        "description": "Update the JWT customizer for the given token type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenTypePath",
+            "description": "The token type to update a JWT customizer for."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "script": {
+                    "description": "The script of the JWT customizer."
+                  },
+                  "environmentVariables": {
+                    "description": "The environment variables for the JWT customizer."
+                  },
+                  "contextSample": {
+                    "description": "The sample context for the JWT customizer script testing purpose."
+                  },
+                  "tokenSample": {
+                    "description": "The sample raw token payload for the JWT customizer script testing purpose."
+                  },
+                  "blockIssuanceOnError": {
+                    "description": "Whether to block token issuance when the JWT customizer script fails."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated JWT customizer."
+          },
+          "400": {
+            "description": "The request body is invalid."
+          }
+        }
+      },
+      "get": {
+        "summary": "Get JWT customizer",
+        "description": "Get the JWT customizer for the given token type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenTypePath",
+            "description": "The token type to get the JWT customizer for."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The JWT customizer."
+          },
+          "404": {
+            "description": "The JWT customizer does not exist."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete JWT customizer",
+        "description": "Delete the JWT customizer for the given token type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenTypePath",
+            "description": "The token type path to delete the JWT customizer for."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The JWT customizer was deleted successfully."
+          },
+          "404": {
+            "description": "The JWT customizer does not exist."
+          }
+        }
+      }
+    },
+    "/api/configs/jwt-customizer/test": {
+      "post": {
+        "summary": "Test JWT customizer",
+        "description": "Test the JWT customizer script with the given sample context and sample token payload.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "tokenType": {
+                    "description": "The token type to test the JWT customizer for."
+                  },
+                  "payload": {
+                    "properties": {
+                      "script": {
+                        "description": "The code snippet of the JWT customizer."
+                      },
+                      "environmentVariables": {
+                        "description": "The environment variables for the JWT customizer."
+                      },
+                      "contextSample": {
+                        "description": "The sample context for the JWT customizer script testing purpose."
+                      },
+                      "tokenSample": {
+                        "description": "The sample token payload for the JWT customizer script testing purpose."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The result of the JWT customizer script testing."
+          },
+          "400": {
+            "description": "Zod errors in cloud service (data type does not match expectation, can be either request body or response body)."
+          },
+          "403": {
+            "description": "Cloud connection does not have enough permission to perform the action."
+          },
+          "422": {
+            "description": "Syntax errors in cloud service."
+          }
+        }
+      }
+    },
+    "/api/configs/actions": {
+      "get": {
+        "summary": "Get all actions",
+        "description": "Get all action configurations for the tenant.",
+        "responses": {
+          "200": {
+            "description": "The action configurations."
+          }
+        }
+      }
+    },
+    "/api/configs/actions/{actionType}": {
+      "put": {
+        "summary": "Create or update action",
+        "description": "Create or update an action configuration for the given action type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionType",
+            "description": "The action type to create or update."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "script": {
+                    "description": "The action script."
+                  },
+                  "environmentVariables": {
+                    "description": "The environment variables for the action script."
+                  },
+                  "contextSample": {
+                    "description": "The sample context for action script testing."
+                  },
+                  "enabled": {
+                    "description": "Whether the action is enabled."
+                  },
+                  "onExecutionError": {
+                    "description": "The action execution error handling policy."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated action configuration."
+          },
+          "201": {
+            "description": "The created action configuration."
+          },
+          "400": {
+            "description": "The request body is invalid."
+          },
+          "403": {
+            "description": "The tenant's subscription plan does not support this feature."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update action",
+        "description": "Update the action configuration for the given action type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionType",
+            "description": "The action type to update."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "script": {
+                    "description": "The action script."
+                  },
+                  "environmentVariables": {
+                    "description": "The environment variables for the action script."
+                  },
+                  "contextSample": {
+                    "description": "The sample context for action script testing."
+                  },
+                  "enabled": {
+                    "description": "Whether the action is enabled."
+                  },
+                  "onExecutionError": {
+                    "description": "The action execution error handling policy."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated action configuration."
+          },
+          "400": {
+            "description": "The request body is invalid."
+          },
+          "403": {
+            "description": "The tenant's subscription plan does not support this feature."
+          },
+          "404": {
+            "description": "The action configuration does not exist."
+          }
+        }
+      },
+      "get": {
+        "summary": "Get action",
+        "description": "Get the action configuration for the given action type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionType",
+            "description": "The action type to get."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The action configuration."
+          },
+          "404": {
+            "description": "The action configuration does not exist."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete action",
+        "description": "Delete the action configuration for the given action type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionType",
+            "description": "The action type to delete."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The action configuration was deleted successfully."
+          },
+          "404": {
+            "description": "The action configuration does not exist."
+          }
+        }
+      }
+    },
+    "/api/configs/actions/test": {
+      "post": {
+        "summary": "Test action",
+        "description": "Test an action script with a sample context.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "actionType": {
+                    "description": "The action type to test."
+                  },
+                  "script": {
+                    "description": "The action script to test."
+                  },
+                  "event": {
+                    "description": "The sample event for action script testing."
+                  },
+                  "environmentVariables": {
+                    "description": "The environment variables for the action script."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The result of the action script testing."
+          },
+          "204": {
+            "description": "The action script returned no result."
+          },
+          "400": {
+            "description": "The request body or response body is invalid."
+          },
+          "403": {
+            "description": "Cloud connection does not have enough permission to perform the action or the tenant's subscription plan does not support this feature."
+          },
+          "422": {
+            "description": "The action script failed to execute."
+          }
+        }
+      }
+    },
+    "/api/configs/id-token": {
+      "get": {
+        "summary": "Get ID token claims configuration",
+        "description": "Get the ID token extended claims configuration for the tenant. This configuration controls which extended claims (e.g., `custom_data`, `identities`, `roles`, `organizations`, `organization_roles`) are included in ID tokens.",
+        "responses": {
+          "200": {
+            "description": "The ID token claims configuration."
+          },
+          "404": {
+            "description": "Configuration not found."
+          }
+        }
+      },
+      "put": {
+        "summary": "Upsert ID token claims configuration",
+        "description": "Create or update the ID token extended claims configuration for the tenant. This controls which extended claims are included in ID tokens when the corresponding scopes are requested.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "enabledExtendedClaims": {
+                    "description": "An array of extended claims to include in ID tokens. Possible values: `custom_data`, `identities`, `sso_identities`, `roles`, `organizations`, `organization_data`, `organization_roles`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated ID token claims configuration."
+          },
+          "403": {
+            "description": "The tenant's subscription plan does not support this feature."
+          }
+        }
+      }
+    },
+    "/api/configs/cimd": {
+      "get": {
+        "summary": "Get CIMD config",
+        "description": "Get the tenant-level OAuth Client ID Metadata Document (CIMD) configuration. A missing configuration resolves to the disabled state.",
+        "responses": {
+          "200": {
+            "description": "The CIMD configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "addConsentPromptForOfflineAccess": {
+                      "description": "Experimental. When enabled, Logto adds `consent` to the `prompt` parameter of CIMD authorization requests that include the `offline_access` scope without it, so the client can receive a refresh token. Requests with `prompt=none` are not changed. Defaults to `false`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update CIMD config",
+        "description": "Update the tenant-level OAuth Client ID Metadata Document (CIMD) configuration. Enabling requires the OIDC provider SSRF protection to be active.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "enabled": {
+                    "description": "Whether CIMD is enabled for the tenant."
+                  },
+                  "addConsentPromptForOfflineAccess": {
+                    "description": "Experimental. When enabled, Logto adds `consent` to the `prompt` parameter of CIMD authorization requests that include the `offline_access` scope without it, so the client can receive a refresh token. Requests with `prompt=none` are not changed. Defaults to `false`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated CIMD configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "addConsentPromptForOfflineAccess": {
+                      "description": "Experimental. When enabled, Logto adds `consent` to the `prompt` parameter of CIMD authorization requests that include the `offline_access` scope without it, so the client can receive a refresh token. Requests with `prompt=none` are not changed. Defaults to `false`."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The OIDC provider SSRF protection is disabled, so CIMD cannot be enabled."
+          }
+        }
+      }
+    }
+  }
+}

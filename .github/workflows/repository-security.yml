@@ -1,0 +1,52 @@
+name: Repository security
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  incoming-security:
+    name: Incoming secrets and private files
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+
+      - name: Install checksum-verified Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl --fail --silent --show-error --location --retry 3 \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.27.2/gitleaks_8.27.2_linux_x64.tar.gz \
+            --output gitleaks.tar.gz
+          echo '141c3b2dede46d8b3a53b47116da756bd223decc0374797559a6b50ecba5590c  gitleaks.tar.gz' | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/security-bin"
+          tar -xzf gitleaks.tar.gz -C "$RUNNER_TEMP/security-bin" gitleaks
+          echo "$RUNNER_TEMP/security-bin" >> "$GITHUB_PATH"
+
+      - name: Test security guards
+        run: node --test .scripts/check-staged-secrets.test.js .scripts/check-private-files.test.js
+
+      - name: Scan incoming commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: sh .scripts/check-incoming-secrets.sh "$BASE_SHA" "$HEAD_SHA"

@@ -1,0 +1,95 @@
+import classNames from 'classnames';
+import { startTransition, useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import { useSWRConfig } from 'swr';
+
+import InvitationIcon from '@/assets/icons/invitation.svg?react';
+import MembersIcon from '@/assets/icons/members.svg?react';
+import PlusIcon from '@/assets/icons/plus.svg?react';
+import { TenantSettingsTabs } from '@/consts';
+import { isCloud } from '@/consts/env';
+import Button from '@/ds-components/Button';
+import Spacer from '@/ds-components/Spacer';
+import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
+import useTenantPathname from '@/hooks/use-tenant-pathname';
+
+import InviteMemberModal from './InviteMemberModal';
+import styles from './index.module.scss';
+import useTenantMembersApi from './use-tenant-members-api';
+
+function TenantMembers() {
+  const { navigate, match } = useTenantPathname();
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const {
+    access: { canInviteMember, canRemoveMember },
+  } = useCurrentTenantScopes();
+
+  const isInvitationTab = match(`/tenant-settings/${TenantSettingsTabs.Members}/invitations`);
+
+  const { invitationsKey } = useTenantMembersApi();
+  const { mutate } = useSWRConfig();
+
+  return (
+    <div className={styles.container}>
+      {(canInviteMember || (!isCloud && canRemoveMember)) && (
+        <div className={styles.tabButtons}>
+          <Button
+            className={classNames(styles.button, !isInvitationTab && styles.active)}
+            icon={<MembersIcon />}
+            title="tenant_members.members"
+            onClick={() => {
+              navigate('.');
+            }}
+          />
+          <Button
+            className={classNames(styles.button, isInvitationTab && styles.active)}
+            icon={<InvitationIcon />}
+            title="tenant_members.invitations"
+            onClick={() => {
+              navigate('invitations');
+            }}
+          />
+          <Spacer />
+          {canInviteMember && (
+            <Button
+              type="primary"
+              size="large"
+              icon={<PlusIcon />}
+              title="tenant_members.invite_members"
+              onClick={() => {
+                setShowInviteModal(true);
+              }}
+            />
+          )}
+        </div>
+      )}
+      <Outlet />
+      {canInviteMember && (
+        <InviteMemberModal
+          isOpen={showInviteModal}
+          onClose={(isSuccessful) => {
+            setShowInviteModal(false);
+
+            if (!isSuccessful) {
+              return;
+            }
+
+            // Refresh the shared cache even before the invitations list mounts.
+            void mutate(invitationsKey);
+
+            if (isInvitationTab) {
+              return;
+            }
+
+            // Defer navigation to avoid modal closing render being interrupted
+            startTransition(() => {
+              navigate('invitations');
+            });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+export default TenantMembers;

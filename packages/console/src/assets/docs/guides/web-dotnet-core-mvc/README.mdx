@@ -1,0 +1,89 @@
+import UriInputField from '@/mdx-components/UriInputField';
+import Steps from '@/mdx-components/Steps';
+import Step from '@/mdx-components/Step';
+
+import Checkpoint from '../../fragments/_checkpoint.md';
+
+import SignInAndSignOutFlows from './fragments/_sign-in-and-sign-out-flows.mdx';
+import ConfigureRedirectUris from './fragments/_configure-redirect-uris.mdx';
+import Installation from './fragments/_installation.md';
+import AddAuthentication from './fragments/_add-authentication.mdx';
+import DisplayUserInformation from './fragments/_display-user-information.md';
+
+<Steps>
+
+<Step title="Add Logto SDK as a dependency">
+
+<Installation />
+
+</Step>
+
+<Step title="Add Logto authentication">
+
+<AddAuthentication {...props} />
+
+</Step>
+
+<Step title="Understand sign-in and sign-out flows">
+
+<SignInAndSignOutFlows />
+
+</Step>
+
+<Step title="Configure redirect URIs">
+
+<ConfigureRedirectUris />
+
+</Step>
+
+<Step title="Implement sign-in and sign-out buttons">
+
+First, add actions methods to your `Controller`, for example:
+
+```csharp title="Controllers/HomeController.cs"
+public class HomeController : Controller
+{
+  public IActionResult SignIn()
+  {
+    // This will redirect the user to the Logto sign-in page.
+    return Challenge(new AuthenticationProperties { RedirectUri = "/" });
+  }
+
+  // Use the `new` keyword to avoid conflict with the `ControllerBase.SignOut` method
+  new public IActionResult SignOut()
+  {
+    // This will clear the authentication cookie and redirect the user to the Logto sign-out page
+    // to clear the Logto session as well.
+    return SignOut(new AuthenticationProperties { RedirectUri = "/" });
+  }
+}
+```
+
+Then, add the links to your View:
+
+```cshtml title="Views/Home/Index.cshtml"
+<p>Is authenticated: @User.Identity?.IsAuthenticated</p>
+@if (User.Identity?.IsAuthenticated == true) {
+  <a asp-controller="Home" asp-action="SignOut">Sign out</a>
+} else {
+  <a asp-controller="Home" asp-action="SignIn">Sign in</a>
+}
+```
+
+It will show the "Sign in" link if the user is not authenticated, and show the "Sign out" link if the user is authenticated.
+
+</Step>
+
+<Step title="Checkpoint: Test your application">
+
+<Checkpoint />
+
+</Step>
+
+<Step title="Display user information">
+
+<DisplayUserInformation />
+
+</Step>
+
+</Steps>

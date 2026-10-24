@@ -1,0 +1,307 @@
+/* eslint-disable max-lines -- Locale catalog mirrors the complete Account Center phrase schema. */
+const account_center = {
+  home: {
+    title: 'Nie znaleziono strony',
+    description: 'Ta strona jest niedostępna.',
+  },
+  page: {
+    title: 'Konto',
+    security_title: 'Bezpieczeństwo',
+    security_description:
+      'Tutaj możesz zmienić ustawienia konta, aby zadbać o jego bezpieczeństwo.',
+    profile_title: 'Informacje osobiste',
+    profile_description: 'Zmień swoje dane osobowe tutaj.',
+    sidebar_personal_info: 'Informacje osobiste',
+    sidebar_security: 'Bezpieczeństwo',
+    sidebar_sessions: 'Sesje',
+    support: 'Pomoc',
+    user_menu: 'Menu użytkownika',
+    sign_out: 'Wyloguj się',
+  },
+  verification: {
+    title: 'Weryfikacja bezpieczeństwa',
+    description:
+      'Potwierdź, że to Ty, aby chronić bezpieczeństwo konta. Wybierz metodę weryfikacji tożsamości.',
+    error_send_failed: 'Nie udało się wysłać kodu weryfikacyjnego. Spróbuj ponownie później.',
+    error_invalid_code: 'Kod weryfikacyjny jest nieprawidłowy lub wygasł.',
+    error_verify_failed: 'Weryfikacja nie powiodła się. Wprowadź kod ponownie.',
+    verification_required: 'Weryfikacja wygasła. Zweryfikuj swoją tożsamość ponownie.',
+    try_another_method: 'Wypróbuj inny sposób weryfikacji',
+    no_available_methods_title: 'Brak dostępnych metod weryfikacji',
+    no_available_methods_description:
+      'Nie masz skonfigurowanych żadnych metod weryfikacji. Najpierw dodaj do swojego konta hasło, adres e-mail lub numer telefonu.',
+  },
+  password_verification: {
+    title: 'Zweryfikuj hasło',
+    description: 'Aby chronić konto, wprowadź hasło, aby potwierdzić swoją tożsamość.',
+    error_failed: 'Nieprawidłowe hasło. Sprawdź wprowadzone dane.',
+  },
+  verification_method: {
+    password: {
+      name: 'Hasło',
+      description: 'Zweryfikuj swoje hasło',
+    },
+    email: {
+      name: 'Kod weryfikacyjny e-mail',
+      description: 'Wyślij kod weryfikacyjny na swój e-mail',
+    },
+    phone: {
+      name: 'Kod weryfikacyjny telefoniczny',
+      description: 'Wyślij kod weryfikacyjny na swój numer telefonu',
+    },
+  },
+  email: {
+    title: 'Połącz e-mail',
+    description: 'Połącz swój e-mail, aby się logować lub ułatwić odzyskiwanie konta.',
+    verification_title: 'Wprowadź kod weryfikacyjny e-mail',
+    verification_description: 'Kod weryfikacyjny został wysłany na Twój e-mail {{email_address}}.',
+    success: 'Główny e-mail połączono pomyślnie.',
+    verification_required: 'Weryfikacja wygasła. Zweryfikuj swoją tożsamość ponownie.',
+  },
+  phone: {
+    title: 'Połącz numer telefonu',
+    description: 'Połącz swój numer telefonu, aby się logować lub ułatwić odzyskiwanie konta.',
+    verification_title: 'Wprowadź kod weryfikacyjny SMS',
+    verification_description: 'Kod weryfikacyjny został wysłany na Twój telefon {{phone_number}}.',
+    success: 'Główny telefon połączono pomyślnie.',
+    verification_required: 'Weryfikacja wygasła. Zweryfikuj swoją tożsamość ponownie.',
+  },
+  username: {
+    title: 'Ustaw nazwę użytkownika',
+    description: 'Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia.',
+    policy_description: '{{requirements}}',
+    success: 'Nazwa użytkownika została pomyślnie zaktualizowana.',
+  },
+  security: {
+    add: 'Dodaj',
+    change: 'Zmień',
+    remove: 'Usuń',
+    not_set: 'Nie ustawiono',
+    social_sign_in: 'Logowanie społecznościowe',
+    social_not_linked: 'Niepołączone',
+    email_phone: 'E-mail / Telefon',
+    email: 'E-mail',
+    phone: 'Telefon',
+    password: 'Hasło',
+    configured: 'Skonfigurowano',
+    not_configured: 'Nie skonfigurowano',
+    two_step_verification: 'Weryfikacja dwuetapowa',
+    authenticator_app: 'Aplikacja uwierzytelniająca',
+    passkeys: 'Passkeys',
+    backup_codes: 'Kody zapasowe',
+    email_verification_code: 'Kod weryfikacyjny e-mail',
+    phone_verification_code: 'Kod weryfikacyjny telefoniczny',
+    passkeys_count_one: '{{count}} passkey',
+    passkeys_count_other: '{{count}} passkeys',
+    backup_codes_count_one: '{{count}} kod pozostały',
+    backup_codes_count_other: '{{count}} kody pozostałe',
+    view: 'Wyświetl',
+    manage: 'Zarządzaj',
+    turn_on_2_step_verification_description:
+      'Dodaj dodatkową warstwę bezpieczeństwa. Podczas logowania zostaniesz poproszony o drugi krok weryfikacji.',
+    turn_off_2_step_verification: 'Wyłącz weryfikację dwuetapową',
+    turn_off_2_step_verification_description:
+      'Wyłączenie weryfikacji dwuetapowej usunie dodatkową warstwę ochrony z Twojego konta podczas logowania. Czy na pewno chcesz kontynuować?',
+    disable_2_step_verification: 'Wyłącz',
+    no_verification_method_warning:
+      'Nie dodałeś drugiej metody weryfikacji. Dodaj co najmniej jedną, aby włączyć weryfikację dwuetapową podczas logowania.',
+    passkey_sign_in_prompt: 'Monituj o skonfigurowanie passkey',
+    passkey_sign_in_prompt_description:
+      'Gdy włączone, zostaniesz poproszony o skonfigurowanie passkey w celu szybszego i bezpieczniejszego logowania.',
+    account_removal: 'Usunięcie konta',
+    delete_your_account: 'Usuń swoje konto',
+    delete_account: 'Usuń konto',
+    remove_username_confirmation_title: 'Usuń nazwę użytkownika',
+    remove_username_confirmation_description:
+      'Po usunięciu nie będziesz mógł logować się za pomocą tej nazwy użytkownika. Czy na pewno chcesz kontynuować?',
+    remove_email_confirmation_title: 'Usuń adres e-mail',
+    remove_email_confirmation_description:
+      'Po usunięciu nie będziesz mógł logować się za pomocą tego adresu e-mail. Czy na pewno chcesz kontynuować?',
+    remove_phone_confirmation_title: 'Usuń numer telefonu',
+    remove_phone_confirmation_description:
+      'Po usunięciu nie będziesz mógł logować się za pomocą tego numeru telefonu. Czy na pewno chcesz kontynuować?',
+    email_removed: 'Adres e-mail został pomyślnie usunięty.',
+    phone_removed: 'Numer telefonu został pomyślnie usunięty.',
+    username_removed: 'Nazwa użytkownika została pomyślnie usunięta.',
+    trusted_devices: {
+      title: 'Zaufane urządzenia MFA',
+      current_device: 'Bieżące urządzenie',
+      expires_on: 'Wygasa {{date}}',
+      unknown_location: 'Nieznana lokalizacja',
+      remove: 'Usuń',
+      removed: 'Zaufane urządzenie zostało usunięte.',
+      loading: 'Ładowanie...',
+      empty: 'Brak zaufanych urządzeń.',
+      load_failed: 'Nie udało się załadować zaufanych urządzeń. Spróbuj ponownie.',
+      retry: 'Spróbuj ponownie',
+      remove_confirmation_title: 'Usunąć zaufane urządzenie?',
+      remove_confirmation_description:
+        'Przy następnym logowaniu na tym urządzeniu konieczne będzie ponowne wykonanie MFA. Bieżąca sesja pozostanie aktywna.',
+    },
+  },
+  social: {
+    linked: '{{connector}} połączono pomyślnie.',
+    not_enabled:
+      'Ta metoda logowania społecznościowego nie jest włączona. Skontaktuj się z administratorem, aby uzyskać pomoc.',
+    removed: '{{connector}} usunięto pomyślnie.',
+    remove_confirmation_title: 'Usuń konto społecznościowe',
+    remove_confirmation_description:
+      'Jeśli usuniesz {{connector}}, możesz nie być w stanie zalogować się za jego pomocą, dopóki nie dodasz go ponownie.',
+  },
+  password: {
+    title: 'Ustaw hasło',
+    description: 'Utwórz nowe hasło, aby zabezpieczyć swoje konto.',
+    success: 'Hasło zostało pomyślnie zaktualizowane.',
+  },
+  code_verification: {
+    send: 'Wyślij kod weryfikacyjny',
+    resend: 'Nie otrzymałeś? <a>Wyślij kod weryfikacyjny ponownie</a>',
+    resend_countdown: 'Nie otrzymałeś? Wyślij ponownie po {{seconds}} s.',
+  },
+  email_verification: {
+    title: 'Zweryfikuj swój e-mail',
+    prepare_description:
+      'Potwierdź swoją tożsamość, aby chronić bezpieczeństwo konta. Wyślij kod weryfikacyjny na swój e-mail.',
+    email_label: 'Adres e-mail',
+    send: 'Wyślij kod weryfikacyjny',
+    description:
+      'Kod weryfikacyjny został wysłany na adres {{email}}. Wprowadź kod, aby kontynuować.',
+    resend: 'Nie otrzymałeś? <a>Wyślij kod weryfikacyjny ponownie</a>',
+    not_received: 'Nie otrzymałeś?',
+    resend_action: 'Wyślij kod weryfikacyjny ponownie',
+    resend_countdown: 'Nie otrzymałeś? Wyślij ponownie po {{seconds}} s.',
+    error_send_failed: 'Nie udało się wysłać kodu weryfikacyjnego. Spróbuj ponownie później.',
+    error_verify_failed: 'Weryfikacja nie powiodła się. Wprowadź kod ponownie.',
+    error_invalid_code: 'Kod weryfikacyjny jest nieprawidłowy lub wygasł.',
+  },
+  phone_verification: {
+    title: 'Zweryfikuj swój telefon',
+    prepare_description:
+      'Potwierdź, że to Ty, aby chronić bezpieczeństwo konta. Wyślij kod weryfikacyjny na swój telefon.',
+    phone_label: 'Numer telefonu',
+    send: 'Wyślij kod weryfikacyjny',
+    description:
+      'Kod weryfikacyjny został wysłany na Twój telefon {{phone}}. Wprowadź kod, aby kontynuować.',
+    resend: 'Nie otrzymałeś? <a>Wyślij kod weryfikacyjny ponownie</a>',
+    resend_countdown: 'Nie otrzymałeś? Wyślij ponownie po {{seconds}} s.',
+    error_send_failed: 'Nie udało się wysłać kodu weryfikacyjnego. Spróbuj ponownie później.',
+    error_verify_failed: 'Weryfikacja nie powiodła się. Wprowadź kod ponownie.',
+    error_invalid_code: 'Kod weryfikacyjny jest nieprawidłowy lub wygasł.',
+  },
+  mfa: {
+    totp_already_added: 'Już dodano aplikację uwierzytelniającą. Najpierw usuń istniejącą.',
+    totp_not_enabled:
+      'Aplikacja uwierzytelniająca OTP nie jest włączona. Skontaktuj się z administratorem, aby uzyskać pomoc.',
+    backup_code_already_added:
+      'Masz już aktywne kody zapasowe. Użyj ich lub usuń przed wygenerowaniem nowych.',
+    backup_code_not_enabled:
+      'Kod zapasowy nie jest włączony. Skontaktuj się z administratorem, aby uzyskać pomoc.',
+    backup_code_requires_other_mfa:
+      'Kody zapasowe wymagają wcześniejszego skonfigurowania innej metody MFA.',
+    passkey_not_enabled:
+      'Passkey nie jest włączony. Skontaktuj się z administratorem, aby uzyskać pomoc.',
+    passkey_already_registered:
+      'Ten passkey jest już zarejestrowany na twoim koncie. Użyj innego uwierzytelniania.',
+  },
+  update_success: {
+    default: {
+      title: 'Zaktualizowano!',
+      description: 'Twoje informacje zostały zaktualizowane.',
+    },
+    email: {
+      title: 'Email zaktualizowany!',
+      description: 'Twój adres email został pomyślnie zaktualizowany.',
+    },
+    phone: {
+      title: 'Numer telefonu zaktualizowany!',
+      description: 'Twój numer telefonu został pomyślnie zaktualizowany.',
+    },
+    username: {
+      title: 'Nazwa użytkownika zmieniona!',
+      description: 'Twoja nazwa użytkownika została pomyślnie zaktualizowana.',
+    },
+    password: {
+      title: 'Hasło zmienione!',
+      description: 'Twoje hasło zostało pomyślnie zaktualizowane.',
+    },
+    totp: {
+      title: 'Aplikacja uwierzytelniająca dodana!',
+      description: 'Twoja aplikacja uwierzytelniająca została pomyślnie połączona z kontem.',
+    },
+    totp_replaced: {
+      title: 'Aplikacja autentykacyjna została zamieniona!',
+      description: 'Twoja aplikacja autentykacyjna została pomyślnie zamieniona.',
+    },
+    backup_code: {
+      title: 'Kody zapasowe wygenerowane!',
+      description: 'Twoje kody zapasowe zostały zapisane. Przechowuj je w bezpiecznym miejscu.',
+    },
+    passkey: {
+      title: 'Passkey dodany!',
+      description: 'Twój passkey został pomyślnie połączony z kontem.',
+    },
+    social: {
+      title: 'Konto społecznościowe połączone!',
+      description: 'Twoje konto społecznościowe zostało pomyślnie połączone.',
+    },
+  },
+  backup_code: {
+    title: 'Kody zapasowe',
+    description:
+      'Możesz użyć jednego z tych kodów zapasowych, aby uzyskać dostęp do swojego konta, jeśli masz problemy z weryfikacją dwuetapową w inny sposób. Każdy kod może być użyty tylko raz.',
+    copy_hint: 'Skopiuj je i przechowuj w bezpiecznym miejscu.',
+    generate_new_title: 'Wygeneruj nowe kody zapasowe',
+    generate_new: 'Wygeneruj nowe kody zapasowe',
+  },
+  passkey: {
+    title: 'Passkeys',
+    added: 'Dodano: {{date}}',
+    last_used: 'Ostatnie użycie: {{date}}',
+    never_used: 'Nigdy',
+    unnamed: 'Passkey bez nazwy',
+    renamed: 'Passkey został pomyślnie zmieniony.',
+    deleted: 'Passkey został pomyślnie usunięty.',
+    add_another_title: 'Dodaj kolejny passkey',
+    add_another_description:
+      'Zarejestruj swój passkey używając biometrii urządzenia, kluczy bezpieczeństwa (np. YubiKey) lub innych dostępnych metod.',
+    add_passkey: 'Dodaj passkey',
+    delete_confirmation_title: 'Usuń swój passkey',
+    delete_confirmation_description:
+      'Jeśli usuniesz ten passkey, nie będziesz mógł go użyć do weryfikacji.',
+    rename_passkey: 'Zmień nazwę passkey',
+    rename_description: 'Wprowadź nową nazwę dla tego passkey.',
+    name_this_passkey: 'Nazwij ten passkey urządzenia',
+    name_passkey_description:
+      'Pomyślnie zweryfikowano to urządzenie do uwierzytelniania dwuetapowego. Dostosuj nazwę, aby rozpoznać go, jeśli masz wiele kluczy.',
+    name_input_label: 'Nazwa',
+  },
+  sessions: {
+    page_title: 'Sesje',
+    page_description:
+      'Zarządzaj swoimi aktywnymi sesjami i autoryzowanymi aplikacjami firm trzecich.',
+    title: 'Sesje',
+    current_session: 'Bieżąca sesja',
+    signed_in_at: 'Zalogowano {{date}}',
+    revoke_session: 'Wyloguj',
+    revoke_session_title: 'Wyloguj sesję',
+    revoke_session_description:
+      'Spowoduje to wylogowanie sesji i cofnięcie wszystkich powiązanych uprawnień. Czy na pewno chcesz kontynuować?',
+    no_other_sessions: 'Brak innych aktywnych sesji.',
+    loading: 'Ładowanie...',
+    third_party_apps_title: 'Aplikacje firm trzecich',
+    no_third_party_apps: 'Brak autoryzowanych aplikacji firm trzecich.',
+    third_party_apps_load_failed:
+      'Nie udało się załadować aplikacji firm trzecich. Spróbuj ponownie.',
+    granted_at: 'Autoryzowano {{date}}',
+    dynamic_app: 'Aplikacja dynamiczna',
+    client_id: 'ID klienta: {{clientId}}',
+    revoke_grant: 'Usuń',
+    revoke_grant_title: 'Usuń dostęp aplikacji firmy trzeciej',
+    revoke_grant_description:
+      'Spowoduje to cofnięcie uprawnień przyznanych tej aplikacji. Wcześniej wydane tokeny dostępu mogą pozostać ważne do czasu ich wygaśnięcia. Czy na pewno chcesz kontynuować?',
+    revoke_grant_failed: 'Nie udało się cofnąć niektórych uprawnień. Spróbuj ponownie.',
+  },
+};
+
+export default Object.freeze(account_center);
+/* eslint-enable max-lines */

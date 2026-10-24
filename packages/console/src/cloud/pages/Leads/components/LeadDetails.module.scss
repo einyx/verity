@@ -1,0 +1,127 @@
+.detailCard {
+  min-width: 0;
+
+  > :not(:first-child) {
+    margin-top: 16px;
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+  color: var(--color-text);
+  word-break: break-word;
+
+  span:nth-child(odd) {
+    color: var(--color-text-secondary);
+  }
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+// Outrank shared Button size rules so wrapped titles can grow in the narrow rail.
+.detailCard .actions > button {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 40px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 600;
+
+  + .field {
+    margin-top: 10px;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input,
+  select,
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+    font: var(--font-body-2);
+
+    &::placeholder {
+      color: var(--color-placeholder);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      background: var(--color-inverse-on-surface);
+      color: var(--color-text-secondary);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+
+  + .section {
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0 0 0 18px;
+    padding: 0;
+  }
+}
+
+.wrappable {
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.notice {
+  color: var(--color-error);
+  font-size: 14px;
+}

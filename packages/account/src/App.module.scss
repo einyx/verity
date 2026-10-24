@@ -1,0 +1,153 @@
+@use '@experience/shared/scss/_underscore.scss' as _;
+
+.app {
+  .layout {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+  }
+
+  .fullPage {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* --- Full-page layout (Home / Security page) --- */
+
+.container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.withSidebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: _.unit(6);
+  align-items: start;
+  padding: 0 _.unit(6);
+}
+
+.main {
+  width: 760px;
+  display: flex;
+  flex-direction: column;
+  padding: _.unit(3) 0;
+}
+
+/* --- Card layout (sub-pages: email, phone, username, etc.) --- */
+
+.cardContainer {
+  min-height: 100%;
+  @include _.flex_column(center, center);
+}
+
+.cardMain {
+  @include _.flex_column;
+}
+
+:global(body.mobile) {
+  .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .layout {
+    position: static;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fullPage {
+    background: var(--color-bg-float-base);
+  }
+
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .main {
+    width: auto;
+    flex: 1;
+    padding: _.unit(4) _.unit(5);
+    background: var(--color-bg-float-base);
+  }
+
+  .withMobileTabNav .main {
+    padding-top: _.unit(4);
+  }
+
+  .cardContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .cardMain {
+    flex: 1;
+    padding: _.unit(4) _.unit(5);
+    position: relative;
+    background: var(--color-bg-body);
+  }
+
+  .signature {
+    margin: _.unit(10) 0 _.unit(2);
+  }
+}
+
+:global(body.desktop) {
+  .cardContainer {
+    padding: _.unit(5);
+  }
+
+  .cardMain {
+    width: 540px;
+    min-height: 540px;
+    position: relative;
+    padding: _.unit(6);
+    border-radius: 16px;
+    background: var(--color-bg-float);
+    box-shadow: var(--color-shadow-2);
+  }
+
+  .signature {
+    position: absolute;
+    bottom: 0;
+    transform: translateY(calc(100% + _.unit(7)));
+    // Have to use padding instead of margin. Overflow margin spacing will be ignored by the browser.
+    padding-bottom: _.unit(7);
+  }
+
+  @media only screen and (max-width: 1060px) {
+    .withSidebar {
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  @media only screen and (max-width: 800px) {
+    .main:not(.cardMain) {
+      width: auto;
+      padding: _.unit(4);
+    }
+  }
+
+  @media only screen and (max-width: 580px) {
+    .cardMain {
+      align-self: stretch;
+      width: auto;
+    }
+  }
+}

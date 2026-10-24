@@ -1,0 +1,20 @@
+@use '@/scss/underscore' as _;
+
+.container {
+  display: flex;
+  align-items: center;
+  font: var(--font-label-2);
+  gap: _.unit(2);
+
+  > svg {
+    flex-shrink: 0;
+  }
+}
+
+.separator {
+  color: var(--color-text-secondary);
+}
+
+.overLimit {
+  color: var(--color-error);
+}

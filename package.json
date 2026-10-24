@@ -1,0 +1,50 @@
+{
+  "name": "@logto/root",
+  "private": true,
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "pnpm:devPreinstall": "cd packages/connectors && node templates/sync-preset.js",
+    "prepare": "if test \"$NODE_ENV\" != \"production\" && test \"$CI\" != \"true\" ; then husky ; fi",
+    "prepack": "pnpm -r prepack",
+    "dev": "pnpm -r prepack && pnpm start:dev",
+    "dev:cloud": "IS_CLOUD=1 CONSOLE_PUBLIC_URL=/console ./scripts/dev-cloud.sh",
+    "start:dev": "pnpm -r --parallel --filter=!@logto/root --filter=!@logto/integration-tests --filter \"!./packages/connectors/connector-*\" dev",
+    "start": "cd packages/core && npm start",
+    "cli": "logto",
+    "translate": "logto-translate",
+    "changeset": "changeset",
+    "alteration": "logto db alt",
+    "connectors": "pnpm -r --filter \"./packages/connectors/connector-*\"",
+    "//": "# `changeset version` won't run version lifecycle scripts, see https://github.com/changesets/changesets/issues/860",
+    "ci:version": "changeset version && pnpm -r version",
+    "ci:build": "pnpm -r build",
+    "ci:lint": "pnpm -r --workspace-concurrency=2 lint",
+    "ci:stylelint": "pnpm -r --workspace-concurrency=2 stylelint",
+    "ci:test": "pnpm -r --workspace-concurrency=2 --no-bail test:ci && pnpm test:scripts",
+    "test:scripts": "node .scripts/compare-database.test.js && node --test .scripts/check-staged-secrets.test.js .scripts/check-private-files.test.js .scripts/build-lifecycle.test.js .scripts/check-upstream-workflows.test.js .scripts/jest-web-apis.test.js .scripts/public-configuration.test.js",
+    "test:integration": "./.scripts/integration/run.sh"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.6",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@commitlint/types": "^19.0.0",
+    "@types/pg": "^8.6.6",
+    "husky": "^9.0.0",
+    "pg": "^8.8.0",
+    "sass": "1.77.8",
+    "tsup": "^8.5.1",
+    "typescript": "^5.0.0",
+    "vite": "^6.2.7"
+  },
+  "engines": {
+    "node": "^24.7.0 || ^26.0.0",
+    "pnpm": "^9.0.0 || ^10.0.0 || ^11.0.0"
+  },
+  "dependencies": {
+    "@logto/cli": "workspace:^",
+    "@logto/translate": "workspace:^"
+  }
+}

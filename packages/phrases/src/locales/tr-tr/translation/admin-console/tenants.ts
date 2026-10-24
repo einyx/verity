@@ -1,0 +1,204 @@
+const tenants = {
+  title: 'Ayarlar',
+  description: 'Kiracı ayarlarını verimli bir şekilde yönetin ve alan adınızı özelleştirin.',
+  oss_description:
+    'Hesap güvenliğinizi sağlamak için hesap ayarlarınızı burada değiştirin ve kişisel bilgilerinizi yönetin.',
+  tabs: {
+    settings: 'Ayarlar',
+    members: 'Üyeler',
+    domains: 'Alan adları',
+    oidc_configs: 'OIDC yapılandırmaları',
+    subscription: 'Plan ve faturalandırma',
+    billing_history: 'Fatura geçmişi',
+    license: 'Lisans',
+  },
+  license: {
+    purchase_title: 'SELF-HOSTED PLANLAR',
+    purchase_description:
+      'Self-hosted Pro ve Kurumsal planlar, kendi örneğinizde Logto markasını gizleme, kendi arayüzünüzü kullanma, konsolda iş birliği ve sınırsız SAML uygulaması gibi ücretli özellikleri açar. Lisans anahtarınızı almak için bir plan satın alın.',
+    purchase_button: 'Self-hosted planlara göz at',
+    install_title: 'LİSANS KURULUMU',
+    install_description:
+      'Self-hosted plan satın aldıktan sonra aldığınız lisans anahtarını yapıştırın.',
+    install_button: 'Lisansı kur',
+    key_field: 'Lisans anahtarı',
+    key_field_description:
+      'Anahtar örneğinizde doğrulanır ve oradan hiç çıkmaz. Elinizdeki anahtarın süresi dolduysa yeni bir anahtar almak için Logto ile iletişime geçin.',
+    key_placeholder: 'Lisans anahtarınızı buraya yapıştırın',
+    installed_toast: 'Lisans başarıyla kuruldu.',
+    details_title: 'LİSANS',
+    details_description: 'Bu örneğe kurulu lisans ve neleri kapsadığı.',
+    plan_field: 'Plan',
+    environment_field: 'Ortam',
+    environment_production: 'Üretim',
+    environment_non_production: 'Üretim dışı',
+    expires_at_field: 'Bitiş tarihi',
+    installed_at_field: 'Kurulum tarihi',
+    last_refreshed_at_field: 'Son yenileme tarihi',
+    grace_ends_at_field: 'Ek süre bitiş tarihi',
+    refresh_expired_description:
+      'Lisans anahtarının süresi {{expiresAt}} tarihinde doldu. Logto anahtarı yenilemeyi denerken lisanslı özellikler {{graceEndsAt}} tarihine kadar kullanılabilir.',
+    refresh_refused_description:
+      'Lisans {{reason}} olduğu için lisans yenileme reddedildi. Lisanslı özellikler {{graceEndsAt}} tarihine kadar kullanılabilir.',
+    refusal_reason_canceled: 'iptal edildi',
+    refusal_reason_unpaid: 'ödenmedi',
+    refusal_reason_expired: 'süresi doldu',
+    refusal_reason_revoked: 'geri alındı',
+    refusal_reason_unknown: 'kullanılamıyor',
+    grace_expired_description:
+      'Lisansın ek süresi {{graceEndsAt}} tarihinde sona erdi. Bu örnek OSS varsayılanlarına döndü. Yeni bir lisans anahtarı almak için Logto ile iletişime geçin ve yeniden kurun.',
+    get_fresh_key_button: 'Yeni lisans anahtarı al',
+    replace_button: 'Lisansı değiştir',
+  },
+  members: {
+    card_title: 'Kiracıları Logto Cloud ile daha güvenli yönetin',
+    card_description:
+      'Tek bir yönetici hesabını paylaşmadan kiracınıza yöneticiler veya iş birlikçileri ekleyin.',
+    card_action: 'Logto Cloud’u keşfedin',
+    self_hosted_card_title: 'Kiracıları self-hosted planlarla daha güvenli yönetin',
+    self_hosted_card_description:
+      'Tek bir yönetici hesabını paylaşmadan kiracınıza yöneticiler veya iş birlikçileri ekleyin.',
+    self_hosted_card_action: 'Self-hosted planları keşfedin',
+  },
+  settings: {
+    title: 'AYARLAR',
+    description: 'Kiracı adını ayarlayın ve verilerinizin barındırıldığı bölgeyi görüntüleyin.',
+    tenant_id: 'Kiracı Kimliği',
+    tenant_name: 'Kiracı Adı',
+    tenant_instance: 'Örnek seçin',
+    tenant_instance_description:
+      "Kiracınızın nerede barındırılacağını seçin. Genel paylaşımlı altyapı için Logto Cloud'u veya özel kaynaklar için özel bir örneği seçin.",
+    tenant_region: 'Veriler barındırılan bölge',
+    tenant_region_description:
+      'Kiracı kaynaklarınızın (kullanıcılar, uygulamalar vb.) barındırıldığı fiziksel konum. Bu, oluşturulduktan sonra değiştirilemez.',
+    tenant_region_tip:
+      'Kiracı kaynaklarınız {{region}} bölgesinde barındırılır. <a>Daha fazla bilgi</a>',
+    environment_tag_development: 'Geliş',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Kiracı türü',
+    development_description:
+      "Yalnızca test amacıyla ve üretimde kullanılmamalıdır. Abonelik gerekli değildir. Tüm pro özelliklere sahiptir ancak giriş banner'ı gibi bazı sınırlamaları bulunmaktadır.",
+    production_description:
+      'Son kullanıcılar tarafından kullanılan uygulamalar için tasarlanmıştır ve ücretli abonelik gerektirebilir.',
+    tenant_info_saved: 'Kiracı bilgileri başarıyla kaydedildi.',
+    tenant_mfa: 'Çok faktörlü kimlik doğrulama',
+    tenant_mfa_description:
+      'Üyelerinizin bu kiracıya erişmek için çok faktörlü kimlik doğrulamayı yapılandırmasını zorunlu kılın.',
+    oss_description: 'Üyelerin bu örnekte Konsol’a nasıl eriştiğini yönetin.',
+    tenant_mfa_confirm_title: 'Tüm üyeler için MFA zorunlu olsun mu?',
+    tenant_mfa_confirm_description:
+      'Bu üyeler henüz MFA yapılandırmadı. Oturumları açık kalır ve bir sonraki girişlerinde yapılandırmaları istenir:',
+    tenant_mfa_confirm_self:
+      'Siz de henüz MFA yapılandırmadınız. Bir sonraki girişinizden önce hesap ayarlarınızdan yapılandırın.',
+    tenant_mfa_confirm_button: 'MFA’yı zorunlu kıl',
+    tenant_mfa_setup_required:
+      'Bu kiracı çok faktörlü kimlik doğrulama gerektiriyor. Şimdi yapılandırın, aksi halde bir sonraki girişinizde istenecek.',
+    tenant_mfa_setup_action: 'MFA yapılandır',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      'Ücretli planlarda kullanılabilir. Tüm üyelerin kuruluşunuzun kimlik sağlayıcısını kullanarak Logto Cloud Konsoluna giriş yapabilmesi için Enterprise SSO etkinleştirmek üzere bizimle iletişime geçin.',
+  },
+  full_env_tag: {
+    development: 'Geliştirme',
+    production: 'Prod',
+  },
+  view_only: {
+    tag: 'Yalnızca görüntüleme',
+    notification:
+      'Bu kiracıya yalnızca görüntüleme erişiminiz var. Değişiklik yapmanız gerekiyorsa bir kiracı yöneticisine başvurun.',
+    hidden: 'Görüntüleyicilerden gizli',
+  },
+  deletion_card: {
+    title: 'SİL',
+    tenant_deletion: 'Kiracıyı Sil',
+    tenant_deletion_description:
+      'Kiracının silinmesi, tüm ilişkili kullanıcı verilerinin ve yapılandırmalarının kalıcı olarak silinmesine neden olur. Lütfen dikkatli bir şekilde devam edin.',
+    tenant_deletion_button: 'Kiracıyı Sil',
+  },
+  leave_tenant_card: {
+    title: 'AYRIL',
+    leave_tenant: 'Kiracıyı Ayrıl',
+    leave_tenant_description:
+      'Kiracıda kalan tüm kaynaklarınız kalır, ancak artık bu kiracıya erişiminiz olmaz.',
+    last_admin_note:
+      'Bu kiracıdan ayrılmak için, en az bir başka üyenin Yönetici rolüne sahip olduğundan emin olun.',
+  },
+  create_modal: {
+    title: 'Kiracı Oluştur',
+    subtitle: 'İzolasyonlu kaynaklara ve kullanıcılara sahip yeni bir kiracı oluşturun.',
+    tenant_id: 'Kiracı Kimliği',
+    tenant_usage_purpose: 'Bu kiracıyı ne için kullanmak istiyorsunuz?',
+    development_description:
+      'Yalnızca test amacıyla ve üretimde kullanılmamalıdır. Abonelik gerekli değildir.',
+    development_description_for_private_regions:
+      'Yalnızca test amacıyla ve üretimde kullanılmamalıdır.',
+    development_hint:
+      'Tüm pro özelliklere sahiptir ancak giriş bannerı gibi bazı sınırlamaları bulunmaktadır.',
+    production_description:
+      'Son kullanıcılar tarafından kullanılmak üzere tasarlanmıştır ve ücretli bir abonelik gerekebilir.',
+    available_plan: 'Mevcut plan:',
+    create_button: 'Kiracı oluştur',
+    tenant_name_placeholder: 'Benim kiracım',
+    tenant_created: 'Kiracı başarıyla oluşturuldu.',
+    invitation_failed:
+      'Bazı davetler gönderilemedi. Lütfen daha sonra Ayarlar -> Üyeler üzerinden tekrar deneyin.',
+    tenant_type_description: 'Bu, oluşturulduktan sonra değiştirilemez.',
+    tenant_id_invalid:
+      'Kiracı kimliği yalnızca küçük harfler, sayılar ve kısa çizgiler içerebilir ve {{max}} karakteri aşmamalıdır.',
+    tenant_id_placeholder: 'Kiracı kimliğiniz',
+    tenant_id_tip:
+      'Kiracı kimliğini özelleştirin. Boş bırakılırsa, Logto varsayılan bir kimlik oluşturur. Kiracı kimliği oluşturulduktan sonra değiştirilemez.',
+  },
+  dev_tenant_migration: {
+    title:
+      'Pro özelliklerimizi ücretsiz olarak deneyebilirsiniz, yeni "Geliştirme kiracısı" oluşturarak!',
+    affect_title: 'Bunu denemenin sizin için bir etkisi var mı?',
+    hint_1:
+      'Eski <strong>ortam etiketlerini</strong> iki yeni kiracı türü ile değiştiriyoruz: <strong>“Gelişme”</strong> ve <strong>“Prod”</strong>.',
+    hint_2:
+      'Sorunsuz bir geçiş ve kesintisiz işlevsellik sağlamak için, tüm erken oluşturulan kiracılarınız önceki aboneliğinizle birlikte <strong>Prod</strong> kiracı türüne yükseltilecektir.',
+    hint_3: 'Endişelenmeyin, diğer tüm ayarlarınız aynı kalacak.',
+    about_tenant_type: 'Kiracı türü hakkında',
+  },
+  delete_modal: {
+    title: 'Kiracıyı Sil',
+    description_line1:
+      'Kiracınız "<span>{{name}}</span>" ve ortam ek etiketi "<span>{{tag}}</span>" ile kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm veri ve kiracı bilgilerinizin kalıcı olarak silinmesine neden olacaktır.',
+    description_line2:
+      'Kiracıyı silmeden önce size yardımcı olabiliriz. <span><a>E-posta yoluyla bizimle iletişime geçin</a></span>',
+    description_line3: '"{{name}}" kiracı adını doğrulamak için devam edin',
+    delete_button: 'Kalıcı olarak sil',
+    cannot_delete_title: 'Bu kiracı silinemez',
+    cannot_delete_description:
+      'Üzgünüm, şu anda bu kiracıyı silemezsiniz. Ücretsiz aboneliğinizde olmadığınızdan ve tüm faturalarınızın ödendiğinden emin olun.',
+  },
+  leave_tenant_modal: {
+    description: 'Bu kiracıdan ayrılmak istediğinize emin misiniz?',
+    leave_button: 'Ayrıl',
+  },
+  tenant_landing_page: {
+    title: 'Henüz bir kiracı oluşturmadınız',
+    description:
+      'Logto ile projenizi yapılandırmaya başlamak için lütfen yeni bir kiracı oluşturun. Hesabınızdan çıkış yapmanız veya hesabınızı silmeniz gerekiyorsa, sağ üst köşedeki avatar düğmesine tıklayın.',
+    create_tenant_button: 'Kiracı oluştur',
+  },
+  status: {
+    mau_exceeded: 'MAU Sınırı Aşıldı',
+    token_exceeded: 'Jeton sınırı aşıldı',
+    suspended: 'Askıya Alındı',
+    overdue: 'Geçmişte',
+  },
+  tenant_suspended_page: {
+    title: 'Kiracı Askıya Alındı. Erişimi geri yüklemek için bizimle iletişime geçin.',
+    description_1:
+      'Üzülerek bildirmekten üzüntü duyoyruz, kiracı hesabınız şu anda geçici olarak askıya alınmıştır. Bunun nedeni, MAU sınırlarını aşmak, gecikmiş ödemeler veya diğer izinsiz işlemler gibi yanlış kullanımdır.',
+    description_2:
+      'Daha fazla açıklama, endişeleriniz veya işlevselliği tamamen geri yüklemek ve kiracılarınızı engellemek isterseniz, lütfen derhal bizimle iletişime geçmekten çekinmeyin.',
+  },
+  production_tenant_notification: {
+    text: 'Ücretsiz test için bir geliştirme kiracısındasınız. Yayına geçmek için bir üretim kiracısı oluşturun.',
+    action: 'Kiracı oluştur',
+  },
+};
+
+export default Object.freeze(tenants);

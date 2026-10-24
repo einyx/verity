@@ -1,0 +1,201 @@
+const security = {
+  page_title: '安全性',
+  title: '安全性',
+  subtitle: '配置針對複雜攻擊的高級保護。',
+  tabs: {
+    captcha: 'CAPTCHA',
+    password_policy: '密碼策略',
+    blocklist: '封鎖清單',
+    general: '一般',
+  },
+  bot_protection: {
+    title: '機器人保護',
+    description: '為註冊、登入和密碼重設啟用 CAPTCHA 以阻止自動化威脅。',
+    captcha: {
+      title: 'CAPTCHA',
+      placeholder: '選擇一個 CAPTCHA 供應商並設定整合。',
+      add: '新增 CAPTCHA',
+    },
+    settings: '設定',
+    enable_captcha: '啟用 CAPTCHA',
+    enable_captcha_description: '啟用註冊、登入和密碼恢復流程的 CAPTCHA 驗證。',
+  },
+  create_captcha: {
+    setup_captcha: '設定 CAPTCHA',
+  },
+  captcha_providers: {
+    recaptcha_enterprise: {
+      name: 'reCAPTCHA Enterprise',
+      description:
+        'Google 的企業級 CAPTCHA 解決方案，提供先進的威脅偵測和詳細的安全分析，以保護你的網站免受詐騙活動的侵害。',
+    },
+    turnstile: {
+      name: 'Cloudflare Turnstile',
+      description:
+        'Cloudflare 的智能 CAPTCHA 替代方案，提供非侵入性的機器人保護，同時確保無視覺難題的無縫用戶體驗。',
+    },
+    cap: {
+      name: 'Cap',
+      description:
+        '開源、可自行託管的工作量證明 CAPTCHA，無需視覺謎題或第三方服務，適合無法存取其他 CAPTCHA 服務的地區。',
+    },
+  },
+  captcha_details: {
+    back_to_security: '返回安全性',
+    page_title: 'CAPTCHA 詳情',
+    check_readme: '查看 README',
+    options_change_captcha: '更改 CAPTCHA 供應商',
+    connection: '連接',
+    description: '配置你的 CAPTCHA 連接。',
+    site_key: '站點金鑰',
+    secret_key: '私密金鑰',
+    project_id: '項目 ID',
+    domain: '網域（可選）',
+    domain_placeholder: 'www.google.com（預設）或 recaptcha.net',
+    recaptcha_key_id: 'reCAPTCHA 金鑰 ID',
+    recaptcha_api_key: '項目的 API 金鑰',
+    cap_endpoint: 'Cap 端點',
+    cap_endpoint_placeholder: 'https://cap.example.com',
+    cap_endpoint_http_notice:
+      '此端點使用 HTTP，僅適用於本地開發。瀏覽器會攔截 HTTPS 登入頁發出的 HTTP 請求，且密鑰將以明文傳輸。生產環境請使用 HTTPS。',
+    deletion_description: '你確定要刪除此 CAPTCHA 供應商嗎？',
+    captcha_deleted: 'CAPTCHA 供應商已成功刪除',
+    setup_captcha: '設定 CAPTCHA',
+    mode: '驗證模式',
+    mode_invisible: '無感驗證',
+    mode_checkbox: '複選框驗證',
+    mode_notice:
+      '驗證模式在 Google Cloud Console 的 reCAPTCHA 金鑰設定中定義。更改此處的模式需要匹配的金鑰類型。',
+    score_threshold: '分數門檻',
+    score_threshold_description:
+      '低於門檻的分數會被拒絕。0.0 允許所有分數，1.0 只允許滿分。預設值為 0.5。',
+    score_threshold_error: '分數門檻必須介乎 0 至 1 之間。',
+  },
+  password_policy: {
+    password_requirements: '密碼要求',
+    password_requirements_description: '增強密碼要求以防禦憑證填充和弱密碼攻擊。',
+    minimum_length: '最小長度',
+    minimum_length_description: 'NIST 建議在 Web 產品中使用至少 8 個字符。',
+    minimum_length_error: '最小長度必須介於{{min}}和{{max}}之間（包括{{min}}和{{max}}）。',
+    minimum_required_char_types: '最小所需字符類型',
+    minimum_required_char_types_description:
+      '字符類型：大寫字母（A-Z）、小寫字母（a-z）、數字（0-9）和特殊符號（{{symbols}}）。',
+    password_rejection: '密碼拒絕設置',
+    compromised_passwords: '拒絕被破解的密碼',
+    breached_passwords: '洩露的密碼',
+    breached_passwords_description: '拒絕之前在洩露數據庫中出現的密碼。',
+    restricted_phrases: '限制低安全性短語',
+    restricted_phrases_tooltip: '密碼應該避免使用這些短語，除非結合至少 3 個或更多的額外字符。',
+    repetitive_or_sequential_characters: '重複或連續字符',
+    repetitive_or_sequential_characters_description: '例如："AAAA"、"1234"和"abcd"。',
+    user_information: '用戶信息',
+    user_information_description: '例如：郵件地址、電話號碼、用戶名等等。',
+    custom_words: '自定義詞彙',
+    custom_words_description: '個性化上下文特定的詞彙，不區分大小寫，每行一個詞。',
+    custom_words_placeholder: '你的服務名稱、公司名稱等等。',
+    password_expiration: '密碼過期',
+    password_expiration_description:
+      '要求用戶在設定的天數後重置密碼。通過 SSO 或通行密鑰登錄的用戶不受影響。',
+    enable_password_expiration: '啟用密碼過期',
+    enable_password_expiration_description:
+      '要求用戶定期重置密碼。對於沒有記錄密碼更改日期的現有用戶，將從此政策啟用之日起進行評估。',
+    enable_password_expiration_tip:
+      '只有在登入體驗中配置至少一種帶有有效連接器的忘記密碼方式後，才能啟用密碼過期。',
+    expiration_period: '密碼有效期限（天）',
+    expiration_period_description: '密碼在過期前保持有效的天數。',
+    expiration_period_error: '密碼有效期限必須在 {{min}} 到 {{max}} 天之間。',
+    password_expiration_recovery_reminder:
+      '部分用戶可能沒有電郵地址或電話號碼來接收密碼復原驗證碼，因此無法重設已過期的密碼。請在註冊時要求提供電郵地址或電話號碼，以確保每位用戶都能復原其密碼。',
+  },
+  verification_code_policy: {
+    card_title: '驗證碼',
+    card_description: '配置登入、註冊和密碼重設流程中驗證碼的過期時長和最大重試次數。',
+    enable: {
+      title: '自定義驗證碼設定',
+      description: '允許自定義驗證碼的過期時長和最大重試次數。',
+    },
+    expiration_duration: {
+      title: '過期時長（秒）',
+      description: '驗證碼發送後保持有效的時長（秒）。',
+      error_message: '過期時長必須在 60 到 3600 秒之間。',
+    },
+    max_retry_attempts: {
+      title: '最大重試次數',
+      description: '驗證碼失效前允許的最大驗證失敗次數。',
+      error_message: '最大重試次數必須在 1 到 100 之間。',
+    },
+  },
+
+  sentinel_policy: {
+    card_title: '識別鎖定',
+    card_description:
+      '鎖定對於所有用戶可用，默認設置下即可使用，但你可以自定義以便獲得更多控制。\n\n在多次身份驗證失敗（例如：密碼錯誤或驗證碼錯誤）後，暫時鎖定一個識別符以防止暴力破解。',
+    enable_sentinel_policy: {
+      title: '自定義鎖定體驗',
+      description: '允許自定義超過鎖定前的最多失敗登入嘗試次數、鎖定時長及立即手動解鎖。',
+    },
+    max_attempts: {
+      title: '最大失敗嘗試次數',
+      description: '在一小時內達到最大失敗登入嘗試次數後暫時鎖定一個識別符。',
+      error_message: '最大失敗嘗試次數必須大於 0。',
+    },
+    lockout_duration: {
+      title: '封鎖時長（分鐘）',
+      description: '在超過最大失敗嘗試次數後，封鎖一段時間。',
+      error_message: '封鎖時長必須至少為 1 分鐘。',
+    },
+    manual_unlock: {
+      title: '手動解鎖',
+      description: '通過確認用戶身份並輸入識別符立即解鎖用戶。',
+      unblock_by_identifiers: '按照識別符解鎖',
+      modal_description_1:
+        '由於多次登入/註冊嘗試失敗而暫時鎖定了一個識別符。為了保護安全，訪問將在封鎖時長後自動恢復。',
+      modal_description_2: ' 只有在確認用戶身份並確保沒有未授權的訪問嘗試後才進行手動解鎖。',
+      placeholder: '輸入識別符（郵件地址/電話號碼/用戶名）',
+      confirm_button_text: '立即解鎖',
+      success_toast: '解鎖成功',
+      duplicate_identifier_error: '識別符已添加',
+      empty_identifier_error: '請輸入至少一個識別符',
+    },
+  },
+  blocklist: {
+    card_title: '電子郵件封鎖清單',
+    card_description: '通過封鎖高風險或不需要的電子郵件地址來控制你的用戶群。',
+    custom_email_allowlist: {
+      title: '允許自訂電子郵件地址',
+      description:
+        '新增規則，只允許特定的電子郵件網域、電子郵件地址或萬用字元模式用於新註冊和新綁定的電子郵件。例如：bar@example.com、@example.com、foo*@example.com、*@example.com。gmail.com 和 googlemail.com 網域會被視為等同，且本地部分中的點號會被忽略，因此 foo.bar@gmail.com 與 foobar@googlemail.com 相符。',
+      placeholder: '輸入電子郵件地址、網域或萬用字元模式',
+      duplicate_error: '電子郵件地址、網域或萬用字元電子郵件地址模式已新增',
+      invalid_format_error:
+        '必須是有效的電子郵件地址（bar@example.com）、網域（@example.com）或萬用字元電子郵件地址模式（foo*@example.com，*@example.com）',
+      warnings: {
+        identical_entries: '部分允許清單項目也存在於阻止規則中。相符的電子郵件仍可能被阻止。',
+        blocked_exact_email: '部分精確電子郵件允許項目符合阻止規則。相符的電子郵件仍可能被阻止。',
+        blocked_subaddressing: '部分允許清單項目包含加號（+），但電子郵件子地址已被阻止。',
+        effectively_unusable: '根據這些檢查，目前允許清單可能無法讓任何新的電子郵件通過。',
+      },
+    },
+    disposable_email: {
+      title: '封鎖一次性電子郵件地址',
+      description:
+        '啟用後將拒絕使用一次性或臨時電子郵件地址的註冊嘗試，這可以防止垃圾信息並改善用戶質量。',
+    },
+    email_subaddressing: {
+      title: '封鎖電子郵件子地址',
+      description:
+        '啟用以拒絕使用帶有加號（+）和其他字符（例如 user+alias@foo.com）的電子郵件子地址的註冊嘗試。',
+    },
+    custom_email_address: {
+      title: '封鎖自定義電子郵件地址',
+      description:
+        '新增規則，封鎖特定的電子郵件網域、電子郵件地址或萬用字元模式透過 UI 註冊或連結。例如：bar@example.com、@example.com、foo*@example.com、*@example.com。gmail.com 和 googlemail.com 網域會被視為等同，且本地部分中的點號會被忽略，因此 foo.bar@gmail.com 與 foobar@googlemail.com 相符。',
+      placeholder: '輸入電子郵件地址、網域或萬用字元模式',
+      duplicate_error: '電子郵件地址、域或通配符電子郵件地址模式已添加',
+      invalid_format_error:
+        '必須是有效的電子郵件地址（bar@example.com）、域（@example.com）或通配符電子郵件地址模式（foo*@example.com, *@example.com）',
+    },
+  },
+};
+
+export default Object.freeze(security);

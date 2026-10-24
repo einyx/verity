@@ -1,0 +1,62 @@
+import type { RequestErrorBody } from '@logto/schemas';
+import { HTTPError, TimeoutError } from 'ky';
+import { useCallback, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import PageContext from '@ac/Providers/PageContextProvider/PageContext';
+import ReauthPromptContext from '@ac/Providers/ReauthPromptProvider/ReauthPromptContext';
+
+export type ErrorHandlers = {
+  [code: string]: ((error: RequestErrorBody) => void | Promise<void>) | undefined;
+  // Overwrite default global error handle logic
+  global?: (error: RequestErrorBody) => void | Promise<void>;
+};
+
+const useErrorHandler = () => {
+  const { t } = useTranslation();
+  const { setToast } = useContext(PageContext);
+  const { requestReauthPrompt } = useContext(ReauthPromptContext);
+
+  const handleError = useCallback(
+    async (error: unknown, errorHandlers?: ErrorHandlers) => {
+      if (error instanceof HTTPError) {
+        try {
+          const logtoError = await error.response.json<RequestErrorBody>();
+
+          const { code, message } = logtoError;
+
+          const handler = errorHandlers?.[code] ?? errorHandlers?.global;
+
+          if (handler) {
+            await handler(logtoError);
+          } else if (error.response.status === 401 && code === 'auth.unauthorized') {
+            requestReauthPrompt();
+          } else {
+            setToast(message);
+          }
+
+          return;
+        } catch (error) {
+          setToast(t('error.unknown'));
+          console.error(error);
+
+          return;
+        }
+      }
+
+      if (error instanceof TimeoutError) {
+        setToast(t('error.timeout'));
+
+        return;
+      }
+
+      setToast(t('error.unknown'));
+      console.error(error);
+    },
+    [requestReauthPrompt, setToast, t]
+  );
+
+  return handleError;
+};
+
+export default useErrorHandler;

@@ -1,0 +1,150 @@
+const sign_up_and_sign_in = {
+  identifiers_email: 'E-Mail Adresse',
+  identifiers_phone: 'Telefonnummer',
+  identifiers_username: 'Benutzername',
+  identifiers_email_or_sms: 'E-Mail Adresse oder Telefonnummer',
+  identifiers_none: 'Nicht zutreffend',
+  and: 'und',
+  or: 'oder',
+  sign_up: {
+    title: 'ANMELDEN',
+    sign_up_identifier: 'Anmeldeidentifier',
+    identifier_description:
+      'Alle ausgewählten Anmeldekennungen sind erforderlich, wenn ein neues Konto erstellt wird.',
+    sign_up_authentication: 'Authentifizierungseinstellung für die Anmeldung',
+    verification_tip:
+      'Benutzer müssen die von dir konfigurierte E-Mail-Adresse oder Telefonnummer durch Eingabe eines Bestätigungscodes bei der Anmeldung überprüfen.',
+    authentication_description:
+      'Alle ausgewählten Aktionen sind für Benutzer verpflichtend, um den Vorgang abzuschließen.',
+    set_a_password_option: 'Erstellen Sie Ihr Passwort',
+    verify_at_sign_up_option: 'Bei Anmeldung überprüfen',
+    social_only_creation_description: '(Dies gilt nur für die Erstellung von Social-Accounts)',
+    collect_user_profile: 'Benutzerprofil sammeln',
+    add_profile_fields: 'Profilfelder hinzufügen',
+    profile_fields_hint: {
+      not_in_list: 'Nicht in der Liste?',
+      set_up: 'Einrichten',
+      go_to: 'weitere Profilfelder jetzt.',
+    },
+  },
+  sign_in: {
+    title: 'ANMELDEN',
+    sign_in_identifier_and_auth: 'Anmeldeidentifier und Authentifizierungseinstellungen',
+    description: 'Benutzer können sich über jede der verfügbaren Optionen anmelden.',
+    add_sign_in_method: 'Anmeldemethode hinzufügen',
+    add_sign_up_method: 'Anmeldemethode hinzufügen',
+    password_auth: 'Passwort',
+    verification_code_auth: 'Verifizierungscode',
+    auth_swap_tip:
+      'Tauschen Sie die untenstehenden Optionen aus, um zu bestimmen, welche zuerst im Vorgang angezeigt wird.',
+    require_auth_factor: 'Sie müssen mindestens einen Authentifizierungsfaktor auswählen.',
+    forgot_password: 'Passwort vergessen',
+    forgot_password_description:
+      'Benutzer können ihr Passwort mit jeder verfügbaren Verifizierungsmethode zurücksetzen.',
+    add_verification_method: 'Verifizierungsmethode hinzufügen',
+    email_verification_code: 'E-Mail-Verifizierungscode',
+    phone_verification_code: 'Telefonverifizierungscode',
+  },
+  social_sign_in: {
+    title: 'ANMELDEN MIT SOCIAL MEDIA',
+    social_sign_in: 'Anmelden mit Social Media',
+    description:
+      'Abhängig von der obligatorischen Identifizierung, die Sie eingerichtet haben, wird Ihr Benutzer möglicherweise aufgefordert, bei der Anmeldung über den Social Connector eine Identifizierung bereitzustellen.',
+    add_social_connector: 'Sozialen Connector hinzufügen',
+    set_up_hint: {
+      not_in_list: 'Nicht in der Liste?',
+      set_up_more: 'Einrichten',
+      go_to: 'andere Social Connectors jetzt.',
+    },
+    settings_title: 'Social-Sign-in-Erlebnis',
+    automatic_account_linking: 'Konten mit dem gleichen Identifier automatisch verknüpfen',
+    automatic_account_linking_tip:
+      'Wenn diese Option aktiviert ist, wird Logto bei einer neuen sozialen Anmeldung die soziale Identität automatisch mit dem Konto verknüpfen, wenn es genau ein bestehendes Konto mit dem gleichen Identifier gibt (z.B. eine E-Mail-Adresse). Der Benutzer wird nicht gefragt, ob er Konten verknüpfen möchte.',
+    required_sign_up_identifiers: 'Benutzer müssen fehlende Anmeldeidentifier angeben',
+    required_sign_up_identifiers_tip:
+      'Wenn aktiviert, müssen sich Benutzer über soziale Anbieter einloggen und alle fehlenden Anmeldeidentifier (wie E-Mail) ausfüllen, bevor sie sich anmelden können.\n\nWenn deaktiviert, können Benutzer fortfahren, ohne fehlende Identifier anzugeben, auch wenn das soziale Konto sie nicht synchronisiert hat.',
+  },
+  passkey_sign_in: {
+    title: 'PASSKEY-ANMELDUNG',
+    passkey_sign_in: 'Passkey-Anmeldung',
+    enable_passkey_sign_in_description:
+      'Ermöglichen Sie Benutzern, über Passkey (WebAuthn) schnell und sicher auf die Anwendung zuzugreifen, z. B. mit Biometrie oder Sicherheitsschlüssel.',
+    prompts: 'Passkey-Eingabeaufforderungen',
+    show_passkey_button: '"Mit Passkey fortfahren"-Schaltfläche auf der Anmeldeseite anzeigen',
+    show_passkey_button_tip:
+      'Das Deaktivieren der "Mit Passkey fortfahren"-Schaltfläche macht den Anmeldefluss identifikatorbasiert, wobei Passwort- und Passkey-Optionen im nächsten Schritt angezeigt werden.',
+    allow_autofill:
+      'Eingabeaufforderung und automatisches Ausfüllen registrierter Passkeys in Identifikatorfeldern erlauben',
+  },
+  tip: {
+    set_a_password: 'Ein einmaliges Passwort für Ihren Benutzernamen ist ein Muss.',
+    verify_at_sign_up:
+      'Wir unterstützen derzeit nur überprüfte E-Mails. Ihre Benutzerbasis kann eine große Anzahl von E-Mail-Adressen von schlechter Qualität enthalten, wenn keine Validierung vorliegt.',
+    password_auth:
+      'Dies ist unerlässlich, da Sie die Option zum Setzen eines Passworts während des Anmeldeprozesses aktiviert haben.',
+    verification_code_auth:
+      'Dies ist unerlässlich, da Sie nur die Möglichkeit aktiviert haben, einen Verifizierungscode bei der Anmeldung bereitzustellen. Sie können das Kontrollkästchen deaktivieren, wenn die Passworteinrichtung im Anmeldeprozess erlaubt ist.',
+    email_mfa_enabled:
+      'E-Mail-Verifizierungscode ist bereits für MFA aktiviert, daher kann er nicht als primäre Anmeldemethode wiederverwendet werden, um die Sicherheit zu gewährleisten.',
+    phone_mfa_enabled:
+      'Telefonverifizierungscode ist bereits für MFA aktiviert, daher kann er nicht als primäre Anmeldemethode wiederverwendet werden, um die Sicherheit zu gewährleisten.',
+    delete_sign_in_method:
+      'Dies ist unerlässlich, da Sie {{identifier}} als obligatorischen Identifier ausgewählt haben.',
+    password_disabled_notification:
+      'Die Option "Erstellen Sie Ihr Passwort" ist für die Anmeldung mit Benutzername deaktiviert, was Benutzer daran hindern könnte, sich anzumelden. Bestätigen Sie, um mit dem Speichern fortzufahren.',
+  },
+  advanced_options: {
+    title: 'ERWEITERTE OPTIONEN',
+    enable_single_sign_on: 'Enterprise-Single Sign-On (SSO) aktivieren',
+    enable_single_sign_on_description:
+      'Aktivieren Sie Benutzer, sich bei der Anwendung mit Single Sign-On mit ihren Unternehmens-Identitäten anzumelden.',
+    single_sign_on_hint: {
+      prefix: 'Gehe zu ',
+      link: 'Abschnitt "Enterprise SSO"',
+      suffix: ', um weitere Unternehmens-Connectors einzurichten.',
+    },
+    enable_user_registration: 'Benutzerregistrierung aktivieren',
+    enable_user_registration_description:
+      'Aktivieren oder deaktivieren Sie die Benutzerregistrierung. Sobald deaktiviert, können Benutzer immer noch über die Admin-Konsole hinzugefügt werden, aber Benutzer können keine Konten mehr über die Anmelde-Benutzeroberfläche einrichten.',
+    unknown_session_redirect_url: 'Unbekannte Sitzungsumleitungs-URL',
+    unknown_session_redirect_url_tip:
+      'Manchmal kann Logto eine Benutzersitzung auf der Anmeldeseite nicht erkennen, z. B. wenn eine Sitzung abläuft oder der Benutzer den Anmeldelink zu den Lesezeichen hinzufügt oder teilt. Standardmäßig erscheint ein 404-Fehler "Unbekannte Sitzung". Um die Benutzererfahrung zu verbessern, legen Sie eine Fallback-URL fest, um Benutzer zurück zu Ihrer App zu leiten und die Authentifizierung neu zu starten.',
+  },
+  username_policy: {
+    title: 'Benutzernamenrichtlinie',
+    description:
+      'Passen Sie die Anforderungen an Benutzernamen an, einschließlich Länge, erlaubter Zeichen und Groß-/Kleinschreibung.',
+    manage_button: 'Verwalten',
+    modal_title: 'Benutzernamenrichtlinie',
+    modal_description: 'Passen Sie die Anforderungen an Benutzernamen für Ihre Endbenutzer an.',
+    length: {
+      title: 'Länge des Benutzernamens',
+      minimum: 'Minimum',
+      maximum: 'Maximum',
+      min_greater_than_max: 'Die Mindestlänge darf die maximale Länge nicht überschreiten.',
+    },
+    allowed_chars: {
+      title: 'Erlaubte Zeichentypen',
+      uppercase: 'Großbuchstaben (A-Z)',
+      lowercase: 'Kleinbuchstaben (a-z)',
+      numbers: 'Zahlen (0-9)',
+      underscore: 'Unterstriche (_)',
+      no_valid_leading_char:
+        'Zahlen allein sind nicht erlaubt. Aktivieren Sie mindestens eine der Optionen: Großbuchstaben, Kleinbuchstaben oder Unterstriche.',
+      no_char_selected: 'Wählen Sie mindestens einen Zeichentyp aus.',
+    },
+    case_sensitive: {
+      title: 'Groß-/Kleinschreibung bei Benutzernamen beachten',
+      description:
+        'Groß- und Kleinbuchstaben als unterschiedlich behandeln. „user123“ und „User123“ werden als verschiedene Benutzernamen behandelt.',
+    },
+    case_conflicts: {
+      title: 'Vorhandene Benutzernamenkonflikte erkannt',
+      description:
+        'Einige Benutzernamen würden kollidieren, wenn die Groß-/Kleinschreibung deaktiviert wird. Lösen Sie die {{count}} unten aufgeführten Konfliktgruppen, bevor Sie speichern.',
+      sample_title: 'Konfliktbehaftete Benutzernamen',
+    },
+  },
+};
+
+export default Object.freeze(sign_up_and_sign_in);

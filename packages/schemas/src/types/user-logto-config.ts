@@ -1,0 +1,74 @@
+import { z } from 'zod';
+
+/**
+ * The key for MFA-related data in user's logto_config
+ */
+export const userMfaDataKey = 'mfa';
+
+/*
+ * The key for passkey sign-in data in user's logto_config
+ */
+export const userPasskeySignInDataKey = 'passkey_sign_in';
+
+/**
+ * Schema for MFA-related data stored in user's logto_config
+ */
+export const userMfaDataGuard = z.object({
+  /**
+   * Whether the user has actively enabled/bound MFA factors
+   *
+   * Note: The `undefined` value indicates that a new user has never made a choice on enabling the optional MFA; or an
+   * existing user data was created before the introduction of this field, so the MFA enabled state is unknown. We need
+   * to check extra conditions to determine it when the user submits the experience interaction.
+   * @see {@link @logto/core/packages/core/src/routes/experience/classes/mfa.ts#assertOptionalMfaEnablement}
+   */
+  enabled: z.boolean().optional(),
+  /**
+   * Whether the user has skipped MFA binding flow
+   */
+  skipped: z.boolean().optional(),
+  /**
+   * Whether the user has skipped optional additional MFA binding suggestion
+   */
+  additionalBindingSuggestionSkipped: z.boolean().optional(),
+  /**
+   * Whether the user has skipped MFA verification on sign-in
+   *
+   * Users can manually disable MFA verification requirement for sign-in,
+   * but if the MFA policy is set to mandatory, this setting will be ignored.
+   */
+  skipMfaOnSignIn: z.boolean().optional(),
+});
+
+export type UserMfaData = z.infer<typeof userMfaDataGuard>;
+
+/**
+ * Schema for passkey sign-in related data stored in user's logto_config
+ */
+export const userPasskeySignInDataGuard = z.object({
+  /**
+   * Whether the user has skipped binding passkey for sign-in persistently
+   */
+  skipped: z.boolean().optional(),
+});
+
+export type UserPasskeySignInData = z.infer<typeof userPasskeySignInDataGuard>;
+
+/**
+ * Schema for the MFA settings API response (GET/PATCH /api/my-account/mfa-settings)
+ */
+export const userMfaSettingsResponseGuard = z.object({
+  skipMfaOnSignIn: z.boolean(),
+});
+
+export type UserMfaSettingsResponse = z.infer<typeof userMfaSettingsResponseGuard>;
+
+/**
+ * Schema for user's logto_config field
+ */
+export const userLogtoConfigGuard = z.object({
+  [userMfaDataKey]: userMfaDataGuard.optional(),
+  [userPasskeySignInDataKey]: userPasskeySignInDataGuard.optional(),
+});
+
+export type UserLogtoConfig = z.infer<typeof userLogtoConfigGuard>;

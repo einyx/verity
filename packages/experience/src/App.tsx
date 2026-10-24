@@ -1,0 +1,278 @@
+import { MfaFactor, experience } from '@logto/schemas';
+import { Route, Routes, BrowserRouter } from 'react-router-dom';
+
+import { isDevFeaturesEnabled } from '@/constants/env';
+import { handleSearchParametersData } from '@/shared/utils/search-parameters';
+
+import AppLayout from './Layout/AppLayout';
+import AppBoundary from './Providers/AppBoundary';
+import CaptchaContextProvider from './Providers/CaptchaContextProvider';
+import LoadingLayerProvider from './Providers/LoadingLayerProvider';
+import PageContextProvider from './Providers/PageContextProvider';
+import SettingsProvider from './Providers/SettingsProvider';
+import UserInteractionContextProvider from './Providers/UserInteractionContextProvider';
+import DevelopmentTenantNotification from './containers/DevelopmentTenantNotification';
+import MfaVerificationGuard from './containers/MfaVerificationGuard';
+import StepUpGuard from './containers/StepUpGuard';
+import StepUpRecoveryGuard from './containers/StepUpRecoveryGuard';
+import Callback from './pages/Callback';
+import Consent from './pages/Consent';
+import Continue from './pages/Continue';
+import Device from './pages/Device';
+import DeviceSuccess from './pages/Device/Success';
+import DirectSignIn from './pages/DirectSignIn';
+import ErrorPage from './pages/ErrorPage';
+import ForgotPassword from './pages/ForgotPassword';
+import IdentifierRegister from './pages/IdentifierRegister';
+import IdentifierSignIn from './pages/IdentifierSignIn';
+import MfaBinding from './pages/MfaBinding';
+import BackupCodeBinding from './pages/MfaBinding/BackupCodeBinding';
+import EmailMfaBinding from './pages/MfaBinding/EmailMfaBinding';
+import PhoneMfaBinding from './pages/MfaBinding/PhoneMfaBinding';
+import TotpBinding from './pages/MfaBinding/TotpBinding';
+import WebAuthnBinding from './pages/MfaBinding/WebAuthnBinding';
+import MfaOnboarding from './pages/MfaOnboarding';
+import MfaVerification from './pages/MfaVerification';
+import BackupCodeVerification from './pages/MfaVerification/BackupCodeVerification';
+import EmailVerificationCode from './pages/MfaVerification/EmailVerificationCode';
+import PhoneVerificationCode from './pages/MfaVerification/PhoneVerificationCode';
+import TotpVerification from './pages/MfaVerification/TotpVerification';
+import WebAuthnVerification from './pages/MfaVerification/WebAuthnVerification';
+import OneTimeToken from './pages/OneTimeToken';
+import OneTimeTokenErrorPage from './pages/OneTimeToken/Error';
+import PasskeySetup from './pages/PasskeySetup';
+import Register from './pages/Register';
+import RegisterPassword from './pages/RegisterPassword';
+import ResetPassword from './pages/ResetPassword';
+import ResetPasswordLanding from './pages/ResetPasswordLanding';
+import SignIn from './pages/SignIn';
+import SignInPasskeyVerification from './pages/SignInPasskeyVerification';
+import SignInPassword from './pages/SignInPassword';
+import SignInVerificationMethods from './pages/SignInVerificationMethods';
+import SingleSignOnConnectors from './pages/SingleSignOnConnectors';
+import SingleSignOnEmail from './pages/SingleSignOnEmail';
+import SingleSignOnLanding from './pages/SingleSignOnLanding';
+import SocialLanding from './pages/SocialLanding';
+import SocialLinkAccount from './pages/SocialLinkAccount';
+import SocialSignInWebCallback from './pages/SocialSignInWebCallback';
+import StepUp from './pages/StepUp';
+import StepUpPassword from './pages/StepUp/Password';
+import StepUpVerificationCode from './pages/StepUp/VerificationCode';
+import SwitchAccount from './pages/SwitchAccount';
+import TrustedDevice from './pages/TrustedDevice';
+import VerificationCode from './pages/VerificationCode';
+import { UserMfaFlow } from './types';
+import 'overlayscrollbars/overlayscrollbars.css';
+import './shared/scss/normalized.scss';
+import './scss/overlayscrollbars.scss';
+
+handleSearchParametersData();
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <PageContextProvider>
+        <SettingsProvider>
+          <UserInteractionContextProvider>
+            <CaptchaContextProvider>
+              <DevelopmentTenantNotification />
+              <AppBoundary>
+                <Routes>
+                  <Route element={<LoadingLayerProvider />}>
+                    <Route path="callback/:connectorId" element={<Callback />} />
+                    {/* Step-up callbacks recover the mode before consuming upstream proofs. */}
+                    <Route element={isDevFeaturesEnabled ? <StepUpRecoveryGuard /> : undefined}>
+                      <Route
+                        path="callback/social/:connectorId"
+                        element={<SocialSignInWebCallback />}
+                      />
+                    </Route>
+                    <Route path="direct/:method/:target?" element={<DirectSignIn />} />
+                    <Route path={experience.routes.oneTimeToken} element={<OneTimeToken />} />
+                    <Route element={<AppLayout />}>
+                      <Route
+                        path={`${experience.routes.oneTimeToken}/error`}
+                        element={<OneTimeTokenErrorPage />}
+                      />
+                      <Route path={experience.routes.switchAccount} element={<SwitchAccount />} />
+                      <Route
+                        path="unknown-session"
+                        element={<ErrorPage message="error.invalid_session" />}
+                      />
+                      <Route
+                        path={experience.routes.accountSuspended}
+                        element={
+                          <ErrorPage
+                            isNavbarHidden
+                            title="error.account_suspended"
+                            message="error.account_suspended_description"
+                            primaryAction={{
+                              title: 'description.back_to_sign_in',
+                              to: `/${experience.routes.signIn}`,
+                              replace: true,
+                            }}
+                          />
+                        }
+                      />
+
+                      {/* Sign-in */}
+                      <Route path={experience.routes.signIn}>
+                        <Route index element={<SignIn />} />
+                        <Route path="password" element={<SignInPassword />} />
+                        <Route path="passkey" element={<SignInPasskeyVerification />} />
+                        <Route
+                          path="verification-methods"
+                          element={<SignInVerificationMethods />}
+                        />
+                      </Route>
+
+                      {/* Create passkey for sign-in */}
+                      <Route path="create-passkey" element={<PasskeySetup />} />
+
+                      {/* Trusted device */}
+                      <Route path={experience.routes.trustedDevice} element={<TrustedDevice />} />
+
+                      {/* Register */}
+                      <Route path={experience.routes.register}>
+                        <Route index element={<Register />} />
+                        <Route path="password" element={<RegisterPassword />} />
+                      </Route>
+
+                      {/* Forgot password */}
+                      <Route path="forgot-password">
+                        <Route index element={<ForgotPassword />} />
+                        <Route path="reset" element={<ResetPassword />} />
+                      </Route>
+
+                      {/* Step-up establishment and enrollment reuse the existing pages. */}
+                      <Route element={isDevFeaturesEnabled ? <StepUpRecoveryGuard /> : undefined}>
+                        {/* Passwordless verification code */}
+                        <Route path=":flow/verification-code" element={<VerificationCode />} />
+
+                        {/* Mfa onboarding page. Prompt users to turn on 2-step verification. */}
+                        <Route path="mfa-onboarding" element={<MfaOnboarding />} />
+
+                        {/* Mfa binding */}
+                        <Route path={UserMfaFlow.MfaBinding}>
+                          <Route index element={<MfaBinding />} />
+                          <Route path={MfaFactor.TOTP} element={<TotpBinding />} />
+                          <Route path={MfaFactor.WebAuthn} element={<WebAuthnBinding />} />
+                          <Route path={MfaFactor.BackupCode} element={<BackupCodeBinding />} />
+                          <Route
+                            path={MfaFactor.EmailVerificationCode}
+                            element={<EmailMfaBinding />}
+                          />
+                          <Route
+                            path={MfaFactor.PhoneVerificationCode}
+                            element={<PhoneMfaBinding />}
+                          />
+                        </Route>
+
+                        {/* Continue set up missing profile */}
+                        <Route path="continue">
+                          <Route index element={<Continue />} />
+                          <Route path=":method" element={<Continue />} />
+                        </Route>
+                      </Route>
+
+                      {/* Mfa verification */}
+                      <Route
+                        path={UserMfaFlow.MfaVerification}
+                        // Step-up MFA pages recover their state from the interaction.
+                        element={isDevFeaturesEnabled ? <MfaVerificationGuard /> : undefined}
+                      >
+                        <Route index element={<MfaVerification />} />
+                        <Route path={MfaFactor.TOTP} element={<TotpVerification />} />
+                        <Route path={MfaFactor.WebAuthn} element={<WebAuthnVerification />} />
+                        <Route path={MfaFactor.BackupCode} element={<BackupCodeVerification />} />
+                        <Route
+                          path={MfaFactor.EmailVerificationCode}
+                          element={<EmailVerificationCode />}
+                        />
+                        <Route
+                          path={MfaFactor.PhoneVerificationCode}
+                          element={<PhoneVerificationCode />}
+                        />
+                      </Route>
+
+                      {/*
+                       * Step-up: an authenticated session proves the missing assurance. The guard
+                       * loads the server-driven context, the landing dispatches on it, and the
+                       * pinned-user first-factor pages verify the pinned subject. Dev-only
+                       * feature: remove the flag when the flow is released.
+                       */}
+                      {isDevFeaturesEnabled && (
+                        <Route path={experience.routes.stepUp} element={<StepUpGuard />}>
+                          <Route index element={<StepUp />} />
+                          <Route path="password" element={<StepUpPassword />} />
+                          <Route
+                            path="verification-code/:type"
+                            element={<StepUpVerificationCode />}
+                          />
+                        </Route>
+                      )}
+
+                      {/* Social sign-in pages */}
+                      <Route path="social">
+                        <Route path="link/:connectorId" element={<SocialLinkAccount />} />
+                        <Route path="landing/:connectorId" element={<SocialLanding />} />
+                      </Route>
+
+                      {/* Single sign-on */}
+                      <Route path={experience.routes.sso}>
+                        {/* Single sign-on first screen landing page */}
+                        <Route index element={<SingleSignOnLanding />} />
+                        <Route path="email" element={<SingleSignOnEmail />} />
+                        <Route path="connectors" element={<SingleSignOnConnectors />} />
+                      </Route>
+
+                      {/* Consent */}
+                      <Route path="consent" element={<Consent />} />
+
+                      {/* Device flow */}
+                      <Route path={experience.routes.device} element={<Device />} />
+                      <Route
+                        path={`${experience.routes.device}/success`}
+                        element={<DeviceSuccess />}
+                      />
+
+                      {/*
+                       * Identifier sign-in (first screen)
+                       * The first screen which only display specific identifier-based sign-in methods to users
+                       */}
+                      <Route
+                        path={experience.routes.identifierSignIn}
+                        element={<IdentifierSignIn />}
+                      />
+
+                      {/*
+                       * Identifier register (first screen)
+                       * The first screen which only display specific identifier-based registration methods to users
+                       */}
+                      <Route
+                        path={experience.routes.identifierRegister}
+                        element={<IdentifierRegister />}
+                      />
+
+                      {/*
+                       * Reset password (first screen)
+                       * The first screen which allow users to directly access the password reset page
+                       */}
+                      <Route
+                        path={experience.routes.resetPassword}
+                        element={<ResetPasswordLanding />}
+                      />
+                      <Route path="*" element={<ErrorPage />} />
+                    </Route>
+                  </Route>
+                </Routes>
+              </AppBoundary>
+            </CaptchaContextProvider>
+          </UserInteractionContextProvider>
+        </SettingsProvider>
+      </PageContextProvider>
+    </BrowserRouter>
+  );
+};
+
+export default App;

@@ -1,0 +1,49 @@
+const sign_in_experiences = {
+  empty_content_url_of_terms_of_use:
+    '이용 약관 URL이 비어 있어요. 이용 약관이 활성화되어 있다면, 이용 약관 URL를 설정해 주세요.',
+  empty_social_connectors: '연동된 소셜이 없어요. 소셜 로그인을 사용한다면, 연동해 주세요.',
+  enabled_connector_not_found: '활성된 {{type}} 연동을 찾을 수 없어요.',
+  not_one_and_only_one_primary_sign_in_method:
+    '반드시 하나의 메인 로그인 방법이 설정되어야 해요. 입력된 값을 확인해주세요.',
+  username_requires_password: '회원가입 식별자에 대한 비밀번호 설정을 사용하도록 설정해야 해요.',
+  passwordless_requires_verify:
+    '이메일/휴대전화번호 가입 식별자에 대해 확인을 사용하도록 설정해야 해요.',
+  miss_sign_up_identifier_in_sign_in: '로그인 방법에는 회원가입 ID가 포함되어야 해요.',
+  password_sign_in_must_be_enabled:
+    '회원가입 시 비밀번호를 설정해야 할 경우 비밀번호 로그인을 사용하도록 설정해야 해요.',
+  code_sign_in_must_be_enabled:
+    '비밀번호를 설정할 필요가 없을 때는 인증 코드 로그인을 활성화해야 해요.',
+  unsupported_default_language: '{{language}} 언어는 아직 지원하지 않아요.',
+  at_least_one_authentication_factor: '최소한 하나의 인증 방법을 선택해야 해요.',
+  backup_code_cannot_be_enabled_alone: '백업 코드는 단독으로 활성화할 수 없습니다.',
+  duplicated_mfa_factors: '중복된 MFA 인증 요소입니다.',
+  email_verification_code_cannot_be_used_for_mfa:
+    '이메일 확인 코드가 로그인에 대해 이메일 확인이 활성화된 경우 MFA에 사용할 수 없습니다.',
+  phone_verification_code_cannot_be_used_for_mfa:
+    'SMS 확인 코드가 로그인에 대해 SMS 확인이 활성화된 경우 MFA에 사용할 수 없습니다.',
+  email_verification_code_cannot_be_used_for_sign_in:
+    '이메일 확인 코드는 MFA 에 활성화된 경우 로그인에 사용할 수 없습니다.',
+  phone_verification_code_cannot_be_used_for_sign_in:
+    'SMS 확인 코드는 MFA 에 활성화된 경우 로그인에 사용할 수 없습니다.',
+  adaptive_mfa_requires_mfa: 'Adaptive MFA를 활성화하려면 먼저 MFA를 활성화해야 합니다.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA 를 활성화하려면 건너뛸 수 없는 MFA 프롬프트 정책이 필요합니다. PromptOnlyAtSignInMandatory 또는 PromptAtSignInAndSignUpMandatory 를 사용하세요.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Adaptive MFA 가 비활성화된 경우, MFA 프롬프트 정책은 건너뛸 수 있어야 합니다. PromptOnlyAtSignInMandatory 또는 PromptAtSignInAndSignUpMandatory 를 사용하지 마세요.',
+  duplicated_sign_up_identifiers: '중복된 회원가입 식별자가 감지되었습니다.',
+  missing_sign_up_identifiers: '기본 회원가입 식별자는 비워 둘 수 없습니다.',
+  invalid_custom_email_blocklist_format:
+    '잘못된 사용자 정의 이메일 차단 목록 항목: {{items, list(type:conjunction)}}. 각 항목은 유효한 이메일 주소 또는 이메일 도메인이어야 합니다. 예: foo@example.com 또는 @example.com.',
+  forgot_password_method_requires_connector:
+    '비밀번호 찾기 방법은 해당 {{method}} 커넥터를 구성해야 합니다.',
+  password_expiration_requires_forgot_password:
+    '비밀번호 만료를 사용하려면 유효한 커넥터가 연결된 비밀번호 찾기 방법이 하나 이상 필요합니다.',
+  password_expiration_not_enabled:
+    '비밀번호 만료 정책이 활성화되지 않았습니다. 비밀번호를 만료시키기 전에 로그인 경험 설정에서 이를 활성화하세요.',
+  password_expiration_invalid_period_days:
+    '비밀번호 만료가 활성화된 경우 유효 기간(일)은 양의 정수여야 합니다.',
+  username_policy_case_conflicts_exist:
+    '대소문자만 다른 사용자 이름이 존재하는 경우 대소문자 구분 안 함으로 전환할 수 없습니다. 충돌을 해결한 후 다시 시도하세요.',
+};
+
+export default Object.freeze(sign_in_experiences);

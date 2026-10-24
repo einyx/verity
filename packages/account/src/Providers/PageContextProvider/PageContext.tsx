@@ -1,0 +1,50 @@
+import type { SignInExperienceResponse, Platform } from '@experience/shared/types';
+import { Theme, type AccountCenter, type UserProfileResponse } from '@logto/schemas';
+import { createContext } from 'react';
+import { isMobile } from 'react-device-detect';
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+const noopAsync = async (): Promise<void> => undefined;
+
+export type PageContextType = {
+  theme: Theme;
+  toast: string;
+  platform: Platform;
+  setTheme: React.Dispatch<React.SetStateAction<Theme>>;
+  setToast: React.Dispatch<React.SetStateAction<string>>;
+  experienceSettings?: SignInExperienceResponse;
+  setExperienceSettings: React.Dispatch<React.SetStateAction<SignInExperienceResponse | undefined>>;
+  accountCenterSettings?: AccountCenter;
+  setAccountCenterSettings: React.Dispatch<React.SetStateAction<AccountCenter | undefined>>;
+  userInfo?: Partial<UserProfileResponse>;
+  refreshUserInfo: () => Promise<void>;
+  userInfoError?: Error;
+  isLoadingUserInfo: boolean;
+  verificationId?: string;
+  setVerificationId: (verificationId?: string, expiresAt?: string) => void;
+  isLoadingExperience: boolean;
+  experienceError?: Error;
+};
+
+const PageContext = createContext<PageContextType>({
+  theme: Theme.Light,
+  toast: '',
+  platform: isMobile ? 'mobile' : 'web',
+  setTheme: noop,
+  setToast: noop,
+  experienceSettings: undefined,
+  setExperienceSettings: noop,
+  accountCenterSettings: undefined,
+  setAccountCenterSettings: noop,
+  userInfo: undefined,
+  refreshUserInfo: noopAsync,
+  userInfoError: undefined,
+  isLoadingUserInfo: false,
+  verificationId: undefined,
+  setVerificationId: noop,
+  isLoadingExperience: false,
+  experienceError: undefined,
+});
+
+export default PageContext;

@@ -1,0 +1,295 @@
+import type {
+  CreatePersonalAccessToken,
+  DesensitizedEnterpriseSsoTokenSetSecret,
+  DesensitizedSocialTokenSetSecret,
+  GetUserApplicationGrantsResponse,
+  GetUserSessionResponse,
+  GetUserSessionsResponse,
+  Identities,
+  Identity,
+  MfaFactor,
+  MfaVerification,
+  OrganizationWithRoles,
+  PersonalAccessToken,
+  Role,
+  SessionGrantRevokeTarget,
+  TrustedDeviceResponse,
+  User,
+  UserProfileResponse,
+  UserSsoIdentity,
+  UsersPasswordEncryptionMethod,
+} from '@logto/schemas';
+import { conditional, type Nullable } from '@silverhand/essentials';
+
+import { authedAdminApi } from './api.js';
+
+export type CreateUserPayload = Partial<{
+  id: string;
+  primaryEmail: string;
+  primaryPhone: string;
+  username: string;
+  password: string;
+  name: string;
+  passwordDigest: string;
+  passwordAlgorithm: UsersPasswordEncryptionMethod;
+}>;
+
+export const createUser = async (payload: CreateUserPayload = {}) =>
+  authedAdminApi
+    .post('users', {
+      json: payload,
+    })
+    .json<User>();
+
+export type GetUserOptions = {
+  withSsoIdentities?: boolean;
+  includePasswordHash?: boolean;
+};
+
+export type UserProfileResponseWithPasswordHash = UserProfileResponse & {
+  passwordDigest?: Nullable<string>;
+  passwordAlgorithm?: Nullable<UsersPasswordEncryptionMethod>;
+};
+
+export async function getUser(userId: string, options: GetUserOptions = {}) {
+  const { withSsoIdentities, includePasswordHash } = options;
+  const searchParams = new URLSearchParams({
+    ...(withSsoIdentities && { includeSsoIdentities: 'true' }),
+    ...(includePasswordHash && { includePasswordHash: 'true' }),
+  });
+
+  return authedAdminApi
+    .get(`users/${userId}`, searchParams.size > 0 ? { searchParams } : undefined)
+    .json<UserProfileResponseWithPasswordHash>();
+}
+
+export const getUsers = async (searchParams?: URLSearchParams) =>
+  authedAdminApi
+    .get('users', searchParams ? { searchParams } : undefined)
+    .json<UserProfileResponseWithPasswordHash[]>();
+
+export const updateUser = async (userId: string, payload: Partial<User>) =>
+  authedAdminApi
+    .patch(`users/${userId}`, {
+      json: payload,
+    })
+    .json<User>();
+
+export const updateUserProfile = async (userId: string, profile: Partial<User['profile']>) =>
+  authedAdminApi
+    .patch(`users/${userId}/profile`, {
+      json: { profile },
+    })
+    .json<User['profile']>();
+
+export const suspendUser = async (userId: string, isSuspended: boolean) =>
+  authedAdminApi.patch(`users/${userId}/is-suspended`, { json: { isSuspended } }).json<User>();
+
+export const deleteUser = async (userId: string) => authedAdminApi.delete(`users/${userId}`);
+
+export const updateUserPassword = async (userId: string, password: string) =>
+  authedAdminApi
+    .patch(`users/${userId}/password`, {
+      json: {
+        password,
+      },
+    })
+    .json<UserProfileResponse>();
+
+export const expireUserPassword = async (userId: string) =>
+  authedAdminApi
+    .patch(`users/${userId}/password/expiration`, {
+      json: {
+        isExpired: true,
+      },
+    })
+    .json<UserProfileResponse>();
+
+export const deleteUserIdentity = async (userId: string, connectorTarget: string) =>
+  authedAdminApi.delete(`users/${userId}/identities/${connectorTarget}`);
+
+export const assignRolesToUser = async (userId: string, roleIds: string[]) =>
+  authedAdminApi
+    .post(`users/${userId}/roles`, { json: { roleIds } })
+    .json<{ roleIds: string[]; addedRoleIds: string[] }>();
+
+export const putRolesToUser = async (userId: string, roleIds: string[]) =>
+  authedAdminApi.put(`users/${userId}/roles`, { json: { roleIds } }).json<{ roleIds: string[] }>();
+
+/**
+ * Get roles assigned to the user.
+ *
+ * @param userId Concerned user id
+ * @param keyword Search among all roles (on `id`, `name` and `description` fields) assigned to the user with `keyword`
+ * @returns All roles which contains the keyword assigned to the user
+ */
+export const getUserRoles = async (userId: string, keyword?: string) => {
+  const searchParams = new URLSearchParams(keyword && [['search', `%${keyword}%`]]);
+  return authedAdminApi.get(`users/${userId}/roles`, { searchParams }).json<Role[]>();
+};
+
+export const deleteRoleFromUser = async (userId: string, roleId: string) =>
+  authedAdminApi.delete(`users/${userId}/roles/${roleId}`);
+
+export const postUserIdentity = async (
+  userId: string,
+  connectorId: string,
+  connectorData: Record<string, unknown>
+) =>
+  authedAdminApi
+    .post(`users/${userId}/identities`, {
+      json: {
+        connectorId,
+        connectorData,
+      },
+    })
+    .json<Identities>();
+
+export const putUserIdentity = async (userId: string, target: string, identity: Identity) =>
+  authedAdminApi.put(`users/${userId}/identities/${target}`, { json: identity }).json<Identities>();
+
+export const verifyUserPassword = async (userId: string, password: string) =>
+  authedAdminApi.post(`users/${userId}/password/verify`, { json: { password } });
+
+export const getUserMfaVerifications = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/mfa-verifications`).json<MfaVerification[]>();
+
+export const deleteUserMfaVerification = async (userId: string, mfaVerificationId: string) =>
+  authedAdminApi.delete(`users/${userId}/mfa-verifications/${mfaVerificationId}`);
+
+export const createUserMfaVerification = async (userId: string, type: MfaFactor) =>
+  authedAdminApi
+    .post(`users/${userId}/mfa-verifications`, { json: { type } })
+    .json<
+      | { type: MfaFactor.TOTP; secret: string; secretQrCode: string }
+      | { type: MfaFactor.BackupCode; codes: string[] }
+    >();
+
+type UserLogtoConfig = {
+  mfa: { enabled?: boolean; skipped?: boolean; skipMfaOnSignIn?: boolean };
+  passkeySignIn: { skipped?: boolean };
+};
+
+export const getUserLogtoConfig = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/logto-configs`).json<UserLogtoConfig>();
+
+export const updateUserLogtoConfig = async (userId: string, logtoConfig: UserLogtoConfig) =>
+  authedAdminApi
+    .patch(`users/${userId}/logto-configs`, { json: logtoConfig })
+    .json<UserLogtoConfig>();
+
+export const getUserOrganizations = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/organizations`).json<OrganizationWithRoles[]>();
+
+export const createPersonalAccessToken = async ({
+  userId,
+  ...body
+}: Omit<CreatePersonalAccessToken, 'value'>) =>
+  authedAdminApi
+    .post(`users/${userId}/personal-access-tokens`, { json: body })
+    .json<PersonalAccessToken>();
+
+export const getUserPersonalAccessTokens = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/personal-access-tokens`).json<PersonalAccessToken[]>();
+
+export const deletePersonalAccessToken = async (userId: string, name: string) =>
+  authedAdminApi.post(`users/${userId}/personal-access-tokens/delete`, { json: { name } });
+
+export const updatePersonalAccessToken = async (
+  userId: string,
+  name: string,
+  body: Record<string, unknown>
+) =>
+  authedAdminApi
+    .patch(`users/${userId}/personal-access-tokens`, {
+      json: { ...body, currentName: name },
+    })
+    .json<PersonalAccessToken>();
+
+export const deletePersonalAccessTokenLegacy = async (userId: string, name: string) =>
+  authedAdminApi.delete(`users/${userId}/personal-access-tokens/${name}`);
+
+export const updatePersonalAccessTokenLegacy = async (
+  userId: string,
+  name: string,
+  body: Record<string, unknown>
+) =>
+  authedAdminApi
+    .patch(`users/${userId}/personal-access-tokens/${name}`, {
+      json: body,
+    })
+    .json<PersonalAccessToken>();
+
+export const getUserTrustedDevices = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/trusted-devices`).json<TrustedDeviceResponse[]>();
+
+export const deleteUserTrustedDevice = async (userId: string, trustedDeviceId: string) =>
+  authedAdminApi.delete(`users/${userId}/trusted-devices/${trustedDeviceId}`);
+
+export const getUserIdentity = async (
+  userId: string,
+  target: string,
+  includeTokenSecret = true
+) => {
+  const searchParams = new URLSearchParams({
+    ...conditional(includeTokenSecret && { includeTokenSecret: 'true' }),
+  });
+
+  return authedAdminApi
+    .get(`users/${userId}/identities/${target}`, {
+      searchParams,
+    })
+    .json<{
+      identity: Identity;
+      tokenSecret?: DesensitizedSocialTokenSetSecret;
+    }>();
+};
+
+export const getUserSsoIdentity = async (
+  userId: string,
+  connectorId: string,
+  includeTokenSecret = true
+) => {
+  const searchParams = new URLSearchParams({
+    ...conditional(includeTokenSecret && { includeTokenSecret: 'true' }),
+  });
+
+  return authedAdminApi
+    .get(`users/${userId}/sso-identities/${connectorId}`, { searchParams })
+    .json<{
+      ssoIdentity: UserSsoIdentity;
+      tokenSecret?: DesensitizedEnterpriseSsoTokenSetSecret;
+    }>();
+};
+
+export const getUserSessions = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/sessions`).json<GetUserSessionsResponse>();
+
+export const getUserApplicationGrants = async (
+  userId: string,
+  appType?: 'firstParty' | 'thirdParty'
+) =>
+  authedAdminApi
+    .get(`users/${userId}/grants`, {
+      searchParams: new URLSearchParams({
+        ...conditional(appType && { appType }),
+      }),
+    })
+    .json<GetUserApplicationGrantsResponse>();
+
+export const getUserSession = async (userId: string, sessionId: string) =>
+  authedAdminApi.get(`users/${userId}/sessions/${sessionId}`).json<GetUserSessionResponse>();
+
+export const revokeUserGrant = async (userId: string, grantId: string) =>
+  authedAdminApi.delete(`users/${userId}/grants/${grantId}`);
+
+export const revokeUserSession = async (
+  userId: string,
+  sessionId: string,
+  revokeGrantsTarget?: SessionGrantRevokeTarget
+) =>
+  authedAdminApi.delete(`users/${userId}/sessions/${sessionId}`, {
+    searchParams: new URLSearchParams({
+      ...conditional(revokeGrantsTarget && { revokeGrantsTarget }),
+    }),
+  });

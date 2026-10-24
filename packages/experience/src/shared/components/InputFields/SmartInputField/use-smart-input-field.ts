@@ -1,0 +1,118 @@
+import { SignInIdentifier } from '@logto/schemas';
+import { useState, useCallback, useMemo } from 'react';
+import type { ChangeEventHandler } from 'react';
+
+import { getDefaultCountryCallingCode } from '@/utils/country-code';
+import { parseIdentifierValue, parsePhoneIdentifier } from '@/utils/form';
+
+import { detectIdentifierType } from './utils';
+
+export type IdentifierInputType =
+  SignInIdentifier.Email | SignInIdentifier.Phone | SignInIdentifier.Username;
+
+export type IdentifierInputValue = {
+  /**
+   * The type of the identifier input.
+   * `undefined` value is for the case when the user has inputted an identifier but the type is not yet determined in the `SmartInputField`.
+   */
+  type?: IdentifierInputType;
+  /**
+   * The value of the identifier input.
+   */
+  value: string;
+};
+
+type Props = {
+  defaultValue?: string;
+  enabledTypes: IdentifierInputType[];
+};
+
+const useSmartInputField = ({ defaultValue, enabledTypes }: Props) => {
+  const enabledTypeSet = useMemo(() => new Set(enabledTypes), [enabledTypes]);
+
+  // Parse default type from enabled types and default value
+  const defaultType = useMemo(
+    () => detectIdentifierType({ value: defaultValue ?? '', enabledTypeSet }),
+    [defaultValue, enabledTypeSet]
+  );
+
+  // Parse default value if provided
+  const { countryCode: defaultCountryCode, inputValue: defaultInputValue } = useMemo(
+    () => parseIdentifierValue(defaultType, defaultValue),
+    [defaultType, defaultValue]
+  );
+
+  const [currentType, setCurrentType] = useState(defaultType);
+
+  const [countryCode, setCountryCode] = useState<string>(
+    defaultCountryCode ?? getDefaultCountryCallingCode()
+  );
+
+  const [inputValue, setInputValue] = useState<string>(defaultInputValue ?? '');
+
+  const detectInputType = useCallback(
+    (value: string) => detectIdentifierType({ value, enabledTypeSet, currentType }),
+    [currentType, enabledTypeSet]
+  );
+
+  const onCountryCodeChange = useCallback(
+    (value: string) => {
+      if (currentType === SignInIdentifier.Phone) {
+        const code = value.replace(/\D/g, '');
+        setCountryCode(code);
+      }
+    },
+    [currentType]
+  );
+
+  const onInputValueChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
+    ({ target: { value } }) => {
+      const trimValue = value.trim();
+
+      if (enabledTypeSet.has(SignInIdentifier.Phone) && trimValue.startsWith('+')) {
+        const phoneIdentifier = parsePhoneIdentifier(trimValue);
+
+        if (phoneIdentifier) {
+          setCountryCode(phoneIdentifier.countryCode);
+          setInputValue(phoneIdentifier.inputValue);
+          setCurrentType(SignInIdentifier.Phone);
+          return;
+        }
+
+        /**
+         * When phone is the only enabled type, the value is always treated as a phone number and
+         * the country calling code is prepended to it. A leading `+` that does not yet parse into a
+         * full number (e.g. `+7`) would otherwise produce a malformed value like `86+7`, so strip
+         * it here since the `+` is already represented by the country code selector.
+         */
+        if (enabledTypeSet.size === 1) {
+          setInputValue(trimValue.slice(1));
+          setCurrentType(SignInIdentifier.Phone);
+          return;
+        }
+      }
+
+      setInputValue(trimValue);
+
+      const type = detectInputType(trimValue);
+      setCurrentType(type);
+    },
+    [detectInputType, enabledTypeSet]
+  );
+
+  const onInputValueClear = useCallback(() => {
+    setInputValue('');
+    setCurrentType(enabledTypeSet.size === 1 ? defaultType : undefined);
+  }, [defaultType, enabledTypeSet.size]);
+
+  return {
+    countryCode,
+    onCountryCodeChange,
+    inputValue,
+    onInputValueChange,
+    onInputValueClear,
+    identifierType: currentType,
+  };
+};
+
+export default useSmartInputField;

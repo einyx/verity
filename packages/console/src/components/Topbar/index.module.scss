@@ -1,0 +1,97 @@
+@use '@/scss/underscore' as _;
+
+.topbar {
+  flex: 0 0 64px;
+  width: 100%;
+  padding: 0 _.unit(6);
+  gap: _.unit(4);
+  display: flex;
+  align-items: center;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    // Half the mark's height (28px), as in the MeshX logo lockup. The wordmark's empty left margin is
+    // removed on .logo, so this is the visible gap.
+    gap: 14px;
+    cursor: pointer;
+  }
+
+  .wordmark {
+    width: 120px;
+    height: auto;
+  }
+
+  .logo {
+    width: auto;
+    height: 28px;
+    color: var(--color-text);
+    // The wordmark artwork starts about 110 of its 459 viewBox units in; pull it back so the
+    // gap to the mark is the 2px gap above, not the SVG's empty left margin (~27px at 28px tall).
+    margin-inline-start: -27px;
+  }
+
+  .line {
+    @include _.vertical-bar;
+    height: 20px;
+  }
+
+  .text {
+    font: var(--font-title-2);
+    color: var(--color-text);
+    // Same 28px row as the logo, so the title and the mark share one vertical centre.
+    display: flex;
+    align-items: center;
+    height: 28px;
+  }
+}
+
+// Plain text buttons: Ask AI is the only pill in the topbar, so the others stay quiet.
+.button {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 _.unit(2);
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  transition: background-color 0.15s ease;
+  user-select: none;
+  outline: none;
+  cursor: pointer;
+  text-decoration: none;
+  gap: _.unit(1);
+  font: var(--font-label-2);
+  color: var(--color-text);
+
+  &:hover {
+    background-color: var(--color-hover-variant);
+  }
+
+  // Use this selector to override the hover effect in `<TextLink />`
+  &:not(:disabled):hover {
+    text-decoration: none;
+  }
+
+  &.active {
+    background-color: var(--color-focused-variant);
+  }
+
+  .icon {
+    width: 20px;
+    height: 20px;
+
+    > path {
+      fill: var(--color-neutral-variant-50);
+    }
+  }
+}
+
+.newVersionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-error);
+  margin-inline-start: _.unit(0.5);
+}

@@ -1,0 +1,64 @@
+import { LogtoJwtTokenKeyType } from '@logto/schemas';
+import { useTranslation } from 'react-i18next';
+
+import DeleteIcon from '@/assets/icons/delete.svg?react';
+import EditIcon from '@/assets/icons/edit.svg?react';
+import Button from '@/ds-components/Button';
+import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
+import useTenantPathname from '@/hooks/use-tenant-pathname';
+import { getPagePath } from '@/pages/CustomizeJwt/utils/path';
+import { Action } from '@/pages/CustomizeJwt/utils/type';
+
+import styles from './index.module.scss';
+
+type Props = {
+  readonly tokenType: LogtoJwtTokenKeyType;
+  readonly onDelete: (token: LogtoJwtTokenKeyType) => void;
+};
+
+function CustomizerItem({ tokenType, onDelete }: Props) {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const editLink = getPagePath(tokenType, Action.Edit);
+  const { navigate } = useTenantPathname();
+  const {
+    access: { isReadOnly },
+  } = useCurrentTenantScopes();
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.title}>
+        {t('jwt_claims.custom_jwt_item', {
+          for:
+            tokenType === LogtoJwtTokenKeyType.AccessToken
+              ? t('jwt_claims.user_jwt.for')
+              : t('jwt_claims.machine_to_machine_jwt.for'),
+        })}
+      </div>
+      <div className={styles.actions}>
+        <Button
+          icon={<EditIcon className={styles.icon} />}
+          type="text"
+          size="small"
+          title="general.edit"
+          onClick={() => {
+            navigate(editLink);
+          }}
+        />
+        {!isReadOnly && (
+          <Button
+            className={styles.danger}
+            icon={<DeleteIcon className={styles.icon} />}
+            type="text"
+            size="small"
+            title="general.delete"
+            onClick={() => {
+              onDelete(tokenType);
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default CustomizerItem;

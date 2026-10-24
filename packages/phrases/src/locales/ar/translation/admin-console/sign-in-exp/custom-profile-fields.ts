@@ -1,0 +1,104 @@
+const custom_profile_fields = {
+  table: {
+    add_button: 'إضافة حقل الملف الشخصي',
+    title: {
+      field_label: 'تسمية الحقل',
+      type: 'النوع',
+      user_data_key: 'مفتاح بيانات المستخدم',
+    },
+    placeholder: {
+      title: 'جمع ملف المستخدم الشخصي',
+      description: 'تخصيص الحقول لجمع المزيد من معلومات ملف المستخدم الشخصي أثناء التسجيل.',
+    },
+  },
+  type: {
+    Text: 'نص',
+    Number: 'رقم',
+    Date: 'تاريخ',
+    Checkbox: 'خانة اختيار (منطقية)',
+    Select: 'قائمة منسدلة (اختيار فردي)',
+    Url: 'رابط URL',
+    Regex: 'تعبير منتظم',
+    Address: 'عنوان (تركيب)',
+    Fullname: 'الاسم الكامل (تركيب)',
+  },
+  modal: {
+    title: 'إضافة حقل الملف الشخصي',
+    subtitle: 'تخصيص الحقول لجمع المزيد من معلومات ملف المستخدم الشخصي أثناء التسجيل.',
+    built_in_properties: 'بيانات المستخدم الأساسية',
+    custom_properties: 'بيانات المستخدم المخصصة',
+    custom_data_field_name: 'مفتاح بيانات المستخدم',
+    custom_data_field_input_placeholder: 'أدخل مفتاح بيانات المستخدم، مثل `myFavoriteFieldName`',
+    custom_field: {
+      title: 'بيانات مخصصة',
+      description: 'أي خصائص إضافية للمستخدم يمكنك تعريفها لتلبية المتطلبات الفريدة لتطبيقك.',
+    },
+    type_required: 'الرجاء تحديد نوع الخاصية',
+    create_button: 'إنشاء حقل الملف الشخصي',
+    avatar: {
+      description:
+        'يتيح للمستخدمين تحميل صورة الملف الشخصي أثناء التسجيل. يتم تخزين URL الصورة المرفوعة كـ avatar للمستخدم.',
+      storage_not_configured:
+        'يتطلب تحميل avatar وجود مزوّد تخزين مُعد. قم بإعداد storage قبل إضافة هذا الحقل.',
+    },
+  },
+  details: {
+    page_title: 'تفاصيل حقل الملف الشخصي',
+    back_to_sie: 'العودة إلى تجربة تسجيل الدخول',
+    enter_field_name: 'أدخل اسم حقل الملف الشخصي',
+    delete_description:
+      'لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد أنك تريد حذف حقل الملف الشخصي هذا؟',
+    field_deleted: 'تم حذف حقل الملف الشخصي {{name}} بنجاح.',
+    key: 'مفتاح بيانات المستخدم',
+    field_name: 'اسم الحقل',
+    field_type: 'نوع الحقل',
+    settings: 'الإعدادات',
+    settings_description: 'تخصيص الحقول لجمع المزيد من معلومات ملف المستخدم الشخصي أثناء التسجيل.',
+    address_format: 'تنسيق العنوان',
+    single_line_address: 'عنوان بسطر واحد',
+    multi_line_address: 'عنوان متعدد الأسطر (مثل: الشارع، المدينة، الولاية، الرمز البريدي، البلد)',
+    components: 'مكونات',
+    components_tip: 'حدد المكونات لتكوين الحقل المعقد.',
+    label: 'تسمية الحقل',
+    label_placeholder: 'تسمية',
+    label_tip: 'هل تحتاج إلى الترجمة؟ أضف اللغات في <a>تجربة تسجيل الدخول > المحتوى</a>',
+    label_tooltip:
+      'تسمية عائمة تُعرّف الغرض من الحقل. تظهر داخل حقل الإدخال وتتحرك للأعلى عند التركيز أو وجود قيمة.',
+    placeholder: 'عنصر نائب الحقل',
+    placeholder_placeholder: 'العنصر النائب',
+    placeholder_tooltip:
+      'مثال مضمَّن أو تلميح للتنسيق يظهر داخل الإدخال. يظهر عادةً بعد تحريك التسمية ويجب أن يكون قصيراً (مثال: MM/DD/YYYY).',
+    description: 'وصف الحقل',
+    description_placeholder: 'الوصف',
+    description_tooltip:
+      'نص مساعد يُعرض أسفل حقل النص. استخدمه للتعليمات الأطول أو ملاحظات سهولة الوصول.',
+    options: 'خيارات',
+    options_tip:
+      'أدخل كل خيار في سطر جديد. التنسيق: value:label (مثال: red:Red). يمكنك أيضاً إدخال value فقط؛ إذا لم يتم تقديم label فسيُعرَض value نفسه كالتسمية.',
+    options_placeholder: 'value1:label1\nvalue2:label2\nvalue3:label3',
+    regex: 'تعبير منتظم',
+    regex_tip: 'حدد تعبيرًا منتظمًا للتحقق من صحة الإدخال.',
+    regex_placeholder: '^[a-zA-Z0-9]+$',
+    date_format: 'تنسيق التاريخ',
+    date_format_us: 'MM/dd/yyyy (مثال: الولايات المتحدة)',
+    date_format_uk: 'dd/MM/yyyy (مثال: المملكة المتحدة وأوروبا)',
+    date_format_iso: 'yyyy-MM-dd (المعيار الدولي)',
+    custom_date_format: 'تنسيق تاريخ مخصص',
+    custom_date_format_placeholder: 'أدخل تنسيق التاريخ المخصص. مثل "MM-dd-yyyy"',
+    custom_date_format_tip: 'راجع <a>وثائق date-fns</a> لرموز التنسيق الصالحة.',
+    input_length: 'طول الإدخال',
+    value_range: 'نطاق القيمة',
+    min: 'الحد الأدنى',
+    max: 'الحد الأقصى',
+    default_value: 'القيمة الافتراضية',
+    checkbox_checked: 'محدد (True)',
+    checkbox_unchecked: 'غير محدد (False)',
+    required: 'مطلوب',
+    required_description:
+      'عند التمكين، يجب على المستخدمين ملء هذا الحقل. عند التعطيل، يكون هذا الحقل اختياريًا.',
+    avatar_upload_description:
+      'يقوم المستخدمون النهائيون بتحميل avatar أثناء التسجيل. القيمة المخزنة هي URL الصورة المرفوعة.',
+  },
+};
+
+export default Object.freeze(custom_profile_fields);

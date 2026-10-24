@@ -1,0 +1,304 @@
+/* eslint-disable max-lines -- Locale catalog mirrors the complete Account Center phrase schema. */
+const account_center = {
+  home: {
+    title: 'Sayfa bulunamadı',
+    description: 'Bu sayfa kullanılamıyor.',
+  },
+  page: {
+    title: 'Hesap',
+    security_title: 'Güvenlik',
+    security_description:
+      'Hesabınızın güvenliğini sağlamak için hesap ayarlarınızı burada değiştirebilirsiniz.',
+    profile_title: 'Kişisel bilgiler',
+    profile_description: 'Kişisel bilgilerinizi burada değiştirin.',
+    sidebar_personal_info: 'Kişisel bilgiler',
+    sidebar_security: 'Güvenlik',
+    sidebar_sessions: 'Oturumlar',
+    support: 'Destek',
+    user_menu: 'Kullanıcı menüsü',
+    sign_out: 'Oturumu kapat',
+  },
+  verification: {
+    title: 'Güvenlik doğrulaması',
+    description:
+      'Hesap güvenliğinizi korumak için siz olduğunuzu doğrulayın. Kimliğinizi doğrulamak için lütfen yöntemi seçin.',
+    error_send_failed: 'Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar dene.',
+    error_invalid_code: 'Doğrulama kodu geçersiz veya süresi dolmuş.',
+    error_verify_failed: 'Doğrulama başarısız. Lütfen kodu tekrar gir.',
+    verification_required: 'Doğrulama süresi doldu. Lütfen kimliğini yeniden doğrula.',
+    try_another_method: 'Başka bir doğrulama yöntemi deneyin',
+    no_available_methods_title: 'Kullanılabilir doğrulama yöntemi yok',
+    no_available_methods_description:
+      'Ayarlanmış herhangi bir doğrulama yönteminiz yok. Lütfen önce hesabınıza bir parola, e-posta adresi veya telefon numarası ekleyin.',
+  },
+  password_verification: {
+    title: 'Parolayı doğrula',
+    description: 'Hesabını korumak için kimliğini doğrula. Parolanı gir.',
+    error_failed: 'Yanlış parola. Lütfen girişinizi kontrol edin.',
+  },
+  verification_method: {
+    password: {
+      name: 'Parola',
+      description: 'Parolanızı doğrulayın',
+    },
+    email: {
+      name: 'E-posta doğrulama kodu',
+      description: 'Doğrulama kodunu e-postana gönder',
+    },
+    phone: {
+      name: 'Telefon doğrulama kodu',
+      description: 'Doğrulama kodunu telefon numarana gönder',
+    },
+  },
+  email: {
+    title: 'E-postayı bağla',
+    description: 'Giriş yapmak veya hesap kurtarmaya yardımcı olmak için e-postanı bağla.',
+    verification_title: 'E-posta doğrulama kodunu gir',
+    verification_description: 'Doğrulama kodu e-postana {{email_address}} gönderildi.',
+    success: 'Birincil e-posta başarıyla bağlandı.',
+    verification_required: 'Doğrulama süresi doldu. Lütfen kimliğini yeniden doğrula.',
+  },
+  phone: {
+    title: 'Telefon numarasını bağla',
+    description: 'Giriş yapmak veya hesap kurtarmaya yardımcı olmak için telefon numaranı bağla.',
+    verification_title: 'SMS doğrulama kodunu gir',
+    verification_description: 'Doğrulama kodu telefonuna {{phone_number}} gönderildi.',
+    success: 'Birincil telefon başarıyla bağlandı.',
+    verification_required: 'Doğrulama süresi doldu. Lütfen kimliğini yeniden doğrula.',
+  },
+  username: {
+    title: 'Kullanıcı adını ayarla',
+    description: 'Kullanıcı adı yalnızca harf, rakam ve alt çizgi içerebilir.',
+    policy_description: '{{requirements}}',
+    success: 'Kullanıcı adı başarıyla güncellendi.',
+  },
+  security: {
+    add: 'Ekle',
+    change: 'Değiştir',
+    remove: 'Kaldır',
+    not_set: 'Ayarlanmamış',
+    social_sign_in: 'Sosyal giriş',
+    social_not_linked: 'Bağlanmadı',
+    email_phone: 'E-posta / Telefon',
+    email: 'E-posta',
+    phone: 'Telefon',
+    password: 'Parola',
+    configured: 'Yapılandırıldı',
+    not_configured: 'Yapılandırılmadı',
+    two_step_verification: 'İki adımlı doğrulama',
+    authenticator_app: 'Kimlik doğrulama uygulaması',
+    passkeys: 'Passkeyler',
+    backup_codes: 'Yedek kodlar',
+    email_verification_code: 'E-posta doğrulama kodu',
+    phone_verification_code: 'Telefon doğrulama kodu',
+    passkeys_count_one: '{{count}} passkey',
+    passkeys_count_other: '{{count}} passkey',
+    backup_codes_count_one: '{{count}} kod kaldı',
+    backup_codes_count_other: '{{count}} kod kaldı',
+    view: 'Görüntüle',
+    manage: 'Yönet',
+    turn_on_2_step_verification_description:
+      'Ekstra bir güvenlik katmanı ekleyin. Oturum açarken ikinci bir doğrulama adımı istenecektir.',
+    turn_off_2_step_verification: '2 adımlı doğrulamayı kapat',
+    turn_off_2_step_verification_description:
+      '2 adımlı doğrulamayı devre dışı bırakmak, oturum açarken hesabınızdaki ek koruma katmanını kaldıracaktır. Devam etmek istediğinizden emin misiniz?',
+    disable_2_step_verification: 'Devre dışı bırak',
+    no_verification_method_warning:
+      'İkinci bir doğrulama yöntemi eklemediniz. Oturum açarken 2 adımlı doğrulamayı etkinleştirmek için en az bir tane ekleyin.',
+    passkey_sign_in_prompt: 'Passkey kurulumu için sor',
+    passkey_sign_in_prompt_description:
+      'Açık olduğunda, daha hızlı ve daha güvenli oturum açma için bir passkey kurmanız istenir.',
+    account_removal: 'Hesap silme',
+    delete_your_account: 'Hesabını sil',
+    delete_account: 'Hesabı sil',
+    remove_username_confirmation_title: 'Kullanıcı adını kaldır',
+    remove_username_confirmation_description:
+      'Kaldırıldığında, bu kullanıcı adıyla artık oturum açamayacaksınız. Devam etmek istediğinizden emin misiniz?',
+    remove_email_confirmation_title: 'E-posta adresini kaldır',
+    remove_email_confirmation_description:
+      'Kaldırıldığında, bu e-posta adresiyle artık oturum açamayacaksınız. Devam etmek istediğinizden emin misiniz?',
+    remove_phone_confirmation_title: 'Telefon numarasını kaldır',
+    remove_phone_confirmation_description:
+      'Kaldırıldığında, bu telefon numarasıyla artık oturum açamayacaksınız. Devam etmek istediğinizden emin misiniz?',
+    email_removed: 'E-posta adresi başarıyla kaldırıldı.',
+    phone_removed: 'Telefon numarası başarıyla kaldırıldı.',
+    username_removed: 'Kullanıcı adı başarıyla kaldırıldı.',
+    trusted_devices: {
+      title: 'MFA güvenilir cihazları',
+      current_device: 'Geçerli cihaz',
+      expires_on: '{{date}} tarihinde sona erer',
+      unknown_location: 'Bilinmeyen konum',
+      remove: 'Kaldır',
+      removed: 'Güvenilir cihaz başarıyla kaldırıldı.',
+      loading: 'Yükleniyor...',
+      empty: 'Güvenilir cihaz yok.',
+      load_failed: 'Güvenilir cihazlar yüklenemedi. Lütfen tekrar deneyin.',
+      retry: 'Tekrar dene',
+      remove_confirmation_title: 'Güvenilir cihaz kaldırılsın mı?',
+      remove_confirmation_description:
+        'Bu cihazda bir sonraki oturum açışınızda MFA işlemini yeniden tamamlamanız gerekecek. Geçerli oturumunuz etkin kalacak.',
+    },
+  },
+  social: {
+    linked: '{{connector}} başarıyla bağlandı.',
+    not_enabled:
+      'Bu sosyal oturum açma yöntemi etkin değil. Yardım için lütfen yöneticinizle iletişime geçin.',
+    removed: '{{connector}} başarıyla kaldırıldı.',
+    remove_confirmation_title: 'Sosyal hesabı kaldır',
+    remove_confirmation_description:
+      '{{connector}} kaldırılırsa, yeniden ekleyene kadar bu hesapla oturum açamayabilirsiniz.',
+  },
+  password: {
+    title: 'Şifreyi ayarla',
+    description: 'Hesabını korumak için yeni bir şifre oluştur.',
+    success: 'Şifre başarıyla güncellendi.',
+  },
+  code_verification: {
+    send: 'Doğrulama kodu gönder',
+    resend: 'Hâlâ gelmedi mi? <a>Doğrulama kodunu yeniden gönder</a>',
+    resend_countdown: 'Hâlâ gelmedi mi? {{seconds}} sn sonra tekrar gönder.',
+  },
+  email_verification: {
+    title: 'E-postanı doğrula',
+    prepare_description:
+      'Hesap güvenliğini korumak için kimliğini doğrula. Doğrulama kodunu e-postana gönder.',
+    email_label: 'E-posta adresi',
+    send: 'Doğrulama kodu gönder',
+    description: 'Doğrulama kodu {{email}} adresine gönderildi. Devam etmek için kodu gir.',
+    resend: 'Hâlâ gelmedi mi? <a>Doğrulama kodunu yeniden gönder</a>',
+    not_received: 'Hâlâ gelmedi mi?',
+    resend_action: 'Doğrulama kodunu yeniden gönder',
+    resend_countdown: 'Hâlâ gelmedi mi? {{seconds}} sn sonra tekrar gönder.',
+    error_send_failed: 'Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar dene.',
+    error_verify_failed: 'Doğrulama başarısız. Lütfen kodu tekrar gir.',
+    error_invalid_code: 'Doğrulama kodu geçersiz veya süresi dolmuş.',
+  },
+  phone_verification: {
+    title: 'Telefonunu doğrula',
+    prepare_description:
+      'Hesap güvenliğinizi korumak için siz olduğunuzu doğrulayın. Doğrulama kodunu telefonuna gönder.',
+    phone_label: 'Telefon numarası',
+    send: 'Doğrulama kodu gönder',
+    description: 'Doğrulama kodu telefonuna {{phone}} gönderildi. Devam etmek için kodu gir.',
+    resend: 'Hâlâ gelmedi mi? <a>Doğrulama kodunu yeniden gönder</a>',
+    resend_countdown: 'Hâlâ gelmedi mi? {{seconds}} sn sonra tekrar gönder.',
+    error_send_failed: 'Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar dene.',
+    error_verify_failed: 'Doğrulama başarısız. Lütfen kodu tekrar gir.',
+    error_invalid_code: 'Doğrulama kodu geçersiz veya süresi dolmuş.',
+  },
+  mfa: {
+    totp_already_added:
+      'Zaten bir authenticator uygulaması eklediniz. Lütfen önce mevcut olanı kaldırın.',
+    totp_not_enabled:
+      'Authenticator uygulaması OTP etkin değil. Yardım için lütfen yöneticinizle iletişime geçin.',
+    backup_code_already_added:
+      'Halihazırda aktif yedek kodlarınız var. Yeni kodlar oluşturmadan önce lütfen bunları kullanın veya kaldırın.',
+    backup_code_not_enabled:
+      'Yedek kod etkin değil. Yardım için lütfen yöneticinizle iletişime geçin.',
+    backup_code_requires_other_mfa:
+      'Yedek kodlar, önce başka bir MFA yönteminin ayarlanmasını gerektirir.',
+    passkey_not_enabled: 'Passkey etkin değil. Yardım için lütfen yöneticinizle iletişime geçin.',
+    passkey_already_registered:
+      'Bu passkey zaten hesabınıza kayıtlı. Lütfen farklı bir kimlik doğrulayıcı kullanın.',
+  },
+  update_success: {
+    default: {
+      title: 'Güncellendi!',
+      description: 'Bilgileriniz güncellendi.',
+    },
+    email: {
+      title: 'E-posta güncellendi!',
+      description: 'E-posta adresiniz başarıyla güncellendi.',
+    },
+    phone: {
+      title: 'Telefon numarası güncellendi!',
+      description: 'Telefon numaranız başarıyla güncellendi.',
+    },
+    username: {
+      title: 'Kullanıcı adı değiştirildi!',
+      description: 'Kullanıcı adınız başarıyla güncellendi.',
+    },
+    password: {
+      title: 'Şifre değiştirildi!',
+      description: 'Şifreniz başarıyla güncellendi.',
+    },
+    totp: {
+      title: 'Authenticator uygulaması eklendi!',
+      description: 'Authenticator uygulamanız hesabınıza başarıyla bağlandı.',
+    },
+    totp_replaced: {
+      title: 'Authenticator uygulaması değiştirildi!',
+      description: 'Authenticator uygulamanız başarıyla değiştirildi.',
+    },
+    backup_code: {
+      title: 'Yedek kodlar oluşturuldu!',
+      description: 'Yedek kodlarınız kaydedildi. Onları güvenli bir yerde saklayın.',
+    },
+    passkey: {
+      title: 'Passkey eklendi!',
+      description: 'Passkey başarıyla hesabınıza bağlandı.',
+    },
+    social: {
+      title: 'Sosyal hesap bağlandı!',
+      description: 'Sosyal hesabınız başarıyla bağlandı.',
+    },
+  },
+  backup_code: {
+    title: 'Yedek kodlar',
+    description:
+      '2 adımlı doğrulamada başka yollarla sorun yaşarsanız hesabınıza erişmek için bu yedek kodlardan birini kullanabilirsiniz. Her kod yalnızca bir kez kullanılabilir.',
+    copy_hint: 'Kopyalayıp güvenli bir yerde sakladığınızdan emin olun.',
+    generate_new_title: 'Yeni yedek kodlar oluştur',
+    generate_new: 'Yeni yedek kodlar oluştur',
+  },
+  passkey: {
+    title: "Passkey'ler",
+    added: 'Eklendi: {{date}}',
+    last_used: 'Son kullanım: {{date}}',
+    never_used: 'Hiç',
+    unnamed: 'İsimsiz passkey',
+    renamed: 'Passkey başarıyla yeniden adlandırıldı.',
+    deleted: 'Passkey başarıyla kaldırıldı.',
+    add_another_title: 'Başka bir passkey ekle',
+    add_another_description:
+      "Cihaz biyometriği, güvenlik anahtarları (örn. YubiKey) veya diğer mevcut yöntemleri kullanarak passkey'inizi kaydedin.",
+    add_passkey: 'Bir passkey ekle',
+    delete_confirmation_title: "Passkey'inizi kaldırın",
+    delete_confirmation_description:
+      "Bu passkey'i kaldırırsanız, onunla doğrulama yapamayacaksınız.",
+    rename_passkey: "Passkey'i yeniden adlandır",
+    rename_description: 'Bu passkey için yeni bir ad girin.',
+    name_this_passkey: "Bu cihaz passkey'ini adlandır",
+    name_passkey_description:
+      'Bu cihazı 2 adımlı kimlik doğrulama için başarıyla doğruladınız. Birden fazla anahtarınız varsa tanımak için adı özelleştirin.',
+    name_input_label: 'Ad',
+  },
+  sessions: {
+    page_title: 'Oturumlar',
+    page_description:
+      'Aktif oturumlarınızı ve yetkilendirilmiş üçüncü taraf uygulamalarını yönetin.',
+    title: 'Oturumlar',
+    current_session: 'Mevcut oturum',
+    signed_in_at: '{{date}} tarihinde giriş yapıldı',
+    revoke_session: 'Çıkış yap',
+    revoke_session_title: 'Oturumu kapat',
+    revoke_session_description:
+      'Bu, oturumu kapatacak ve ilgili tüm erişimi iptal edecektir. Devam etmek istediğinizden emin misiniz?',
+    no_other_sessions: 'Başka aktif oturum yok.',
+    loading: 'Yükleniyor...',
+    third_party_apps_title: 'Üçüncü taraf uygulamalar',
+    no_third_party_apps: 'Yetkilendirilmiş üçüncü taraf uygulama yok.',
+    third_party_apps_load_failed: 'Üçüncü taraf uygulamalar yüklenemedi. Lütfen tekrar deneyin.',
+    granted_at: '{{date}} tarihinde yetkilendirildi',
+    dynamic_app: 'Dinamik uygulama',
+    client_id: 'Müşteri kimliği: {{clientId}}',
+    revoke_grant: 'Kaldır',
+    revoke_grant_title: 'Üçüncü taraf uygulama erişimini kaldır',
+    revoke_grant_description:
+      'Bu, bu uygulamaya verilen erişimi iptal edecektir. Daha önce verilmiş erişim belirteçleri süreleri dolana kadar geçerli kalabilir. Devam etmek istediğinizden emin misiniz?',
+    revoke_grant_failed: 'Bazı izinler iptal edilemedi. Lütfen tekrar deneyin.',
+  },
+};
+
+export default Object.freeze(account_center);
+/* eslint-enable max-lines */

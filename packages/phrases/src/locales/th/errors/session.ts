@@ -1,0 +1,84 @@
+const session = {
+  not_found: 'ไม่พบเซสชัน กรุณาย้อนกลับและเข้าสู่ระบบอีกครั้ง',
+  invalid_credentials: 'บัญชีหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบข้อมูลของคุณ',
+  invalid_sign_in_method: 'ไม่รองรับวิธีการเข้าสู่ระบบนี้',
+  invalid_connector_id: 'ไม่พบคอนเน็กเตอร์ที่มี id {{connectorId}}',
+  insufficient_info: 'ข้อมูลเข้าสู่ระบบไม่เพียงพอ',
+  connector_id_mismatch: 'connectorId ไม่ตรงกับบันทึกเซสชัน',
+  connector_session_not_found: 'ไม่พบเซสชันของคอนเน็กเตอร์ กรุณาย้อนกลับและเข้าสู่ระบบอีกครั้ง',
+  verification_session_not_found:
+    'การยืนยันตัวตนล้มเหลว กรุณาเริ่มกระบวนการยืนยันใหม่และลองอีกครั้ง',
+  verification_expired: 'การเชื่อมต่อหมดเวลา กรุณายืนยันอีกครั้งเพื่อความปลอดภัยของบัญชีคุณ',
+  verification_blocked_too_many_attempts:
+    'มีความพยายามมากเกินไปในช่วงเวลาสั้น ๆ กรุณาลองใหม่ {{relativeTime}}',
+  unauthorized: 'กรุณาเข้าสู่ระบบก่อน',
+  unsupported_prompt_name: 'ไม่รองรับ prompt name',
+  forgot_password_not_enabled: 'ไม่ได้เปิดใช้งานลืมรหัสผ่าน',
+  verification_failed: 'การยืนยันตัวตนล้มเหลว กรุณาเริ่มกระบวนการยืนยันใหม่และลองอีกครั้ง',
+  connector_validation_session_not_found: 'ไม่พบเซสชันคอนเน็กเตอร์สำหรับยืนยัน token',
+  csrf_token_mismatch: 'CSRF token ไม่ตรงกัน',
+  identifier_not_found: 'ไม่พบตัวระบุผู้ใช้ กรุณาย้อนกลับและเข้าสู่ระบบอีกครั้ง',
+  interaction_not_found: 'ไม่พบเซสชันการโต้ตอบ กรุณาย้อนกลับและเริ่มเซสชันใหม่อีกครั้ง',
+  invalid_interaction_type: 'ไม่รองรับการดำเนินการนี้สำหรับการโต้ตอบปัจจุบัน กรุณาเริ่มเซสชันใหม่',
+  not_supported_for_forgot_password: 'ไม่รองรับการดำเนินการนี้สำหรับลืมรหัสผ่าน',
+  identity_conflict: 'พบความขัดแย้งของตัวตน กรุณาเริ่มเซสชันใหม่เพื่อดำเนินการด้วยตัวตนที่แตกต่าง',
+  identifier_not_verified:
+    'ตัวระบุที่ให้คือ {{identifier}} ยังไม่ได้รับการยืนยัน กรุณาสร้างบันทึกการยืนยันสำหรับตัวระบุนี้และดำเนินกระบวนการยืนยันให้เสร็จสมบูรณ์',
+  mfa: {
+    require_mfa_verification: 'จำเป็นต้องยืนยัน MFA เพื่อเข้าสู่ระบบ',
+    mfa_sign_in_only: 'MFA สามารถใช้ได้เฉพาะการเข้าสู่ระบบเท่านั้น',
+    pending_info_not_found: 'ไม่พบข้อมูล MFA ที่รอดำเนินการ กรุณาตั้งค่า MFA ก่อน',
+    invalid_totp_code: 'รหัส TOTP ไม่ถูกต้อง',
+    webauthn_verification_failed: 'การยืนยัน WebAuthn ล้มเหลว',
+    webauthn_verification_not_found: 'ไม่พบการยืนยัน WebAuthn',
+    bind_mfa_existed: 'ตั้งค่า MFA นี้ไว้แล้ว',
+    backup_code_can_not_be_alone: 'โค้ดสำรองไม่สามารถเป็น MFA เพียงอย่างเดียวได้',
+    backup_code_required: 'จำเป็นต้องมีโค้ดสำรอง',
+    invalid_backup_code: 'โค้ดสำรองไม่ถูกต้อง',
+    mfa_policy_not_user_controlled: 'นโยบาย MFA ไม่สามารถควบคุมโดยผู้ใช้ได้',
+    mfa_factor_not_enabled: 'MFA นี้ยังไม่ได้เปิดใช้งาน',
+    suggest_additional_mfa:
+      'เพื่อการป้องกันที่แข็งแกร่งยิ่งขึ้น พิจารณาเพิ่มวิธี MFA อื่น คุณสามารถข้ามขั้นตอนนี้และดำเนินการต่อได้',
+  },
+  trusted_device_suggest_opt_in: 'เลือกว่าจะเชื่อถืออุปกรณ์นี้หรือไม่',
+  step_up: {
+    invalid_interaction_event:
+      'การยืนยันตัวตนแบบยกระดับใช้ได้เฉพาะกับการโต้ตอบการลงชื่อเข้าใช้เท่านั้น',
+    subject_not_found:
+      'ไม่พบเซสชันที่ยืนยันตัวตนแล้วสำหรับการยืนยันตัวตนแบบยกระดับ กรุณาลงชื่อเข้าใช้อีกครั้ง',
+    forbidden_route: 'เส้นทางนี้ไม่ได้รับอนุญาตในระหว่างการยืนยันตัวตนแบบยกระดับ',
+    forbidden_identifier:
+      'ไม่อนุญาตให้ระบุ identifier ในระหว่างการยืนยันตัวตนแบบยกระดับ โปรดลองอีกครั้งโดยไม่ส่งฟิลด์นี้',
+    acr_not_satisfied:
+      'การยืนยันที่เสร็จสิ้นไม่เป็นไปตามบริบทการยืนยันตัวตนที่ร้องขอ กรุณายืนยันด้วยวิธีอื่น',
+    require_verification:
+      'จำเป็นต้องยืนยันด้วยวิธีที่มีอยู่ของคุณวิธีใดวิธีหนึ่งเพื่อให้ถึงบริบทการยืนยันตัวตนที่ร้องขอ',
+  },
+  passkey_sign_in: {
+    pending_info_not_found:
+      'ไม่พบข้อมูลการลงชื่อเข้าใช้ด้วย passkey ที่กำลังรอดำเนินการ โปรดเริ่มขั้นตอนการลงชื่อเข้าใช้ใหม่อีกครั้ง',
+    conflict_rp_id: 'Relying Party ID ไม่ตรงกัน โปรดใช้ไคลเอนต์ที่ถูกต้องเพื่อลงชื่อเข้าใช้',
+    sso_users_not_allowed:
+      'ตัวเลือกการลงชื่อเข้าใช้ด้วย Passkey ไม่สามารถใช้งานได้สำหรับผู้ใช้ SSO',
+  },
+  password_expiration: {
+    reset_not_allowed:
+      'การรีเซ็ตรหัสผ่านจะอนุญาตได้ก็ต่อเมื่อรหัสผ่านหมดอายุแล้วในเซสชันลงชื่อเข้าใช้ปัจจุบัน',
+  },
+  sso_enabled: 'มีการเปิดใช้งาน Single Sign On สำหรับอีเมลนี้ กรุณาเข้าสู่ระบบด้วย SSO',
+  captcha_required: 'จำเป็นต้องยืนยันแคปช่า',
+  captcha_failed: 'การยืนยันแคปช่าล้มเหลว',
+  email_blocklist: {
+    disposable_email_validation_failed: 'การตรวจสอบอีเมลล้มเหลว',
+    invalid_email: 'อีเมลไม่ถูกต้อง',
+    email_subaddressing_not_allowed: 'ไม่อนุญาตให้ใช้อีเมลแบบ subaddressing',
+    email_not_allowed: 'อีเมล "{{email}}" ถูกจำกัด กรุณาเลือกอีเมลอื่น',
+  },
+  google_one_tap: {
+    cookie_mismatch: 'คุกกี้ Google One Tap ไม่ตรงกัน',
+    invalid_id_token: 'Google ID Token ไม่ถูกต้อง',
+    unverified_email: 'อีเมลยังไม่ได้รับการยืนยัน',
+  },
+};
+
+export default Object.freeze(session);

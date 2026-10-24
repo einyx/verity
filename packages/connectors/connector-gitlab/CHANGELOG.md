@@ -1,0 +1,149 @@
+# @logto/connector-gitlab
+
+## 1.2.9
+
+### Patch Changes
+
+- Updated dependencies [16f4b2e732]
+  - @logto/shared@3.4.3
+  - @logto/connector-kit@5.1.1
+  - @logto/connector-oauth@1.7.9
+
+## 1.2.8
+
+### Patch Changes
+
+- 4963a55b4: remove the unused jose dependency
+
+  The GitLab connector declared jose as a dependency but never imported it, so installing the connector pulled in a package it did not need.
+
+- Updated dependencies [4963a55b4]
+- Updated dependencies [58cb52c705]
+  - @logto/connector-oauth@1.7.8
+  - @logto/shared@3.4.2
+
+## 1.2.7
+
+### Patch Changes
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [b7386a5113]
+- Updated dependencies [67b99bba85]
+  - @logto/connector-kit@5.1.0
+  - @logto/shared@3.4.1
+  - @logto/connector-oauth@1.7.7
+
+## 1.2.6
+
+### Patch Changes
+
+- Updated dependencies [41a56f79e3]
+  - @logto/connector-kit@5.0.1
+  - @logto/connector-oauth@1.7.6
+
+## 1.2.5
+
+### Patch Changes
+
+- Updated dependencies [3350b13ec8]
+  - @logto/shared@3.4.0
+  - @logto/connector-oauth@1.7.5
+
+## 1.2.4
+
+### Patch Changes
+
+- Updated dependencies [4e25126228]
+- Updated dependencies [4e25126228]
+  - @logto/connector-kit@5.0.0
+  - @logto/connector-oauth@1.7.4
+
+## 1.2.3
+
+### Patch Changes
+
+- Updated dependencies [317f9744d1]
+  - @logto/shared@3.3.1
+  - @logto/connector-oauth@1.7.3
+
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [462e430445]
+- Updated dependencies [7c87ebc068]
+  - @logto/connector-kit@4.7.0
+  - @logto/connector-oauth@1.7.2
+
+## 1.2.1
+
+### Patch Changes
+
+- Updated dependencies [ad4f9d6abf]
+- Updated dependencies [5da6792d40]
+  - @logto/connector-kit@4.6.0
+  - @logto/connector-oauth@1.7.1
+
+## 1.2.0
+
+### Minor Changes
+
+- 34964af46: feat: support custom scope in the `getAuthorizationUri` method
+
+  This change allows the `getAuthorizationUri` method in the social connectors to accept an extra `scope` parameter, enabling more flexible authorization requests.
+
+  If the scope is provided, it will be used in the authorization request; otherwise, the default scope configured in the connector settings will be used.
+
+### Patch Changes
+
+- Updated dependencies [0343699d7]
+- Updated dependencies [34964af46]
+  - @logto/connector-oauth@1.7.0
+  - @logto/connector-kit@4.4.0
+
+## 1.1.0
+
+### Minor Changes
+
+- 2961d355d: bump node version to ^22.14.0
+
+### Patch Changes
+
+- Updated dependencies [2961d355d]
+  - @logto/connector-oauth@1.6.0
+  - @logto/connector-kit@4.3.0
+  - @logto/shared@3.2.0
+
+## 1.0.1
+
+### Patch Changes
+
+- e11e57de8: bump dependencies for security update
+- Updated dependencies [e11e57de8]
+  - @logto/connector-oauth@1.5.1
+  - @logto/connector-kit@4.1.1
+  - @logto/shared@3.1.4
+
+## 1.0.0
+
+### Major Changes
+
+- 31296f0bc: add GitLab social connector leveraging OAuth2
+
+  ### Major Changes
+
+  - Initial release of the GitLab connector.
+
+    This release introduces the Logto connector for GitLab, enabling social sign-in using GitLab accounts. It supports OAuth 2.0 authentication flow, fetching user information, and handling errors gracefully.
+
+  ### Features
+
+  - **OAuth 2.0 Authentication**: Support for OAuth 2.0 authentication flow with GitLab.
+  - **User Information Retrieval**: Fetches user details such as full name, email, profile URL, and avatar.
+  - **Error Handling**: Graceful handling of OAuth errors, including token exchange failures and user-denied permissions.
+  - **Configurable Scope**: Allows customization of OAuth scopes to access different levels of user information.
+
+### Patch Changes
+
+- Updated dependencies [27d2c91d2]
+  - @logto/connector-oauth@1.5.0

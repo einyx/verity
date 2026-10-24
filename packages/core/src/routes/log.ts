@@ -1,0 +1,106 @@
+import {
+  Logs,
+  action,
+  interaction,
+  token,
+  LogKeyUnknown,
+  jwtCustomizer,
+  saml,
+  trustedDevice,
+  type AuditLogPrefix,
+} from '@logto/schemas';
+import { yes } from '@silverhand/essentials';
+import { object, string } from 'zod';
+
+import koaGuard from '#src/middleware/koa-guard.js';
+import koaPagination from '#src/middleware/koa-pagination.js';
+import { parseTimestampParam, validateTimeWindow } from '#src/utils/time-window.js';
+
+import type { ManagementApiRouter, RouterInitArgs } from './types.js';
+
+export default function logRoutes<T extends ManagementApiRouter>(
+  ...[router, { queries }]: RouterInitArgs<T>
+) {
+  const { findLogById, countLogs, findLogs } = queries.logs;
+
+  router.get(
+    '/logs',
+    koaPagination(),
+    koaGuard({
+      query: object({
+        userId: string().optional(),
+        applicationId: string().optional(),
+        logKey: string().optional(),
+        enableCap: string().optional(),
+        start_time: string().optional(),
+        end_time: string().optional(),
+      }),
+      response: Logs.guard.array(),
+      status: [200, 400],
+    }),
+    async (ctx, next) => {
+      const { limit, offset } = ctx.pagination;
+      const {
+        query: { userId, applicationId, logKey, enableCap, start_time, end_time },
+      } = ctx.guard;
+
+      const startTime = parseTimestampParam(start_time, 'start_time');
+      const endTime = parseTimestampParam(end_time, 'end_time');
+      validateTimeWindow(startTime, endTime);
+
+      const includeKeyPrefix: AuditLogPrefix[] = [
+        token.Type.ExchangeTokenBy,
+        token.Type.RevokeToken,
+        token.Type.RevokeGrants,
+        interaction.prefix,
+        jwtCustomizer.prefix,
+        saml.prefix,
+        action.prefix,
+        trustedDevice.prefix,
+        LogKeyUnknown,
+      ];
+
+      // TODO: @Gao refactor like user search
+      const [{ count, isCapped }, logs] = await Promise.all([
+        countLogs(
+          {
+            logKey,
+            payload: { applicationId, userId },
+            startTime,
+            endTime,
+            includeKeyPrefix,
+          },
+          { capped: yes(enableCap) }
+        ),
+        findLogs(limit, offset, {
+          logKey,
+          payload: { userId, applicationId },
+          startTime,
+          endTime,
+          includeKeyPrefix,
+        }),
+      ]);
+
+      // Return totalCount to pagination middleware
+      ctx.pagination.totalCount = count;
+      ctx.pagination.totalCountIsCapped = isCapped;
+      ctx.body = logs;
+
+      return next();
+    }
+  );
+
+  router.get(
+    '/logs/:id',
+    koaGuard({ params: object({ id: string().min(1) }), response: Logs.guard, status: [200, 404] }),
+    async (ctx, next) => {
+      const {
+        params: { id },
+      } = ctx.guard;
+
+      ctx.body = await findLogById(id);
+
+      return next();
+    }
+  );
+}

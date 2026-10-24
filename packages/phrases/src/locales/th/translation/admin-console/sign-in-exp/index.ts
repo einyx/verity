@@ -1,0 +1,306 @@
+import content from './content.js';
+import custom_profile_fields from './custom-profile-fields.js';
+import sign_up_and_sign_in from './sign-up-and-sign-in.js';
+
+const sign_in_exp = {
+  page_title: 'ประสบการณ์การเข้าสู่ระบบ',
+  page_title_with_account: 'การเข้าสู่ระบบและบัญชี',
+  title: 'การเข้าสู่ระบบและบัญชี',
+  description:
+    'ปรับแต่งกระบวนการยืนยันตัวตนและ UI พร้อมดูตัวอย่างประสบการณ์ใช้งานทันทีแบบเรียลไทม์',
+  tabs: {
+    branding: 'การสร้างแบรนด์',
+    sign_up_and_sign_in: 'สมัครและเข้าสู่ระบบ',
+    collect_user_profile: 'เก็บข้อมูลโปรไฟล์ผู้ใช้',
+    account_center: 'ศูนย์บัญชี',
+    content: 'เนื้อหา',
+    password_policy: 'นโยบายรหัสผ่าน',
+  },
+  welcome: {
+    title: 'ปรับแต่งประสบการณ์เข้าสู่ระบบ',
+    description:
+      'เริ่มต้นง่าย ๆ กับการตั้งค่าเข้าสู่ระบบครั้งแรก คู่มือนี้จะแนะนำคุณตลอดการตั้งค่าทั้งหมดที่จำเป็น',
+    get_started: 'เริ่มต้น',
+    apply_remind: 'โปรดทราบว่า ประสบการณ์การเข้าสู่ระบบจะถูกนำไปใช้กับทุกแอปพลิเคชันในบัญชีนี้',
+  },
+  color: {
+    title: 'สี',
+    primary_color: 'สีแบรนด์',
+    dark_primary_color: 'สีแบรนด์ (โหมดมืด)',
+    dark_mode: 'เปิดใช้งานโหมดมืด',
+    dark_mode_description:
+      'แอปของคุณจะมีธีมโหมดมืดที่สร้างอัตโนมัติตามสีแบรนด์ของคุณและอัลกอริทึม Logto คุณสามารถปรับแต่งได้ตามต้องการ',
+    dark_mode_reset_tip: 'คำนวณสีโหมดมืดใหม่ตามสีแบรนด์',
+    reset: 'คำนวณใหม่',
+  },
+  branding: {
+    title: 'พื้นที่แบรนด์',
+    ui_style: 'สไตล์',
+    with_light: '{{value}}',
+    with_dark: '{{value}} (โหมดมืด)',
+    app_logo_and_favicon: 'โลโก้แอปและ Favicon',
+    company_logo_and_favicon: 'โลโก้บริษัทและ Favicon',
+    organization_logo_and_favicon: 'โลโก้องค์กรและ Favicon',
+    hide_logto_branding: 'ซ่อนแบรนด์ Logto',
+    hide_logto_branding_description:
+      'ลบ "Powered by Logto" เพื่อให้แบรนด์ของคุณโดดเด่นด้วยประสบการณ์ลงชื่อเข้าใช้ที่สะอาดและเป็นมืออาชีพ',
+    hide_logto_branding_oss_note:
+      'ฟีเจอร์นี้พร้อมใช้งานใน <a>Logto Cloud</a> หรือ<selfHosted>แผน self-hosted</selfHosted>',
+  },
+  branding_uploads: {
+    app_logo: {
+      title: 'โลโก้แอป',
+      url: 'URL โลโก้แอป',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'โลโก้แอป: {{error}}',
+    },
+    company_logo: {
+      title: 'โลโก้บริษัท',
+      url: 'URL โลโก้บริษัท',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'โลโก้บริษัท: {{error}}',
+    },
+    organization_logo: {
+      title: 'อัปโหลดรูปภาพ',
+      url: 'URL โลโก้องค์กร',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'โลโก้องค์กร: {{error}}',
+    },
+    connector_logo: {
+      title: 'อัปโหลดรูปภาพ',
+      url: 'URL โลโก้คอนเนคเตอร์',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'โลโก้คอนเนคเตอร์: {{error}}',
+    },
+    favicon: {
+      title: 'Favicon',
+      url: 'URL Favicon',
+      url_placeholder: 'https://your.cdn.domain/favicon.ico',
+      error: 'Favicon: {{error}}',
+    },
+  },
+  custom_ui: {
+    title: 'ปรับแต่ง UI',
+    cloud_tag: 'Cloud',
+    css_code_editor_title: 'CSS ที่กำหนดเอง',
+    css_code_editor_field_title: 'การเขียนทับ CSS',
+    css_code_editor_description1: 'ดูตัวอย่าง CSS ที่กำหนดเอง',
+    css_code_editor_description2: '<a>{{link}}</a>',
+    css_code_editor_description_link_content: 'เรียนรู้เพิ่มเติม',
+    css_code_editor_content_placeholder:
+      'ป้อน CSS overrides ของคุณที่นี่เพื่อปรับแต่งสไตล์ของทุกองค์ประกอบให้ตรงตามความต้องการของคุณ แสดงความคิดสร้างสรรค์และทำให้ UI ของคุณโดดเด่น',
+    bring_your_ui_title: 'นำ UI ของคุณมาเอง',
+    bring_your_ui_upload_title: 'อัปโหลดไฟล์ UI แบบกำหนดเอง',
+    bring_your_ui_description:
+      'อัปโหลดไฟล์บีบอัด (.zip) เพื่อแทนที่ UI สำเร็จรูปของ Logto ด้วยโค้ดของคุณเอง <a>เรียนรู้เพิ่มเติม</a>',
+    bring_your_ui_oss_description: 'ปรับแต่ง UI สำหรับการลงชื่อเข้าใช้ด้วยโค้ดของคุณเอง',
+    bring_your_ui_oss_card_description:
+      'การอัปโหลด UI แบบกำหนดเองพร้อมใช้งานใน <a>Logto Cloud</a> หรือ<selfHosted>แผน self-hosted</selfHosted> โดยไม่ต้อง fork หรือปรับใช้ใหม่',
+    bring_your_ui_oss_try_cloud: 'ลองใช้ Cloud',
+    preview_with_bring_your_ui_description:
+      'ไฟล์ UI ที่คุณกำหนดเองถูกอัปโหลดเรียบร้อยแล้วและกำลังใช้งานอยู่ ดังนั้นหน้าต่างตัวอย่างแบบฝังจึงถูกปิดใช้งาน\nหากต้องการทดสอบหน้าเข้าสู่ระบบแบบกำหนดเอง ให้คลิกปุ่ม "แสดงตัวอย่างสด" เพื่อเปิดในแท็บใหม่',
+    csp_description:
+      'อนุญาต source expression เพิ่มเติมสำหรับ UI เข้าสู่ระบบแบบกำหนดเองของคุณ ค่านี้จะใช้เฉพาะเมื่อมีการให้บริการไฟล์ UI แบบกำหนดเองเท่านั้น',
+    csp_script_src: 'script-src ที่อนุญาต',
+    csp_script_src_tip:
+      'อนุญาต source expression แบบ HTTPS สำหรับสคริปต์ที่โหลดโดย UI แบบกำหนดเองของคุณ เช่น https://scripts.example.com หรือ https://*.example.com',
+    csp_connect_src: 'connect-src ที่อนุญาต',
+    csp_connect_src_tip:
+      'อนุญาต source expression แบบ HTTPS หรือ WSS สำหรับคำขอเครือข่ายที่ส่งจาก UI แบบกำหนดเองของคุณ เช่น https://api.example.com หรือ wss://events.example.com',
+    csp_source_invalid_error:
+      'ป้อน source expression ที่ถูกต้อง ใช้ URL แบบ https://; connect-src รองรับ wss:// ด้วย ไม่รองรับคีย์เวิร์ด CSP และเครื่องหมายอัฒภาค',
+    csp_source_duplicate_error: 'source expression นี้อยู่ในรายการแล้ว',
+  },
+  account_center: {
+    title: 'ศูนย์บัญชี',
+    description: 'ปรับแต่งขั้นตอนศูนย์บัญชีของคุณด้วย Logto API.',
+    enable_account_api: 'เปิดใช้งานศูนย์บัญชีและ Account API',
+    enable_account_api_description:
+      'เปิดใช้ทั้ง Account API สำหรับผู้ใช้ปลายทางและศูนย์บัญชีสำเร็จรูปของ Logto พร้อมกัน เมื่อปิดใช้งาน ฟีเจอร์ทั้งสองจะไม่พร้อมใช้งาน',
+    field_options: {
+      off: 'ปิด',
+      edit: 'แก้ไข',
+      read_only: 'อ่านอย่างเดียว',
+      enabled: 'เปิดใช้งาน',
+      disabled: 'ปิดใช้งาน',
+    },
+    sections: {
+      account_security: {
+        title: 'ความปลอดภัยของบัญชี',
+        description:
+          'จัดการการเข้าถึง Account API เพื่อให้ผู้ใช้สามารถดูหรือแก้ไขข้อมูลตัวตนและปัจจัยการยืนยันตัวตนหลังจากเข้าสู่ระบบแอปพลิเคชัน',
+        security_verification: {
+          title: 'การยืนยันความปลอดภัย',
+          description:
+            'ก่อนเปลี่ยนการตั้งค่าความปลอดภัย ผู้ใช้ต้องยืนยันตัวตนเพื่อรับรหัสบันทึกการยืนยันที่มีอายุ 10 นาที หากต้องการเปิดใช้งานวิธีการยืนยัน (อีเมล โทรศัพท์ รหัสผ่าน) ให้ตั้งค่าสิทธิ์ Account API ด้านล่างเป็น<strong>อ่านอย่างเดียว</strong> (ขั้นต่ำ) หรือ<strong>แก้ไข</strong> เพื่อให้ระบบตรวจจับได้ว่าผู้ใช้ได้กำหนดค่าไว้หรือไม่ <a>เรียนรู้เพิ่มเติม</a>',
+        },
+        groups: {
+          identifiers: {
+            title: 'ตัวระบุ',
+          },
+          authentication_factors: {
+            title: 'ปัจจัยการยืนยันตัวตน',
+          },
+          session_management: {
+            title: 'การจัดการเซสชัน',
+          },
+          developer_settings: {
+            title: 'การตั้งค่าสำหรับนักพัฒนา',
+          },
+        },
+      },
+      user_profile: {
+        title: 'โปรไฟล์ผู้ใช้',
+        description:
+          'จัดการการเข้าถึง Account API เพื่อให้ผู้ใช้สามารถดูหรือแก้ไขข้อมูลโปรไฟล์พื้นฐานหรือแบบกำหนดเองหลังจากเข้าสู่ระบบแอปพลิเคชัน.',
+        groups: {
+          profile_data: {
+            title: 'ข้อมูลโปรไฟล์',
+          },
+        },
+      },
+      secret_vault: {
+        title: 'ห้องนิรภัยลับ',
+        description:
+          'สำหรับคอนเนคเตอร์โซเชียลและองค์กร จัดเก็บโทเค็นการเข้าถึงของบุคคลที่สามอย่างปลอดภัยเพื่อเรียกใช้ API ของพวกเขา (เช่น เพิ่มกิจกรรมลงใน Google ปฏิทิน).',
+        third_party_token_storage: {
+          title: 'โทเค็นบุคคลที่สาม',
+          third_party_access_token_retrieval: 'การดึงโทเค็นการเข้าถึงบุคคลที่สาม',
+          third_party_token_tooltip:
+            'หากต้องการจัดเก็บโทเค็น คุณสามารถเปิดใช้งานตัวเลือกนี้ได้ในการตั้งค่าของคอนเนคเตอร์โซเชียลหรือองค์กรที่เกี่ยวข้อง.',
+          third_party_token_description:
+            'เมื่อเปิดใช้งาน Account API แล้ว การดึงโทเค็นของบุคคลที่สามจะเปิดใช้งานโดยอัตโนมัติ.',
+        },
+      },
+    },
+    fields: {
+      email: 'ที่อยู่อีเมล',
+      phone: 'หมายเลขโทรศัพท์',
+      social: 'ตัวตนโซเชียล',
+      password: 'รหัสผ่าน',
+      mfa: 'การยืนยันตัวตนหลายปัจจัย',
+      mfa_description: 'ให้ผู้ใช้จัดการวิธี MFA จากศูนย์บัญชี.',
+      passkey: 'Passkey',
+      username: 'ชื่อผู้ใช้',
+      name: 'ชื่อ',
+      avatar: 'อวตาร',
+      profile: 'โปรไฟล์',
+      profile_description: 'ควบคุมการเข้าถึงคุณลักษณะของโปรไฟล์ที่มีโครงสร้าง.',
+      custom_data: 'ข้อมูลแบบกำหนดเอง',
+      custom_data_description: 'ควบคุมการเข้าถึงข้อมูล JSON แบบกำหนดเองที่เก็บไว้กับผู้ใช้.',
+      sessions: 'การจัดการเซสชัน',
+      trusted_devices: 'อุปกรณ์ที่เชื่อถือได้',
+      personal_access_tokens: 'โทเค็นการเข้าถึงส่วนบุคคล',
+      personal_access_tokens_description:
+        'การเปิดใช้งานนี้ช่วยให้ผู้ใช้สร้างโทเค็นการเข้าถึงส่วนบุคคลที่มีอายุการใช้งานยาวนานซึ่งยังคงใช้งานได้แม้จะออกจากระบบหรือรีเซ็ตรหัสผ่าน และสามารถนำไปแลกเปลี่ยนเป็นโทเค็นการเข้าถึงโดยแอปพลิเคชันบุคคลที่หนึ่งที่เปิดใช้งานการแลกเปลี่ยนโทเค็น',
+    },
+    profile_fields: {
+      title: 'ฟิลด์โปรไฟล์สำหรับศูนย์บัญชีที่สร้างไว้ล่วงหน้า',
+      add_profile_fields: 'เพิ่มฟิลด์โปรไฟล์',
+      hint: {
+        not_in_list: 'ไม่มีในรายการ?',
+        set_up: 'ตั้งค่า',
+        go_to: 'ฟิลด์โปรไฟล์อื่นๆ ตอนนี้',
+      },
+      disabled_hint: {
+        name: 'ในการเพิ่มฟิลด์นี้ ให้ตั้งค่าสิทธิ์ "ชื่อ" เป็น "แก้ไข/อ่านอย่างเดียว" ในส่วนโปรไฟล์ผู้ใช้ด้านล่างก่อน',
+        avatar:
+          'ในการเพิ่มฟิลด์นี้ ให้ตั้งค่าสิทธิ์ "อวตาร" เป็น "แก้ไข/อ่านอย่างเดียว" ในส่วนโปรไฟล์ผู้ใช้ด้านล่างก่อน',
+        profile:
+          'ในการเพิ่มฟิลด์นี้ ให้ตั้งค่าสิทธิ์ "โปรไฟล์" เป็น "แก้ไข/อ่านอย่างเดียว" ในส่วนโปรไฟล์ผู้ใช้ด้านล่างก่อน',
+        custom_data:
+          'ในการเพิ่มฟิลด์นี้ ให้ตั้งค่าสิทธิ์ "ข้อมูลแบบกำหนดเอง" เป็น "แก้ไข/อ่านอย่างเดียว" ในส่วนโปรไฟล์ผู้ใช้ด้านล่างก่อน',
+      },
+    },
+    webauthn_related_origins: 'ต้นทางที่เกี่ยวข้องกับ WebAuthn',
+    webauthn_related_origins_description:
+      'เพิ่มโดเมนของแอปพลิเคชันส่วนหน้าที่ได้รับอนุญาตให้ลงทะเบียน passkey ผ่าน Account API.',
+    webauthn_related_origins_error: 'ต้นทางต้องขึ้นต้นด้วย https:// หรือ http://',
+    delete_account_url: 'ลบบัญชี',
+    delete_account_url_description:
+      'ระบุ URL ของเอ็นด์พอยต์ของคุณเองเพื่อจัดการการลบบัญชีด้วยตรรกะแบบกำหนดเอง',
+    prebuilt_ui: {
+      title: 'รวมเข้ากับ UI ที่สร้างไว้ล่วงหน้า',
+      description:
+        'รวมศูนย์บัญชีแบบสำเร็จรูป การยืนยันความปลอดภัย หรือขั้นตอนการอัปเดตโปรไฟล์เดี่ยวอย่างรวดเร็วด้วย UI ที่สร้างไว้ล่วงหน้า เพียงรวมโดเมนของคุณเข้ากับเส้นทางเพื่อสร้าง URL ศูนย์บัญชีของคุณ (เช่น https://auth.foo.com/account/email)',
+      permission_notice:
+        'หากต้องการรวมโฟลว์สำเร็จรูปเหล่านี้ ให้ตั้งค่าสิทธิ์ Account API ที่เกี่ยวข้องเป็น<strong>แก้ไข</strong>ในการตั้งค่าด้านล่าง',
+      account_center_title: 'รวมศูนย์บัญชีแบบสำเร็จรูป',
+      account_center_description:
+        'พาผู้ใช้ไปยังศูนย์บัญชีเพื่อจัดการการตั้งค่าความปลอดภัย เช่น อีเมล หมายเลขโทรศัพท์ ชื่อผู้ใช้ รหัสผ่าน MFA และบัญชีที่เชื่อมต่อ',
+      flows_title: 'รวมขั้นตอนการตั้งค่าความปลอดภัยสำเร็จรูป',
+      single_task_flows_title: 'รวมขั้นตอนงานเดี่ยวแบบสำเร็จรูป',
+      flows_description:
+        'รวมโดเมนของคุณเข้ากับเส้นทางเพื่อสร้าง URL การตั้งค่าบัญชีของคุณ (เช่น, https://auth.foo.com/account/email). เพิ่ม `redirect=` เพื่อให้ผู้ใช้กลับไปยังแอปพลิเคชันของคุณหลังจากอัปเดตสำเร็จ, `show_success=true` เพื่อแสดงหน้าสำเร็จ, `ui_locales=` เพื่อแทนที่ภาษาเริ่มต้น, หรือ `identifier=` เพื่อกรอกช่องระบุตัวตนล่วงหน้า.',
+      single_task_flows_description:
+        'พาผู้ใช้เข้าสู่ขั้นตอนเฉพาะโดยตรง (เช่น การเชื่อมโยงอีเมล) เพิ่ม `redirect=` เพื่อให้ผู้ใช้กลับไปยังแอปพลิเคชันของคุณหลังจากอัปเดตสำเร็จ, `show_success=true` เพื่อแสดงหน้าสำเร็จ, `ui_locales=` เพื่อแทนที่ภาษาเริ่มต้น, หรือ `identifier=` เพื่อกรอกช่องระบุตัวตนล่วงหน้า',
+      tooltips: {
+        email: 'อัปเดตที่อยู่อีเมลหลักของคุณ',
+        phone: 'อัปเดตหมายเลขโทรศัพท์หลักของคุณ',
+        username: 'อัปเดตชื่อผู้ใช้ของคุณ',
+        password: 'ตั้งรหัสผ่านใหม่',
+        social: 'เชื่อมโยงบัญชีโซเชียลเพื่อใช้ลงชื่อเข้าใช้',
+        social_change: 'เปลี่ยนไปใช้บัญชีโซเชียลที่เชื่อมโยงไว้อื่น',
+        social_remove: 'ลบบัญชีโซเชียลที่เชื่อมโยงแล้ว',
+        authenticator_app: 'ตั้งค่าแอปยืนยันตัวตนใหม่สำหรับการยืนยันตัวตนหลายปัจจัย',
+        authenticator_app_replace: 'แทนที่แอปยืนยันตัวตนที่มีอยู่ของคุณด้วยแอปใหม่',
+        passkey_add: 'ลงทะเบียน passkey ใหม่',
+        passkey_manage: 'จัดการ passkey ที่มีอยู่ของคุณหรือเพิ่มใหม่',
+        backup_codes_generate: 'สร้างชุดโค้ดสำรองใหม่ 10 ชุด',
+        backup_codes_manage: 'ดูโค้ดสำรองที่มีอยู่ของคุณหรือสร้างใหม่',
+        account_center:
+          'เข้าถึงศูนย์บัญชีเพื่อจัดการการตั้งค่าความปลอดภัย เช่น อีเมล หมายเลขโทรศัพท์ ชื่อผู้ใช้ รหัสผ่าน MFA และบัญชีที่เชื่อมต่อ',
+        profile: 'ศูนย์กลางสำหรับจัดการข้อมูลส่วนตัว (เช่น ชื่อ รูปประจำตัว)',
+        sessions: 'ดูและจัดการเซสชันที่ใช้งานอยู่ในทุกอุปกรณ์',
+      },
+      customize_note: 'ไม่ต้องการประสบการณ์แบบสำเร็จรูปใช่หรือไม่? คุณสามารถ',
+      customize_link: 'ปรับแต่งขั้นตอนด้วย Account API แทนได้',
+    },
+    custom_css: {
+      title: 'CSS ที่กำหนดเอง',
+      description: 'ปรับแต่งลักษณะของศูนย์บัญชีโดยใช้ CSS ที่กำหนดเอง',
+    },
+  },
+  sign_up_and_sign_in,
+  content,
+  setup_warning: {
+    no_connector_sms:
+      'ยังไม่ได้ตั้งค่า SMS connector ก่อนตั้งค่าให้เสร็จสมบูรณ์ ผู้ใช้จะไม่สามารถเข้าสู่ระบบด้วยวิธีนี้ได้ <a>{{link}}</a> ใน "Connectors"',
+    no_connector_email:
+      'ยังไม่ได้ตั้งค่า email connector ก่อนตั้งค่าให้เสร็จสมบูรณ์ ผู้ใช้จะไม่สามารถเข้าสู่ระบบด้วยวิธีนี้ได้ <a>{{link}}</a> ใน "Connectors"',
+    no_connector_social:
+      'คุณยังไม่ได้ตั้งค่าคอนเนคเตอร์โซเชียลใด ๆ เพิ่มคอนเนคเตอร์ก่อนเพื่อใช้งานวิธีเข้าสู่ระบบด้วยโซเชียล <a>{{link}}</a> ใน "Connectors"',
+    no_connector_email_account_center:
+      'ยังไม่ได้ตั้งค่าคอนเนคเตอร์อีเมล ตั้งค่าใน <a>"คอนเนคเตอร์อีเมลและ SMS"</a>',
+    no_connector_sms_account_center:
+      'ยังไม่ได้ตั้งค่าคอนเนคเตอร์ SMS ตั้งค่าใน <a>"คอนเนคเตอร์อีเมลและ SMS"</a>',
+    no_connector_social_account_center:
+      'ยังไม่ได้ตั้งค่าคอนเนคเตอร์โซเชียล ตั้งค่าใน <a>"คอนเนคเตอร์โซเชียล"</a>',
+    no_mfa_factor: 'ยังไม่ได้ตั้งค่า MFA factor กรุณาตั้งค่าใน <a>{{link}}</a>.',
+    setup_link: 'ตั้งค่า',
+  },
+  save_alert: {
+    description:
+      'คุณกำลังดำเนินการตั้งค่ากระบวนการสมัครและเข้าสู่ระบบใหม่ ผู้ใช้ทั้งหมดของคุณอาจได้รับผลกระทบจากการตั้งค่าใหม่นี้ คุณแน่ใจหรือไม่ว่าจะยืนยันการเปลี่ยนแปลงนี้?',
+    before: 'ก่อน',
+    after: 'หลัง',
+    sign_up: 'สมัคร',
+    sign_in: 'เข้าสู่ระบบ',
+    social: 'โซเชียล',
+    forgot_password_migration_notice:
+      'เราได้อัปเกรดการยืนยันรหัสผ่านที่ลืมเพื่อรองรับวิธีการแบบกำหนดเอง ก่อนหน้านี้ สิ่งนี้ถูกกำหนดโดยอัตโนมัติโดยตัวเชื่อมต่ออีเมลและ SMS ของคุณ คลิก<strong>ยืนยัน</strong>เพื่อทำการอัปเกรดให้เสร็จสิ้น',
+  },
+  preview: {
+    title: 'ดูตัวอย่างการเข้าสู่ระบบ',
+    live_preview: 'แสดงตัวอย่างสด',
+    live_preview_tip: 'บันทึกเพื่อดูตัวอย่างการเปลี่ยนแปลง',
+    native: 'เนทีฟ',
+    desktop_web: 'เว็บเดสก์ท็อป',
+    mobile_web: 'เว็บมือถือ',
+    desktop: 'เดสก์ท็อป',
+    mobile: 'มือถือ',
+  },
+  custom_profile_fields,
+};
+
+export default Object.freeze(sign_in_exp);

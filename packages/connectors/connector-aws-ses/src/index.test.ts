@@ -1,0 +1,124 @@
+import { SESv2Client } from '@aws-sdk/client-sesv2';
+import { TemplateType } from '@logto/connector-kit';
+
+import createConnector from './index.js';
+import { mockedConfig, mockGenericI18nEmailTemplate } from './mock.js';
+
+const getConfig = vi.fn().mockResolvedValue(mockedConfig);
+
+const getI18nEmailTemplate = vi.fn().mockResolvedValue(mockGenericI18nEmailTemplate);
+
+vi.spyOn(SESv2Client.prototype, 'send').mockResolvedValue({
+  MessageId: 'mocked-message-id',
+  $metadata: {
+    httpStatusCode: 200,
+  },
+} as never);
+
+describe('sendMessage()', () => {
+  afterAll(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call SendMail() with correct template and content', async () => {
+    const connector = await createConnector({ getConfig });
+    const toMail = 'to@email.com';
+    const { emailAddress } = mockedConfig;
+    await connector.sendMessage({
+      to: toMail,
+      type: TemplateType.SignIn,
+      payload: { code: '1234' },
+    });
+    const toExpected = [toMail];
+    expect(SESv2Client.prototype.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          FromEmailAddress: emailAddress,
+          Destination: { ToAddresses: toExpected },
+          Content: {
+            Simple: {
+              Subject: { Data: 'Sign-in code 1234', Charset: 'utf8' },
+              Body: {
+                Html: {
+                  Data: 'Your code is 1234, 1234 is your code',
+                },
+              },
+            },
+          },
+          FeedbackForwardingEmailAddress: undefined,
+          FeedbackForwardingEmailAddressIdentityArn: undefined,
+          FromEmailAddressIdentityArn: undefined,
+          ConfigurationSetName: undefined,
+        },
+      })
+    );
+  });
+
+  it('should call SendMail() with correct template and content (2)', async () => {
+    const connector = await createConnector({ getConfig });
+    const toMail = 'to@email.com';
+    const { emailAddress } = mockedConfig;
+    await connector.sendMessage({
+      to: toMail,
+      type: TemplateType.OrganizationInvitation,
+      payload: { code: '1234', link: 'https://logto.dev' },
+    });
+    const toExpected = [toMail];
+    expect(SESv2Client.prototype.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          FromEmailAddress: emailAddress,
+          Destination: { ToAddresses: toExpected },
+          Content: {
+            Simple: {
+              Subject: { Data: 'Organization invitation', Charset: 'utf8' },
+              Body: {
+                Html: {
+                  Data: 'Your link is https://logto.dev',
+                },
+              },
+            },
+          },
+          FeedbackForwardingEmailAddress: undefined,
+          FeedbackForwardingEmailAddressIdentityArn: undefined,
+          FromEmailAddressIdentityArn: undefined,
+          ConfigurationSetName: undefined,
+        },
+      })
+    );
+  });
+
+  it('should call SendMail() with custom template', async () => {
+    const connector = await createConnector({ getConfig, getI18nEmailTemplate });
+    const toMail = 'to@email.com';
+    const { emailAddress } = mockedConfig;
+    await connector.sendMessage({
+      to: toMail,
+      type: TemplateType.Generic,
+      payload: { code: '1234', link: 'https://logto.dev' },
+    });
+    const toExpected = [toMail];
+    expect(SESv2Client.prototype.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: {
+          FromEmailAddress: emailAddress,
+          Destination: { ToAddresses: toExpected },
+          Content: {
+            Simple: {
+              Subject: { Data: 'Generic email', Charset: 'utf8' },
+              Body: {
+                Html: {
+                  Data: 'Verification code is 1234',
+                },
+              },
+            },
+          },
+          FeedbackForwardingEmailAddress: undefined,
+          FeedbackForwardingEmailAddressIdentityArn: undefined,
+          FromEmailAddressIdentityArn: undefined,
+          ConfigurationSetName: undefined,
+        },
+      })
+    );
+  });
+});

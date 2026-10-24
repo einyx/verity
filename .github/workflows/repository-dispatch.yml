@@ -1,0 +1,36 @@
+name: Repository Dispatch
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency: ${{ github.workflow }}
+
+jobs:
+  configuration-status:
+    if: github.repository != 'logto-io/logto'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Explain upstream dispatch configuration
+        run: |
+          echo '### Downstream dispatch: not configured' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This imported workflow targets logto-io/cloud and requires upstream credentials. Configure an owned downstream target before enabling dispatch for this repository.' >> "$GITHUB_STEP_SUMMARY"
+
+  event_dispatch:
+    if: github.repository == 'logto-io/logto'
+    strategy:
+      matrix:
+        target: [logto-io/cloud]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dispatch Event
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.BOT_PAT }}
+          repository: ${{ matrix.target }}
+          event-type: ${{ github.event_name }}
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'

@@ -1,0 +1,100 @@
+const mfa = {
+  title: 'Autenticação de vários fatores',
+  description:
+    'Adicione autenticação de vários fatores para aumentar a segurança da sua experiência de login.',
+  factors: 'Fatores',
+  multi_factors: 'Vários fatores',
+  multi_factors_description:
+    'Os usuários precisam verificar um dos fatores habilitados para a verificação em duas etapas.',
+  totp: 'Aplicativo autenticador',
+  otp_description: 'Vincule o Google Authenticator, etc., para verificar senhas únicas.',
+  webauthn: 'Passkeys',
+  webauthn_description:
+    'Verifique por meio de um método suportado pelo navegador: biometria, digitalização de telefone ou chave de segurança, etc.',
+  webauthn_domain_tip:
+    'O WebAuthn vincula chaves públicas ao domínio específico. Modificar o domínio do seu serviço bloqueará usuários de autenticar via senhas existentes.',
+  backup_code: 'Códigos de backup',
+  backup_code_description:
+    'Gere 10 códigos de backup únicos após os usuários configurarem qualquer método MFA.',
+  backup_code_setup_hint:
+    'Quando os usuários não podem verificar os fatores MFA acima, use a opção de backup.',
+  backup_code_error_hint:
+    'Para usar um código de backup, você precisa de pelo menos mais um método MFA para autenticação bem-sucedida do usuário.',
+  email_verification_code: 'Código de verificação por email',
+  email_verification_code_description:
+    'Vincule o endereço de email para receber e verificar códigos de verificação.',
+  phone_verification_code: 'Código de verificação por SMS',
+  phone_verification_code_description:
+    'Vincule o número de telefone para receber e verificar códigos de verificação por SMS.',
+  policy: 'Política',
+  policy_description: 'Defina a política MFA para fluxos de login e inscrição.',
+  two_step_sign_in_policy: 'Política de verificação em duas etapas no login',
+  user_controlled: 'Os usuários podem ativar ou desativar o MFA por conta própria',
+  user_controlled_tip:
+    'Os usuários podem pular a configuração do MFA na primeira vez no login ou inscrição, ou ativar/desativar nas configurações da conta.',
+  mandatory: 'Os usuários sempre precisam usar o MFA no login',
+  mandatory_tip:
+    'Os usuários devem configurar o MFA na primeira vez no login ou inscrição e usá-lo em todos os logins futuros.',
+  require_mfa: 'Exigir MFA',
+  require_mfa_label:
+    'Ative isto para tornar a verificação em duas etapas obrigatória para acessar as suas aplicações. Se desativado, os usuários podem decidir se ativam o MFA por si mesmos.',
+  require_mfa_optional:
+    'MFA opcional: permita que os utilizadores escolham ativar o MFA para a segurança da própria conta',
+  require_mfa_adaptive:
+    'MFA adaptativo: peça o MFA apenas quando o início de sessão parecer arriscado (por exemplo, novo país / longo período de inatividade)',
+  require_mfa_mandatory:
+    'MFA obrigatório: exige que todos os utilizadores concluam o MFA sempre que iniciarem sessão',
+  set_up_prompt: 'Prompt de configuração do MFA',
+  no_prompt: 'Não pedir aos usuários para configurar o MFA',
+  prompt_at_sign_in_and_sign_up:
+    'Pedir aos usuários para configurar o MFA durante o registo (pode ser ignorado, prompt único)',
+  prompt_only_at_sign_in:
+    'Pedir aos usuários para configurar o MFA na próxima tentativa de início de sessão após o registo (pode ser ignorado, prompt único)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Peça aos utilizadores para configurar o MFA durante o registo. (não pode ser ignorado)',
+  prompt_only_at_sign_in_mandatory:
+    'Peça aos utilizadores para configurar o MFA na próxima tentativa de início de sessão após o registo. (não pode ser ignorado)',
+  set_up_organization_required_mfa_prompt:
+    'Prompt de configuração do MFA para utilizadores após a ativação do MFA pela organização',
+  prompt_at_sign_in_non_skippable:
+    'Pedir aos utilizadores para configurar MFA no próximo início de sessão (não pode ser ignorado)',
+  email_primary_method_tip:
+    'O código de verificação por email já é o seu método principal de início de sessão. Para manter a segurança, ele não pode ser reutilizado para MFA.',
+  phone_primary_method_tip:
+    'O código de verificação por SMS já é o seu método principal de início de sessão. Para manter a segurança, ele não pode ser reutilizado para MFA.',
+  no_email_connector_warning:
+    'Nenhum conector de email foi configurado ainda. Antes de completar a configuração, os utilizadores não poderão usar códigos de verificação por email para MFA. <a>{{link}}</a> em "Conectores".',
+  no_sms_connector_warning:
+    'Nenhum conector SMS foi configurado ainda. Antes de completar a configuração, os utilizadores não poderão usar códigos de verificação SMS para MFA. <a>{{link}}</a> em "Conectores".',
+  no_email_connector_error:
+    'Não é possível ativar MFA com código de verificação por email sem um conector de email. Por favor, configure primeiro um conector de email.',
+  no_sms_connector_error:
+    'Não é possível ativar MFA com código de verificação SMS sem um conector SMS. Por favor, configure primeiro um conector SMS.',
+  setup_link: 'Configurar',
+  trusted_device: {
+    title: 'Dispositivos fidedignos',
+    description:
+      'Permita que os navegadores fidedignos concluam automaticamente a verificação MFA quando o fluxo MFA atual o exigir.',
+    enable_title: 'Ativar dispositivos fidedignos',
+    enable_description: 'Permita confiar neste navegador após concluir um fator MFA elegível.',
+    duration_title: 'Duração da confiança (dias)',
+    duration_error: 'Introduza um número inteiro entre {{min}} e {{max}}.',
+    duration_note: 'As alterações de duração aplicam-se apenas a dispositivos confiados depois.',
+    organization_allow_title: 'Permitir dispositivos fidedignos',
+    organization_allow_tip:
+      'Uma organização só pode restringir a política do tenant e não pode ativá-la quando estiver desativada globalmente.',
+    organization_allow_description:
+      'Permita a verificação por dispositivo fidedigno aos membros desta organização.',
+    organization_global_disabled:
+      'Ative primeiro os dispositivos fidedignos nas definições MFA do tenant.',
+    management_description:
+      'Faça a gestão dos navegadores em que este utilizador confiou após concluir a MFA. Ao remover um, esse navegador voltará a exigir MFA no próximo início de sessão.',
+    management_hint: 'A localização mais recente é apenas informativa.',
+    management_empty: 'Este utilizador não tem dispositivos fidedignos ativos.',
+    management_deletion_confirmation:
+      'Remover {{name}}? Este navegador voltará a exigir MFA no próximo início de sessão.',
+    management_removed: 'Dispositivo fidedigno removido.',
+  },
+};
+
+export default Object.freeze(mfa);

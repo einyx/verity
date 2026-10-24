@@ -1,0 +1,204 @@
+const tenants = {
+  title: 'Definições',
+  description: 'Gerir eficientemente as configurações do inquilino e personalizar o seu domínio.',
+  oss_description:
+    'Altere as definições da sua conta e faça a gestão das suas informações pessoais aqui para garantir a segurança da sua conta.',
+  tabs: {
+    settings: 'Definições',
+    members: 'Membros',
+    domains: 'Domínios',
+    oidc_configs: 'Configurações de OIDC',
+    subscription: 'Plano e faturação',
+    billing_history: 'Histórico de faturação',
+    license: 'Licença',
+  },
+  license: {
+    purchase_title: 'PLANOS SELF-HOSTED',
+    purchase_description:
+      'Os planos Pro e Empresa self-hosted desbloqueiam funcionalidades pagas na sua própria instância, como ocultar a marca Logto, usar a sua própria interface, colaboração na consola e aplicações SAML ilimitadas. Compre um plano para obter a sua chave de licença.',
+    purchase_button: 'Ver planos self-hosted',
+    install_title: 'INSTALAR LICENÇA',
+    install_description: 'Cole a chave de licença que recebeu ao comprar um plano self-hosted.',
+    install_button: 'Instalar licença',
+    key_field: 'Chave de licença',
+    key_field_description:
+      'A chave é verificada na sua instância e nunca sai dela. Contacte a Logto para obter uma chave nova se a que tem expirou.',
+    key_placeholder: 'Cole aqui a sua chave de licença',
+    installed_toast: 'Licença instalada com sucesso.',
+    details_title: 'LICENÇA',
+    details_description: 'A licença instalada nesta instância e o que concede.',
+    plan_field: 'Plano',
+    environment_field: 'Ambiente',
+    environment_production: 'Produção',
+    environment_non_production: 'Não produção',
+    expires_at_field: 'Expira em',
+    installed_at_field: 'Instalada em',
+    last_refreshed_at_field: 'Última atualização em',
+    grace_ends_at_field: 'O período de tolerância termina em',
+    refresh_expired_description:
+      'A chave de licença expirou em {{expiresAt}}. As funcionalidades licenciadas continuam disponíveis até {{graceEndsAt}} enquanto o Logto tenta atualizá-la.',
+    refresh_refused_description:
+      'A atualização da licença foi recusada porque a licença está {{reason}}. As funcionalidades licenciadas continuam disponíveis até {{graceEndsAt}}.',
+    refusal_reason_canceled: 'cancelada',
+    refusal_reason_unpaid: 'não paga',
+    refusal_reason_expired: 'expirada',
+    refusal_reason_revoked: 'revogada',
+    refusal_reason_unknown: 'indisponível',
+    grace_expired_description:
+      'O período de tolerância da licença terminou em {{graceEndsAt}}. Esta implementação reverteu para as predefinições do OSS. Contacte a Logto para obter uma nova chave de licença e instale-a novamente.',
+    get_fresh_key_button: 'Obter uma nova chave de licença',
+    replace_button: 'Substituir licença',
+  },
+  members: {
+    card_title: 'Gira inquilinos com mais segurança com o Logto Cloud',
+    card_description:
+      'Adicione administradores ou colaboradores ao seu inquilino sem partilhar uma única conta de administrador.',
+    card_action: 'Explorar o Logto Cloud',
+    self_hosted_card_title: 'Gira inquilinos com mais segurança com os planos self-hosted',
+    self_hosted_card_description:
+      'Adicione administradores ou colaboradores ao seu inquilino sem partilhar uma única conta de administrador.',
+    self_hosted_card_action: 'Explorar os planos self-hosted',
+  },
+  settings: {
+    title: 'DEFINIÇÕES',
+    description:
+      'Defina o nome do inquilino e veja a região de hospedagem dos seus dados e o tipo de inquilino.',
+    tenant_id: 'ID do Inquilino',
+    tenant_name: 'Nome do Inquilino',
+    tenant_instance: 'Selecione a sua instância',
+    tenant_instance_description:
+      'Selecione onde o seu inquilino será hospedado. Escolha Logto Cloud para infraestrutura pública compartilhada ou uma instância privada para recursos dedicados.',
+    tenant_region: 'Região de hospedagem',
+    tenant_region_description:
+      'A localização física onde os recursos do seu inquilino (utilizadores, aplicações, etc.) estão hospedados. Isto não pode ser alterado após a criação.',
+    tenant_region_tip:
+      'Os recursos do seu inquilino são hospedados na região {{region}}. <a>Saiba mais</a>',
+    environment_tag_development: 'Dev',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Tipo de inquilino',
+    development_description:
+      'Apenas para testes e não deve ser usado em produção. Não é necessário nenhum plano de subscrição. Tem todas as funcionalidades profissionais, mas tem limitações, como um banner de início de sessão.',
+    production_description:
+      'Destinado a aplicações que estão a ser utilizadas por utilizadores finais e que podem exigir uma subscrição paga.',
+    tenant_info_saved: 'A informação do inquilino foi guardada com sucesso.',
+    tenant_mfa: 'Autenticação multifator',
+    tenant_mfa_description:
+      'Exija que os seus membros configurem a autenticação multifator para aceder a este inquilino.',
+    oss_description: 'Gira a forma como os membros acedem à Consola nesta instância.',
+    tenant_mfa_confirm_title: 'Exigir MFA para todos os membros?',
+    tenant_mfa_confirm_description:
+      'Estes membros ainda não configuraram a MFA. Continuam com sessão iniciada e terão de a configurar no próximo início de sessão:',
+    tenant_mfa_confirm_self:
+      'Também ainda não configurou a MFA. Configure-a nas definições da sua conta antes do próximo início de sessão.',
+    tenant_mfa_confirm_button: 'Exigir MFA',
+    tenant_mfa_setup_required:
+      'Este inquilino exige autenticação multifator. Configure-a agora ou ser-lhe-á pedida no próximo início de sessão.',
+    tenant_mfa_setup_action: 'Configurar MFA',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      'Disponível em planos pagos. Contacte-nos para ativar o Enterprise SSO para que todos os membros possam iniciar sessão na consola Logto Cloud usando o fornecedor de identidade da sua organização.',
+  },
+  full_env_tag: {
+    development: 'Desenvolvimento',
+    production: 'Produção',
+  },
+  view_only: {
+    tag: 'Apenas visualização',
+    notification:
+      'Tem acesso apenas de visualização a este inquilino. Peça a um administrador do inquilino se precisar de fazer alterações.',
+    hidden: 'Oculto para leitores',
+  },
+  deletion_card: {
+    title: 'ELIMINAR',
+    tenant_deletion: 'Eliminar inquilino',
+    tenant_deletion_description:
+      'A eliminação do inquilino resultará na remoção permanente de todos os dados de utilizador e configuração associados. Por favor, proceda com cuidado.',
+    tenant_deletion_button: 'Eliminar inquilino',
+  },
+  leave_tenant_card: {
+    title: 'SAIR',
+    leave_tenant: 'Sair do inquilino',
+    leave_tenant_description:
+      'Quaisquer recursos no inquilino permanecerão, mas deixará de ter acesso a este inquilino.',
+    last_admin_note:
+      'Para sair deste inquilino, certifique-se de que pelo menos mais um membro tem a função de Administrador.',
+  },
+  create_modal: {
+    title: 'Criar inquilino',
+    subtitle: 'Crie um novo inquilino que tenha recursos e utilizadores isolados.',
+    tenant_id: 'ID do Inquilino',
+    tenant_usage_purpose: 'Para que pretende utilizar este inquilino?',
+    development_description:
+      'Apenas para testes e não deve ser usado em produção. Não é necessário nenhum plano de subscrição.',
+    development_description_for_private_regions:
+      'Apenas para testes e não deve ser usado em produção.',
+    development_hint:
+      'Tem todas as funcionalidades profissionais, mas tem limitações, como um banner de início de sessão.',
+    production_description: 'Para uso por utilizadores finais e pode exigir uma subscrição paga.',
+    available_plan: 'Plano disponível:',
+    create_button: 'Criar inquilino',
+    tenant_name_placeholder: 'Meu inquilino',
+    tenant_created: 'Inquilino criado com sucesso.',
+    invitation_failed:
+      'Alguns convites falharam ao enviar. Por favor, tente novamente em Definições -> Membros mais tarde.',
+    tenant_type_description: 'Isto não pode ser alterado após a criação.',
+    tenant_id_invalid:
+      'O ID do inquilino pode conter apenas letras minúsculas, números e hífens, e não deve exceder {{max}} caracteres.',
+    tenant_id_placeholder: 'O seu ID de inquilino',
+    tenant_id_tip:
+      'Personalize o ID do inquilino. Se deixado em branco, o Logto irá gerar um ID predefinido. O ID do inquilino não pode ser alterado após a criação.',
+  },
+  dev_tenant_migration: {
+    title:
+      'Agora pode experimentar gratuitamente as nossas funcionalidades Pro ao criar um novo "inquilino de desenvolvimento"!',
+    affect_title: 'Como isto o afeta?',
+    hint_1:
+      'Estamos a substituir as antigas <strong>etiquetas de ambiente</strong> por dois novos tipos de inquilino: <strong>“Desenvolvimento”</strong> e <strong>“Produção”</strong>.',
+    hint_2:
+      'Para garantir uma transição sem problemas e funcionalidade ininterrupta, todos os inquilinos criados anteriormente serão elevados ao tipo de inquilino <strong>Produção</strong> juntamente com a sua subscrição anterior.',
+    hint_3: 'Não se preocupe, todas as outras definições permanecerão as mesmas.',
+    about_tenant_type: 'Sobre o tipo de inquilino',
+  },
+  delete_modal: {
+    title: 'Eliminar inquilino',
+    description_line1:
+      'Tem a certeza de que deseja eliminar o seu inquilino "<span>{{name}}</span>" com a etiqueta de sufixo de ambiente "<span>{{tag}}</span>"? Esta ação não pode ser desfeita e resultará na eliminação permanente de todos os seus dados e informações do inquilino.',
+    description_line2:
+      'Antes de excluir o inquilino, talvez possamos ajudá-lo. <span><a>Contacte-nos por email</a></span>',
+    description_line3:
+      'Se quiser continuar, introduza o nome do inquilino "<span>{{name}}</span>" para confirmar.',
+    delete_button: 'Eliminar permanentemente',
+    cannot_delete_title: 'Não é possível apagar este inquilino',
+    cannot_delete_description:
+      'Desculpe, não é possível apagar este inquilino neste momento. Certifique-se de estar no Plano Gratuito e ter pago todas as faturas em atraso.',
+  },
+  leave_tenant_modal: {
+    description: 'Tem a certeza de que deseja sair deste inquilino?',
+    leave_button: 'Sair',
+  },
+  tenant_landing_page: {
+    title: 'Ainda não criou um inquilino',
+    description:
+      'Para começar a configurar o seu projeto com o Logto, crie um novo inquilino. Se precisar de fazer logout ou excluir a sua conta, basta clicar no botão avatar no canto superior direito.',
+    create_tenant_button: 'Criar inquilino',
+  },
+  status: {
+    mau_exceeded: 'Limite MAU Excedido',
+    token_exceeded: 'Token excedido',
+    suspended: 'Suspenso',
+    overdue: 'Atrasado',
+  },
+  tenant_suspended_page: {
+    title: 'Inquilino suspenso. Contacte-nos para restaurar o acesso.',
+    description_1:
+      'Lamentamos informar que a sua conta de inquilino foi temporariamente suspensa devido a uso indevido, incluindo exceder os limites de MAU, pagamentos em atraso ou outras ações não autorizadas.',
+    description_2:
+      'Se precisar de mais esclarecimentos, tiver alguma preocupação ou desejar restaurar a funcionalidade completa e desbloquear os seus inquilinos, não hesite em contactar-nos imediatamente.',
+  },
+  production_tenant_notification: {
+    text: 'Está no inquilino de desenvolvimento para testes gratuitos. Crie um inquilino de produção para entrar ao vivo.',
+    action: 'Criar inquilino',
+  },
+};
+
+export default Object.freeze(tenants);

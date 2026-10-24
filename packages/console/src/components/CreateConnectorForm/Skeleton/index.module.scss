@@ -1,0 +1,31 @@
+@use '@/scss/underscore' as _;
+
+.connector {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-neutral-90);
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  @include _.shimmering-animation;
+}
+
+.name {
+  width: 50px;
+  height: 16px;
+  margin-bottom: _.unit(1);
+  @include _.shimmering-animation;
+}
+
+.description {
+  height: 14px;
+  margin-bottom: _.unit(0.5);
+  @include _.shimmering-animation;
+
+  &.shortDescription {
+    width: 50%;
+  }
+}

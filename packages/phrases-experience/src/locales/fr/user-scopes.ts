@@ -1,0 +1,18 @@
+const user_scopes = {
+  descriptions: {
+    custom_data: 'Vos données personnalisées',
+    email: 'Votre adresse e-mail',
+    phone: 'Votre numéro de téléphone',
+    profile: "Votre nom, nom d'utilisateur, avatar et autres informations de profil",
+    roles: 'Vos rôles',
+    identities: 'Vos identités sociales liées',
+    'urn:logto:scope:organizations': 'Les informations de vos organisations',
+    'urn:logto:scope:organization_roles': "Vos rôles dans l'organisation",
+    address: 'Votre adresse',
+    'urn:logto:scope:sessions': 'Vos sessions actives',
+    'urn:logto:scope:trusted_devices': 'Vos appareils de confiance',
+    'urn:logto:scope:personal_access_tokens': "Vos jetons d'accès personnels",
+  },
+};
+
+export default Object.freeze(user_scopes);

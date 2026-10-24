@@ -1,0 +1,206 @@
+const tenants = {
+  title: 'Ustawienia',
+  description: 'Skuteczne zarządzanie ustawieniami najemcy i dostosowywanie domeny.',
+  oss_description:
+    'Zmień tutaj ustawienia konta i zarządzaj swoimi danymi osobowymi, aby zapewnić bezpieczeństwo konta.',
+  tabs: {
+    settings: 'Ustawienia',
+    members: 'Członkowie',
+    domains: 'Domeny',
+    oidc_configs: 'Konfiguracje OIDC',
+    subscription: 'Plan i rozliczenia',
+    billing_history: 'Historia rozliczeń',
+    license: 'Licencja',
+  },
+  license: {
+    purchase_title: 'PLANY SELF-HOSTED',
+    purchase_description:
+      'Plany Pro i Przedsiębiorstwo self-hosted odblokowują płatne funkcje na Twojej instancji, takie jak ukrycie marki Logto, własny interfejs, współpraca w konsoli oraz nieograniczona liczba aplikacji SAML. Kup plan, aby otrzymać klucz licencyjny.',
+    purchase_button: 'Zobacz plany self-hosted',
+    install_title: 'INSTALACJA LICENCJI',
+    install_description: 'Wklej klucz licencyjny otrzymany po zakupie planu self-hosted.',
+    install_button: 'Zainstaluj licencję',
+    key_field: 'Klucz licencyjny',
+    key_field_description:
+      'Klucz jest weryfikowany na Twojej instancji i nigdy jej nie opuszcza. Jeśli Twój klucz wygasł, skontaktuj się z Logto, aby otrzymać nowy.',
+    key_placeholder: 'Wklej tutaj swój klucz licencyjny',
+    installed_toast: 'Licencja została zainstalowana.',
+    details_title: 'LICENCJA',
+    details_description: 'Licencja zainstalowana na tej instancji i zakres, jaki przyznaje.',
+    plan_field: 'Plan',
+    environment_field: 'Środowisko',
+    environment_production: 'Produkcyjne',
+    environment_non_production: 'Nieprodukcyjne',
+    expires_at_field: 'Wygasa',
+    installed_at_field: 'Zainstalowano',
+    last_refreshed_at_field: 'Ostatnio odświeżono',
+    grace_ends_at_field: 'Okres karencji kończy się',
+    refresh_expired_description:
+      'Klucz licencyjny wygasł {{expiresAt}}. Funkcje objęte licencją pozostaną dostępne do {{graceEndsAt}}, gdy Logto będzie próbować go odświeżyć.',
+    refresh_refused_description:
+      'Odświeżenie licencji odrzucono, ponieważ licencja jest {{reason}}. Funkcje objęte licencją pozostaną dostępne do {{graceEndsAt}}.',
+    refusal_reason_canceled: 'anulowana',
+    refusal_reason_unpaid: 'nieopłacona',
+    refusal_reason_expired: 'wygasła',
+    refusal_reason_revoked: 'unieważniona',
+    refusal_reason_unknown: 'niedostępna',
+    grace_expired_description:
+      'Okres karencji licencji zakończył się {{graceEndsAt}}. To wdrożenie wróciło do domyślnych ustawień OSS. Skontaktuj się z Logto, aby otrzymać nowy klucz licencyjny, i zainstaluj go ponownie.',
+    get_fresh_key_button: 'Pobierz nowy klucz licencyjny',
+    replace_button: 'Zmień licencję',
+  },
+  members: {
+    card_title: 'Zarządzaj tenantami bezpieczniej dzięki Logto Cloud',
+    card_description:
+      'Dodawaj administratorów lub współpracowników do swojego tenantu bez współdzielenia jednego konta administratora.',
+    card_action: 'Poznaj Logto Cloud',
+    self_hosted_card_title: 'Zarządzaj tenantami bezpieczniej dzięki planom self-hosted',
+    self_hosted_card_description:
+      'Dodawaj administratorów lub współpracowników do swojego tenantu bez współdzielenia jednego konta administratora.',
+    self_hosted_card_action: 'Poznaj plany self-hosted',
+  },
+  settings: {
+    title: 'USTAWIENIA',
+    description:
+      'Ustaw nazwę najemcy i wyświetl informacje o regionie hostowania danych oraz typie najemcy.',
+    tenant_id: 'ID Najemcy',
+    tenant_name: 'Nazwa Najemcy',
+    tenant_instance: 'Wybierz swoją instancję',
+    tenant_instance_description:
+      'Wybierz, gdzie będzie hostowany twój najemca. Wybierz Logto Cloud dla publicznej, współdzielonej infrastruktury, lub prywatną instancję dla dedykowanych zasobów.',
+    tenant_region: 'Region hostowania danych',
+    tenant_region_description:
+      'Fizyczna lokalizacja, w której hostowane są zasoby twojego najemcy (użytkownicy, aplikacje itp.). Tego nie można zmienić po utworzeniu.',
+    tenant_region_tip:
+      'Twoje zasoby najemcy są hostowane w {{region}}. <a>Uzyskaj więcej informacji</a>',
+    environment_tag_development: 'Dev',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Typ najemcy',
+    development_description:
+      'Wyłącznie do testów i nie powinien być używany w produkcji. Nie jest wymagana subskrypcja. Posiada wszystkie funkcje Pro, ale ma ograniczenia, takie jak baner logowania.',
+    production_description:
+      'Przeznaczony dla aplikacji używanych przez użytkowników końcowych i może wymagać płatnej subskrypcji.',
+    tenant_info_saved: 'Informacje o najemcy zostały pomyślnie zapisane.',
+    tenant_mfa: 'Uwierzytelnianie wieloskładnikowe',
+    tenant_mfa_description:
+      'Wymagaj od członków skonfigurowania uwierzytelniania wieloskładnikowego, aby uzyskać dostęp do tego najemcy.',
+    oss_description:
+      'Zarządzaj sposobem, w jaki członkowie uzyskują dostęp do Konsoli na tej instancji.',
+    tenant_mfa_confirm_title: 'Wymagać MFA od wszystkich członków?',
+    tenant_mfa_confirm_description:
+      'Ci członkowie nie skonfigurowali jeszcze MFA. Pozostaną zalogowani i zostaną poproszeni o jego skonfigurowanie przy następnym logowaniu:',
+    tenant_mfa_confirm_self:
+      'Ty również nie skonfigurowałeś MFA. Skonfiguruj je w ustawieniach konta przed następnym logowaniem.',
+    tenant_mfa_confirm_button: 'Wymagaj MFA',
+    tenant_mfa_setup_required:
+      'Ten najemca wymaga uwierzytelniania wieloskładnikowego. Skonfiguruj je teraz, w przeciwnym razie zostaniesz o to poproszony przy następnym logowaniu.',
+    tenant_mfa_setup_action: 'Skonfiguruj MFA',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      'Dostępne w płatnych planach. Skontaktuj się z nami, aby włączyć Enterprise SSO, dzięki czemu wszyscy członkowie będą mogli logować się do konsoli Logto Cloud za pomocą dostawcy tożsamości Twojej organizacji.',
+  },
+  full_env_tag: {
+    development: 'Development',
+    production: 'Production',
+  },
+  view_only: {
+    tag: 'Tylko podgląd',
+    notification:
+      'Masz dostęp tylko do odczytu do tego najemcy. Poproś administratora najemcy, jeśli musisz wprowadzić zmiany.',
+    hidden: 'Ukryte dla przeglądających',
+  },
+  deletion_card: {
+    title: 'USUWANIE',
+    tenant_deletion: 'Usuń najemcę',
+    tenant_deletion_description:
+      'Usunięcie najemcy spowoduje trwałe usunięcie wszystkich powiązanych danych użytkowników i konfiguracji. Proszę postępować ostrożnie.',
+    tenant_deletion_button: 'Usuń najemcę',
+  },
+  leave_tenant_card: {
+    title: 'OPUŚĆ',
+    leave_tenant: 'Opuść najemcę',
+    leave_tenant_description:
+      'Wszelkie zasoby w najemcy pozostaną, ale nie będziesz mieć dostępu do tego najemcy.',
+    last_admin_note:
+      'Aby opuścić tego najemcę, upewnij się, że co najmniej jeszcze jeden członek ma rolę Administrator.',
+  },
+  create_modal: {
+    title: 'Utwórz nowego najemcę',
+    subtitle: 'Utwórz nowego najemcę z izolowanymi zasobami i użytkownikami.',
+    tenant_id: 'ID Najemcy',
+    tenant_usage_purpose: 'Co chcesz zrobić z tym najemcą?',
+    development_description:
+      'Wyłącznie do testów i nie powinien być używany w produkcji. Nie jest wymagana subskrypcja.',
+    development_description_for_private_regions:
+      'Wyłącznie do testów i nie powinien być używany w produkcji.',
+    development_hint:
+      'Posiada wszystkie funkcje Pro, ale ma ograniczenia, takie jak baner logowania.',
+    production_description:
+      'Przeznaczony dla użytkowników końcowych i może wymagać płatnej subskrypcji.',
+    available_plan: 'Dostępny plan:',
+    create_button: 'Utwórz najemcę',
+    tenant_name_placeholder: 'Mój najemca',
+    tenant_created: 'Najemca utworzony pomyślnie.',
+    invitation_failed:
+      'Niektóre zaproszenia nie udało się wysłać. Spróbuj ponownie później w Ustawienia -> Członkowie.',
+    tenant_type_description: 'Tego nie można zmienić po utworzeniu.',
+    tenant_id_invalid:
+      'Identyfikator najemcy może zawierać tylko małe litery, cyfry i myślniki oraz nie może przekraczać {{max}} znaków.',
+    tenant_id_placeholder: 'Identyfikator najemcy',
+    tenant_id_tip:
+      'Dostosuj identyfikator najemcy. Jeśli pozostawisz puste, Logto wygeneruje domyślny identyfikator. Identyfikator najemcy nie może zostać zmieniony po utworzeniu.',
+  },
+  dev_tenant_migration: {
+    title:
+      'Teraz możesz przetestować nasze funkcje Pro, tworząc nowego "Najemcę w trybie deweloperskim"!',
+    affect_title: 'Jak to wpłynie na Ciebie?',
+    hint_1:
+      'Zastępujemy stare <strong>tagi środowiska</strong> dwoma nowymi typami najemców: <strong>„Development”</strong> i <strong>„Production”</strong>.',
+    hint_2:
+      'Aby zapewnić płynne przejście i nieprzerwaną funkcjonalność, wszystkie wcześniej utworzone najemcy zostaną podniesione do typu najemcy <strong>Production</strong> wraz z Twoją poprzednią subskrypcją.',
+    hint_3: 'Nie martw się, wszystkie inne ustawienia pozostaną takie same.',
+    about_tenant_type: 'O typie najemcy',
+  },
+  delete_modal: {
+    title: 'Usuń najemcę',
+    description_line1:
+      'Czy na pewno chcesz usunąć swojego najemcę "<span>{{name}}</span>" z sufiksem tagu środowiska "<span>{{tag}}</span>"? Tego działania nie można cofnąć i spowoduje ono trwałe usunięcie wszystkich Twoich danych i informacji o najemcy.',
+    description_line2:
+      'Przed usunięciem najemcy, może możemy Ci pomóc. <span><a>Skontaktuj się z nami przez e-mail</a></span>',
+    description_line3:
+      'Jeśli chcesz kontynuować, wprowadź nazwę najemcy "<span>{{name}}</span>" w celu potwierdzenia.',
+    delete_button: 'Usuń na stałe',
+    cannot_delete_title: 'Nie można usunąć tego najemcy',
+    cannot_delete_description:
+      'Przepraszam, nie możesz teraz usunąć tego najemcy. Upewnij się, że korzystasz z planu darmowego i uregulowałeś wszystkie zaległe płatności.',
+  },
+  leave_tenant_modal: {
+    description: 'Czy na pewno chcesz opuścić tego najemcę?',
+    leave_button: 'Opuść',
+  },
+  tenant_landing_page: {
+    title: 'Nie utworzyłeś jeszcze najemcy',
+    description:
+      'Aby rozpocząć konfigurowanie projektu z Logto, utwórz nowego najemcę. Jeśli musisz się wylogować lub usunąć swoje konto, wystarczy kliknąć przycisk awatara w prawym górnym rogu.',
+    create_tenant_button: 'Utwórz najemcę',
+  },
+  status: {
+    mau_exceeded: 'Przekroczono limit MAU',
+    token_exceeded: 'Przekroczono limit tokenów',
+    suspended: 'Zawieszony',
+    overdue: 'Opóźnienie w płatnościach',
+  },
+  tenant_suspended_page: {
+    title: 'Konto najemcy zawieszone. Skontaktuj się z nami, aby przywrócić dostęp.',
+    description_1:
+      'Z głębokim żalem informujemy, że twoje konto najemcy zostało tymczasowo zawieszone z powodu nieprawidłowego korzystania, w tym przekroczenia limitów MAU, opóźnionych płatności lub innych nieautoryzowanych działań.',
+    description_2:
+      'Jeśli potrzebujesz dalszych wyjaśnień, masz jakiekolwiek obawy lub chcesz przywrócić pełną funkcjonalność i odblokować swoje najemce, nie wahaj się skontaktować z nami natychmiast.',
+  },
+  production_tenant_notification: {
+    text: 'Jesteś w trybie najemcy deweloperskiego do darmowego testowania. Utwórz najemcę produkcyjnego, aby przejść do działania.',
+    action: 'Utwórz najemcę',
+  },
+};
+
+export default Object.freeze(tenants);

@@ -1,0 +1,311 @@
+import content from './content.js';
+import custom_profile_fields from './custom-profile-fields.js';
+import sign_up_and_sign_in from './sign-up-and-sign-in.js';
+
+const sign_in_exp = {
+  page_title: 'Sign-in experience',
+  page_title_with_account: 'Sign-in & account',
+  title: 'Sign-in & account',
+  description:
+    'Customize the authentication flows and UI, and preview the out-of-the-box experience in real time.',
+  tabs: {
+    branding: 'Branding',
+    sign_up_and_sign_in: 'Sign-up and sign-in',
+    collect_user_profile: 'Collect user profile',
+    account_center: 'Account center',
+    content: 'Content',
+    password_policy: 'Password policy',
+  },
+  welcome: {
+    title: 'Customize sign-in experience',
+    description:
+      'Get started fast with your first sign-in setup. This guide walks you through all the necessary settings.',
+    get_started: 'Get started',
+    apply_remind:
+      'Please note that sign-in experience will apply to all applications under this account.',
+  },
+  color: {
+    title: 'COLOR',
+    template: 'Template',
+    template_default: 'Default',
+    template_meshx_dark: 'MeshX Dark',
+    primary_color: 'Brand color',
+    dark_primary_color: 'Brand color (dark)',
+    dark_mode: 'Enable dark mode',
+    dark_mode_description:
+      'Your app will have an auto-generated dark mode theme based on your brand color and MeshX algorithm. You are free to customize.',
+    dark_mode_reset_tip: 'Recalculate dark mode color based on brand color.',
+    reset: 'Recalculate',
+  },
+  branding: {
+    title: 'BRANDING AREA',
+    ui_style: 'Style',
+    with_light: '{{value}}',
+    with_dark: '{{value}} (dark)',
+    app_logo_and_favicon: 'App logo and favicon',
+    company_logo_and_favicon: 'Company logo and favicon',
+    organization_logo_and_favicon: 'Organization logo and favicon',
+    hide_logto_branding: 'Hide MeshX branding',
+    hide_logto_branding_description:
+      'Remove "Powered by MeshX". Spotlight your brand exclusively with a clean, professional sign-in experience.',
+    hide_logto_branding_oss_note:
+      'This feature is available in <a>MeshX Cloud</a> or <selfHosted>self-hosted plans</selfHosted>.',
+  },
+  branding_uploads: {
+    app_logo: {
+      title: 'App logo',
+      url: 'App logo URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'App logo: {{error}}',
+    },
+    company_logo: {
+      title: 'Company logo',
+      url: 'Company logo URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'Company logo: {{error}}',
+    },
+    organization_logo: {
+      title: 'Upload image',
+      url: 'Organization logo URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'Organization logo: {{error}}',
+    },
+    connector_logo: {
+      title: 'Upload image',
+      url: 'Connector logo URL',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'Connector logo: {{error}}',
+    },
+    favicon: {
+      title: 'Favicon',
+      url: 'Favicon URL',
+      url_placeholder: 'https://your.cdn.domain/favicon.ico',
+      error: 'Favicon: {{error}}',
+    },
+  },
+  custom_ui: {
+    title: 'Custom UI',
+    cloud_tag: 'Cloud',
+    css_code_editor_title: 'Custom CSS',
+    css_code_editor_field_title: 'CSS overrides',
+    css_code_editor_description1: 'See the example of custom CSS.',
+    css_code_editor_description2: '<a>{{link}}</a>',
+    css_code_editor_description_link_content: 'Learn more',
+    css_code_editor_content_placeholder:
+      'Enter your CSS overrides here to tailor the styles of anything to your exact specifications. Express your creativity and make your UI stand out.',
+    bring_your_ui_title: 'Bring your UI',
+    bring_your_ui_upload_title: 'Upload custom UI assets',
+    bring_your_ui_description:
+      'Upload a compressed package (.zip) to replace the MeshX prebuilt UI with your own code. <a>Learn more</a>',
+    bring_your_ui_oss_description: 'Customize the sign-in UI with your own code.',
+    bring_your_ui_oss_card_description:
+      'Custom UI upload is included in this self-hosted installation. No need to fork and redeploy.',
+    bring_your_ui_oss_try_cloud: 'Try Cloud',
+    preview_with_bring_your_ui_description:
+      'Your custom UI assets have been successfully uploaded and are now being served. Consequently, the built-in preview window has been disabled.\nTo test your personalized sign-in UI, click the "Live Preview" button to open it in a new browser tab.',
+    csp_description:
+      'Allow additional source expressions for your custom sign-in UI. These values are applied only when custom UI assets are served.',
+    csp_script_src: 'Allowed script-src',
+    csp_script_src_tip:
+      'Allow HTTPS source expressions for scripts loaded by your custom UI, such as https://scripts.example.com or https://*.example.com.',
+    csp_connect_src: 'Allowed connect-src',
+    csp_connect_src_tip:
+      'Allow HTTPS or WSS source expressions for network requests made by your custom UI, such as https://api.example.com or wss://events.example.com.',
+    csp_source_invalid_error:
+      'Enter a valid source expression. Use https:// URLs; connect-src also supports wss://. CSP keywords and semicolons are not supported.',
+    csp_source_duplicate_error: 'This source expression is already listed.',
+  },
+  account_center: {
+    title: 'ACCOUNT CENTER',
+    description:
+      'Implement your account center for end users to manage account security and profile information.',
+    enable_account_api: 'Enable account center and Account API',
+    enable_account_api_description:
+      "Turn on both the user-facing Account API and MeshX's out-of-the-box account center. When off, both features are unavailable.",
+    field_options: {
+      off: 'Off',
+      edit: 'Edit',
+      read_only: 'Read only',
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+    },
+    sections: {
+      account_security: {
+        title: 'ACCOUNT SECURITY',
+        description:
+          'Manage access to the Account API, enabling users to view or edit their identity information and authentication factors after signing into the application.',
+        security_verification: {
+          title: 'Security verification',
+          description:
+            'Before changing security settings, users must verify their identity to get a 10-minute verification record ID. To enable a verification method (email, phone, password), set the Account API permission to <strong>Read only</strong> (minimum) or <strong>Edit</strong> below so the system can detect if the user has it configured. <a>Learn more</a>',
+        },
+        groups: {
+          identifiers: {
+            title: 'Identifiers',
+          },
+          authentication_factors: {
+            title: 'Authentication factors',
+          },
+          session_management: {
+            title: 'Session management',
+          },
+          developer_settings: {
+            title: 'Developer settings',
+          },
+        },
+      },
+      user_profile: {
+        title: 'USER PROFILE',
+        description:
+          'Manage access to the Account API, enabling users to view or edit basic or custom profile data after signing into the application.',
+        groups: {
+          profile_data: {
+            title: 'Profile data',
+          },
+        },
+      },
+      secret_vault: {
+        title: 'SECRET VAULT',
+        description:
+          'For social and enterprise connectors, secure store third-party access tokens to call their APIs (e.g., add events to Google Calendar).',
+        third_party_token_storage: {
+          title: 'Third-party token',
+          third_party_access_token_retrieval: 'Third-party access token retrieval',
+          third_party_token_tooltip:
+            "To store tokens, you can enable this in the corresponding social or enterprise connector's settings.",
+          third_party_token_description:
+            'Once the Account API is enabled, third-party token retrieval is automatically activated.',
+        },
+      },
+    },
+    fields: {
+      email: 'Email address',
+      phone: 'Phone number',
+      social: 'Social identities',
+      password: 'Password',
+      mfa: 'Multi-factor authentication',
+      mfa_description: 'Let users manage their MFA methods from the account center.',
+      passkey: 'Passkey',
+      username: 'Username',
+      name: 'Name',
+      avatar: 'Avatar',
+      profile: 'Profile',
+      profile_description: 'Control access to structured profile attributes.',
+      custom_data: 'Custom data',
+      custom_data_description: 'Control access to custom JSON data stored on the user.',
+      sessions: 'Sessions',
+      trusted_devices: 'Trusted devices',
+      personal_access_tokens: 'Personal access tokens',
+      personal_access_tokens_description:
+        'Enabling this lets users create long-lived personal access tokens that remain active across sign-outs and password resets, and can be exchanged for access tokens by any first-party application with token exchange enabled.',
+    },
+    profile_fields: {
+      title: 'Profile fields for prebuilt account center',
+      add_profile_fields: 'Add profile fields',
+      hint: {
+        not_in_list: 'Not in the list?',
+        set_up: 'Set up',
+        go_to: 'other profile fields now.',
+      },
+      disabled_hint: {
+        name: "To add this field, set the 'Name' permission to 'Edit / Read only' in the User profile section below first.",
+        avatar:
+          "To add this field, set the 'Avatar' permission to 'Edit / Read only' in the User profile section below first.",
+        profile:
+          "To add this field, set the 'Profile' permission to 'Edit / Read only' in the User profile section below first.",
+        custom_data:
+          "To add this field, set the 'Custom data' permission to 'Edit / Read only' in the User profile section below first.",
+      },
+    },
+    webauthn_related_origins: 'WebAuthn Related Origins',
+    webauthn_related_origins_description:
+      'Add the domains of your front-end applications that are allowed to register passkeys via the Account API.',
+    webauthn_related_origins_error: 'Origin must start with https:// or http://',
+    delete_account_url: 'Delete account',
+    delete_account_url_description:
+      'Provide your own endpoint URL to handle account deletion with custom logic.',
+    prebuilt_ui: {
+      title: 'INTEGRATE PREBUILT UI',
+      description:
+        'Quickly integrate out-of-the-box account center, security verification, or a single profile update flow with prebuilt UI. Simply combine your domain with the route to form your account center URL (e.g., https://auth.foo.com/account/email).',
+      permission_notice:
+        'To integrate these prebuilt flows, set the related Account API permissions to <strong>Edit</strong> in the settings below.',
+      account_center_title: 'Integrate the out-of-the-box account center',
+      account_center_description:
+        'Route users to the account center to manage security settings such as email, phone, username, password, MFA, and connected accounts.',
+      flows_title: 'Integrate out-of-the-box security setting flows',
+      single_task_flows_title: 'Integrate an out-of-the-box single task flow',
+      flows_description:
+        'Combine your domain with the route to form your account setting URL (e.g., https://auth.foo.com/account/email). Optionally add `redirect=` to return users to your app after a successful update, `show_success=true` to keep the success page visible, `ui_locales=` to override the default language, or `identifier=` to pre-fill the identifier input field.',
+      single_task_flows_description:
+        'Route users straight into a specific flow (e.g., email linkage). Optionally add `redirect=` to return users to your app after a successful update, `show_success=true` to keep the success page visible, `ui_locales=` to override the default language, or `identifier=` to pre-fill the identifier input field.',
+      tooltips: {
+        email: 'Update your primary email address',
+        phone: 'Update your primary phone number',
+        username: 'Update your username',
+        password: 'Set a new password',
+        social: 'Link a social account for sign-in',
+        social_change: 'Change to another linked social account',
+        social_remove: 'Remove a linked social account',
+        authenticator_app: 'Set up a new authenticator app for multi-factor authentication',
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
+        passkey_add: 'Register a new passkey',
+        passkey_manage: 'Manage your existing passkeys or add new ones',
+        backup_codes_generate: 'Generate a new set of 10 backup codes',
+        backup_codes_manage: 'View your available backup codes or generate new ones',
+        account_center:
+          'Access the account center to manage security settings such as email, phone, username, password, MFA, and connected accounts',
+        profile: 'The central hub for managing your personal information (e.g., name, avatar)',
+        sessions: 'View and manage your active sessions across devices',
+      },
+      customize_note: "Don't want the out-of-the-box experience? You can fully",
+      customize_link: 'customize your flows with the Account API instead.',
+    },
+    custom_css: {
+      title: 'CUSTOM CSS',
+      description: 'Customize the appearance of the account center using custom CSS.',
+    },
+  },
+  sign_up_and_sign_in,
+  content,
+  setup_warning: {
+    no_connector_sms:
+      'No SMS connector set-up yet. Before completing the configuration, users will not be able to sign in with this method. <a>{{link}}</a> in "Connectors"',
+    no_connector_email:
+      'No email connector set-up yet. Before completing the configuration, users will not be able to sign in with this method. <a>{{link}}</a> in "Connectors"',
+    no_connector_social:
+      'You haven\'t set up any social connector yet. Add connectors first to apply social sign-in methods. <a>{{link}}</a> in "Connectors".',
+    no_connector_email_account_center:
+      'No email connector set-up yet. Set up in <a>"Email and SMS connectors"</a>.',
+    no_connector_sms_account_center:
+      'No SMS connector set-up yet. Set up in <a>"Email and SMS connectors"</a>.',
+    no_connector_social_account_center:
+      'No social connector set-up yet. Set up in <a>"Social connectors"</a>.',
+    no_mfa_factor: 'No MFA factor set-up yet. Set up in <a>{{link}}</a>.',
+    setup_link: 'Set up',
+  },
+  save_alert: {
+    description:
+      'You are implementing new sign-in and sign-up procedures. All of your users may be affected by the new set-up. Are you sure to commit to the change?',
+    before: 'Before',
+    after: 'After',
+    sign_up: 'Sign-up',
+    sign_in: 'Sign-in',
+    social: 'Social',
+    forgot_password_migration_notice:
+      "We've upgraded forgot password verification to support custom methods. Previously, this was automatically determined by your Email and SMS connectors. Click <strong>Confirm</strong> to complete the upgrade.",
+  },
+  preview: {
+    title: 'Sign-in preview',
+    live_preview: 'Live preview',
+    live_preview_tip: 'Save to preview changes',
+    native: 'Native',
+    desktop_web: 'Desktop Web',
+    mobile_web: 'Mobile Web',
+    desktop: 'Desktop',
+    mobile: 'Mobile',
+  },
+  custom_profile_fields,
+};
+
+export default Object.freeze(sign_in_exp);

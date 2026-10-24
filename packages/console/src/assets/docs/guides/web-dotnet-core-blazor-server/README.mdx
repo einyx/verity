@@ -1,0 +1,168 @@
+import Steps from '@/mdx-components/Steps';
+import Step from '@/mdx-components/Step';
+import SignInAndSignOutFlows from '../web-dotnet-core-mvc/fragments/_sign-in-and-sign-out-flows.mdx';
+import ConfigureRedirectUris from '../web-dotnet-core-mvc/fragments/_configure-redirect-uris.mdx';
+import Installation from '../web-dotnet-core-mvc/fragments/_installation.md';
+import AddAuthentication from '../web-dotnet-core-mvc/fragments/_add-authentication.mdx';
+import DisplayUserInformation from '../web-dotnet-core-mvc/fragments/_display-user-information.md';
+import Checkpoint from '../../fragments/_checkpoint.md';
+
+<Steps>
+
+<Step title="Add Logto SDK as a dependency">
+
+<Installation />
+
+</Step>
+
+<Step title="Add Logto authentication">
+
+<AddAuthentication {...props} />
+
+</Step>
+
+<Step title="Understand sign-in and sign-out flows">
+
+<SignInAndSignOutFlows />
+
+</Step>
+
+<Step title="Configure redirect URIs">
+
+<ConfigureRedirectUris />
+
+</Step>
+
+<Step title="Add routes">
+
+Since Blazor Server uses SignalR to communicate between the server and the client, this means methods that directly manipulate the HTTP context (like issuing challenges or redirects) don't work as expected when called from a Blazor component.
+
+To make it right, we need to explicitly add two endpoints for sign-in and sign-out redirects:
+
+```csharp title="Program.cs"
+app.MapGet("/SignIn", async context =>
+{
+    if (!(context.User?.Identity?.IsAuthenticated ?? false))
+    {
+        await context.ChallengeAsync(new AuthenticationProperties { RedirectUri = "/" });
+    } else {
+        context.Response.Redirect("/");
+    }
+});
+
+app.MapGet("/SignOut", async context =>
+{
+    if (context.User?.Identity?.IsAuthenticated ?? false)
+    {
+        await context.SignOutAsync(new AuthenticationProperties { RedirectUri = "/" });
+    } else {
+        context.Response.Redirect("/");
+    }
+});
+```
+
+Now we can redirect to these endpoints to trigger sign-in and sign-out.
+
+</Step>
+
+<Step title="Sign-in and sign-out">
+
+In the Razor component, add the following code:
+
+```cshtml title="Components/Pages/Index.razor"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+@* ... *@
+
+<p>Is authenticated: @User.Identity?.IsAuthenticated</p>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <button @onclick="SignOut">Sign out</button>
+}
+else
+{
+    <button @onclick="SignIn">Sign in</button>
+}
+
+@* ... *@
+
+@code {
+    private ClaimsPrincipal? User { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.User;
+    }
+
+    private void SignIn()
+    {
+        NavigationManager.NavigateTo("/SignIn", forceLoad: true);
+    }
+
+    private void SignOut()
+    {
+        NavigationManager.NavigateTo("/SignOut", forceLoad: true);
+    }
+}
+```
+
+**Explanation**:
+
+- The injected `AuthenticationStateProvider` is used to get the current user's authentication state, and populate the `User` property.
+- The `SignIn` and `SignOut` methods are used to redirect the user to the sign-in and sign-out endpoints respectively. Since the nature of Blazor Server, we need to use `NavigationManager` with force load to trigger the redirection.
+
+The page will show the "Sign in" button if the user is not authenticated, and show the "Sign out" button if the user is authenticated.
+
+</Step>
+
+<Step title="Alternative: Use the `AuthorizeView` component">
+
+Alternatively, you can use the `AuthorizeView` component to conditionally render content based on the user's authentication state. This component is useful when you want to show different content to authenticated and unauthenticated users.
+
+In your Razor component, add the following code:
+
+```cshtml title="Components/Pages/Index.razor"
+@using Microsoft.AspNetCore.Components.Authorization
+
+@* ... *@
+
+<AuthorizeView>
+    <Authorized>
+        <p>Name: @User?.Identity?.Name</p>
+        @* Content for authenticated users *@
+    </Authorized>
+    <NotAuthorized>
+        @* Content for unauthenticated users *@
+    </NotAuthorized>
+</AuthorizeView>
+
+@* ... *@
+```
+
+The `AuthorizeView` component requires a cascading parameter of type `Task<AuthenticationState>`. A direct way to get this parameter is to add the `<CascadingAuthenticationState>` component. However, due to the nature of Blazor Server, we cannot simply add the component to the layout or the root component (it may not work as expected). Instead, we can add the following code to the builder (`Program.cs` or `Startup.cs`) to provide the cascading parameter:
+
+```csharp title="Program.cs"
+builder.Services.AddCascadingAuthenticationState();
+```
+
+Then you can use the `AuthorizeView` component in every component that needs it.
+
+</Step>
+
+<Step title="Checkpoint: Test your application">
+
+<Checkpoint />
+
+</Step>
+
+<Step title="Display user information">
+
+<DisplayUserInformation />
+
+</Step>
+
+</Steps>

@@ -1,0 +1,232 @@
+import path from 'node:path';
+
+import { fetchTokenByRefreshToken } from '@logto/js';
+import { InteractionEvent, type Resource, RoleType, VerificationType } from '@logto/schemas';
+import { assert } from '@silverhand/essentials';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+import {
+  accessTokenJwtCustomizerPayload,
+  accessTokenSampleScript,
+} from '#src/__mocks__/jwt-customizer.js';
+import {
+  createResource,
+  deleteJwtCustomizer,
+  deleteResource,
+  deleteUser,
+  upsertJwtCustomizer,
+} from '#src/api/index.js';
+import { assignUsersToRole, createRole, deleteRole } from '#src/api/role.js';
+import { createScope, deleteScope } from '#src/api/scope.js';
+import { defaultConfig } from '#src/client/index.js';
+import { logtoUrl } from '#src/constants.js';
+import { initExperienceClient, processSession } from '#src/helpers/client.js';
+import { identifyUserWithUsernamePassword } from '#src/helpers/experience/index.js';
+import { createUserByAdmin } from '#src/helpers/index.js';
+import { enableAllPasswordSignInMethods } from '#src/helpers/sign-in-experience.js';
+import { generateUsername, generatePassword, getAccessTokenPayload } from '#src/utils.js';
+
+const adaptiveMfaSignInContextHeaders = Object.freeze({
+  'x-logto-cf-country': 'US',
+  'x-logto-cf-bot-score': '10',
+});
+
+const adaptiveMfaSignInContextClaimScript = `const getCustomJwtClaims = async ({ context }) => {
+  return {
+    signInCountry: context?.interaction?.signInContext?.country,
+    signInBotScore: context?.interaction?.signInContext?.botScore,
+  };
+};`;
+
+describe('get access token', () => {
+  const username = generateUsername();
+  const password = generatePassword();
+  const guestUsername = generateUsername();
+  const testApiResourceInfo: Pick<Resource, 'name' | 'indicator'> = {
+    name: 'test-api-resource',
+    indicator: 'https://foo.logto.io/api',
+  };
+  const testApiScopeNames = ['read', 'write', 'delete', 'update'];
+
+  /* eslint-disable @silverhand/fp/no-let */
+  let testApiResourceId: string;
+  let testApiScopeIds: string[];
+  let testApiUserRoleId: string;
+  let guestUserId: string;
+  /* eslint-enable @silverhand/fp/no-let */
+
+  /* eslint-disable @silverhand/fp/no-mutation */
+  beforeAll(async () => {
+    const guestUser = await createUserByAdmin({ username: guestUsername, password });
+    guestUserId = guestUser.id;
+    const user = await createUserByAdmin({ username, password });
+    const testApiResource = await createResource(
+      testApiResourceInfo.name,
+      testApiResourceInfo.indicator
+    );
+    testApiResourceId = testApiResource.id;
+    const testApiScopes = await Promise.all(
+      testApiScopeNames.map(async (name) => createScope(testApiResource.id, name))
+    );
+    testApiScopeIds = testApiScopes.map(({ id }) => id);
+    const testApiUserRole = await createRole({
+      name: 'test-api-user-role',
+      type: RoleType.User,
+      scopeIds: testApiScopes.map(({ id }) => id),
+    });
+    testApiUserRoleId = testApiUserRole.id;
+    await assignUsersToRole([user.id], testApiUserRole.id);
+    await enableAllPasswordSignInMethods();
+  });
+  /* eslint-enable @silverhand/fp/no-mutation */
+
+  afterAll(async () => {
+    if (testApiUserRoleId) {
+      await deleteRole(testApiUserRoleId);
+    }
+    if (testApiResourceId) {
+      await Promise.all(testApiScopeIds.map(async (id) => deleteScope(testApiResourceId, id)));
+      await deleteResource(testApiResourceId);
+    }
+    if (guestUserId) {
+      await deleteUser(guestUserId);
+    }
+  });
+
+  it('can sign in and getAccessToken with admin user', async () => {
+    const client = await initExperienceClient({
+      config: {
+        resources: [testApiResourceInfo.indicator],
+        scopes: testApiScopeNames,
+      },
+    });
+    await identifyUserWithUsernamePassword(client, username, password);
+    const { redirectTo } = await client.submitInteraction();
+    await processSession(client, redirectTo);
+    const accessToken = await client.getAccessToken(testApiResourceInfo.indicator);
+    expect(accessToken).not.toBeNull();
+    expect(getAccessTokenPayload(accessToken)).toHaveProperty('scope', testApiScopeNames.join(' '));
+
+    // Request for invalid resource should throw
+    await expect(client.getAccessToken('api.foo.com')).rejects.toThrow();
+  });
+
+  it('can sign in and getAccessToken with guest user', async () => {
+    await upsertJwtCustomizer('access-token', {
+      ...accessTokenJwtCustomizerPayload,
+      script: accessTokenSampleScript,
+    });
+
+    const client = await initExperienceClient({
+      config: {
+        resources: [testApiResourceInfo.indicator],
+        scopes: testApiScopeNames,
+      },
+    });
+    await identifyUserWithUsernamePassword(client, guestUsername, password);
+
+    const { redirectTo } = await client.submitInteraction();
+    await processSession(client, redirectTo);
+    const accessToken = await client.getAccessToken(testApiResourceInfo.indicator);
+
+    expect(getAccessTokenPayload(accessToken)).not.toHaveProperty(
+      'scope',
+      testApiScopeNames.join(' ')
+    );
+    expect(getAccessTokenPayload(accessToken)).toHaveProperty('user_id', guestUserId);
+    // The guest user has password.
+    expect(getAccessTokenPayload(accessToken)).toHaveProperty('hasPassword', true);
+
+    expect(getAccessTokenPayload(accessToken)).toHaveProperty(
+      'interactionEvent',
+      InteractionEvent.SignIn
+    );
+    expect(getAccessTokenPayload(accessToken)).toHaveProperty(
+      'verificationType',
+      VerificationType.Password
+    );
+
+    await deleteJwtCustomizer('access-token');
+  });
+
+  it('sign in and verify jwt', async () => {
+    const client = await initExperienceClient({
+      config: {
+        resources: [testApiResourceInfo.indicator],
+        scopes: testApiScopeNames,
+      },
+    });
+    await identifyUserWithUsernamePassword(client, guestUsername, password);
+    const { redirectTo } = await client.submitInteraction();
+    await processSession(client, redirectTo);
+    const accessToken = await client.getAccessToken(testApiResourceInfo.indicator);
+    await expect(
+      jwtVerify(accessToken, createRemoteJWKSet(new URL('/oidc/jwks', logtoUrl)), {
+        issuer: new URL('/oidc', logtoUrl).href,
+        audience: testApiResourceInfo.indicator,
+        requiredClaims: ['scope', 'client_id'],
+        subject: guestUserId,
+      })
+    ).resolves.toBeTruthy();
+  });
+
+  it('can sign in and get multiple access tokens by the same refresh token within `refreshTokenReuseInterval`', async () => {
+    const client = await initExperienceClient({
+      config: { resources: [testApiResourceInfo.indicator] },
+    });
+    await identifyUserWithUsernamePassword(client, username, password);
+
+    const { redirectTo } = await client.submitInteraction();
+
+    await processSession(client, redirectTo);
+
+    const refreshToken = await client.getRefreshToken();
+
+    assert(refreshToken, new Error('No Refresh Token found'));
+
+    const getAccessTokenByRefreshToken = async () =>
+      fetchTokenByRefreshToken(
+        {
+          clientId: defaultConfig.appId,
+          tokenEndpoint: path.join(logtoUrl, '/oidc/token'),
+          refreshToken,
+          resource: testApiResourceInfo.indicator,
+        },
+        async <T>(...args: Parameters<typeof fetch>): Promise<T> => {
+          const response = await fetch(...args);
+          assert(response.ok, new Error('Request error'));
+
+          return response.json();
+        }
+      );
+
+    // Allow to use the same refresh token to fetch access token within short time period
+    await Promise.all([getAccessTokenByRefreshToken(), getAccessTokenByRefreshToken()]);
+  });
+
+  it('includes adaptive MFA sign-in context in custom claims when issuing access tokens', async () => {
+    await upsertJwtCustomizer('access-token', {
+      ...accessTokenJwtCustomizerPayload,
+      script: adaptiveMfaSignInContextClaimScript,
+    });
+
+    try {
+      const client = await initExperienceClient({
+        config: {
+          resources: [testApiResourceInfo.indicator],
+        },
+        extraHeaders: adaptiveMfaSignInContextHeaders,
+      });
+      await identifyUserWithUsernamePassword(client, guestUsername, password);
+
+      const { redirectTo } = await client.submitInteraction();
+      await processSession(client, redirectTo);
+      const accessToken = await client.getAccessToken(testApiResourceInfo.indicator);
+
+      expect(getAccessTokenPayload(accessToken)).toHaveProperty('signInCountry', 'US');
+      expect(getAccessTokenPayload(accessToken)).toHaveProperty('signInBotScore', '10');
+    } finally {
+      await deleteJwtCustomizer('access-token');
+    }
+  });
+});

@@ -1,0 +1,228 @@
+import { type Application, type ApplicationSecret, ApplicationType } from '@logto/schemas';
+import { pickDefault } from '@logto/shared/esm';
+
+import { mockApplication, mockProtectedApplication } from '#src/__mocks__/index.js';
+import koaErrorHandler from '#src/middleware/koa-error-handler.js';
+import koaI18next from '#src/middleware/koa-i18next.js';
+import { MockTenant } from '#src/test-utils/tenant.js';
+import { createRequester } from '#src/utils/test-utils.js';
+
+const { jest } = import.meta;
+
+const mockApplicationSecret: ApplicationSecret = {
+  tenantId: 'mock_tenant_id',
+  applicationId: mockProtectedApplication.id,
+  name: 'Default secret',
+  value: 'app_secret',
+  createdAt: Date.now(),
+  expiresAt: null,
+};
+
+const findApplicationById = jest.fn(async (): Promise<Application> => mockProtectedApplication);
+const updateApplicationById = jest.fn(
+  async (_id: string, data: Partial<Application>): Promise<Application> => ({
+    ...mockApplication,
+    ...data,
+  })
+);
+const insert = jest.fn(async (data: Partial<ApplicationSecret>) => ({
+  ...mockApplicationSecret,
+  ...data,
+}));
+const deleteByName = jest.fn(async () => mockApplicationSecret);
+const update = jest.fn(async ({ set }: { set: Partial<ApplicationSecret> }) => ({
+  ...mockApplicationSecret,
+  ...set,
+}));
+const syncAppConfigsToRemote = jest.fn();
+
+const tenantContext = new MockTenant(
+  undefined,
+  {
+    applications: {
+      findApplicationById,
+      updateApplicationById,
+    },
+    applicationSecrets: {
+      insert,
+      deleteByName,
+      update,
+    },
+  },
+  undefined,
+  {
+    protectedApps: {
+      syncAppConfigsToRemote,
+    },
+  }
+);
+
+const applicationSecretRoutes = await pickDefault(import('./application-secret.js'));
+
+describe('application secret routes', () => {
+  const applicationSecretRequest = createRequester({
+    authedRoutes: applicationSecretRoutes,
+    middlewares: [koaI18next(), koaErrorHandler()],
+    tenantContext,
+  });
+
+  afterEach(() => {
+    findApplicationById.mockClear();
+    updateApplicationById.mockClear();
+    insert.mockClear();
+    deleteByName.mockClear();
+    update.mockClear();
+    syncAppConfigsToRemote.mockClear();
+  });
+
+  it('DELETE /applications/:id/legacy-secret should omit the generated internal secret', async () => {
+    findApplicationById.mockResolvedValueOnce({ ...mockApplication, secret: 'legacy-secret' });
+
+    const response = await applicationSecretRequest.delete(
+      `/applications/${mockApplication.id}/legacy-secret`
+    );
+
+    expect(response.status).toEqual(200);
+    expect(response.body).not.toHaveProperty('secret');
+    expect(updateApplicationById).toHaveBeenCalledTimes(1);
+    expect(updateApplicationById.mock.calls[0]?.[0]).toBe(mockApplication.id);
+    expect(updateApplicationById.mock.calls[0]?.[1].secret).toMatch(/^#internal:/);
+  });
+
+  it('POST /applications/:id/secrets should store a caller-supplied value', async () => {
+    const value = 'a'.repeat(32);
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Operator secret', value });
+
+    expect(response.status).toEqual(201);
+    expect(insert.mock.calls[0]?.[0]).toMatchObject({ name: 'Operator secret', value });
+  });
+
+  it('POST /applications/:id/secrets should generate a value when none is given', async () => {
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Generated secret' });
+
+    expect(response.status).toEqual(201);
+    expect(insert.mock.calls[0]?.[0].value).toMatch(/^\w{32,}$/);
+  });
+
+  it('POST /applications/:id/secrets should reject short or internal values', async () => {
+    const short = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Short', value: 'too-short' });
+    const internal = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'Internal', value: `#internal:${'a'.repeat(32)}` });
+
+    expect(short.status).toEqual(400);
+    expect(internal.status).toEqual(400);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('POST /applications/:id/secrets should resync protected app configs', async () => {
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockProtectedApplication.id}/secrets`)
+      .send({ name: 'New secret' });
+
+    expect(response.status).toEqual(201);
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+  });
+
+  it('POST /applications/:id/secrets should roll back if protected app config resync fails', async () => {
+    syncAppConfigsToRemote.mockRejectedValueOnce(new Error('sync failed'));
+
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockProtectedApplication.id}/secrets`)
+      .send({ name: 'New secret' });
+
+    expect(response.status).toEqual(500);
+    expect(response.body).toMatchObject({
+      code: 'application.sync_application_secret_failed',
+      message: 'Sync application secret failed.',
+    });
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+    expect(deleteByName).toHaveBeenCalledWith(mockProtectedApplication.id, 'New secret');
+  });
+
+  it('DELETE /applications/:id/secrets/:name should resync protected app configs', async () => {
+    const response = await applicationSecretRequest.delete(
+      `/applications/${mockProtectedApplication.id}/secrets/${encodeURIComponent(
+        mockApplicationSecret.name
+      )}`
+    );
+
+    expect(response.status).toEqual(204);
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+  });
+
+  it('DELETE /applications/:id/secrets/:name should roll back if protected app config resync fails', async () => {
+    syncAppConfigsToRemote.mockRejectedValueOnce(new Error('sync failed'));
+
+    const response = await applicationSecretRequest.delete(
+      `/applications/${mockProtectedApplication.id}/secrets/${encodeURIComponent(
+        mockApplicationSecret.name
+      )}`
+    );
+
+    expect(response.status).toEqual(500);
+    expect(response.body).toMatchObject({
+      code: 'application.sync_application_secret_failed',
+      message: 'Sync application secret failed.',
+    });
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+    expect(insert).toHaveBeenCalledWith(mockApplicationSecret);
+  });
+
+  it('PATCH /applications/:id/secrets/:name should resync protected app configs', async () => {
+    const response = await applicationSecretRequest
+      .patch(
+        `/applications/${mockProtectedApplication.id}/secrets/${encodeURIComponent(
+          mockApplicationSecret.name
+        )}`
+      )
+      .send({ name: 'Renamed secret' });
+
+    expect(response.status).toEqual(200);
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+  });
+
+  it('PATCH /applications/:id/secrets/:name should roll back if protected app config resync fails', async () => {
+    syncAppConfigsToRemote.mockRejectedValueOnce(new Error('sync failed'));
+
+    const response = await applicationSecretRequest
+      .patch(
+        `/applications/${mockProtectedApplication.id}/secrets/${encodeURIComponent(
+          mockApplicationSecret.name
+        )}`
+      )
+      .send({ name: 'Renamed secret' });
+
+    expect(response.status).toEqual(500);
+    expect(response.body).toMatchObject({
+      code: 'application.sync_application_secret_failed',
+      message: 'Sync application secret failed.',
+    });
+    expect(syncAppConfigsToRemote).toHaveBeenCalledWith(mockProtectedApplication.id);
+    expect(update).toHaveBeenLastCalledWith({
+      where: { applicationId: mockProtectedApplication.id, name: 'Renamed secret' },
+      set: { name: mockApplicationSecret.name },
+      jsonbMode: 'replace',
+    });
+  });
+
+  it('should skip resync for non-protected apps', async () => {
+    findApplicationById.mockResolvedValueOnce({
+      ...mockApplication,
+      type: ApplicationType.Traditional,
+    });
+
+    const response = await applicationSecretRequest
+      .post(`/applications/${mockApplication.id}/secrets`)
+      .send({ name: 'New secret' });
+
+    expect(response.status).toEqual(201);
+    expect(syncAppConfigsToRemote).not.toHaveBeenCalled();
+  });
+});

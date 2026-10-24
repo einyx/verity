@@ -1,0 +1,139 @@
+{
+  "tags": [
+    {
+      "name": "Domains",
+      "description": "Custom domain lets you present a consistent brand by having your own domain name on the sign-in and registration pages. See [🌍 Custom domain](https://docs.meshx.io/docs/recipes/custom-domain/) for more details."
+    }
+  ],
+  "paths": {
+    "/api/domains": {
+      "get": {
+        "summary": "Get domains",
+        "description": "Get all of your custom domains.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A list of domains."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create domain",
+        "description": "Create a new domain with the given data. The maximum domain number is 1, once created, can not be modified, you'll have to delete and recreate one.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "domain": {
+                    "description": "The domain name, e.g. `example.com`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The domain was created successfully."
+          },
+          "422": {
+            "description": "Validation error. Please check the request body."
+          }
+        }
+      }
+    },
+    "/api/domains/cleanup": {
+      "post": {
+        "summary": "Cleanup stale domains",
+        "description": "Clean up custom domains that have been inactive (not verified) for a specified number of days. This uses Cloudflare as the source of truth to determine domain activity.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "staleDays": {
+                    "description": "The number of days a domain must be inactive before it is considered stale and eligible for cleanup."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The cleanup result summary."
+          }
+        }
+      }
+    },
+    "/api/domains/{id}": {
+      "get": {
+        "summary": "Get domain",
+        "description": "Get domain details by ID, by calling this API, the domain status will be synced from remote provider.",
+        "responses": {
+          "200": {
+            "description": "Details of the domain."
+          },
+          "404": {
+            "description": "The domain with the specified ID was not found."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete domain",
+        "description": "Delete domain by ID.",
+        "responses": {
+          "204": {
+            "description": "The domain was deleted successfully."
+          },
+          "404": {
+            "description": "The domain with the specified ID was not found."
+          }
+        }
+      }
+    },
+    "/api/domains/{id}/verification-files": {
+      "get": {
+        "summary": "Get domain verification files",
+        "description": "Get the verification files served from the custom domain.",
+        "responses": {
+          "200": {
+            "description": "The configured domain verification files."
+          },
+          "404": {
+            "description": "The domain with the specified ID was not found."
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace domain verification files",
+        "description": "Replace the verification files served from the custom domain.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "verificationFiles": {
+                    "description": "Up to 10 text or JSON verification files served as filenames with extensions at the domain root, or at paths under `/.well-known/`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The domain verification files were replaced successfully."
+          },
+          "400": {
+            "description": "Validation error. Please check the request body."
+          },
+          "404": {
+            "description": "The domain with the specified ID was not found."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "accountSID": "<account-sid>",
+  "authToken": "<auth-token>",
+  "fromMessagingServiceSID": "<from-messaging-service-sid>",
+  "templates": [
+    {
+      "usageType": "SignIn",
+      "content": "This is for sign-in purposes only. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "Register",
+      "content": "This is for registering purposes only. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "ForgotPassword",
+      "content": "This is for resetting password purposes only. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "MfaVerification",
+      "content": "This is for MFA verification purposes only. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "Generic",
+      "content": "This is for generic purpose through management API only. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "OrganizationInvitation",
+      "content": "You have been invited to join an organization. Please click the link to accept: {{link}}."
+    },
+    {
+      "usageType": "UserPermissionValidation",
+      "content": "This is for validating user permission. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "BindNewIdentifier",
+      "content": "This is for binding a new identifier to your account. Your verification code is {{code}}."
+    },
+    {
+      "usageType": "BindMfa",
+      "content": "This is for binding MFA to your account. Your verification code is {{code}}."
+    }
+  ]
+}

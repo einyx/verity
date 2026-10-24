@@ -1,0 +1,47 @@
+const inkeep_ai_bot = {
+  intro_message:
+    'Hi, ich bin Logto AI!\n\nIch bin ein KI-Assistent, der auf Dokumentation, Hilfeartikel und andere Inhalte trainiert wurde.\n\nFrage mich alles über `Logto`.',
+  chat_placeholder: 'Fragen Sie Logto AI nach einer Schritt-für-Schritt-Anleitung',
+  disclaimer_label: 'Logto AI Haftungsausschluss',
+  disclaimer_tooltip: 'Antworten werden von KI generiert und könnten einer Überprüfung bedürfen.',
+  example_questions_label: 'Beispielfragen',
+  example_questions: [
+    'Schnellstartanleitung für die Einrichtung von Logto',
+    'Konfigurieren der Multi-Tenancy-Architektur',
+    'Wie integriert man ein Benutzerprofil?',
+  ],
+  stop: 'Stoppen',
+  clear: 'Neu anfangen',
+  get_help: 'Hilfe erhalten',
+  copy_chat: 'Kopieren',
+  ask_ai_label: 'KI fragen',
+  contact: 'Kontakt',
+  discord: 'Discord',
+  action_proposed: 'Vorgeschlagene Änderung: {{tool}}',
+  action_confirm: 'Bestätigen',
+  action_cancel: 'Abbrechen',
+  action_running: 'Wird erstellt…',
+  action_done: 'Erstellt',
+  action_cancelled: 'Abgebrochen',
+  action_failed: 'Nicht erstellt',
+  action_failed_detail:
+    'Diese Änderung konnte nicht durchgeführt werden. Sie ist möglicherweise abgelaufen; bitte fragen Sie erneut.',
+  setup_prompt_copied: 'Setup-Prompt kopiert',
+  onboard_agent: 'Ihren Agenten bei MeshX einarbeiten',
+  attached_files_label: 'Angehängte Dateien',
+  attach_file: 'Datei anhängen',
+  remove_file: '{{name}} entfernen',
+  attachment_error: 'Es können nur Textdateien bis 100 KB angehängt werden: {{names}}',
+  copy_you: 'Du',
+  copy_assistant: 'MeshX AI',
+  file_label: 'Datei: {{name}}',
+  enter_to_send: 'Enter zum Senden',
+  thinking_steps: [
+    'Denke nach…',
+    'Lese deine Nachricht…',
+    'Berechne deine Präferenzen…',
+    'Suche die passende meshX-Antwort…',
+  ],
+};
+
+export default Object.freeze(inkeep_ai_bot);

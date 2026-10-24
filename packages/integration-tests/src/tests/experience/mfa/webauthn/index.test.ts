@@ -1,0 +1,433 @@
+import { ConnectorType } from '@logto/connector-kit';
+import { MfaFactor, MfaPolicy, SignInIdentifier, SignInMode } from '@logto/schemas';
+import { generateStandardId } from '@logto/shared';
+
+import {
+  createUserMfaVerification,
+  deleteUser,
+  updateUser,
+  updateUserPassword,
+} from '#src/api/admin-user.js';
+import { updateSignInExperience } from '#src/api/sign-in-experience.js';
+import { SsoConnectorApi } from '#src/api/sso-connector.js';
+import { demoAppUrl } from '#src/constants.js';
+import { clearConnectorsByTypes } from '#src/helpers/connector.js';
+import { signInWithEnterpriseSso } from '#src/helpers/experience/index.js';
+import {
+  enableMandatoryMfaWithWebAuthn,
+  resetMfaSettings,
+  resetPasskeySignInSettings,
+} from '#src/helpers/sign-in-experience.js';
+import { generateNewUser } from '#src/helpers/user.js';
+import ExpectWebAuthnExperience from '#src/ui-helpers/expect-webauthn-experience.js';
+import { generateUsername, waitFor } from '#src/utils.js';
+
+describe('MFA - WebAuthn', () => {
+  beforeAll(async () => {
+    await clearConnectorsByTypes([ConnectorType.Email, ConnectorType.Sms, ConnectorType.Social]);
+    await enableMandatoryMfaWithWebAuthn();
+    await updateSignInExperience({
+      signUp: {
+        identifiers: [SignInIdentifier.Username],
+        password: true,
+        verify: false,
+      },
+      signIn: {
+        methods: [
+          {
+            identifier: SignInIdentifier.Username,
+            password: true,
+            verificationCode: false,
+            isPasswordPrimary: true,
+          },
+        ],
+      },
+      forgotPasswordMethods: [],
+    });
+  });
+
+  afterAll(async () => {
+    await resetMfaSettings();
+  });
+
+  it('should bind WebAuthn when registering and verify WebAuthn when signing in', async () => {
+    const username = generateUsername();
+    const password = 'l0gt0_T3st_P@ssw0rd';
+
+    const experience = new ExpectWebAuthnExperience(await browser.newPage());
+    await experience.setupVirtualAuthenticator();
+    await experience.startWith(demoAppUrl, 'register');
+    await experience.toFillInput('identifier', username, { submit: true });
+    experience.toBeAt('register/password');
+    await experience.toFillNewPasswords(password);
+    await experience.toCreatePasskey();
+    await experience.verifyThenEnd(false);
+
+    await experience.startWith(demoAppUrl, 'sign-in');
+    await experience.toFillForm(
+      {
+        identifier: username,
+        password,
+      },
+      { submit: true }
+    );
+    // Wait for the page to process submitting request.
+    await waitFor(500);
+
+    await experience.toVerifyViaPasskey();
+
+    await experience.clearVirtualAuthenticator();
+    const userId = await experience.getUserIdFromDemoAppPage();
+    await experience.verifyThenEnd();
+    await deleteUser(userId);
+  });
+
+  it('should bind WebAuthn if an existing user has no WebAuthn', async () => {
+    const { userProfile, user } = await generateNewUser({ username: true, password: true });
+    const experience = new ExpectWebAuthnExperience(await browser.newPage());
+    await experience.setupVirtualAuthenticator();
+    await experience.startWith(demoAppUrl, 'sign-in');
+
+    await experience.toFillForm(
+      {
+        identifier: userProfile.username,
+        password: userProfile.password,
+      },
+      { submit: true }
+    );
+    // Wait for the page to process submitting request.
+    await waitFor(500);
+    await experience.toCreatePasskey();
+
+    await experience.clearVirtualAuthenticator();
+    await experience.verifyThenEnd();
+
+    await deleteUser(user.id);
+  });
+
+  describe('trusted device opt-in', () => {
+    beforeAll(async () => {
+      await updateSignInExperience({ trustedDevice: { enabled: true, durationDays: 365 } });
+    });
+
+    afterAll(async () => {
+      await updateSignInExperience({ trustedDevice: { enabled: false } });
+    });
+
+    it('creates a trusted device from WebAuthn binding and skips MFA on the next sign-in', async () => {
+      const { userProfile, user } = await generateNewUser({ username: true, password: true });
+      const experience = new ExpectWebAuthnExperience(await browser.newPage());
+      await experience.setupVirtualAuthenticator();
+
+      await experience.startWith(demoAppUrl, 'sign-in');
+      await experience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await experience.waitToBeAt(`mfa-binding/${MfaFactor.WebAuthn}`);
+      await experience.toCreatePasskey();
+      await experience.toOptInTrustedDevice();
+      await experience.verifyThenEnd(false);
+      await experience.clearDemoAppSession();
+      await experience.clearVirtualAuthenticator();
+      await experience.page.close();
+      const trustedDeviceExperience = new ExpectWebAuthnExperience(await browser.newPage());
+
+      await trustedDeviceExperience.startWith(demoAppUrl, 'sign-in');
+      await trustedDeviceExperience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await trustedDeviceExperience.verifyThenEnd();
+
+      await deleteUser(user.id);
+    });
+
+    it('creates a trusted device from WebAuthn verification and skips MFA on the next sign-in', async () => {
+      const { userProfile, user } = await generateNewUser({ username: true, password: true });
+      const experience = new ExpectWebAuthnExperience(await browser.newPage());
+      await experience.setupVirtualAuthenticator();
+
+      await experience.startWith(demoAppUrl, 'sign-in');
+      await experience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await experience.toCreatePasskey();
+      await experience.toSkipTrustedDevice();
+      await experience.verifyThenEnd(false);
+      await experience.clearTrustedDeviceOptOut(user.id);
+
+      await experience.startWith(demoAppUrl, 'sign-in');
+      await experience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await experience.waitToBeAt(`mfa-verification/${MfaFactor.WebAuthn}`);
+      await experience.toVerifyViaPasskey();
+      await experience.toOptInTrustedDevice();
+      await experience.verifyThenEnd(false);
+      await experience.clearDemoAppSession();
+      await experience.clearVirtualAuthenticator();
+      await experience.page.close();
+      const trustedDeviceExperience = new ExpectWebAuthnExperience(await browser.newPage());
+
+      await trustedDeviceExperience.startWith(demoAppUrl, 'sign-in');
+      await trustedDeviceExperience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await trustedDeviceExperience.verifyThenEnd();
+
+      await deleteUser(user.id);
+    }, 90_000);
+  });
+});
+
+describe('Passkey sign-in', () => {
+  beforeAll(async () => {
+    await clearConnectorsByTypes([ConnectorType.Email, ConnectorType.Sms, ConnectorType.Social]);
+    // Enable mandatory MFA with WebAuthn so passkey is registered during registration
+    await enableMandatoryMfaWithWebAuthn();
+    await updateSignInExperience({
+      signUp: {
+        identifiers: [SignInIdentifier.Username],
+        password: true,
+        verify: false,
+      },
+      signIn: {
+        methods: [
+          {
+            identifier: SignInIdentifier.Username,
+            password: true,
+            verificationCode: false,
+            isPasswordPrimary: true,
+          },
+        ],
+      },
+      forgotPasswordMethods: [],
+    });
+  });
+
+  afterAll(async () => {
+    await resetMfaSettings();
+    await resetPasskeySignInSettings();
+  });
+
+  afterEach(async () => {
+    /**
+     * Cases in this suite override the MFA policy and passkey sign-in settings mid-test;
+     * restore the baseline so one failed case cannot leak its settings into the next.
+     */
+    await enableMandatoryMfaWithWebAuthn();
+    await resetPasskeySignInSettings();
+  });
+
+  it('should prompt enable MFA if new registered user has no MFA but has bound sign-in passkey', async () => {
+    await updateSignInExperience({
+      mfa: {
+        factors: [MfaFactor.WebAuthn, MfaFactor.TOTP],
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+      },
+      passkeySignIn: {
+        enabled: true,
+        showPasskeyButton: true,
+        allowAutofill: false,
+      },
+    });
+
+    const username = generateUsername();
+    const password = 'l0gt0_T3st_P@ssw0rd';
+
+    const experience = new ExpectWebAuthnExperience(await browser.newPage());
+    await experience.setupVirtualAuthenticator();
+
+    // Register with username and password
+    await experience.startWith(demoAppUrl, 'register');
+    await experience.toFillInput('identifier', username, { submit: true });
+    experience.toBeAt('register/password');
+    await experience.toFillNewPasswords(password);
+
+    // Bind a sign-in passkey during registration
+    await experience.waitForPathname('create-passkey');
+    /**
+     * The "Create a passkey" button stays disabled (and a click on it is silently swallowed)
+     * until the WebAuthn registration options have been fetched.
+     */
+    await experience.page.waitForNetworkIdle();
+    await experience.toClick('button:not([disabled])', 'Create a passkey', false);
+
+    // After passkey is created, user should be prompted to enable MFA since the user has no MFA factor bound but has a sign-in passkey
+    await experience.waitForPathname('mfa-onboarding');
+    await experience.toClick('button', 'Enable 2-step verification', false);
+    await experience.waitForPathname('mfa-binding');
+
+    // Skip enabling MFA
+    await experience.toClick('div[role=button][class$=skipButton]', undefined, false);
+
+    await experience.waitForUrl(demoAppUrl);
+    await experience.page.waitForNetworkIdle();
+    const userId = await experience.getUserIdFromDemoAppPage();
+    await experience.clearVirtualAuthenticator();
+    await experience.verifyThenEnd();
+
+    await deleteUser(userId);
+  });
+
+  it('should sign in with passkey and skip MFA verification even when mandatory TOTP MFA is enabled', async () => {
+    const username = generateUsername();
+    const password = 'l0gt0_T3st_P@ssw0rd';
+
+    // Step 1: Register a user with passkey (WebAuthn MFA binding during registration)
+    const experience = new ExpectWebAuthnExperience(await browser.newPage());
+    await experience.setupVirtualAuthenticator();
+    await experience.startWith(demoAppUrl, 'register');
+    await experience.toFillInput('identifier', username, { submit: true });
+    experience.toBeAt('register/password');
+    await experience.toFillNewPasswords(password);
+    await experience.toCreatePasskey();
+    const userId = await experience.getUserIdFromDemoAppPage();
+    await experience.verifyThenEnd(false);
+
+    // Step 2: Add TOTP MFA to the user via admin API, so the user has mandatory TOTP MFA
+    await createUserMfaVerification(userId, MfaFactor.TOTP);
+
+    // Step 3: Enable mandatory TOTP MFA and passkey sign-in
+    await updateSignInExperience({
+      mfa: {
+        factors: [MfaFactor.TOTP],
+        policy: MfaPolicy.Mandatory,
+      },
+      passkeySignIn: {
+        enabled: true,
+        showPasskeyButton: true,
+        allowAutofill: false,
+      },
+    });
+
+    // Step 4: Sign in using the passkey sign-in button
+    // The passkey sign-in creates a SignInPasskey verification record,
+    // which should skip MFA verification according to the new logic
+    await experience.startWith(demoAppUrl, 'sign-in');
+
+    // Wait for the page and passkey sign-in button to load
+    await waitFor(1000);
+
+    // Click the "Continue with passkey" button; `verifyThenEnd` below waits for the demo app URL
+    await experience.toClick('button', 'Continue with passkey', false);
+
+    // Step 5: Verify the user is signed in successfully without MFA verification prompt
+    // If MFA was not skipped, the user would be redirected to the MFA verification page
+    await experience.verifyThenEnd(false);
+
+    await experience.clearVirtualAuthenticator();
+    await experience.page.close();
+    await deleteUser(userId);
+  });
+});
+
+describe('Passkey sign-in should be blocked for SSO users', () => {
+  const ssoConnectorApi = new SsoConnectorApi();
+  const domain = 'sso-passkey-test.com';
+  const enterpriseSsoIdentityId = generateStandardId();
+  const ssoEmail = `user-${generateStandardId()}@${domain}`;
+  const username = generateUsername();
+  const password = 'l0gt0_T3st_P@ssw0rd';
+
+  beforeAll(async () => {
+    await clearConnectorsByTypes([ConnectorType.Email, ConnectorType.Sms, ConnectorType.Social]);
+    // Create SSO connector
+    await ssoConnectorApi.createMockOidcConnector([domain]);
+    await updateSignInExperience({
+      singleSignOnEnabled: true,
+      signInMode: SignInMode.SignInAndRegister,
+      signUp: {
+        identifiers: [SignInIdentifier.Username],
+        password: true,
+        verify: false,
+      },
+      signIn: {
+        methods: [
+          {
+            identifier: SignInIdentifier.Username,
+            password: true,
+            verificationCode: false,
+            isPasswordPrimary: true,
+          },
+        ],
+      },
+      forgotPasswordMethods: [],
+    });
+  });
+
+  afterAll(async () => {
+    await resetMfaSettings();
+    await updateSignInExperience({
+      singleSignOnEnabled: false,
+      passkeySignIn: {
+        enabled: false,
+        showPasskeyButton: false,
+        allowAutofill: false,
+      },
+    });
+    await ssoConnectorApi.cleanUp();
+  });
+
+  it('should block SSO users from signing in with passkey', async () => {
+    // Step 1: Register a user via SSO (creates SSO identity)
+    const userId = await signInWithEnterpriseSso(
+      ssoConnectorApi.firstConnectorId!,
+      {
+        sub: enterpriseSsoIdentityId,
+        email: ssoEmail,
+        email_verified: true,
+      },
+      true // RegisterNewUser
+    );
+
+    // Step 2: Set username and password for the SSO user via admin API
+    await updateUser(userId, { username });
+    await updateUserPassword(userId, password);
+
+    // Step 3: Enable mandatory WebAuthn MFA so the user can bind a passkey
+    await enableMandatoryMfaWithWebAuthn();
+
+    // Step 4: Sign in with username/password to bind a passkey during MFA step
+    const experience = new ExpectWebAuthnExperience(await browser.newPage());
+    await experience.setupVirtualAuthenticator();
+    await experience.startWith(demoAppUrl, 'sign-in');
+    await experience.toFillForm(
+      {
+        identifier: username,
+        password,
+      },
+      { submit: true }
+    );
+
+    await waitFor(500);
+    await experience.toCreatePasskey();
+    await experience.verifyThenEnd(false);
+
+    // Step 5: Disable MFA requirement and enable passkey sign-in
+    await resetMfaSettings();
+    await updateSignInExperience({
+      passkeySignIn: {
+        enabled: true,
+        showPasskeyButton: true,
+        allowAutofill: false,
+      },
+    });
+
+    // Step 6: Attempt passkey sign-in — should be blocked for SSO users
+    await experience.startWith(demoAppUrl, 'sign-in');
+    await waitFor(1000);
+
+    await experience.toClick('button', 'Continue with passkey', false);
+
+    await experience.waitForToast(/not eligible for SSO users/);
+
+    await experience.clearVirtualAuthenticator();
+    await experience.page.close();
+    await deleteUser(userId);
+  });
+});

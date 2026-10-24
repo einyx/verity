@@ -1,0 +1,197 @@
+import { builtInLanguageOptions as consoleBuiltInLanguageOptions } from '@logto/phrases';
+import { Theme } from '@logto/schemas';
+import classNames from 'classnames';
+import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import ExternalLinkIcon from '@/assets/icons/external-link.svg?react';
+import File from '@/assets/icons/file.svg?react';
+import Globe from '@/assets/icons/globe.svg?react';
+import Palette from '@/assets/icons/palette.svg?react';
+import Profile from '@/assets/icons/profile.svg?react';
+import SignOut from '@/assets/icons/sign-out.svg?react';
+import SingleSignOn from '@/assets/icons/single-sign-on.svg?react';
+import { useSelfHostedLicenses } from '@/cloud/hooks/use-self-hosted-licenses';
+import UserAvatar from '@/components/UserAvatar';
+import UserInfoCard from '@/components/UserInfoCard';
+import { adminTenantEndpoint } from '@/consts';
+import { isCloud } from '@/consts/env';
+import { GlobalRoute } from '@/contexts/TenantsProvider';
+import Divider from '@/ds-components/Divider';
+import Dropdown, { DropdownItem } from '@/ds-components/Dropdown';
+import FlipOnRtl from '@/ds-components/FlipOnRtl';
+import Spacer from '@/ds-components/Spacer';
+import { Ring as Spinner } from '@/ds-components/Spinner';
+import useCurrentUser from '@/hooks/use-current-user';
+import useRedirectUri from '@/hooks/use-redirect-uri';
+import useSignOut from '@/hooks/use-sign-out';
+import useUserPreferences from '@/hooks/use-user-preferences';
+import { DynamicAppearanceMode } from '@/types/appearance-mode';
+import { onKeyDownHandler } from '@/utils/a11y';
+
+import SubMenu from './SubMenu';
+import UserInfoSkeleton from './UserInfoSkeleton';
+import styles from './index.module.scss';
+
+function UserInfo() {
+  const { signOut } = useSignOut();
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const { user, isLoading: isLoadingUser } = useCurrentUser();
+  const { data: selfHostedLicenses, error: selfHostedLicensesError } = useSelfHostedLicenses();
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const postSignOutRedirectUri = useRedirectUri('signOut');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const {
+    data: { language, appearanceMode },
+    update,
+  } = useUserPreferences();
+
+  if (isLoadingUser) {
+    return <UserInfoSkeleton />;
+  }
+
+  return (
+    <>
+      <div
+        ref={anchorRef}
+        role="button"
+        tabIndex={0}
+        className={classNames(styles.container, showDropdown && styles.active)}
+        onKeyDown={onKeyDownHandler(() => {
+          setShowDropdown(true);
+        })}
+        onClick={() => {
+          setShowDropdown(true);
+        }}
+      >
+        <UserAvatar user={user} />
+      </div>
+      <Dropdown
+        hasOverflowContent
+        anchorRef={anchorRef}
+        className={styles.dropdown}
+        isOpen={showDropdown}
+        horizontalAlign="end"
+        onClose={() => {
+          setShowDropdown(false);
+        }}
+      >
+        <UserInfoCard className={styles.userInfo} user={user} avatarSize="large" />
+        <Divider />
+        {isCloud && !selfHostedLicensesError && Boolean(selfHostedLicenses?.length) && (
+          <DropdownItem
+            className={classNames(styles.dropdownItem, isLoading && styles.loading)}
+            icon={<File className={styles.icon} />}
+            onClick={() => {
+              window.open(GlobalRoute.SelfHostedLicenses, '_blank', 'noopener,noreferrer');
+            }}
+          >
+            {t('cloud.self_hosted_licenses.title')}
+            <Spacer />
+            <div className={styles.icon}>
+              <FlipOnRtl>
+                <ExternalLinkIcon />
+              </FlipOnRtl>
+            </div>
+          </DropdownItem>
+        )}
+        {/* Console SSO */}
+        {isCloud && (
+          <DropdownItem
+            className={classNames(styles.dropdownItem, isLoading && styles.loading)}
+            icon={<SingleSignOn className={styles.icon} />}
+            onClick={() => {
+              window.open(GlobalRoute.ConsoleSso, '_blank', 'noopener,noreferrer');
+            }}
+          >
+            {t('menu.single_sign_on')}
+            <Spacer />
+            <div className={styles.icon}>
+              <FlipOnRtl>
+                <ExternalLinkIcon />
+              </FlipOnRtl>
+            </div>
+          </DropdownItem>
+        )}
+        <DropdownItem
+          className={classNames(styles.dropdownItem, isLoading && styles.loading)}
+          icon={<Profile className={styles.icon} />}
+          onClick={() => {
+            const accountUrl = new URL('/account/profile', adminTenantEndpoint.href);
+            window.open(accountUrl.toString(), '_blank', 'noopener,noreferrer');
+          }}
+        >
+          {t('menu.profile')}
+          <Spacer />
+          <div className={styles.icon}>
+            <FlipOnRtl>
+              <ExternalLinkIcon />
+            </FlipOnRtl>
+          </div>
+        </DropdownItem>
+        <Divider />
+        <SubMenu
+          className={styles.dropdownItem}
+          icon={<Globe className={styles.icon} />}
+          title="menu.language"
+          options={consoleBuiltInLanguageOptions}
+          selectedOption={language}
+          onItemClick={(language) => {
+            void update({ language });
+            setShowDropdown(false);
+          }}
+        />
+        <SubMenu
+          className={styles.dropdownItem}
+          icon={<Palette className={styles.icon} />}
+          title="menu.appearance.label"
+          options={[
+            {
+              value: DynamicAppearanceMode.System,
+              title: t('menu.appearance.system'),
+            },
+            {
+              value: Theme.Light,
+              title: t('menu.appearance.light'),
+            },
+            {
+              value: Theme.Dark,
+              title: t('menu.appearance.dark'),
+            },
+          ]}
+          selectedOption={appearanceMode}
+          onItemClick={(appearanceMode) => {
+            void update({ appearanceMode });
+            setShowDropdown(false);
+          }}
+        />
+        <Divider />
+        <DropdownItem
+          className={classNames(styles.dropdownItem, isLoading && styles.loading)}
+          icon={
+            <FlipOnRtl>
+              <SignOut className={styles.icon} />
+            </FlipOnRtl>
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+
+            if (isLoading) {
+              return;
+            }
+            setIsLoading(true);
+            void signOut(postSignOutRedirectUri.href);
+          }}
+        >
+          {t('menu.sign_out')}
+          <Spacer />
+          {isLoading && <Spinner className={styles.spinner} />}
+        </DropdownItem>
+      </Dropdown>
+    </>
+  );
+}
+
+export default UserInfo;

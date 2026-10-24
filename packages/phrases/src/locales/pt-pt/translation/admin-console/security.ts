@@ -1,0 +1,227 @@
+const security = {
+  page_title: 'Segurança',
+  title: 'Segurança',
+  subtitle: 'Configure proteções avançadas para se defender contra ataques complexos.',
+  tabs: {
+    captcha: 'CAPTCHA',
+    password_policy: 'Política de password',
+    blocklist: 'Lista de bloqueio',
+    general: 'Geral',
+  },
+  bot_protection: {
+    title: 'Proteção contra bots',
+    description:
+      'Ative CAPTCHA para registo, login e recuperação de palavra-passe para bloquear ameaças automatizadas.',
+    captcha: {
+      title: 'CAPTCHA',
+      placeholder: 'Selecione um fornecedor de CAPTCHA e configure a integração.',
+      add: 'Adicionar CAPTCHA',
+    },
+    settings: 'Configurações',
+    enable_captcha: 'Ativar CAPTCHA',
+    enable_captcha_description:
+      'Ativar verificação CAPTCHA para fluxos de inscrição, entrada e recuperação de senha.',
+  },
+  create_captcha: {
+    setup_captcha: 'Configurar CAPTCHA',
+  },
+  captcha_providers: {
+    recaptcha_enterprise: {
+      name: 'reCAPTCHA Enterprise',
+      description:
+        'Solução empresarial de CAPTCHA da Google que oferece deteção avançada de ameaças e análises de segurança detalhadas para proteger o seu site contra atividades fraudulentas.',
+    },
+    turnstile: {
+      name: 'Cloudflare Turnstile',
+      description:
+        'Alternativa inteligente ao CAPTCHA da Cloudflare, que oferece proteção não intrusiva contra bots, garantindo uma experiência de utilizador fluida sem quebra-cabeças visuais.',
+    },
+    cap: {
+      name: 'Cap',
+      description:
+        'CAPTCHA de código aberto e auto-alojado baseado em prova de trabalho, sem quebra-cabeças visuais nem serviços de terceiros, ideal para regiões onde outros serviços de CAPTCHA não estão acessíveis.',
+    },
+  },
+  captcha_details: {
+    back_to_security: 'Voltar à Segurança',
+    page_title: 'Detalhes do CAPTCHA',
+    check_readme: 'Consultar README',
+    options_change_captcha: 'Alterar fornecedor de CAPTCHA',
+    connection: 'Ligação',
+    description: 'Configure a sua ligação CAPTCHA.',
+    site_key: 'Chave do site',
+    secret_key: 'Chave secreta',
+    project_id: 'ID do projeto',
+    domain: 'Domínio (opcional)',
+    domain_placeholder: 'www.google.com (padrão) ou recaptcha.net',
+    recaptcha_key_id: 'ID da chave reCAPTCHA',
+    recaptcha_api_key: 'Chave de API do projeto',
+    cap_endpoint: 'Endpoint do Cap',
+    cap_endpoint_placeholder: 'https://cap.example.com',
+    cap_endpoint_http_notice:
+      'Este endpoint utiliza HTTP, o que só é adequado para desenvolvimento local. Os navegadores bloqueiam pedidos HTTP a partir de uma página de início de sessão HTTPS, e a chave secreta seria enviada sem encriptação. Utilize HTTPS em produção.',
+    deletion_description: 'Tem a certeza de que deseja eliminar este fornecedor de CAPTCHA?',
+    captcha_deleted: 'Fornecedor de CAPTCHA eliminado com sucesso',
+    setup_captcha: 'Configurar CAPTCHA',
+    mode: 'Modo de verificação',
+    mode_invisible: 'Invisível',
+    mode_checkbox: 'Caixa de seleção',
+    mode_notice:
+      'O modo de verificação é definido nas definições da chave reCAPTCHA na Google Cloud Console. Alterar o modo aqui requer um tipo de chave correspondente.',
+    score_threshold: 'Limiar de pontuação',
+    score_threshold_description:
+      'Pontuações abaixo do limiar são rejeitadas. 0.0 permite todas, 1.0 apenas pontuações perfeitas. O valor predefinido é 0.5.',
+    score_threshold_error: 'O limiar de pontuação deve estar entre 0 e 1.',
+  },
+  password_policy: {
+    password_requirements: 'Requisitos de password',
+    password_requirements_description:
+      'Aprimorar os requisitos de senha para se defender contra ataques de stuffing de credenciais e senhas fracas. ',
+    minimum_length: 'Comprimento mínimo',
+    minimum_length_description:
+      'O NIST sugere o uso de <a>pelo menos 8 caracteres</a> para produtos web.',
+    minimum_length_error: 'O comprimento mínimo deve estar entre {{min}} e {{max}} (inclusive).',
+    minimum_required_char_types: 'Tipos de caracteres mínimos necessários',
+    minimum_required_char_types_description:
+      'Tipos de caracteres: letras maiúsculas (A-Z), letras minúsculas (a-z), números (0-9) e símbolos especiais ({{symbols}}).',
+    password_rejection: 'Rejeição de password',
+    compromised_passwords: 'Passwords comprometidos',
+    breached_passwords: 'Passwords violados',
+    breached_passwords_description:
+      'Recusar passwords encontradas anteriormente em bancos de dados de violação.',
+    restricted_phrases: 'Frases de baixa segurança restritas',
+    restricted_phrases_tooltip:
+      'A tua password deve evitar essas frases, a menos que combines com 3 ou mais caracteres adicionais.',
+    repetitive_or_sequential_characters: 'Caracteres repetitivos ou sequenciais',
+    repetitive_or_sequential_characters_description: 'Ex., "AAAA", "1234" e "abcd".',
+    user_information: 'Informações do utilizador',
+    user_information_description:
+      'Ex., endereço de email, número de telefone, nome de utilizador, etc.',
+    custom_words: 'Palavras personalizadas',
+    custom_words_description:
+      'Personalize palavras específicas do contexto, não diferenciando maiúsculas de minúsculas e uma por linha.',
+    custom_words_placeholder: 'O seu nome de serviço, nome da empresa, etc.',
+    password_expiration: 'Expiração de palavra-passe',
+    password_expiration_description:
+      'Exigir que os utilizadores redefinam a sua palavra-passe após um número definido de dias. Os utilizadores que iniciam sessão via SSO ou passkey não são afetados.',
+    enable_password_expiration: 'Ativar expiração de palavra-passe',
+    enable_password_expiration_description:
+      'Exigir que os utilizadores redefinam periodicamente a sua palavra-passe. Os utilizadores existentes sem uma data de alteração de palavra-passe registada serão avaliados a partir da data em que esta política foi ativada.',
+    enable_password_expiration_tip:
+      'Só pode ativar a expiração da palavra-passe depois de configurar, na experiência de início de sessão, pelo menos um método de recuperação da palavra-passe com um conector válido.',
+    expiration_period: 'Período de validade da palavra-passe (dias)',
+    expiration_period_description:
+      'Número de dias que uma palavra-passe permanece válida antes de expirar.',
+    expiration_period_error:
+      'O período de validade da palavra-passe deve estar entre {{min}} e {{max}} dias.',
+    password_expiration_recovery_reminder:
+      'Alguns utilizadores podem não ter um endereço de e-mail ou número de telefone para receber um código de recuperação da palavra-passe, pelo que não poderão repor uma palavra-passe expirada. Exija um endereço de e-mail ou número de telefone no registo para garantir que todos os utilizadores possam recuperar a sua palavra-passe.',
+  },
+  verification_code_policy: {
+    card_title: 'Código de verificação',
+    card_description:
+      'Configure a duração da expiração e o número máximo de novas tentativas para códigos de verificação usados nos fluxos de início de sessão, registo e reposição da palavra-passe.',
+    enable: {
+      title: 'Personalizar definições do código de verificação',
+      description:
+        'Permitir a personalização da duração da expiração do código de verificação e do número máximo de novas tentativas.',
+    },
+    expiration_duration: {
+      title: 'Duração da expiração (segundos)',
+      description:
+        'A duração em segundos durante a qual um código de verificação permanece válido após ser enviado.',
+      error_message: 'A duração da expiração deve estar entre 60 e 3600 segundos.',
+    },
+    max_retry_attempts: {
+      title: 'Número máximo de novas tentativas',
+      description:
+        'Número máximo de tentativas de verificação falhadas permitidas antes de o código ser invalidado.',
+      error_message: 'O número máximo de novas tentativas deve estar entre 1 e 100.',
+    },
+  },
+
+  sentinel_policy: {
+    card_title: 'Bloqueio de identificador',
+    card_description:
+      'O bloqueio está disponível para todos os utilizadores com configurações padrão, mas podes personalizá-lo para maior controle.\n\nBloqueia temporariamente um identificador após várias tentativas de autenticação falhadas (por exemplo, uma sequência de senhas ou códigos de verificação incorretos) para impedir acesso por força bruta.',
+    enable_sentinel_policy: {
+      title: 'Personalizar experiência de bloqueio',
+      description:
+        'Permitir a personalização do máximo de tentativas de login falhadas antes do bloqueio, duração do bloqueio, e desbloqueio manual imediato.',
+    },
+    max_attempts: {
+      title: 'Máximo de tentativas falhadas',
+      description:
+        'Bloqueia temporariamente um identificador após atingir o número máximo de tentativas de login falhadas em uma hora.',
+      error_message: 'O máximo de tentativas falhadas deve ser maior que 0.',
+    },
+    lockout_duration: {
+      title: 'Duração do bloqueio (minutos)',
+      description:
+        'Bloquear login por um período após exceder o limite máximo de tentativas falhadas.',
+      error_message: 'A duração do bloqueio deve ser de pelo menos 1 minuto.',
+    },
+    manual_unlock: {
+      title: 'Desbloqueio manual',
+      description:
+        'Desbloqueie usuários imediatamente confirmando sua identidade e inserindo seu identificador.',
+      unblock_by_identifiers: 'Desbloquear por identificador',
+      modal_description_1:
+        'Um identificador foi temporariamente bloqueado devido a várias tentativas de login/registro falhadas. Para proteger a segurança, o acesso será restaurado automaticamente após a duração do bloqueio.',
+      modal_description_2:
+        'Desbloqueie manualmente apenas se você tiver certeza da identidade do usuário e garantido que não houve tentativas de acesso não autorizado.',
+      placeholder:
+        'Insira identificadores (endereço de email / número de telefone / nome de utilizador)',
+      confirm_button_text: 'Desbloquear agora',
+      success_toast: 'Desbloqueado com sucesso',
+      duplicate_identifier_error: 'Identificador já adicionado',
+      empty_identifier_error: 'Por favor, insira pelo menos um identificador',
+    },
+  },
+  blocklist: {
+    card_title: 'Lista de bloqueio de email',
+    card_description:
+      'Assuma o controle da sua base de utilizadores, bloqueando endereços de email de alto risco ou indesejados.',
+    custom_email_allowlist: {
+      title: 'Permitir endereços de email personalizados',
+      description:
+        'Adicione regras para permitir apenas domínios de email, endereços de email ou padrões curinga específicos para novos registos e emails recentemente associados. Exemplos: bar@example.com, @example.com, foo*@example.com, *@example.com. Os domínios gmail.com e googlemail.com são tratados como equivalentes e os pontos na parte local são ignorados, pelo que foo.bar@gmail.com corresponde a foobar@googlemail.com.',
+      placeholder: 'Introduza um endereço de email, domínio ou padrão curinga',
+      duplicate_error: 'Endereço de email, domínio ou padrão curinga já adicionado',
+      invalid_format_error:
+        'Deve ser um endereço de email válido (bar@example.com), domínio (@example.com) ou padrão curinga (foo*@example.com, *@example.com)',
+      warnings: {
+        identical_entries:
+          'Algumas entradas da lista de permissões também existem nas regras de bloqueio. Emails correspondentes ainda podem ser bloqueados.',
+        blocked_exact_email:
+          'Alguns emails exatos da lista de permissões correspondem a uma regra de bloqueio. Emails correspondentes ainda podem ser bloqueados.',
+        blocked_subaddressing:
+          'Algumas entradas da lista de permissões contêm sinal de mais (+), mas o subendereçamento de email está bloqueado.',
+        effectively_unusable:
+          'Com base nestas verificações, a lista de permissões atual pode não permitir a passagem de nenhum novo email.',
+      },
+    },
+    disposable_email: {
+      title: 'Bloquear endereços de email descartáveis',
+      description:
+        'Ativar para rejeitar qualquer tentativa de inscrição usando um endereço de email descartável ou temporário, o que pode prevenir spam e melhorar a qualidade dos utilizadores.',
+    },
+    email_subaddressing: {
+      title: 'Bloquear subendereços de email',
+      description:
+        'Ativar para rejeitar qualquer tentativa de inscrição que utilize subendereços de email com um sinal de mais (+) e caracteres adicionais (por exemplo, user+alias@foo.com).',
+    },
+    custom_email_address: {
+      title: 'Bloquear endereços de email personalizados',
+      description:
+        'Adicione regras para impedir que domínios de email, endereços de email ou padrões curinga específicos se registem ou sejam associados através da IU. Exemplos: bar@example.com, @example.com, foo*@example.com, *@example.com. Os domínios gmail.com e googlemail.com são tratados como equivalentes e os pontos na parte local são ignorados, pelo que foo.bar@gmail.com corresponde a foobar@googlemail.com.',
+      placeholder: 'Introduza um endereço de email, domínio ou padrão curinga',
+      duplicate_error:
+        'Endereço de email, domínio ou padrão de endereço de email com caracteres universais já adicionado',
+      invalid_format_error:
+        'Deve ser um endereço de email válido (bar@example.com), domínio (@example.com) ou padrão de endereço de email com caracteres universais (foo*@example.com, *@example.com)',
+    },
+  },
+};
+
+export default Object.freeze(security);

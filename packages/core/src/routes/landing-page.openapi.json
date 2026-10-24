@@ -1,0 +1,31 @@
+{
+  "tags": [
+    {
+      "name": "Dev feature",
+      "description": "In-development API surfaces. Hidden from public OpenAPI output unless dev features are enabled."
+    }
+  ],
+  "paths": {
+    "/api/landing-page": {
+      "get": {
+        "summary": "Read the published landing page",
+        "description": "Returns only the published document, including the optional live-editor element overrides. The draft is never exposed here.",
+        "tags": ["Dev feature"]
+      }
+    },
+    "/api/landing-page/editor": {
+      "get": {
+        "summary": "Read the editable landing page",
+        "description": "Returns the draft, the published document and the published version. Live-editor element overrides are kept on the document and in the version history.",
+        "tags": ["Dev feature"]
+      }
+    },
+    "/api/landing-page/draft": {
+      "put": {
+        "summary": "Save the landing page draft",
+        "description": "Saves the ordered sections and the optional live-editor elements without publishing. elements is a record keyed by a stable authored element ID (letters, digits, underscores and hyphens, 1-100 characters; prototype-related keys are rejected). Each value accepts only optional text (max 1000), href (same-site path, section anchor or HTTPS URL, max 2048), src (HTTPS image URL, max 2048), alt (max 300), fit (cover or contain) and integer x/y offsets (-400 through 400). Documents without elements stay valid. The full request schema is generated from landingPageDocumentGuard.",
+        "tags": ["Dev feature"]
+      }
+    }
+  }
+}

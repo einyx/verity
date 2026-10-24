@@ -1,0 +1,26 @@
+# From this genius: https://github.com/orgs/community/discussions/67654#discussioncomment-8038649
+name: Rerun workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        required: true
+jobs:
+  rerun:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Rerun failed jobs
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          case "$RUN_ID" in
+            ''|*[!0-9]*) echo 'Invalid workflow run ID' >&2; exit 1 ;;
+          esac
+          gh run watch "$RUN_ID" > /dev/null 2>&1
+          gh run rerun "$RUN_ID" --failed

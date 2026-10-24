@@ -1,0 +1,147 @@
+const sign_up_and_sign_in = {
+  identifiers_email: 'メールアドレス',
+  identifiers_phone: '電話番号',
+  identifiers_username: 'ユーザー名',
+  identifiers_email_or_sms: 'メールアドレスまたは電話番号',
+  identifiers_none: '該当なし',
+  and: 'および',
+  or: 'または',
+  sign_up: {
+    title: 'サインアップ',
+    sign_up_identifier: 'サインアップ識別子',
+    identifier_description:
+      '新しいアカウントを作成する際に、すべての選択されたサインアップ識別子が必要です。',
+    sign_up_authentication: 'サインアップの認証設定',
+    verification_tip:
+      'ユーザーはサインアップ中に確認コードを入力することで、設定されたメールや電話番号を確認する必要があります。',
+    authentication_description:
+      '選択したすべてのアクションは、ユーザーがフローを完了するために必須です。',
+    set_a_password_option: 'パスワードの設定',
+    verify_at_sign_up_option: 'サインアップ時に確認する',
+    social_only_creation_description: '（これはソーシャルアカウント作成に適用されます）',
+    collect_user_profile: 'ユーザープロフィールを収集',
+    add_profile_fields: 'プロフィールフィールドを追加',
+    profile_fields_hint: {
+      not_in_list: '一覧にない場合は?',
+      set_up: '設定',
+      go_to: '他のプロフィールフィールドに移動します。',
+    },
+  },
+  sign_in: {
+    title: 'サインイン',
+    sign_in_identifier_and_auth: 'サインインの識別子と認証設定',
+    description: 'ユーザーは利用可能なすべてのオプションを使用してサインインできます',
+    add_sign_in_method: 'サインイン方法を追加',
+    add_sign_up_method: 'サインアップ方法を追加',
+    password_auth: 'パスワード',
+    verification_code_auth: '確認コード',
+    auth_swap_tip: '以下のオプションを交換して、フローで最初に表示されるオプションを決定します。',
+    require_auth_factor: '少なくとも 1 つの認証要素を選択する必要があります。',
+    forgot_password: 'パスワードを忘れた場合',
+    forgot_password_description:
+      'ユーザーは利用可能な確認方法を使用してパスワードをリセットできます。',
+    add_verification_method: '確認方法を追加',
+    email_verification_code: 'メール確認コード',
+    phone_verification_code: '電話確認コード',
+  },
+  social_sign_in: {
+    title: 'ソーシャルサインイン',
+    social_sign_in: 'ソーシャルサインイン',
+    description:
+      '設定した必須識別子に応じて、ユーザーはソーシャルコネクタを介してサインアップする際に識別子を提供するよう求められる場合があります。',
+    add_social_connector: 'ソーシャルコネクタを追加',
+    set_up_hint: {
+      not_in_list: '一覧にない場合は?',
+      set_up_more: '設定',
+      go_to: '他のソーシャルコネクタに移動します。',
+    },
+    settings_title: 'ソーシャルサインインエクスペリエンス',
+    automatic_account_linking: '同じ識別子を持つアカウントを自動的にリンクする',
+    automatic_account_linking_tip:
+      '有効にすると、ユーザーが新しいソーシャルアイデンティティでサインインした際に、同じ識別子（例：メールアドレス）を持つ既存のアカウントが正確に 1 つある場合、Logto はそのソーシャルアイデンティティを自動的にそのアカウントにリンクします。ユーザーはアカウントをリンクするかどうかを選択するようには求められません。',
+    required_sign_up_identifiers: '欠落しているサインアップ識別子の提供をユーザーに要求する',
+    required_sign_up_identifiers_tip:
+      '有効にすると、ソーシャルプロバイダー経由でログインするユーザーは、ログインを完了する前に、（メールのような）欠落している必須サインアップ識別子を記入する必要があります。 \n\n無効にすると、ソーシャルアカウントがそれを同期しなかった場合でも、ユーザーは欠落した識別子を提供せずに続行できます。',
+  },
+  passkey_sign_in: {
+    title: 'パスキーサインイン',
+    passkey_sign_in: 'パスキーサインイン',
+    enable_passkey_sign_in_description:
+      'ユーザーが生体認証やセキュリティキーなどを使用して、パスキー（WebAuthn）経由でアプリケーションに迅速かつ安全にアクセスできるようにします。',
+    prompts: 'パスキープロンプト',
+    show_passkey_button: 'サインインページに「パスキーで続行」ボタンを表示',
+    show_passkey_button_tip:
+      '「パスキーで続行」ボタンを無効にすると、サインインフローは識別子優先になり、次のステップでパスワードとパスキーのオプションが表示されます。',
+    allow_autofill: '識別子フィールドで登録済みパスキーのプロンプトと自動入力を許可',
+  },
+  tip: {
+    set_a_password: 'ユーザー名にユニークなパスワードを設定することが重要です。',
+    verify_at_sign_up:
+      '現在、検証されたメールアドレスのみをサポートしています。検証がない場合、ユーザーベースには低品質のメールアドレスが多数含まれる場合があります。',
+    password_auth:
+      'これは、サインアッププロセス中にパスワードを設定するオプションを有効にした場合に必要です。',
+    verification_code_auth:
+      'これは、サインアップ時に確認コードの提供オプションのみを有効にした場合に必要です。サインアッププロセスでパスワード設定を許可する場合は、ボックスのチェックを外してもかまいません。',
+    email_mfa_enabled:
+      'メール確認コードはすでに MFA に対して有効になっているため、セキュリティのためにプライマリサインイン方法として再利用することはできません。',
+    phone_mfa_enabled:
+      '電話確認コードはすでに MFA に対して有効になっているため、セキュリティのためにプライマリサインイン方法として再利用することはできません。',
+    delete_sign_in_method: 'これは {{identifier}} を必須の識別子として選択した場合に必要です。',
+    password_disabled_notification:
+      'ユーザー名のサインアップで「パスワードを作成する」オプションが無効になっており、ユーザーがサインインできない可能性があります。保存を続行するには確認してください。',
+  },
+  advanced_options: {
+    title: '高度なオプション',
+    enable_single_sign_on: '企業向けシングルサインオン (SSO) を有効にする',
+    enable_single_sign_on_description:
+      'ユーザーが企業のアイデンティティを使用してアプリケーションにサインインできるようにします。',
+    single_sign_on_hint: {
+      prefix: '詳細は、',
+      link: '"企業向けSSO"',
+      suffix: 'セクションをご覧ください。',
+    },
+    enable_user_registration: 'ユーザー登録を有効にする',
+    enable_user_registration_description:
+      'ユーザー登録を有効または無効にできます。無効にすると、ユーザーは管理コンソールで追加できますが、サインイン画面でアカウントを作成することはできません。',
+    unknown_session_redirect_url: '不明なセッションのリダイレクト URL',
+    unknown_session_redirect_url_tip:
+      'Logto がサインインページでユーザーのセッションを認識できないことがあります。例えば、セッションが期限切れになった場合や、ユーザーがサインインリンクをブックマークまたは共有した場合です。デフォルトでは、「不明なセッション」404 エラーが表示されます。ユーザーエクスペリエンスを向上させるために、ユーザーをアプリに戻して認証を再開するためのフォールバック URL を設定します。',
+  },
+  username_policy: {
+    title: 'ユーザー名ポリシー',
+    description:
+      'ユーザー名の要件（長さ、使用できる文字、大文字と小文字の区別など）をカスタマイズします。',
+    manage_button: '管理',
+    modal_title: 'ユーザー名ポリシー',
+    modal_description: 'エンドユーザー向けのユーザー名の要件をカスタマイズします。',
+    length: {
+      title: 'ユーザー名の長さ',
+      minimum: '最小',
+      maximum: '最大',
+      min_greater_than_max: '最小の長さは最大の長さを超えることはできません。',
+    },
+    allowed_chars: {
+      title: '使用できる文字の種類',
+      uppercase: '大文字（A-Z）',
+      lowercase: '小文字（a-z）',
+      numbers: '数字（0-9）',
+      underscore: 'アンダースコア（_）',
+      no_valid_leading_char:
+        '数字のみは使用できません。大文字、小文字、アンダースコアのうち少なくとも1つを有効にしてください。',
+      no_char_selected: '少なくとも1つの文字タイプを選択してください。',
+    },
+    case_sensitive: {
+      title: '大文字と小文字を区別するユーザー名',
+      description:
+        '大文字と小文字を別の文字として扱います。「user123」と「User123」は異なるユーザー名として扱われます。',
+    },
+    case_conflicts: {
+      title: '既存のユーザー名の競合が検出されました',
+      description:
+        '大文字と小文字の区別を無効にすると、一部のユーザー名が競合します。保存する前に、以下の{{count}}件の競合グループを解決してください。',
+      sample_title: '競合しているユーザー名',
+    },
+  },
+};
+
+export default Object.freeze(sign_up_and_sign_in);

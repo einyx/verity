@@ -1,0 +1,347 @@
+import {
+  type actionConfigGuard,
+  type jwtCustomizerConfigGuard,
+  LogtoConfigs,
+  LogtoTenantConfigKey,
+  type McpPortalConnection,
+  mcpPortalConnectionGuard,
+  type AdminConsoleData,
+  type CimdConfig,
+  cimdConfigGuard,
+  defaultCimdConfig,
+  type IdTokenConfig,
+  type LogtoConfig,
+  type LogtoConfigKey,
+  type LogtoActionKey,
+  LogtoOidcConfigKey,
+  type LogtoJwtTokenKey,
+  type OidcPrivateKey,
+  oidcPrivateKeyGuard,
+  idTokenConfigGuard,
+  type LogtoOidcConfigType,
+  signingKeyRotationStateGuard,
+  type SigningKeyRotationState,
+  messageRateLimitOverrideGuard,
+} from '@logto/schemas';
+import type { CommonQueryMethods } from '@silverhand/slonik';
+import { sql } from '@silverhand/slonik';
+import { type z } from 'zod';
+
+import { type WellKnownCache } from '#src/caches/well-known.js';
+import { DeletionError } from '#src/errors/SlonikError/index.js';
+import { convertToIdentifiers } from '#src/utils/sql.js';
+
+const { table, fields } = convertToIdentifiers(LogtoConfigs);
+const qualifiedValueField = sql.identifier([LogtoConfigs.table, LogtoConfigs.fields.value]);
+
+export const createLogtoConfigQueries = (
+  pool: CommonQueryMethods,
+  wellKnownCache: WellKnownCache
+) => {
+  const upsertPrivateSigningKeysWithExecutor = async (
+    executor: CommonQueryMethods,
+    privateKeys: OidcPrivateKey[]
+  ) =>
+    executor.one<{ key: LogtoOidcConfigKey.PrivateKeys; value: unknown }>(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (${LogtoOidcConfigKey.PrivateKeys}, ${sql.jsonb(privateKeys)})
+        on conflict (${fields.tenantId}, ${fields.key}) do update set ${fields.value} = ${sql.jsonb(
+          privateKeys
+        )}
+        returning ${fields.key}, ${fields.value}
+    `);
+
+  const upsertPrivateSigningKeys = async (privateKeys: OidcPrivateKey[]) =>
+    upsertPrivateSigningKeysWithExecutor(pool, privateKeys);
+
+  const getAdminConsoleConfig = async () =>
+    pool.one<{ value: unknown }>(sql`
+      select ${fields.value} from ${table}
+      where ${fields.key} = ${LogtoTenantConfigKey.AdminConsole}
+    `);
+
+  const updateAdminConsoleConfig = async (value: Partial<AdminConsoleData>) =>
+    pool.one<{ value: unknown }>(sql`
+      update ${table}
+      set ${fields.value} = coalesce(${fields.value},'{}'::jsonb) || ${sql.jsonb(value)}
+      where ${fields.key} = ${LogtoTenantConfigKey.AdminConsole}
+      returning ${fields.value}
+    `);
+
+  const getCloudConnectionData = async () =>
+    pool.one<{ value: unknown }>(sql`
+      select ${fields.value} from ${table}
+      where ${fields.key} = ${LogtoTenantConfigKey.CloudConnection}
+    `);
+
+  /** The MCP portal connection, or undefined before the portal has been set up. */
+  const getMcpPortalConnection = async (): Promise<McpPortalConnection | undefined> => {
+    const row = await pool.maybeOne<{ value: unknown }>(sql`
+      select ${fields.value} from ${table}
+      where ${fields.key} = ${LogtoTenantConfigKey.McpPortal}
+    `);
+
+    return row ? mcpPortalConnectionGuard.parse(row.value) : undefined;
+  };
+
+  const upsertMcpPortalConnection = async (value: McpPortalConnection) => {
+    await pool.query(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+      values (${LogtoTenantConfigKey.McpPortal}, ${sql.jsonb(value)})
+      on conflict (${fields.tenantId}, ${fields.key}) do update set ${fields.value} = ${sql.jsonb(value)}
+    `);
+  };
+
+  const deleteMcpPortalConnection = async () =>
+    pool.query(sql`delete from ${table} where ${fields.key} = ${LogtoTenantConfigKey.McpPortal}`);
+
+  const getRowsByKeys = async (keys: LogtoConfigKey[]) =>
+    pool.query<LogtoConfig>(sql`
+      select ${sql.join([fields.key, fields.value], sql`,`)} from ${table}
+        where ${fields.key} in (${sql.join(keys, sql`,`)})
+    `);
+
+  const deleteRowByKey = async (key: LogtoConfigKey) => {
+    const { rowCount } = await pool.query(sql`
+      delete from ${table}
+      where ${fields.key}=${key}
+    `);
+
+    if (rowCount < 1) {
+      throw new DeletionError(LogtoConfigs.table, key);
+    }
+  };
+
+  const lockPrivateSigningKeys = async () =>
+    pool.query(sql`
+      select ${fields.key}
+      from ${table}
+      where ${fields.key} = ${LogtoOidcConfigKey.PrivateKeys}
+      for update
+    `);
+
+  const lockPrivateSigningKeysAndRotationState = async () =>
+    pool.query(sql`
+      select ${fields.key}
+      from ${table}
+      where ${fields.key} in (
+        ${LogtoOidcConfigKey.PrivateKeys},
+        ${LogtoTenantConfigKey.SigningKeyRotationState}
+      )
+      for update
+    `);
+
+  const getSigningKeyRotationStateWithExecutor = async (
+    executor: CommonQueryMethods
+  ): Promise<SigningKeyRotationState | undefined> => {
+    const { rows } = await executor.query<LogtoConfig>(sql`
+      select ${sql.join([fields.key, fields.value], sql`,`)} from ${table}
+        where ${fields.key} = ${LogtoTenantConfigKey.SigningKeyRotationState}
+    `);
+
+    if (rows.length === 0) {
+      return undefined;
+    }
+
+    return signingKeyRotationStateGuard.parse(rows[0]?.value);
+  };
+  const upsertSigningKeyRotationStateWithExecutor = async (
+    executor: CommonQueryMethods,
+    value: SigningKeyRotationState
+  ) =>
+    executor.one<{ value: SigningKeyRotationState }>(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (${LogtoTenantConfigKey.SigningKeyRotationState}, ${sql.jsonb(value)})
+        on conflict (${fields.tenantId}, ${fields.key}) do update
+        set ${fields.value} = ${sql.jsonb(value)}
+        returning ${fields.value}
+    `);
+
+  const getPrivateSigningKeys = async (): Promise<OidcPrivateKey[]> => {
+    const { rows } = await pool.query<LogtoConfig>(sql`
+      select ${sql.join([fields.key, fields.value], sql`,`)} from ${table}
+      where ${fields.key} = ${LogtoOidcConfigKey.PrivateKeys}
+    `);
+
+    return oidcPrivateKeyGuard.array().parse(rows[0]?.value);
+  };
+
+  const updateOidcConfigsByKey = async <
+    T extends Exclude<LogtoOidcConfigKey, LogtoOidcConfigKey.PrivateKeys>,
+  >(
+    key: T,
+    value: LogtoOidcConfigType[T]
+  ) =>
+    pool.query(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (${key}, ${sql.jsonb(value)})
+        on conflict (${fields.tenantId}, ${fields.key}) do update set ${fields.value} = ${sql.jsonb(value)}
+        returning *
+    `);
+
+  const getSigningKeyRotationState = async (): Promise<SigningKeyRotationState | undefined> =>
+    getSigningKeyRotationStateWithExecutor(pool);
+
+  const upsertSigningKeyRotationState = async (
+    value: SigningKeyRotationState
+  ): Promise<SigningKeyRotationState> => {
+    const { value: rawValue } = await upsertSigningKeyRotationStateWithExecutor(pool, value);
+
+    return signingKeyRotationStateGuard.parse(rawValue);
+  };
+
+  const setTenantCacheExpiresAt = async (
+    tenantCacheExpiresAt: number
+  ): Promise<SigningKeyRotationState> => {
+    const { value: rawValue } = await pool.one<{ value: SigningKeyRotationState }>(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (
+          ${LogtoTenantConfigKey.SigningKeyRotationState},
+          ${sql.jsonb({ tenantCacheExpiresAt })}
+        )
+        on conflict (${fields.tenantId}, ${fields.key}) do update
+        set ${fields.value} = coalesce(${qualifiedValueField}, '{}'::jsonb) || ${sql.jsonb({
+          tenantCacheExpiresAt,
+        })}
+        returning ${fields.value}
+    `);
+
+    return signingKeyRotationStateGuard.parse(rawValue);
+  };
+
+  const setSigningKeyRotationAt = async (
+    signingKeyRotationAt: number
+  ): Promise<SigningKeyRotationState> => {
+    const { value: rawValue } = await pool.one<{ value: SigningKeyRotationState }>(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (
+          ${LogtoTenantConfigKey.SigningKeyRotationState},
+          ${sql.jsonb({ signingKeyRotationAt })}
+        )
+        on conflict (${fields.tenantId}, ${fields.key}) do update
+        set ${fields.value} = coalesce(${qualifiedValueField}, '{}'::jsonb) || ${sql.jsonb({
+          signingKeyRotationAt,
+        })}
+        returning ${fields.value}
+    `);
+
+    return signingKeyRotationStateGuard.parse(rawValue);
+  };
+
+  // Can not narrow down the type of value if we utilize `buildInsertIntoWithPool` method.
+  const upsertJwtCustomizer = async <T extends LogtoJwtTokenKey>(
+    key: T,
+    value: z.infer<(typeof jwtCustomizerConfigGuard)[T]>
+  ) =>
+    pool.one<{ key: T; value: Record<string, string> }>(
+      sql`
+        insert into ${table} (${fields.key}, ${fields.value})
+          values (${key}, ${sql.jsonb(value)})
+          on conflict (${fields.tenantId}, ${fields.key}) do update set ${
+            fields.value
+          } = ${sql.jsonb(value)}
+          returning *
+      `
+    );
+
+  const deleteJwtCustomizer = async <T extends LogtoJwtTokenKey>(key: T) => deleteRowByKey(key);
+
+  const upsertAction = async <T extends LogtoActionKey>(
+    key: T,
+    value: z.infer<(typeof actionConfigGuard)[T]>
+  ) =>
+    pool.one<{ key: T; value: z.infer<(typeof actionConfigGuard)[T]> }>(
+      sql`
+        insert into ${table} (${fields.key}, ${fields.value})
+          values (${key}, ${sql.jsonb(value)})
+          on conflict (${fields.tenantId}, ${fields.key}) do update set ${
+            fields.value
+          } = ${sql.jsonb(value)}
+          returning *
+      `
+    );
+
+  const deleteAction = async <T extends LogtoActionKey>(key: T) => deleteRowByKey(key);
+
+  const getIdTokenConfig = wellKnownCache.memoize(async () => {
+    const { rows } = await getRowsByKeys([LogtoTenantConfigKey.IdToken]);
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return idTokenConfigGuard.parse(rows[0]?.value);
+  }, ['id-token-config']);
+
+  const upsertIdTokenConfig = wellKnownCache.mutate(
+    async (value: IdTokenConfig) =>
+      pool.one<{ value: unknown }>(sql`
+        insert into ${table} (${fields.key}, ${fields.value})
+          values (${LogtoTenantConfigKey.IdToken}, ${sql.jsonb(value)})
+          on conflict (${fields.tenantId}, ${fields.key}) do update set ${fields.value} = ${sql.jsonb(value)}
+          returning ${fields.value}
+      `),
+    ['id-token-config']
+  );
+
+  const getCimdConfig = async (): Promise<CimdConfig> => {
+    const { rows } = await getRowsByKeys([LogtoTenantConfigKey.Cimd]);
+
+    if (rows.length === 0) {
+      return defaultCimdConfig;
+    }
+
+    return cimdConfigGuard.parse(rows[0]?.value);
+  };
+
+  const upsertCimdConfig = async (value: CimdConfig) =>
+    pool.query(sql`
+      insert into ${table} (${fields.key}, ${fields.value})
+        values (${LogtoTenantConfigKey.Cimd}, ${sql.jsonb(value)})
+        on conflict (${fields.tenantId}, ${fields.key}) do update set ${fields.value} = ${sql.jsonb(
+          value
+        )}
+        returning *
+    `);
+
+  // Internal, ops-only per-tenant override of the system message send-rate-limit policy. There is
+  // intentionally no upsert counterpart: the key is set by direct DB write only (no API), so the
+  // cache picks it up on its next expiry (or tenant restart).
+  const getMessageRateLimitOverride = wellKnownCache.memoize(async () => {
+    const { rows } = await getRowsByKeys([LogtoTenantConfigKey.MessageRateLimitOverride]);
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return messageRateLimitOverrideGuard.parse(rows[0]?.value);
+  }, ['message-rate-limit-override']);
+
+  return {
+    getAdminConsoleConfig,
+    updateAdminConsoleConfig,
+    getCloudConnectionData,
+    getMcpPortalConnection,
+    upsertMcpPortalConnection,
+    deleteMcpPortalConnection,
+    getRowsByKeys,
+    lockPrivateSigningKeys,
+    lockPrivateSigningKeysAndRotationState,
+    getPrivateSigningKeys,
+    upsertPrivateSigningKeys,
+    updateOidcConfigsByKey,
+    getSigningKeyRotationState,
+    upsertSigningKeyRotationState,
+    setTenantCacheExpiresAt,
+    setSigningKeyRotationAt,
+    upsertJwtCustomizer,
+    deleteJwtCustomizer,
+    upsertAction,
+    deleteAction,
+    getIdTokenConfig,
+    upsertIdTokenConfig,
+    getCimdConfig,
+    upsertCimdConfig,
+    getMessageRateLimitOverride,
+  };
+};

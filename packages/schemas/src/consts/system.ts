@@ -1,0 +1,19 @@
+/**
+ * In OSS:
+ *
+ * - Only one single user tenant (`default`) is available.
+ * - Admin tenant and Admin Console share one endpoint (`ADMIN_ENDPOINT`).
+ *
+ * There's no need to parse tenant ID from the first path segment in OSS, and the segment should be a fixed value.
+ *
+ * If we use `/default`, the URL will look ugly; thus we keep the old fashion `/console`.
+ */
+export const ossConsolePath = '/console';
+
+/** The prefix for keys and values that need to be explicitly marked as internal. */
+export const internalPrefix = '#internal:';
+
+/**
+ * The timeout for WebAuthn authentication options, in milliseconds.
+ */
+export const webAuthnAuthenticationOptionsTimeout = 60_000;

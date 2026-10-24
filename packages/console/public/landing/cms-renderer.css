@@ -1,0 +1,41 @@
+.cms-rendered-section {
+  scroll-margin-top: 6rem;
+  padding: clamp(3rem, 7vw, 6rem) max(1.5rem, calc((100vw - 80rem) / 2));
+  border-bottom: 1px solid var(--color-border, #e7e5e4);
+  background: var(--color-background, #fff);
+  color: var(--color-foreground, #1c1917);
+}
+
+.cms-rendered-section:nth-child(even) {
+  background: var(--color-card, #fafaf9);
+}
+
+.cms-rendered-section__inner {
+  max-width: 80rem;
+  margin: auto;
+}
+
+.cms-rendered-section h1,
+.cms-rendered-section h2 {
+  max-width: 54rem;
+  margin: 0 0 1.25rem;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1.05;
+  font-weight: 650;
+  letter-spacing: -.035em;
+}
+
+.cms-rendered-section h1 span { display: block; }
+.cms-rendered-section p { max-width: 54rem; color: var(--color-muted-foreground, #57534e); line-height: 1.7; }
+.cms-rendered-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin-top: 2rem; }
+.cms-rendered-card { padding: 1.5rem; border: 1px solid var(--color-border, #e7e5e4); border-radius: 1rem; background: var(--color-background, #fff); }
+.cms-rendered-card h3 { margin: 0 0 .75rem; font-size: 1.2rem; font-weight: 600; }
+.cms-rendered-card p { margin: .5rem 0; }
+.cms-rendered-list { padding-left: 1.25rem; line-height: 1.7; }
+.cms-rendered-image { display: block; width: min(100%, 72rem); max-height: 38rem; margin: 2rem auto 0; border-radius: 1rem; object-fit: cover; }
+.cms-rendered-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.cms-rendered-actions a { display: inline-flex; padding: .75rem 1.1rem; border-radius: .55rem; background: #c9342b; color: #fff; font-weight: 600; text-decoration: none; }
+
+@media (max-width: 40rem) {
+  .cms-rendered-section { padding: 3rem 1.25rem; }
+}

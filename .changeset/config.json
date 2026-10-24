@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@2.2.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "//": "CAUTION: When updating the fields below, you should also update README accordingly.",
+  "fixed": [
+    [
+      "@logto/core",
+      "@logto/api",
+      "@logto/cli",
+      "@logto/create",
+      "@logto/schemas"
+    ]
+  ],
+  "linked": [],
+  "//": "END OF CAUTION",
+  "access": "restricted",
+  "baseBranch": "master",
+  "updateInternalDependencies": "minor"
+}

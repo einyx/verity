@@ -1,0 +1,15 @@
+@use '@/scss/underscore' as _;
+
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.upsellNotice {
+  margin-bottom: _.unit(4);
+}
+
+.customUiNotice {
+  margin-bottom: _.unit(4);
+}

@@ -1,0 +1,1215 @@
+/* Three panes: section list, the active section's form, and status with version history. */
+.shell {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 24px 24px 24px 16px;
+  box-sizing: border-box;
+}
+
+/* The console shell caps its direct children to a centred width; the editor uses the full pane. */
+.shell.shell {
+  max-width: none;
+  margin: 0;
+}
+
+.nav {
+  flex: 0 0 240px;
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: calc(100vh - 48px);
+  min-height: 480px;
+  // Same card treatment as the right-hand column, so the two sides match.
+  padding: 20px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+  box-sizing: border-box;
+}
+
+.navArtwork {
+  margin-top: auto;
+  padding-top: 24px;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.navHeading {
+  padding: 0 12px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-layer-2);
+  }
+
+  &[aria-current='true'] {
+    background: var(--color-layer-2);
+    font-weight: 600;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sectionName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sectionHint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.side {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 8px;
+}
+
+.button {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+}
+
+.primaryButton {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-pressed);
+    border-color: var(--color-primary-pressed);
+  }
+}
+
+.secondaryButton {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-layer-1);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-layer-2);
+  }
+}
+
+.statusRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liveBadge,
+.draftBadge {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.liveBadge {
+  background: var(--color-success-container, #e6f6ec);
+  color: var(--color-success, #1f7a3f);
+}
+
+.draftBadge {
+  background: var(--color-layer-2);
+  color: var(--color-text-secondary);
+}
+
+.message {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+.versions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.versionRow {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.group {
+  margin: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+}
+
+/* One list item per card: closed rows show only the number and heading. */
+.item {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+}
+
+.itemSummary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::after {
+    content: '+';
+    margin-left: auto;
+    color: var(--color-text-secondary);
+  }
+}
+
+.item[open] > .itemSummary::after {
+  content: '\2212';
+}
+
+.itemIndex {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.itemName {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.collectionAction {
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: var(--color-layer-1);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+}
+
+.groupTitle {
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  /* The field name reads as a label; the hint sits under it, muted. */
+  > span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* One input style for every copy field, so each one looks editable. */
+  input,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-text-secondary);
+  }
+}
+
+.hint {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+/* A checkbox with its label and hint, for on/off switches in the content. */
+.checkField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--color-text);
+
+  input {
+    margin: 0;
+  }
+
+  .hint {
+    flex-basis: 100%;
+  }
+}
+
+.longText {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* URLs and other technical values read best in monospace; copy uses the site's typeface. */
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
+.notice {
+  padding: 24px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .nav {
+    position: static;
+    flex: none;
+    width: 100%;
+  }
+
+  .side {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.previewLocale {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+
+  select {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+    font: inherit;
+  }
+}
+
+.previewHelp {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* The live preview: one card styled like the marketing site, with its fonts, warm neutrals and brand red. */
+.preview {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 16px;
+  background: oklch(98.232% 0.003 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
+}
+
+.previewLabel {
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: oklch(48.449% 0.009 99.035deg);
+}
+
+.previewStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.previewHeading {
+  margin: 0;
+  font-family: 'Stack Sans Headline', system-ui, sans-serif;
+  font-size: 48px;
+  font-weight: 300;
+  line-height: 48px;
+  letter-spacing: -0.031rem;
+  color: oklch(21.252% 0.005 17.533deg);
+}
+
+.previewText {
+  margin: 0;
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: oklch(48.449% 0.009 99.035deg);
+}
+
+.previewButton {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: oklch(57.578% 0.212 32.209deg);
+  color: oklch(100% 0 none);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  .sectionColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    position: static;
+  }
+}
+
+/* Matches the marketing site: its fonts, warm neutrals, brand red and pill buttons. */
+@font-face {
+  font-family: 'Stack Sans Headline';
+  src: url('/console/landing/_astro/stack-sans-headline-latin-wght-normal.CFGVyMar.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Stack Sans Text';
+  src: url('/console/landing/_astro/stack-sans-text-latin-wght-normal.cHS98N20.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+.previewActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Static mock of the demo chat in the live preview. */
+.chatMock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 12px;
+  background: oklch(100% 0 none);
+  font-family: 'Stack Sans Text', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chatBubbleAssistant,
+.chatBubbleUser,
+.chatBubbleMuted {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.chatBubbleAssistant {
+  align-self: flex-start;
+  background: oklch(96% 0.004 84.559deg);
+  color: oklch(21.252% 0.005 17.533deg);
+}
+
+.chatBubbleUser {
+  align-self: flex-end;
+  background: oklch(57.578% 0.212 32.209deg);
+  color: oklch(100% 0 none);
+}
+
+.chatBubbleMuted {
+  align-self: stretch;
+  max-width: none;
+  color: oklch(48.449% 0.009 99.035deg);
+  background: oklch(96% 0.004 84.559deg);
+}
+
+.chatInput {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border: 1px solid oklch(88.546% 0.007 88.648deg);
+  border-radius: 999px;
+  color: oklch(48.449% 0.009 99.035deg);
+}
+
+.chatField {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.chatSend {
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: oklch(57.578% 0.212 32.209deg);
+  color: oklch(100% 0 none);
+
+  &:disabled {
+    opacity: 40%;
+    cursor: not-allowed;
+  }
+}
+
+.viewToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-layer-1);
+  align-self: flex-start;
+
+  button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: var(--color-text);
+      color: var(--color-layer-1);
+    }
+  }
+}
+
+// The live landing page, embedded for editing. It takes the full width of the editor column.
+.pageFrame {
+  display: block;
+  width: 100%;
+  height: 72vh;
+  min-height: 680px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+}
+
+.puckEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+
+  :global(.Puck) {
+    min-height: 0;
+  }
+
+  :global(.landingSectionCard) {
+    max-width: 680px;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+  }
+
+  :global(.landingSectionCard > small) {
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.07em;
+  }
+
+  :global(.landingSectionCard h3) {
+    margin: 8px 0;
+    font-size: 20px;
+  }
+
+  :global(.landingSectionCard p) {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  :global(.landingSectionCard img) {
+    display: block;
+    max-width: 100%;
+    max-height: 160px;
+    margin: 12px 0;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  :global(.landingSectionCardButton) {
+    display: inline-flex;
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: var(--color-white);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  :global([contenteditable='true']) {
+    outline: 1px dashed transparent;
+    outline-offset: 3px;
+    cursor: text;
+    transition: outline-color 120ms ease;
+  }
+
+  :global([contenteditable='true']:hover),
+  :global([contenteditable='true']:focus-visible) {
+    outline-color: var(--color-brand);
+  }
+
+  :global([data-cms-href]) {
+    cursor: pointer;
+  }
+}
+
+.puckEditorToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.puckFieldsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.puckSectionPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+
+  select {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+    font: inherit;
+  }
+}
+
+.puckPluginContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.puckPluginHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  h2 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  > span {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+.puckPluginHint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.puckComponentList,
+.puckOutlineList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.puckComponentCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding: 12px 36px 12px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-layer-1);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 55%;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background: var(--color-layer-2);
+  }
+}
+
+.puckComponentCardTitle {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.puckComponentCardAdd {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--color-primary);
+  font-size: 20px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.puckOutlineGroup {
+  margin: 12px 0 4px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.puckOutlineEntry {
+  padding: 4px 6px;
+  cursor: default;
+}
+
+.puckOutlineEntry[aria-current='location'] {
+  border-color: color-mix(in srgb, var(--color-brand) 28%, transparent);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.puckOutlineStatus {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.puckOutlineEmpty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.puckOutlineSelect {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+.puckOutlineActions {
+  display: flex;
+  gap: 2px;
+
+  button {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 35%;
+      cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-border);
+      background: var(--color-layer-1);
+      color: var(--color-text);
+    }
+  }
+}
+
+.puckSectionEntry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  &:hover {
+    border-color: var(--color-border);
+    background: var(--color-layer-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+.puckSectionEntryActive {
+  border-color: color-mix(in srgb, var(--color-brand) 28%, transparent);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.puckSectionEntryCopy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.puckSectionEntryTitle {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.puckSectionEntryDescription {
+  overflow-wrap: anywhere;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.puckSectionNumber {
+  display: grid;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--color-layer-2);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.puckSectionEntryArrow {
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (max-width: 700px) {
+  .puckEditorToolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.liveCanvas {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.liveCanvasToolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+  color: #57534e;
+  font-size: 13px;
+
+  /* stylelint-disable-next-line no-descending-specificity -- Live toolbar buttons do not share the outline-action container. */
+  button {
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 1px solid #d6d3d1;
+    border-radius: 6px;
+    background: #fff;
+    color: #292524;
+    cursor: pointer;
+
+    /* stylelint-disable-next-line no-descending-specificity -- This state is scoped to live toolbar buttons, not outline actions. */
+    &:disabled {
+      opacity: 45%;
+      cursor: default;
+    }
+    /* stylelint-disable-next-line no-descending-specificity -- This focus state belongs to a separate toolbar component. */
+    &:focus-visible {
+      outline: 2px solid #d92d20;
+      outline-offset: 2px;
+    }
+  }
+}
+
+.liveCanvasBody {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+
+  iframe {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.elementProperties {
+  position: sticky;
+  top: 0;
+  flex: 0 0 280px;
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-left: 1px solid #e5e5e5;
+  background: #fff;
+  color: #292524;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  p {
+    margin-top: 16px;
+    color: #78716c;
+    font-size: 12px;
+  }
+  /* stylelint-disable-next-line no-descending-specificity -- Properties controls and outline-action buttons have separate containers. */
+  button {
+    min-width: 32px;
+    min-height: 32px;
+  }
+}
+
+.elementField {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+  font-size: 13px;
+
+  input,
+  select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #d6d3d1;
+    border-radius: 5px;
+    background: #fff;
+    color: #292524;
+  }
+
+  [role='alert'] {
+    color: #b91c1c;
+  }
+}
+
+@media (max-width: 900px) {
+  .liveCanvasBody {
+    flex-direction: column;
+  }
+
+  .elementProperties {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

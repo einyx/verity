@@ -1,0 +1,206 @@
+const tenants = {
+  title: 'Paramètres',
+  description: 'Gérez efficacement les paramètres du locataire et personnalisez votre domaine.',
+  oss_description:
+    "Modifiez ici les paramètres de votre compte et gérez vos informations personnelles afin d'assurer la sécurité de votre compte.",
+  tabs: {
+    settings: 'Paramètres',
+    members: 'Membres',
+    domains: 'Domaines',
+    oidc_configs: 'Configurations OIDC',
+    subscription: 'Plan et facturation',
+    billing_history: 'Historique de facturation',
+    license: 'Licence',
+  },
+  license: {
+    purchase_title: 'PLANS AUTO-HÉBERGÉS',
+    purchase_description:
+      'Les plans Professionnel et Entreprise auto-hébergés débloquent des fonctionnalités payantes sur votre propre instance : masquer la marque Logto, utiliser votre propre interface, la collaboration dans la console et des applications SAML illimitées. Achetez un plan pour obtenir votre clé de licence.',
+    purchase_button: 'Voir les plans auto-hébergés',
+    install_title: 'INSTALLER LA LICENCE',
+    install_description:
+      'Collez la clé de licence que vous avez reçue après l’achat d’un plan auto-hébergé.',
+    install_button: 'Installer la licence',
+    key_field: 'Clé de licence',
+    key_field_description:
+      'La clé est vérifiée sur votre instance et n’en sort jamais. Contactez Logto pour obtenir une nouvelle clé si la vôtre a expiré.',
+    key_placeholder: 'Collez votre clé de licence ici',
+    installed_toast: 'Licence installée avec succès.',
+    details_title: 'LICENCE',
+    details_description: 'La licence installée sur cette instance et ce qu’elle accorde.',
+    plan_field: 'Plan',
+    environment_field: 'Environnement',
+    environment_production: 'Production',
+    environment_non_production: 'Hors production',
+    expires_at_field: 'Expire le',
+    installed_at_field: 'Installée le',
+    last_refreshed_at_field: 'Dernière actualisation le',
+    grace_ends_at_field: 'La période de grâce se termine le',
+    refresh_expired_description:
+      'La clé de licence a expiré le {{expiresAt}}. Les fonctionnalités sous licence restent disponibles jusqu’au {{graceEndsAt}} pendant que Logto tente de l’actualiser.',
+    refresh_refused_description:
+      'L’actualisation de la licence a été refusée car la licence est {{reason}}. Les fonctionnalités sous licence restent disponibles jusqu’au {{graceEndsAt}}.',
+    refusal_reason_canceled: 'annulée',
+    refusal_reason_unpaid: 'impayée',
+    refusal_reason_expired: 'expirée',
+    refusal_reason_revoked: 'révoquée',
+    refusal_reason_unknown: 'indisponible',
+    grace_expired_description:
+      'La période de grâce de la licence s’est terminée le {{graceEndsAt}}. Ce déploiement est revenu aux valeurs OSS par défaut. Contactez Logto pour obtenir une nouvelle clé de licence et installez-la à nouveau.',
+    get_fresh_key_button: 'Obtenir une nouvelle clé',
+    replace_button: 'Remplacer la licence',
+  },
+  members: {
+    card_title: 'Gérez vos locataires plus sûrement avec Logto Cloud',
+    card_description:
+      'Ajoutez des administrateurs ou des collaborateurs à votre locataire sans partager un seul compte administrateur.',
+    card_action: 'Découvrir Logto Cloud',
+    self_hosted_card_title: 'Gérez vos locataires plus sûrement avec les plans auto-hébergés',
+    self_hosted_card_description:
+      'Ajoutez des administrateurs ou des collaborateurs à votre locataire sans partager un seul compte administrateur.',
+    self_hosted_card_action: 'Découvrir les plans auto-hébergés',
+  },
+  settings: {
+    title: 'PARAMÈTRES',
+    description:
+      "Définissez le nom du locataire et consultez la région d'hébergement de vos données et le type de locataire.",
+    tenant_id: 'ID du locataire',
+    tenant_name: 'Nom du locataire',
+    tenant_instance: 'Sélectionnez votre instance',
+    tenant_instance_description:
+      'Sélectionnez où votre locataire sera hébergé. Choisissez Logto Cloud pour une infrastructure partagée publique, ou une instance privée pour des ressources dédiées.',
+    tenant_region: "Région d'hébergement des données",
+    tenant_region_description:
+      'Le lieu physique où vos ressources de locataire (utilisateurs, applications, etc.) sont hébergées. Cela ne peut pas être changé après la création.',
+    tenant_region_tip:
+      'Vos ressources de locataire sont hébergées dans {{region}}. <a>En savoir plus</a>',
+    environment_tag_development: 'Dev',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Type de locataire',
+    development_description:
+      "Uniquement pour les tests et ne devrait pas être utilisé en production. Aucune souscription n'est requise. Il possède toutes les fonctionnalités Pro mais présente des limitations telles qu'une bannière de connexion.",
+    production_description:
+      'Destiné aux applications utilisées par les utilisateurs finaux et pouvant nécessiter une souscription payante.',
+    tenant_info_saved: 'Les informations du locataire ont été enregistrées avec succès.',
+    tenant_mfa: 'Authentification multi-facteurs',
+    tenant_mfa_description:
+      "Exiger que vos membres configurent l'authentification multi-facteurs pour accéder à ce locataire.",
+    oss_description: 'Gérez la façon dont les membres accèdent à la Console sur cette instance.',
+    tenant_mfa_confirm_title: 'Exiger la MFA pour tous les membres ?',
+    tenant_mfa_confirm_description:
+      "Ces membres n'ont pas encore configuré la MFA. Ils restent connectés et devront la configurer lors de leur prochaine connexion :",
+    tenant_mfa_confirm_self:
+      "Vous n'avez pas non plus configuré la MFA. Configurez-la dans les paramètres de votre compte avant votre prochaine connexion.",
+    tenant_mfa_confirm_button: 'Exiger la MFA',
+    tenant_mfa_setup_required:
+      "Ce locataire exige l'authentification multi-facteurs. Configurez-la maintenant, sinon elle vous sera demandée lors de votre prochaine connexion.",
+    tenant_mfa_setup_action: 'Configurer la MFA',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      "Disponible sur les plans payants. Contactez-nous pour activer Enterprise SSO afin que tous les membres puissent se connecter à la console Logto Cloud en utilisant le fournisseur d'identité de votre organisation.",
+  },
+  full_env_tag: {
+    development: 'Développement',
+    production: 'Production',
+  },
+  view_only: {
+    tag: 'Lecture seule',
+    notification:
+      'Vous avez un accès en lecture seule à ce locataire. Demandez à un administrateur du locataire si vous devez effectuer des modifications.',
+    hidden: 'Masqué pour les lecteurs',
+  },
+  deletion_card: {
+    title: 'SUPPRIMER',
+    tenant_deletion: 'Supprimer le locataire',
+    tenant_deletion_description:
+      'La suppression du locataire entraînera la suppression permanente de toutes les données utilisateur et configurations associées. Veuillez procéder avec prudence.',
+    tenant_deletion_button: 'Supprimer le locataire',
+  },
+  leave_tenant_card: {
+    title: 'QUITTER',
+    leave_tenant: 'Quitter le locataire',
+    leave_tenant_description:
+      "Toutes les ressources du locataire resteront, mais vous n'aurez plus accès à ce locataire.",
+    last_admin_note:
+      "Pour quitter ce locataire, assurez-vous qu'au moins un autre membre a le rôle Administrateur.",
+  },
+  create_modal: {
+    title: 'Créer un locataire',
+    subtitle: "Créer un nouveau locataire qui dispose de ressources et d'utilisateurs isolés.",
+    tenant_id: 'ID du locataire',
+    tenant_usage_purpose: 'Dans quel but souhaitez-vous utiliser ce locataire?',
+    development_description:
+      "Uniquement pour les tests et ne devrait pas être utilisé en production. Aucune souscription n'est requise.",
+    development_description_for_private_regions:
+      'Uniquement pour les tests et ne devrait pas être utilisé en production.',
+    development_hint:
+      "Il possède toutes les fonctionnalités Pro mais présente des limitations telles qu'une bannière de connexion.",
+    production_description:
+      'À utiliser par les utilisateurs finaux et peut nécessiter une souscription payante.',
+    available_plan: 'Plan disponible :',
+    create_button: 'Créer un locataire',
+    tenant_name_placeholder: 'Mon locataire',
+    tenant_created: 'Locataire créé avec succès.',
+    invitation_failed:
+      "Certaines invitations n'ont pas pu être envoyées. Veuillez réessayer plus tard dans Paramètres -> Membres.",
+    tenant_type_description: 'Cela ne peut pas être changé après la création.',
+    tenant_id_invalid:
+      "L'identifiant du locataire ne peut contenir que des lettres minuscules, des chiffres et des tirets, et ne doit pas dépasser {{max}} caractères.",
+    tenant_id_placeholder: 'Votre identifiant de locataire',
+    tenant_id_tip:
+      "Personnalisez l'identifiant du locataire. Si laissé vide, Logto générera un identifiant par défaut. L'identifiant du locataire ne peut pas être modifié après la création.",
+  },
+  dev_tenant_migration: {
+    title:
+      'Vous pouvez désormais essayer nos fonctionnalités Pro gratuitement en créant un nouveau « locataire de développement » !',
+    affect_title: 'Comment cela vous affecte-t-il ?',
+    hint_1:
+      "Nous remplaçons les anciennes <strong>balises d'environnement</strong> par deux nouveaux types de locataires : <strong>« Développement »</strong> et <strong>« Production »</strong>.",
+    hint_2:
+      'Pour garantir une transition sans heurt et un fonctionnement ininterrompu, tous les locataires créés auparavant seront convertis en locataires de type <strong>Production</strong> avec votre précédente souscription.',
+    hint_3: 'Ne vous inquiétez pas, tous vos autres paramètres resteront les mêmes.',
+    about_tenant_type: 'À propos du type de locataire',
+  },
+  delete_modal: {
+    title: 'Supprimer le locataire',
+    description_line1:
+      'Êtes-vous sûr de vouloir supprimer votre locataire "<span>{{name}}</span>" avec le tag de suffixe d\'environnement "<span>{{tag}}</span>"? Cette action est irréversible et entraînera la suppression permanente de toutes vos données et informations de locataire.',
+    description_line2:
+      'Avant de supprimer le locataire, peut-être pouvons-nous vous aider. <span><a>Contactez-nous par e-mail</a></span>',
+    description_line3:
+      'Si vous souhaitez continuer, veuillez entrer le nom du locataire "<span>{{name}}</span>" pour confirmer.',
+    delete_button: 'Supprimer définitivement',
+    cannot_delete_title: 'Impossible de supprimer ce locataire',
+    cannot_delete_description:
+      "Désolé, vous ne pouvez pas supprimer ce locataire pour le moment. Assurez-vous d'être sur le Plan Gratuit et d'avoir payé toutes les factures en cours.",
+  },
+  leave_tenant_modal: {
+    description: 'Êtes-vous sûr de vouloir quitter ce locataire?',
+    leave_button: 'Partir',
+  },
+  tenant_landing_page: {
+    title: "Vous n'avez pas encore créé de locataire",
+    description:
+      "Pour commencer à configurer votre projet avec Logto, veuillez créer un nouveau locataire. Si vous devez vous déconnecter ou supprimer votre compte, cliquez simplement sur le bouton d'avatar dans le coin supérieur droit.",
+    create_tenant_button: 'Créer un locataire',
+  },
+  status: {
+    mau_exceeded: 'MAU dépassé',
+    token_exceeded: 'Jeton dépassé',
+    suspended: 'Suspendu',
+    overdue: 'En retard',
+  },
+  tenant_suspended_page: {
+    title: "Locataire suspendu. Contactez-nous pour restaurer l'accès.",
+    description_1:
+      "Nous regrettons profondément de vous informer que votre compte de locataire a été temporairement suspendu en raison d'une utilisation abusive, y compris le dépassement des limites MAU, des paiements en retard ou d'autres actions non autorisées.",
+    description_2:
+      "Si vous avez besoin de clarifications supplémentaires, si vous avez des préoccupations ou si vous souhaitez restaurer la fonctionnalité complète et débloquer vos locataires, n'hésitez pas à nous contacter immédiatement.",
+  },
+  production_tenant_notification: {
+    text: 'Vous êtes dans un locataire de développement pour les tests gratuits. Créez un locataire de production pour passer en direct.',
+    action: 'Créer un locataire',
+  },
+};
+
+export default Object.freeze(tenants);

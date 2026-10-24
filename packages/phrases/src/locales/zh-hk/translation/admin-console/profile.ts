@@ -1,0 +1,83 @@
+const profile = {
+  link_account: {
+    anonymous: '匿名',
+  },
+
+  delete_account: {
+    title: '刪除賬戶',
+    label: '刪除賬戶',
+    description: '刪除賬戶將會刪除所有個人信息、用戶數據和配置。此操作無法撤銷。',
+    button: '刪除賬戶',
+    p: {
+      has_issue: '很抱歉聽到你想刪除你的賬戶。在刪除賬戶之前，你需要解決以下問題。',
+      after_resolved: '一旦你解決了這些問題，你就可以刪除賬戶了。如需任何幫助，請隨時聯繫我們。',
+      check_information: '很抱歉聽到你想刪除你的賬戶。請在繼續操作前仔細檢查以下信息。',
+      remove_all_data:
+        '刪除賬戶將會永久刪除你在 Logto Cloud 的所有數據。因此，請確保在繼續操作前備份所有重要數據。',
+      confirm_information: '請確認上述信息是否符合你的預期。一旦刪除賬戶，我們將無法恢復。',
+      has_admin_role: '由於你是以下租戶的管理員，這些租戶將與你的賬戶一起被刪除：',
+      has_admin_role_other: '由於你是以下租戶的管理員，這些租戶將與你的賬戶一起被刪除：',
+      quit_tenant: '你將退出以下租戶：',
+      quit_tenant_other: '你將退出以下租戶：',
+    },
+    issues: {
+      paid_plan: '以下租戶有付費計劃，請先取消訂閱：',
+      paid_plan_other: '以下租戶有付費計劃，請先取消訂閱：',
+      subscription_status: '以下租戶有訂閱狀態問題：',
+      subscription_status_other: '以下租戶有訂閱狀態問題：',
+      open_invoice: '以下租戶有未結發票：',
+      open_invoice_other: '以下租戶有未結發票：',
+    },
+    error_occurred: '發生錯誤',
+    error_occurred_description: '抱歉，刪除賬戶時出現問題：',
+    request_id: '請求 ID：{{requestId}}',
+    try_again_later: '請稍後再試。如果問題仍然存在，請聯繫 Logto 團隊並提供請求 ID。',
+    final_confirmation: '最終確認',
+    about_to_start_deletion: '你即將開始刪除過程，這一操作無法撤銷。',
+    permanently_delete: '永久刪除',
+  },
+
+  fields: {
+    name: '姓名',
+    name_description: '用戶的全名，包括所有名字組件（例如 "Jane Doe"）。',
+    avatar: '頭像',
+    avatar_description: '用戶頭像圖片的 URL。',
+    familyName: '姓氏',
+    familyName_description: '用戶的姓氏或最後一個名字（例如 "Doe"）。',
+    givenName: '名字',
+    givenName_description: '用戶的名字或第一個名字（例如 "Jane"）。',
+    middleName: '中間名',
+    middleName_description: '用戶的中間名（例如 "Marie"）。',
+    nickname: '暱稱',
+    nickname_description: '用戶的暱稱或熟悉的名字，可能與其法定姓名不同。',
+    preferredUsername: '首選用戶名',
+    preferredUsername_description: '用戶希望被引用的簡短標識符。',
+    profile: '個人資料',
+    profile_description: '用戶可讀的個人資料頁面的 URL（例如社交媒體個人資料）。',
+    website: '網站',
+    website_description: '用戶個人網站或博客的 URL。',
+    gender: '性別',
+    gender_description: '用戶自我認同的性別（例如 "女性"、"男性"、"非二元性別"）。',
+    birthdate: '出生日期',
+    birthdate_description: '用戶的出生日期，格式為指定格式（例如 "MM-dd-yyyy"）。',
+    zoneinfo: '時區',
+    zoneinfo_description:
+      '用戶的時區，格式為 IANA 格式（例如 "America/New_York" 或 "Europe/Paris"）。',
+    locale: '語言',
+    locale_description: '用戶的語言，格式為 IETF BCP 47 格式（例如 "en-US" 或 "zh-CN"）。',
+    address: {
+      formatted: '地址',
+      streetAddress: '街道地址',
+      locality: '城市',
+      region: '州/省',
+      postalCode: '郵政編碼',
+      country: '國家',
+    },
+    address_description:
+      '用戶的完整地址，包括所有地址組件（例如 "123 Main St, Anytown, USA 12345"）。',
+    fullname: '全名',
+    fullname_description: '根據配置靈活組合姓氏、名字和中間名。',
+  },
+};
+
+export default Object.freeze(profile);

@@ -1,0 +1,45 @@
+@use '@/scss/underscore' as _;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  color: var(--color-text);
+  align-items: center;
+  justify-content: center;
+  // Spacing comes from the gap, not a margin on the SVGs: a margin on `.container svg` would also
+  // reach the spinning mark and push the group off center.
+  gap: _.unit(8);
+  overflow: hidden;
+}
+
+.logo {
+  width: auto;
+  // Same on-screen text size as before the crop change (32px for the 96-unit-tall crop).
+  height: 23px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-neutral-variant-80);
+  border-top-color: var(--color-primary-50);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

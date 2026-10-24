@@ -1,0 +1,305 @@
+import content from './content.js';
+import custom_profile_fields from './custom-profile-fields.js';
+import sign_up_and_sign_in from './sign-up-and-sign-in.js';
+
+const sign_in_exp = {
+  page_title: 'تجربة تسجيل الدخول',
+  page_title_with_account: 'تسجيل الدخول والحساب',
+  title: 'تسجيل الدخول والحساب',
+  description: 'تخصيص تدفقات المصادقة وواجهة المستخدم، ومعاينة التجربة الافتراضية في الوقت الفعلي.',
+  tabs: {
+    branding: 'العلامة التجارية',
+    sign_up_and_sign_in: 'التسجيل وتسجيل الدخول',
+    collect_user_profile: 'جمع ملف تعريف المستخدم',
+    account_center: 'مركز الحساب',
+    content: 'المحتوى',
+    password_policy: 'سياسة كلمة المرور',
+  },
+  welcome: {
+    title: 'تخصيص تجربة تسجيل الدخول',
+    description:
+      'ابدأ بسرعة مع إعداد تسجيل الدخول الأول الخاص بك. يرشدك هذا الدليل خلال جميع الإعدادات اللازمة.',
+    get_started: 'ابدأ',
+    apply_remind: 'يرجى ملاحظة أن تجربة تسجيل الدخول ستنطبق على جميع التطبيقات تحت هذا الحساب.',
+  },
+  color: {
+    title: 'اللون',
+    primary_color: 'لون العلامة التجارية',
+    dark_primary_color: 'لون العلامة التجارية (الداكن)',
+    dark_mode: 'تمكين الوضع الداكن',
+    dark_mode_description:
+      'سيحتوي تطبيقك على نمط وضع داكن مولد تلقائيًا بناءً على لون العلامة التجارية الخاصة بك وخوارزمية Logto. يمكنك تخصيصه بحرية.',
+    dark_mode_reset_tip: 'إعادة حساب لون الوضع الداكن بناءً على لون العلامة التجارية.',
+    reset: 'إعادة الحساب',
+  },
+  branding: {
+    title: 'منطقة العلامة التجارية',
+    ui_style: 'النمط',
+    with_light: '{{value}}',
+    with_dark: '{{value}} (داكن)',
+    app_logo_and_favicon: 'شعار التطبيق ورمز الموقع',
+    company_logo_and_favicon: 'شعار الشركة ورمز الموقع',
+    organization_logo_and_favicon: 'شعار المنظمة ورمز الموقع',
+    hide_logto_branding: 'إخفاء علامة Logto التجارية',
+    hide_logto_branding_description:
+      'أزل عبارة "مدعوم من Logto". سلّط الضوء على علامتك فقط مع تجربة تسجيل دخول نظيفة واحترافية.',
+    hide_logto_branding_oss_note:
+      'هذه الميزة متاحة في <a>Logto Cloud</a> أو ضمن <selfHosted>خطط الاستضافة الذاتية</selfHosted>.',
+  },
+  branding_uploads: {
+    app_logo: {
+      title: 'شعار التطبيق',
+      url: 'رابط شعار التطبيق',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'شعار التطبيق: {{error}}',
+    },
+    company_logo: {
+      title: 'شعار الشركة',
+      url: 'رابط شعار الشركة',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'شعار الشركة: {{error}}',
+    },
+    organization_logo: {
+      title: 'تحميل صورة',
+      url: 'رابط شعار المنظمة',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'شعار المنظمة: {{error}}',
+    },
+    connector_logo: {
+      title: 'تحميل صورة',
+      url: 'رابط شعار الموصل',
+      url_placeholder: 'https://your.cdn.domain/logo.png',
+      error: 'شعار الموصل: {{error}}',
+    },
+    favicon: {
+      title: 'رمز الموقع',
+      url: 'رابط رمز الموقع',
+      url_placeholder: 'https://your.cdn.domain/favicon.ico',
+      error: 'رمز الموقع: {{error}}',
+    },
+  },
+  custom_ui: {
+    title: 'واجهة مخصصة',
+    cloud_tag: 'Cloud',
+    css_code_editor_title: 'CSS مخصص',
+    css_code_editor_field_title: 'تجاوز CSS',
+    css_code_editor_description1: 'انظر إلى مثال لـ CSS مخصص.',
+    css_code_editor_description2: '<a>{{link}}</a>',
+    css_code_editor_description_link_content: 'تعلم المزيد',
+    css_code_editor_content_placeholder:
+      'أدخل تعديلات CSS الخاصة بك هنا لتخصيص أنماط أي عنصر وفقًا لمتطلباتك الدقيقة. عبّر عن إبداعك واجعل واجهتك مميزة.',
+    bring_your_ui_title: 'اجلب واجهتك الخاصة',
+    bring_your_ui_upload_title: 'تحميل أصول واجهة المستخدم المخصصة',
+    bring_your_ui_description:
+      'قم بتحميل حزمة مضغوطة (.zip) لاستبدال واجهة المستخدم المُعدة مسبقًا في Logto بالشفرة الخاصة بك. <a>تعلم المزيد</a>',
+    bring_your_ui_oss_description: 'خصّص واجهة تسجيل الدخول باستخدام الشيفرة الخاصة بك.',
+    bring_your_ui_oss_card_description:
+      'رفع واجهة مستخدم مخصصة متاح في <a>Logto Cloud</a> أو ضمن <selfHosted>خطط الاستضافة الذاتية</selfHosted>. لا حاجة إلى عمل fork أو إعادة النشر.',
+    bring_your_ui_oss_try_cloud: 'جرّب Cloud',
+    preview_with_bring_your_ui_description:
+      'تم تحميل أصول واجهة المستخدم المخصصة الخاصة بك بنجاح ويتم تقديمها الآن. وبالتالي ، تم تعطيل نافذة المعاينة المدمجة.\nلتجربة واجهة تسجيل الدخول المخصصة الخاصة بك ، انقر فوق زر "المعاينة المباشرة" لفتحها في علامة تبويب مستعرض جديدة.',
+    csp_description:
+      'اسمح بتعبيرات مصادر إضافية لواجهة تسجيل الدخول المخصصة الخاصة بك. تُطبّق هذه القيم فقط عند تقديم أصول واجهة المستخدم المخصصة.',
+    csp_script_src: 'script-src المسموح بها',
+    csp_script_src_tip:
+      'اسمح بتعبيرات مصادر HTTPS للبرامج النصية التي تحمّلها واجهتك المخصصة، مثل https://scripts.example.com أو https://*.example.com.',
+    csp_connect_src: 'connect-src المسموح بها',
+    csp_connect_src_tip:
+      'اسمح بتعبيرات مصادر HTTPS أو WSS لطلبات الشبكة التي ترسلها واجهتك المخصصة، مثل https://api.example.com أو wss://events.example.com.',
+    csp_source_invalid_error:
+      'أدخل تعبير مصدر صالحًا. استخدم عناوين URL من نوع https://؛ كما يدعم connect-src ‏wss://. كلمات CSP المفتاحية والفواصل المنقوطة غير مدعومة.',
+    csp_source_duplicate_error: 'تعبير المصدر هذا موجود بالفعل في القائمة.',
+  },
+  account_center: {
+    title: 'مركز الحساب',
+    description: 'خصص تدفقات مركز الحساب لديك باستخدام واجهات برمجة تطبيقات Logto.',
+    enable_account_api: 'تفعيل مركز الحساب وواجهة Account API',
+    enable_account_api_description:
+      'يؤدي هذا إلى تفعيل واجهة Account API الموجهة للمستخدمين النهائيين ومركز الحساب الجاهز من Logto معًا. عند إيقافه، تصبح الميزتان غير متاحتين.',
+    field_options: {
+      off: 'إيقاف',
+      edit: 'تحرير',
+      read_only: 'للقراءة فقط',
+      enabled: 'مفعّل',
+      disabled: 'معطّل',
+    },
+    sections: {
+      account_security: {
+        title: 'أمان الحساب',
+        description:
+          'أدِر الوصول إلى واجهة Account API لتمكين المستخدمين من عرض معلومات الهوية وعوامل المصادقة أو تعديلها بعد تسجيل الدخول إلى التطبيق.',
+        security_verification: {
+          title: 'التحقق الأمني',
+          description:
+            'قبل تغيير إعدادات الأمان، يجب على المستخدمين التحقق من هويتهم للحصول على معرّف سجل تحقق صالح لمدة 10 دقائق. لتفعيل طريقة تحقق (البريد الإلكتروني، الهاتف، كلمة المرور)، اضبط إذن Account API أدناه على <strong>للقراءة فقط</strong> (الحد الأدنى) أو <strong>تحرير</strong> حتى يتمكن النظام من اكتشاف ما إذا كان المستخدم قد قام بتكوينه. <a>معرفة المزيد</a>',
+        },
+        groups: {
+          identifiers: {
+            title: 'المعرّفات',
+          },
+          authentication_factors: {
+            title: 'عوامل المصادقة',
+          },
+          session_management: {
+            title: 'إدارة الجلسات',
+          },
+          developer_settings: {
+            title: 'إعدادات المطور',
+          },
+        },
+      },
+      user_profile: {
+        title: 'ملف المستخدم',
+        description:
+          'أدِر الوصول إلى واجهة Account API لتمكين المستخدمين من عرض بيانات الملف الشخصي الأساسية أو المخصصة أو تعديلها بعد تسجيل الدخول إلى التطبيق.',
+        groups: {
+          profile_data: {
+            title: 'بيانات الملف الشخصي',
+          },
+        },
+      },
+      secret_vault: {
+        title: 'خزنة الأسرار',
+        description:
+          'لموصلات الشبكات الاجتماعية وموصلات المؤسسة، خزّن رموز الوصول الخاصة بجهات خارجية بشكل آمن لاستدعاء واجهاتهم البرمجية (مثل إضافة أحداث إلى تقويم Google).',
+        third_party_token_storage: {
+          title: 'رمز جهة خارجية',
+          third_party_access_token_retrieval: 'استرجاع رمز الوصول لجهة خارجية',
+          third_party_token_tooltip:
+            'لحفظ الرموز، يمكنك تفعيل هذا الخيار في إعدادات الموصل الاجتماعي أو المؤسسي المقابل.',
+          third_party_token_description:
+            'بعد تفعيل واجهة Account API، يتم تفعيل استرجاع رموز الجهات الخارجية تلقائيًا.',
+        },
+      },
+    },
+    fields: {
+      email: 'عنوان البريد الإلكتروني',
+      phone: 'رقم الهاتف',
+      social: 'هويات الشبكات الاجتماعية',
+      password: 'كلمة المرور',
+      mfa: 'المصادقة متعددة العوامل',
+      mfa_description: 'اسمح للمستخدمين بإدارة طرق المصادقة متعددة العوامل من مركز الحساب.',
+      passkey: 'Passkey',
+      username: 'اسم المستخدم',
+      name: 'الاسم',
+      avatar: 'الصورة الرمزية',
+      profile: 'الملف الشخصي',
+      profile_description: 'تحكم في الوصول إلى سمات الملف الشخصي المنظمة.',
+      custom_data: 'بيانات مخصصة',
+      custom_data_description: 'تحكم في الوصول إلى بيانات JSON المخصصة المخزنة للمستخدم.',
+      sessions: 'إدارة الجلسات',
+      trusted_devices: 'الأجهزة الموثوقة',
+      personal_access_tokens: 'رموز الوصول الشخصية',
+      personal_access_tokens_description:
+        'يتيح تمكين هذا للمستخدمين إنشاء رموز وصول شخصية طويلة الأمد تظل نشطة عبر تسجيلات الخروج وإعادة تعيين كلمة المرور، ويمكن استبدالها برموز وصول بواسطة أي تطبيق طرف أول مع تمكين تبادل الرموز.',
+    },
+    profile_fields: {
+      title: 'حقول الملف الشخصي لمركز الحساب الجاهز',
+      add_profile_fields: 'إضافة حقول الملف الشخصي',
+      hint: {
+        not_in_list: 'غير موجود في القائمة؟',
+        set_up: 'الإعداد',
+        go_to: 'حقول الملف الشخصي الأخرى الآن.',
+      },
+      disabled_hint: {
+        name: 'لإضافة هذا الحقل، عيّن أولاً صلاحية "الاسم" إلى "تحرير/للقراءة فقط" في قسم ملف المستخدم أدناه.',
+        avatar:
+          'لإضافة هذا الحقل، عيّن أولاً صلاحية "الصورة الرمزية" إلى "تحرير/للقراءة فقط" في قسم ملف المستخدم أدناه.',
+        profile:
+          'لإضافة هذا الحقل، عيّن أولاً صلاحية "الملف الشخصي" إلى "تحرير/للقراءة فقط" في قسم ملف المستخدم أدناه.',
+        custom_data:
+          'لإضافة هذا الحقل، عيّن أولاً صلاحية "بيانات مخصصة" إلى "تحرير/للقراءة فقط" في قسم ملف المستخدم أدناه.',
+      },
+    },
+    webauthn_related_origins: 'أصول WebAuthn ذات الصلة',
+    webauthn_related_origins_description:
+      'أضف نطاقات تطبيقات الواجهة الأمامية المسموح لها بتسجيل مفاتيح المرور عبر واجهة Account API.',
+    webauthn_related_origins_error: 'يجب أن يبدأ الأصل بـ https:// أو http://',
+    delete_account_url: 'حذف الحساب',
+    delete_account_url_description:
+      'قدّم عنوان URL لنقطة النهاية الخاصة بك لمعالجة حذف الحساب بمنطق مخصص.',
+    prebuilt_ui: {
+      title: 'دمج واجهة المستخدم المُعدة مسبقًا',
+      description:
+        'ادمج بسرعة مركز الحساب الجاهز أو التحقق الأمني أو تدفق تحديث ملف شخصي واحد باستخدام واجهة مستخدم مُعدة مسبقًا. ما عليك سوى دمج نطاقك مع المسار لتكوين عنوان URL لمركز الحساب (على سبيل المثال: https://auth.foo.com/account/email).',
+      permission_notice:
+        'لدمج هذه التدفقات المُعدة مسبقًا، قم بتعيين أذونات Account API ذات الصلة إلى <strong>تحرير</strong> في الإعدادات أدناه.',
+      account_center_title: 'دمج مركز الحساب الجاهز',
+      account_center_description:
+        'وجّه المستخدمين إلى مركز الحساب لإدارة إعدادات الأمان مثل البريد الإلكتروني والهاتف واسم المستخدم وكلمة المرور والمصادقة متعددة العوامل والحسابات المتصلة.',
+      flows_title: 'دمج تدفقات إعدادات الأمان الجاهزة',
+      single_task_flows_title: 'دمج تدفق مهمة واحدة جاهز',
+      flows_description:
+        'اتخذ نطاقك وأضفه إلى المسار لتشكل عنوان URL لإعدادات حسابك (مثل، https://auth.foo.com/account/email). بشكل اختياري، أضف `redirect=` لإرجاع المستخدمين إلى تطبيقك بعد التحديث بنجاح، أو `show_success=true` لإبقاء صفحة النجاح مرئية، أو `ui_locales=` لتجاوز اللغة الافتراضية، أو `identifier=` لملء حقل إدخال المعرّف مسبقًا.',
+      single_task_flows_description:
+        'وجّه المستخدمين مباشرةً إلى تدفق محدد (مثل ربط البريد الإلكتروني). بشكل اختياري، أضف `redirect=` لإرجاع المستخدمين إلى تطبيقك بعد التحديث بنجاح، أو `show_success=true` لإبقاء صفحة النجاح مرئية، أو `ui_locales=` لتجاوز اللغة الافتراضية، أو `identifier=` لملء حقل إدخال المعرّف مسبقًا.',
+      tooltips: {
+        email: 'قم بتحديث عنوان بريدك الإلكتروني الرئيسي',
+        phone: 'قم بتحديث رقم هاتفك المحمول الرئيسي',
+        username: 'قم بتحديث اسم المستخدم الخاص بك',
+        password: 'عين كلمة مرور جديدة',
+        social: 'اربط حسابًا اجتماعيًا لتسجيل الدخول',
+        social_change: 'التبديل إلى حساب اجتماعي مرتبط آخر',
+        social_remove: 'أزل حسابًا اجتماعيًا مرتبطًا',
+        authenticator_app: 'قم بإعداد تطبيق مصادق جديد للمصادقة متعددة العوامل',
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
+        passkey_add: 'تسجيل مفتاح مرور جديد',
+        passkey_manage: 'إدارة مفاتيح المرور الحالية أو إضافة مفاتيح جديدة',
+        backup_codes_generate: 'توليد مجموعة جديدة من 10 أكواد احتياطية',
+        backup_codes_manage: 'عرض الأكواد الاحتياطية المتاحة أو توليد أكواد جديدة',
+        account_center:
+          'الوصول إلى مركز الحساب لإدارة إعدادات الأمان مثل البريد الإلكتروني والهاتف واسم المستخدم وكلمة المرور والمصادقة متعددة العوامل والحسابات المتصلة',
+        profile: 'المركز الرئيسي لإدارة معلوماتك الشخصية (مثل الاسم والصورة الرمزية)',
+        sessions: 'عرض وإدارة جلساتك النشطة عبر الأجهزة',
+      },
+      customize_note: 'لا تريد التجربة المعدة مسبقًا؟ يمكنك بالكامل',
+      customize_link: 'تخصيص التدفقات الخاصة بك باستخدام واجهة Account API بدلاً من ذلك.',
+    },
+    custom_css: {
+      title: 'CSS مخصص',
+      description: 'تخصيص مظهر مركز الحساب باستخدام CSS مخصص.',
+    },
+  },
+  sign_up_and_sign_in,
+  content,
+  setup_warning: {
+    no_connector_sms:
+      'لم يتم إعداد أي موصل SMS بعد. قبل إكمال التكوين ، لن يتمكن المستخدمون من تسجيل الدخول باستخدام هذه الطريقة. <a>{{link}}</a> في "الموصلات"',
+    no_connector_email:
+      'لم يتم إعداد أي موصل بريد إلكتروني بعد. قبل إكمال التكوين ، لن يتمكن المستخدمون من تسجيل الدخول باستخدام هذه الطريقة. <a>{{link}}</a> في "الموصلات"',
+    no_connector_social:
+      'لم تقم بإعداد أي موصل اجتماعي بعد. أضف الموصلات أولاً لتطبيق طرق تسجيل الدخول الاجتماعي. <a>{{link}}</a> في "الموصلات".',
+    no_connector_email_account_center:
+      'لم يتم إعداد موصل البريد الإلكتروني بعد. قم بالإعداد في <a>"موصلات البريد الإلكتروني والرسائل القصيرة"</a>.',
+    no_connector_sms_account_center:
+      'لم يتم إعداد موصل الرسائل القصيرة بعد. قم بالإعداد في <a>"موصلات البريد الإلكتروني والرسائل القصيرة"</a>.',
+    no_connector_social_account_center:
+      'لم يتم إعداد الموصل الاجتماعي بعد. قم بالإعداد في <a>"الموصلات الاجتماعية"</a>.',
+    no_mfa_factor: 'لم يتم إعداد أي عامل MFA بعد. قم بالإعداد في <a>{{link}}</a>.',
+    setup_link: 'إعداد',
+  },
+  save_alert: {
+    description:
+      'أنت تقوم بتنفيذ إجراءات تسجيل الدخول والتسجيل الجديدة. قد يتأثر جميع مستخدميك بالتغيير الجديد. هل أنت متأكد من الالتزام بالتغيير؟',
+    before: 'قبل',
+    after: 'بعد',
+    sign_up: 'التسجيل',
+    sign_in: 'تسجيل الدخول',
+    social: 'اجتماعي',
+    forgot_password_migration_notice:
+      'لقد قمنا بترقية التحقق من كلمة المرور المنسية لدعم الطرق المخصصة. في السابق، كان هذا يتم تحديده تلقائياً بواسطة موصلات البريد الإلكتروني والرسائل القصيرة. انقر فوق <strong>تأكيد</strong> لإكمال الترقية.',
+  },
+  preview: {
+    title: 'معاينة تسجيل الدخول',
+    live_preview: 'معاينة مباشرة',
+    live_preview_tip: 'حفظ لمعاينة التغييرات',
+    native: 'التطبيق الأصلي',
+    desktop_web: 'الويب على سطح المكتب',
+    mobile_web: 'الويب على الهاتف المحمول',
+    desktop: 'سطح المكتب',
+    mobile: 'الهاتف المحمول',
+  },
+  custom_profile_fields,
+};
+
+export default Object.freeze(sign_in_exp);

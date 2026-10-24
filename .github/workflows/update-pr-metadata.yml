@@ -1,0 +1,31 @@
+name: Update Metadata
+
+on:
+  # CAREFUL! https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  update-metadata:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add labels
+        uses: silverhand-io/actions-add-labels-run-steps@v1.2.2
+        with:
+          title: ${{ github.event.pull_request.title || github.event.issue.title }}
+          github-token: ${{ github.token }}
+
+      - name: Add assignees
+        if: |
+          contains(fromJson('["opened", "reopened"]'), github.event.action) &&
+          !endsWith(github.event.pull_request.user.login, '[bot]')
+        uses: actions-ecosystem/action-add-assignees@v1
+        with:
+          github_token: ${{ github.token }}
+          assignees: ${{ github.event.pull_request.user.login }}
+

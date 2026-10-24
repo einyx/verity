@@ -1,0 +1,481 @@
+import {
+  ForgotPasswordMethod,
+  hookEvents,
+  InteractionEvent,
+  InteractionHookEvent,
+  MfaFactor,
+  MfaPolicy,
+  SignInIdentifier,
+} from '@logto/schemas';
+import { authenticator } from 'otplib';
+
+import { createUserMfaVerification, deleteUser } from '#src/api/admin-user.js';
+import { getWebhookRecentLogs } from '#src/api/logs.js';
+import { updateSignInExperience } from '#src/api/sign-in-experience.js';
+import { SsoConnectorApi } from '#src/api/sso-connector.js';
+import { initExperienceClient, processSession, logoutClient } from '#src/helpers/client.js';
+import { resetPasswordlessConnectors } from '#src/helpers/connector.js';
+import {
+  fulfillUserEmail,
+  identifyUserWithEmailVerificationCode,
+  identifyUserWithUsernamePassword,
+  registerNewUserUsernamePassword,
+  registerNewUserWithVerificationCode,
+  signInWithEnterpriseSso,
+  signInWithPassword,
+} from '#src/helpers/experience/index.js';
+import { successfullyVerifyTotp } from '#src/helpers/experience/totp-verification.js';
+import { getSupportedHookEvents, WebHookApiTest } from '#src/helpers/hook.js';
+import { expectRejects } from '#src/helpers/index.js';
+import { OrganizationApiTest } from '#src/helpers/organization.js';
+import {
+  enableAllPasswordSignInMethods,
+  enableAllVerificationCodeSignInMethods,
+} from '#src/helpers/sign-in-experience.js';
+import { generateNewUserProfile, UserApiTest } from '#src/helpers/user.js';
+import { generateEmail, generatePassword, randomString, waitFor } from '#src/utils.js';
+
+import WebhookMockServer from './WebhookMockServer.js';
+import { assertHookLogResult } from './utils.js';
+
+const webHookMockServer = new WebhookMockServer(9999);
+const userNamePrefix = 'experienceApiHookTriggerTestUser';
+const username = `${userNamePrefix}_0`;
+const password = generatePassword();
+const email = generateEmail();
+
+const userApi = new UserApiTest();
+const webHookApi = new WebHookApiTest();
+const organizationApi = new OrganizationApiTest();
+const ssoConnectorApi = new SsoConnectorApi();
+
+const getHookLogs = async (hookId: string, event: InteractionHookEvent) => {
+  await waitFor(100);
+
+  return getWebhookRecentLogs(
+    hookId,
+    new URLSearchParams({ logKey: `TriggerHook.${event}`, page_size: '10' })
+  );
+};
+
+beforeAll(async () => {
+  await Promise.all([
+    resetPasswordlessConnectors(),
+    enableAllPasswordSignInMethods({
+      identifiers: [SignInIdentifier.Username],
+      password: true,
+      verify: false,
+    }),
+    webHookMockServer.listen(),
+    userApi.create({ username, password }),
+  ]);
+  await updateSignInExperience({
+    forgotPasswordMethods: [
+      ForgotPasswordMethod.EmailVerificationCode,
+      ForgotPasswordMethod.PhoneVerificationCode,
+    ],
+  });
+});
+
+afterAll(async () => {
+  await Promise.all([userApi.cleanUp(), webHookMockServer.close()]);
+});
+afterEach(async () => {
+  await Promise.all([organizationApi.cleanUp(), ssoConnectorApi.cleanUp()]);
+});
+describe('trigger invalid hook', () => {
+  beforeAll(async () => {
+    await webHookApi.create({
+      name: 'invalidHookEventListener',
+      events: [InteractionHookEvent.PostSignIn],
+      config: { url: 'not_work_url' },
+    });
+  });
+
+  it('should log invalid hook url error', async () => {
+    await signInWithPassword({
+      identifier: {
+        type: SignInIdentifier.Username,
+        value: username,
+      },
+      password,
+    });
+
+    const hook = webHookApi.hooks.get('invalidHookEventListener')!;
+    await assertHookLogResult(hook, InteractionHookEvent.PostSignIn, {
+      errorMessage: 'Failed to parse URL from not_work_url',
+    });
+  });
+  afterAll(async () => {
+    await webHookApi.cleanUp();
+  });
+});
+
+describe('experience api hook trigger', () => {
+  beforeEach(async () => {
+    await Promise.all([
+      webHookApi.create({
+        name: 'interactionHookEventListener',
+        events: getSupportedHookEvents(Object.values(InteractionHookEvent)),
+        config: { url: webHookMockServer.endpoint },
+      }),
+      webHookApi.create({
+        name: 'dataHookEventListener',
+        events: getSupportedHookEvents(
+          hookEvents.filter((event) => !(event in InteractionHookEvent))
+        ),
+        config: { url: webHookMockServer.endpoint },
+      }),
+      webHookApi.create({
+        name: 'registerOnlyInteractionHookEventListener',
+        events: [InteractionHookEvent.PostRegister],
+        config: { url: webHookMockServer.endpoint },
+      }),
+    ]);
+  });
+
+  afterEach(async () => {
+    await webHookApi.cleanUp();
+  });
+
+  it('new user registration interaction API', async () => {
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const registerHook = webHookApi.hooks.get('registerOnlyInteractionHookEventListener')!;
+    const dataHook = webHookApi.hooks.get('dataHookEventListener')!;
+
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+    const userId = await registerNewUserUsernamePassword(username, password);
+
+    const interactionHookEventPayload: Record<string, unknown> = {
+      event: InteractionHookEvent.PostRegister,
+      interactionEvent: InteractionEvent.Register,
+      sessionId: expect.any(String),
+      user: expect.objectContaining({ id: userId, username }),
+    };
+
+    await assertHookLogResult(interactionHook, InteractionHookEvent.PostRegister, {
+      hookPayload: interactionHookEventPayload,
+    });
+
+    // Verify multiple hooks can be triggered with the same event
+    await assertHookLogResult(registerHook, InteractionHookEvent.PostRegister, {
+      hookPayload: interactionHookEventPayload,
+    });
+
+    // Verify data hook is triggered
+    await assertHookLogResult(dataHook, 'User.Created', {
+      hookPayload: {
+        event: 'User.Created',
+        interactionEvent: InteractionEvent.Register,
+        sessionId: expect.any(String),
+        data: expect.objectContaining({ id: userId, username }),
+      },
+    });
+
+    // Assert user updated event is not triggered
+    await assertHookLogResult(dataHook, 'User.Data.Updated', {
+      toBeUndefined: true,
+    });
+
+    // Clean up
+    await deleteUser(userId);
+  });
+
+  it('user sign in interaction API  without profile update', async () => {
+    await signInWithPassword({
+      identifier: {
+        type: SignInIdentifier.Username,
+        value: username,
+      },
+      password,
+    });
+
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const dataHook = webHookApi.hooks.get('dataHookEventListener')!;
+    const user = userApi.users.find(({ username: name }) => name === username)!;
+
+    const interactionHookEventPayload: Record<string, unknown> = {
+      event: InteractionHookEvent.PostSignIn,
+      interactionEvent: InteractionEvent.SignIn,
+      sessionId: expect.any(String),
+      user: expect.objectContaining({ id: user.id, username }),
+    };
+
+    await assertHookLogResult(interactionHook, InteractionHookEvent.PostSignIn, {
+      hookPayload: interactionHookEventPayload,
+    });
+
+    // Verify user create data hook is not triggered
+    await assertHookLogResult(dataHook, 'User.Created', {
+      toBeUndefined: true,
+    });
+
+    await assertHookLogResult(dataHook, 'User.Data.Updated', {
+      toBeUndefined: true,
+    });
+  });
+
+  it('user sign in interaction API only emits PostSignIn after MFA challenge succeeds', async () => {
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+    const user = await userApi.create({ username, password });
+    const totpVerification = await createUserMfaVerification(user.id, MfaFactor.TOTP);
+
+    if (totpVerification.type !== MfaFactor.TOTP) {
+      throw new Error('unexpected mfa type');
+    }
+
+    try {
+      await updateSignInExperience({
+        mfa: {
+          factors: [MfaFactor.TOTP],
+          policy: MfaPolicy.Mandatory,
+        },
+      });
+
+      const client = await initExperienceClient();
+      await identifyUserWithUsernamePassword(client, username, password);
+
+      await expectRejects(client.submitInteraction(), {
+        code: 'session.mfa.require_mfa_verification',
+        status: 403,
+        expectData: (data: { availableFactors: string[] }) => {
+          expect(data.availableFactors).toEqual([MfaFactor.TOTP]);
+        },
+      });
+
+      expect(await getHookLogs(interactionHook.id, InteractionHookEvent.PostSignIn)).toHaveLength(
+        0
+      );
+
+      await successfullyVerifyTotp(client, {
+        code: authenticator.generate(totpVerification.secret),
+      });
+
+      const { redirectTo } = await client.submitInteraction();
+      await processSession(client, redirectTo);
+      await logoutClient(client);
+
+      expect(await getHookLogs(interactionHook.id, InteractionHookEvent.PostSignIn)).toHaveLength(
+        1
+      );
+
+      await assertHookLogResult(interactionHook, InteractionHookEvent.PostSignIn, {
+        hookPayload: {
+          event: InteractionHookEvent.PostSignIn,
+          interactionEvent: InteractionEvent.SignIn,
+          sessionId: expect.any(String),
+          user: expect.objectContaining({ id: user.id, username }),
+        },
+      });
+    } finally {
+      await updateSignInExperience({
+        mfa: {
+          factors: [],
+          policy: MfaPolicy.PromptAtSignInAndSignUp,
+        },
+      });
+
+      await deleteUser(user.id);
+    }
+  });
+
+  it('user sign in interaction API with profile update', async () => {
+    await enableAllVerificationCodeSignInMethods({
+      identifiers: [SignInIdentifier.Email],
+      password: false,
+      verify: true,
+    });
+
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const dataHook = webHookApi.hooks.get('dataHookEventListener')!;
+    const user = userApi.users.find(({ username: name }) => name === username)!;
+
+    const client = await initExperienceClient();
+
+    await identifyUserWithUsernamePassword(client, username, password);
+    await fulfillUserEmail(client, email);
+    const { redirectTo } = await client.submitInteraction();
+    await processSession(client, redirectTo);
+    await logoutClient(client);
+
+    const interactionHookEventPayload: Record<string, unknown> = {
+      event: InteractionHookEvent.PostSignIn,
+      interactionEvent: InteractionEvent.SignIn,
+      sessionId: expect.any(String),
+      user: expect.objectContaining({ id: user.id, username }),
+    };
+
+    await assertHookLogResult(interactionHook, InteractionHookEvent.PostSignIn, {
+      hookPayload: interactionHookEventPayload,
+    });
+
+    // Verify user create data hook is not triggered
+    await assertHookLogResult(dataHook, 'User.Created', {
+      toBeUndefined: true,
+    });
+
+    await assertHookLogResult(dataHook, 'User.Data.Updated', {
+      hookPayload: {
+        event: 'User.Data.Updated',
+        interactionEvent: InteractionEvent.SignIn,
+        sessionId: expect.any(String),
+        data: expect.objectContaining({ id: user.id, username, primaryEmail: email }),
+      },
+    });
+  });
+
+  it('password reset interaction API', async () => {
+    const newPassword = generatePassword();
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const dataHook = webHookApi.hooks.get('dataHookEventListener')!;
+    const user = userApi.users.find(({ username: name }) => name === username)!;
+
+    const client = await initExperienceClient({
+      interactionEvent: InteractionEvent.ForgotPassword,
+    });
+    await identifyUserWithEmailVerificationCode(client, email);
+    await client.resetPassword({ password: newPassword });
+    await client.submitInteraction();
+
+    const interactionHookEventPayload: Record<string, unknown> = {
+      event: InteractionHookEvent.PostResetPassword,
+      interactionEvent: InteractionEvent.ForgotPassword,
+      sessionId: expect.any(String),
+      user: expect.objectContaining({ id: user.id, username, primaryEmail: email }),
+    };
+
+    await assertHookLogResult(interactionHook, InteractionHookEvent.PostResetPassword, {
+      hookPayload: interactionHookEventPayload,
+    });
+
+    await assertHookLogResult(dataHook, 'User.Data.Updated', {
+      hookPayload: {
+        event: 'User.Data.Updated',
+        interactionEvent: InteractionEvent.ForgotPassword,
+        sessionId: expect.any(String),
+        data: expect.objectContaining({ id: user.id, username, primaryEmail: email }),
+      },
+    });
+  });
+});
+
+describe('organization jit provisioning hook trigger', () => {
+  const hookName = 'organizationJitProvisioningHookEventListener';
+
+  beforeAll(async () => {
+    await webHookApi.create({
+      name: hookName,
+      events: ['Organization.Membership.Updated'],
+      config: { url: webHookMockServer.endpoint },
+    });
+  });
+
+  const assertOrganizationMembershipUpdated = async (organizationId: string) =>
+    assertHookLogResult(webHookApi.hooks.get(hookName)!, 'Organization.Membership.Updated', {
+      hookPayload: {
+        event: 'Organization.Membership.Updated',
+        organizationId,
+      },
+    });
+
+  it('should trigger `Organization.Membership.Updated` event when user is provisioned by experience', async () => {
+    const organization = await organizationApi.create({ name: 'foo' });
+    const domain = 'example.com';
+    await organizationApi.jit.addEmailDomain(organization.id, domain);
+
+    const userId = await registerNewUserWithVerificationCode({
+      type: SignInIdentifier.Email,
+      value: generateEmail(domain),
+    });
+    await assertOrganizationMembershipUpdated(organization.id);
+    await deleteUser(userId);
+  });
+
+  it('should trigger `Organization.Membership.Updated` event when user is provisioned by SSO', async () => {
+    const organization = await organizationApi.create({ name: 'bar' });
+    const domain = 'sso_example.com';
+    const connector = await ssoConnectorApi.createMockOidcConnector([domain]);
+    await organizationApi.jit.ssoConnectors.add(organization.id, [connector.id]);
+    const email = generateEmail(domain);
+    const sub = randomString();
+
+    await updateSignInExperience({
+      singleSignOnEnabled: true,
+    });
+
+    const userId = await signInWithEnterpriseSso(
+      ssoConnectorApi.firstConnectorId!,
+      {
+        sub,
+        email,
+        email_verified: true,
+      },
+      true
+    );
+
+    await assertOrganizationMembershipUpdated(organization.id);
+
+    await deleteUser(userId);
+  });
+});
+
+describe('should trigger `Identifier.Lockout` event when user repeatedly fails to sign in', () => {
+  const hookName = 'identifierLockoutHookEventListener';
+
+  const testIdentifier = {
+    type: SignInIdentifier.Username,
+    value: `${userNamePrefix}_lockout`,
+  };
+  const maxAttempts = 3;
+  // eslint-disable-next-line @silverhand/fp/no-let
+  let userId: string;
+
+  beforeAll(async () => {
+    await enableAllPasswordSignInMethods({
+      identifiers: [SignInIdentifier.Username],
+      password: true,
+      verify: false,
+    });
+    // eslint-disable-next-line @silverhand/fp/no-mutation
+    userId = await registerNewUserUsernamePassword(testIdentifier.value, generatePassword());
+
+    await updateSignInExperience({
+      sentinelPolicy: { maxAttempts: 3, lockoutDuration: 1 },
+    });
+
+    await webHookApi.create({
+      name: hookName,
+      events: ['Identifier.Lockout'],
+      config: { url: webHookMockServer.endpoint },
+    });
+  });
+
+  afterAll(async () => {
+    await deleteUser(userId);
+    // `sentinelPolicy` is tenant-wide, so leaving it tightened makes unrelated suites fail with
+    // spurious lockouts on a reused database. `{}` is the suite baseline.
+    await updateSignInExperience({ sentinelPolicy: {} });
+  });
+
+  it('should log lockout hook after max failed attempts', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-let, @silverhand/fp/no-mutation
+    for (let i = 0; i < maxAttempts; i++) {
+      // Ignore sign-in failure
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        signInWithPassword({
+          identifier: testIdentifier,
+          password: 'wrong_password',
+        })
+      ).rejects.toThrowError();
+    }
+
+    await assertHookLogResult(webHookApi.hooks.get(hookName)!, 'Identifier.Lockout', {
+      hookPayload: {
+        event: 'Identifier.Lockout',
+        ...testIdentifier,
+      },
+    });
+  });
+});

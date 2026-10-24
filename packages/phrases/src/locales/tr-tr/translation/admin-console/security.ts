@@ -1,0 +1,223 @@
+const security = {
+  page_title: 'Güvenlik',
+  title: 'Güvenlik',
+  subtitle: 'Karmaşık saldırıları önlemek için gelişmiş korumaları yapılandırın.',
+  tabs: {
+    captcha: 'CAPTCHA',
+    password_policy: 'Parola politikası',
+    blocklist: 'Engellenen liste',
+    general: 'Genel',
+  },
+  bot_protection: {
+    title: 'Bot Koruması',
+    description:
+      "Otomatik tehditleri engellemek için kayıt, giriş ve şifre kurtarma işlemlerinde CAPTCHA'yı etkinleştirin.",
+    captcha: {
+      title: 'CAPTCHA',
+      placeholder: 'Bir CAPTCHA sağlayıcısı seçin ve entegrasyonu ayarlayın.',
+      add: 'CAPTCHA ekle',
+    },
+    settings: 'Ayarlar',
+    enable_captcha: "CAPTCHA'yı Etkinleştir",
+    enable_captcha_description:
+      'Kayıt olma, giriş yapma ve şifre kurtarma işlemleri için CAPTCHA doğrulamasını etkinleştirin.',
+  },
+  create_captcha: {
+    setup_captcha: "CAPTCHA'yı ayarla",
+  },
+  captcha_providers: {
+    recaptcha_enterprise: {
+      name: 'reCAPTCHA Enterprise',
+      description:
+        "Google'ın kurumsal CAPTCHA çözümü, web sitenizi sahtekarlık faaliyetlerinden korumak için gelişmiş tehdit algılama ve detaylı güvenlik analizleri sunar.",
+    },
+    turnstile: {
+      name: 'Cloudflare Turnstile',
+      description:
+        "Cloudflare'in akıllı CAPTCHA alternatifi, görsel bulmaca olmadan kullanıcı dostu bir deneyim sunarken aynı zamanda bot koruması sağlar.",
+    },
+    cap: {
+      name: 'Cap',
+      description:
+        'Görsel bulmaca veya üçüncü taraf hizmet gerektirmeyen, iş kanıtı tabanlı, açık kaynaklı ve kendi sunucunuzda barındırılan CAPTCHA; diğer CAPTCHA hizmetlerine erişilemeyen bölgeler için idealdir.',
+    },
+  },
+  captcha_details: {
+    back_to_security: 'Güvenliğe dön',
+    page_title: 'CAPTCHA Detayları',
+    check_readme: "README'i görüntüle",
+    options_change_captcha: 'CAPTCHA sağlayıcısını değiştir',
+    connection: 'Bağlantı',
+    description: 'CAPTCHA bağlantınızı yapılandırın.',
+    site_key: 'Site anahtarı',
+    secret_key: 'Gizli anahtar',
+    project_id: 'Proje ID',
+    domain: 'Domain (isteğe bağlı)',
+    domain_placeholder: 'www.google.com (varsayılan) veya recaptcha.net',
+    recaptcha_key_id: 'reCAPTCHA anahtar ID',
+    recaptcha_api_key: 'Projenin API anahtarı',
+    cap_endpoint: 'Cap uç noktası',
+    cap_endpoint_placeholder: 'https://cap.example.com',
+    cap_endpoint_http_notice:
+      'Bu uç nokta HTTP kullanıyor ve yalnızca yerel geliştirme için uygundur. Tarayıcılar HTTPS oturum açma sayfasından yapılan HTTP isteklerini engeller ve gizli anahtar şifrelenmeden gönderilir. Üretimde HTTPS kullanın.',
+    deletion_description: 'Bu CAPTCHA sağlayıcısını silmek istediğinizden emin misiniz?',
+    captcha_deleted: 'CAPTCHA sağlayıcısı başarıyla silindi',
+    setup_captcha: "CAPTCHA'yı ayarla",
+    mode: 'Doğrulama modu',
+    mode_invisible: 'Görünmez',
+    mode_checkbox: 'Onay kutusu',
+    mode_notice:
+      "Doğrulama modu, Google Cloud Console'daki reCAPTCHA anahtar ayarlarında tanımlanır. Buradaki modu değiştirmek için eşleşen bir anahtar türü gerekir.",
+    score_threshold: 'Puan eşiği',
+    score_threshold_description:
+      "Eşiğin altındaki puanlar reddedilir. 0.0 tümünü kabul eder, 1.0 yalnızca mükemmel puanları kabul eder. Varsayılan değer 0.5'tir.",
+    score_threshold_error: 'Puan eşiği 0 ile 1 arasında olmalıdır.',
+  },
+  password_policy: {
+    password_requirements: 'Parola gereksinimleri',
+    password_requirements_description:
+      'Kimlik bilgisi doldurma ve zayıf parola saldırılarına karşı savunma yapmak için parola gereksinimlerini artırın.',
+    minimum_length: 'Minimum uzunluk',
+    minimum_length_description:
+      'NIST önerilerine göre, web ürünleri için en az <a>8 karakter</a> kullanın.',
+    minimum_length_error: 'Minimum uzunluk {{min}} ile {{max}} (dahil) arasında olmalıdır.',
+    minimum_required_char_types: 'Minimum gereken karakter tipleri',
+    minimum_required_char_types_description:
+      'Karakter tipleri: büyük harfler (A-Z), küçük harfler (a-z), sayılar (0-9) ve özel semboller ({{symbols}}).',
+    password_rejection: 'Parola reddi',
+    compromised_passwords: 'Etkilenen şifreleri reddet',
+    breached_passwords: 'Veri tabanında yer alan şifreleri reddet',
+    breached_passwords_description: 'Daha önceki ihlal veritabanlarında bulunan şifreleri reddet.',
+    restricted_phrases: 'Düşük güvenlikli ifadeleri kısıtla',
+    restricted_phrases_tooltip:
+      'Parolanız 3 ya da daha fazla karakterle birleştirilmediği sürece bu ifadelerden kaçınmalıdır.',
+    repetitive_or_sequential_characters: 'Tekrarlayan veya ardışık karakterler',
+    repetitive_or_sequential_characters_description: 'Örn., "AAAA", "1234" ve "abcd".',
+    user_information: 'Kullanıcı bilgisi',
+    user_information_description: 'Örn., e-posta adresi, telefon numarası, kullanıcı adı vb.',
+    custom_words: 'Özel kelimeler',
+    custom_words_description:
+      'Bağlamla ilgili kelimeleri kişiselleştirin, küçük/büyük harf duyarsız ve satır başına bir kelime olacak şekilde.',
+    custom_words_placeholder: 'Servis adınız, şirket adınız, vb.',
+    password_expiration: 'Parola sona erme',
+    password_expiration_description:
+      'Kullanıcıların belirli bir gün sayısından sonra parolalarını sıfırlamasını gerektirir. SSO veya geçiş anahtarı (passkey) ile oturum açan kullanıcılar etkilenmez.',
+    enable_password_expiration: 'Parola sona ermeyi etkinleştir',
+    enable_password_expiration_description:
+      'Kullanıcıların parolalarını periyodik olarak sıfırlamasını gerektirir. Kayıtlı bir parola değiştirme tarihi olmayan mevcut kullanıcılar, bu politikanın etkinleştirildiği tarihten itibaren değerlendirilecektir.',
+    enable_password_expiration_tip:
+      'Parola sona ermesini yalnızca oturum açma deneyiminde geçerli bir bağlayıcıya sahip en az bir şifremi unuttum yöntemi yapılandırdıktan sonra etkinleştirebilirsiniz.',
+    expiration_period: 'Parola geçerlilik süresi (gün)',
+    expiration_period_description: 'Bir parolanın süresi dolmadan önce geçerli kaldığı gün sayısı.',
+    expiration_period_error: 'Parola geçerlilik süresi {{min}} ile {{max}} gün arasında olmalıdır.',
+    password_expiration_recovery_reminder:
+      'Bazı kullanıcıların parola kurtarma kodu almak için bir e-posta adresi veya telefon numarası olmayabilir, bu nedenle süresi dolmuş bir parolayı sıfırlayamazlar. Her kullanıcının parolasını kurtarabilmesini sağlamak için kayıt sırasında bir e-posta adresi veya telefon numarası zorunlu kılın.',
+  },
+  verification_code_policy: {
+    card_title: 'Doğrulama kodu',
+    card_description:
+      'Oturum açma, kaydolma ve parola sıfırlama akışlarında kullanılan doğrulama kodları için sona erme süresini ve maksimum yeniden deneme sayısını yapılandırın.',
+    enable: {
+      title: 'Doğrulama kodu ayarlarını özelleştir',
+      description:
+        'Doğrulama kodu sona erme süresinin ve maksimum yeniden deneme sayısının özelleştirilmesine izin ver.',
+    },
+    expiration_duration: {
+      title: 'Sona erme süresi (saniye)',
+      description:
+        'Bir doğrulama kodunun gönderildikten sonra geçerli kaldığı saniye cinsinden süre.',
+      error_message: 'Sona erme süresi 60 ile 3600 saniye arasında olmalıdır.',
+    },
+    max_retry_attempts: {
+      title: 'Maksimum yeniden deneme sayısı',
+      description:
+        'Kod geçersiz kılınmadan önce izin verilen maksimum başarısız doğrulama denemesi sayısı.',
+      error_message: 'Maksimum yeniden deneme sayısı 1 ile 100 arasında olmalıdır.',
+    },
+  },
+
+  sentinel_policy: {
+    card_title: 'Kimlik kilitleme',
+    card_description:
+      'Tüm kullanıcılar için varsayılan ayarlarla kilitleme kullanılabilir, ancak daha fazla kontrol için özelleştirebilirsiniz.\n\nBirden fazla başarısız kimlik doğrulama denemesinden sonra (örneğin, ardışık yanlış parola veya doğrulama kodu) bir kimliğin geçici olarak kilitlenmesini sağlayarak kaba kuvvet erişimini önleyin.',
+    enable_sentinel_policy: {
+      title: 'Kilitleme deneyimini özelleştir',
+      description:
+        'Kilitlemeden önceki maksimum başarısız oturum açma deneme sayısını, kilitleme süresini ve anında manuel kilit açmayı özelleştirmeye izin ver.',
+    },
+    max_attempts: {
+      title: 'Maksimum başarısız deneme',
+      description:
+        'Bir saat içinde maksimum başarısız oturum açma deneme sayısına ulaşıldığında bir kimliği geçici olarak kilitleyin.',
+      error_message: "Maksimum başarısız deneme sayısı 0'dan büyük olmalıdır.",
+    },
+    lockout_duration: {
+      title: 'Kilitleme süresi (dakika)',
+      description:
+        'Maksimum başarısız deneme sınırını aştıktan sonra belirli bir süre oturum açmayı engelleyin.',
+      error_message: 'Kilitleme süresi en az 1 dakika olmalıdır.',
+    },
+    manual_unlock: {
+      title: 'Manuel kilit açma',
+      description:
+        'Kullanıcının kimliğini doğrulayıp kimliklerini girdikten sonra anında kilidi açın.',
+      unblock_by_identifiers: 'Kimlik ile engeli kaldır',
+      modal_description_1:
+        'Bir kimlik, birden fazla başarısız oturum açma/kayıt olma denemesi nedeniyle geçici olarak kilitlendi. Güvenliği korumak için, erişim kilitleme süresi bittikten sonra otomatik olarak geri yüklenecektir.',
+      modal_description_2:
+        'Kullanıcının kimliğini doğrulayıp yetkisiz erişim denemesi olmadığından emin olduysanız yalnızca manuel olarak kilidi açın.',
+      placeholder: 'Kimlikleri girin (e-posta adresi / telefon numarası / kullanıcı adı)',
+      confirm_button_text: 'Şimdi kilidini aç',
+      success_toast: 'Başarıyla kilidi açıldı',
+      duplicate_identifier_error: 'Kimlik zaten eklendi',
+      empty_identifier_error: 'Lütfen en az bir kimlik girin',
+    },
+  },
+  blocklist: {
+    card_title: 'E-posta engelleme listesi',
+    card_description:
+      'Yüksek riskli veya istenmeyen e-posta adreslerini engelleyerek kullanıcı tabanınızı kontrol edin.',
+    custom_email_allowlist: {
+      title: 'Özel e-posta adreslerine izin ver',
+      description:
+        'Yeni kayıtlar ve yeni bağlanan e-postalar için yalnızca belirli e-posta alan adlarına, e-posta adreslerine veya joker karakterli kalıplara izin veren kurallar ekleyin. Örnekler: bar@example.com, @example.com, foo*@example.com, *@example.com. gmail.com ve googlemail.com alan adları eşdeğer kabul edilir ve yerel bölümdeki noktalar yok sayılır; bu nedenle foo.bar@gmail.com, foobar@googlemail.com ile eşleşir.',
+      placeholder: 'E-posta adresi, alan adı veya joker karakterli kalıp girin',
+      duplicate_error:
+        'E-posta adresi, alan adı veya joker karakterli e-posta kalıbı zaten eklendi',
+      invalid_format_error:
+        'Geçerli bir e-posta adresi (bar@example.com), alan adı (@example.com) veya joker karakterli e-posta kalıbı (foo*@example.com, *@example.com) olmalıdır',
+      warnings: {
+        identical_entries:
+          'Bazı izin listesi girdileri engelleme kurallarında da bulunuyor. Eşleşen e-postalar yine de engellenebilir.',
+        blocked_exact_email:
+          'Bazı tam izin listesi e-postaları bir engelleme kuralıyla eşleşiyor. Eşleşen e-postalar yine de engellenebilir.',
+        blocked_subaddressing:
+          'Bazı izin listesi girdileri artı işareti (+) içeriyor, ancak e-posta alt adresleme engellenmiş durumda.',
+        effectively_unusable:
+          'Bu kontrollere göre mevcut izin listesi hiçbir yeni e-postanın geçmesine izin vermeyebilir.',
+      },
+    },
+    disposable_email: {
+      title: 'Geçici e-posta adreslerini engelle',
+      description:
+        'Spamı önlemek ve kullanıcı kalitesini artırmak için geçici veya tek kullanımlık e-posta adresleri kullanılarak yapılan kayıt denemelerini reddetmek için etkinleştirin.',
+    },
+    email_subaddressing: {
+      title: 'E-posta alt adlandırmasını engelle',
+      description:
+        'Artı işareti (+) ve ek karakterler ile e-posta alt adresleri kullanılarak yapılan kayıt girişimlerini reddetmek için etkinleştirin (örn., user+alias@foo.com).',
+    },
+    custom_email_address: {
+      title: 'Özel e-posta adreslerini engelle',
+      description:
+        'Belirli e-posta alan adlarının, e-posta adreslerinin veya joker karakterli kalıpların kullanıcı arayüzü aracılığıyla kaydolmasını veya bağlantı kurmasını engelleyen kurallar ekleyin. Örnekler: bar@example.com, @example.com, foo*@example.com, *@example.com. gmail.com ve googlemail.com alan adları eşdeğer kabul edilir ve yerel bölümdeki noktalar yok sayılır; bu nedenle foo.bar@gmail.com, foobar@googlemail.com ile eşleşir.',
+      placeholder: 'E-posta adresi, alan adı veya joker karakterli kalıp girin',
+      duplicate_error:
+        'E-posta adresi, alan adı veya joker karakterli e-posta adresi kalıbı zaten eklendi',
+      invalid_format_error:
+        'Geçerli bir e-posta adresi (bar@example.com), alan adı (@example.com) veya joker karakterli e-posta adresi kalıbı (foo*@example.com, *@example.com) olmalıdır',
+    },
+  },
+};
+
+export default Object.freeze(security);

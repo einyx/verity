@@ -1,0 +1,498 @@
+/* eslint-disable max-lines */
+import {
+  InteractionEvent,
+  MfaFactor,
+  SignInIdentifier,
+  updateProfileApiPayloadGuard,
+  uploadFileGuard,
+  userAssetsGuard,
+  VerificationType,
+} from '@logto/schemas';
+import { addDays, format } from 'date-fns';
+import { type MiddlewareType } from 'koa';
+import type Router from 'koa-router';
+import { object, z } from 'zod';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import { type WithLogContext } from '#src/middleware/koa-audit-log.js';
+import koaGuard from '#src/middleware/koa-guard.js';
+import SystemContext from '#src/tenants/SystemContext.js';
+import type TenantContext from '#src/tenants/TenantContext.js';
+import assertThat from '#src/utils/assert-that.js';
+import { getConsoleLogFromContext } from '#src/utils/console.js';
+
+import { uploadAvatar } from '../avatar-upload.js';
+
+import { createNewMfaCodeVerificationRecord } from './classes/verifications/code-verification.js';
+import { experienceRoutes } from './const.js';
+import { type ExperienceInteractionRouterContext } from './types.js';
+
+const pendingAvatarUploadExpiresInDays = 1;
+
+const buildPendingAvatarUploadObjectKeyPrefix = (tenantId: string, jti: string) => {
+  const expiresAt = format(addDays(new Date(), pendingAvatarUploadExpiresInDays), 'yyyy-MM-dd');
+
+  return `${tenantId}/_pending/${expiresAt}/avatar/${jti}`;
+};
+
+/**
+ * This middleware is guards the current interaction status is MFA verified (if MFA is enabled)
+ *
+ * @throws {RequestError} with status 400 if current interaction is ForgotPassword
+ * @throws {RequestError} with status 404 if current interaction is not identified
+ * @throws {RequestError} with status 403 if MFA verification status is not verified
+ */
+function verifiedInteractionGuard<
+  StateT,
+  ContextT extends WithLogContext,
+  ResponseT,
+>(): MiddlewareType<StateT, ExperienceInteractionRouterContext<ContextT>, ResponseT> {
+  return async (ctx, next) => {
+    const { experienceInteraction } = ctx;
+
+    // Guard current interaction event is not ForgotPassword
+    assertThat(
+      experienceInteraction.interactionEvent !== InteractionEvent.ForgotPassword,
+      new RequestError({
+        code: 'session.not_supported_for_forgot_password',
+        statue: 400,
+      })
+    );
+
+    // A pure step-up applies no tenant MFA policy: its enrollment routes are gated by the step-up
+    // route guard on the predicate that also decides whether an enrolled factor counts.
+    if (
+      experienceInteraction.interactionEvent === InteractionEvent.SignIn &&
+      !experienceInteraction.isStepUp
+    ) {
+      await experienceInteraction.guardMfaVerificationStatus();
+    }
+
+    return next();
+  };
+}
+
+export default function interactionProfileRoutes<T extends ExperienceInteractionRouterContext>(
+  router: Router<unknown, T>,
+  { id: tenantId, libraries, queries }: TenantContext
+) {
+  router.post(
+    `${experienceRoutes.profile}`,
+    koaGuard({
+      body: updateProfileApiPayloadGuard,
+      status: [204, 400, 403, 404, 422],
+    }),
+    async (ctx, next) => {
+      const { experienceInteraction, guard, createLog } = ctx;
+      const profilePayload = guard.body;
+      const { interactionEvent } = experienceInteraction;
+
+      const log = createLog(`Interaction.${interactionEvent}.Profile.Update`);
+
+      // Guard current interaction event is not ForgotPassword
+      assertThat(
+        interactionEvent !== InteractionEvent.ForgotPassword,
+        new RequestError({
+          code: 'session.not_supported_for_forgot_password',
+          statue: 400,
+        })
+      );
+
+      // A pure step-up only stages a first factor it may establish: the route guard opens this
+      // route while `establishableMethods` is non-empty, and the staged type must be one of them.
+      if (experienceInteraction.isStepUp) {
+        const eligibility = await experienceInteraction.getStepUpEligibility();
+
+        assertThat(
+          eligibility?.establishableMethods.some(
+            (method): boolean => String(method) === profilePayload.type
+          ),
+          new RequestError({ code: 'session.step_up.forbidden_route', status: 403 })
+        );
+      }
+
+      if (interactionEvent === InteractionEvent.SignIn && !experienceInteraction.isStepUp) {
+        // Note:
+        // We intentionally allow social profile staging before MFA verification.
+        // This endpoint only writes to the interaction session, while `submit()` is the
+        // DB commit boundary and still enforces MFA for sign-in flows.
+        //
+        // On social linking flows, to simplify the front-end implementation, we allow social profile staging before MFA verification,
+        // and the final submission with `submit()` will enforce MFA verification.
+        // Identified user guard is still applied.
+        await (profilePayload.type === 'social'
+          ? experienceInteraction.guardIdentifiedUser()
+          : experienceInteraction.guardMfaVerificationStatus());
+      }
+
+      log.append({
+        payload: profilePayload,
+      });
+
+      switch (profilePayload.type) {
+        case SignInIdentifier.Email:
+        case SignInIdentifier.Phone:
+        case 'social': {
+          await experienceInteraction.profile.setProfileByVerificationId(
+            profilePayload.type,
+            profilePayload.verificationId,
+            log
+          );
+          break;
+        }
+        case SignInIdentifier.Username: {
+          await experienceInteraction.profile.setProfileWithValidation({
+            username: profilePayload.value,
+          });
+          break;
+        }
+        case 'password': {
+          await experienceInteraction.profile.setPasswordDigestWithValidation(profilePayload.value);
+          break;
+        }
+        /**
+         * Handle non-identifier user profile attributes. The submitted data will be validated and split into
+         * standard user profile attributes and custom user profile attributes. The standard user profile attributes
+         * will be set to the user profile, and the custom user profile attributes will be set to the user custom data.
+         */
+        case 'extraProfile': {
+          const { validateAndParseCustomProfile } = experienceInteraction.profile.profileValidator;
+          await experienceInteraction.profile.setProfileWithValidation(
+            validateAndParseCustomProfile(profilePayload.values)
+          );
+          experienceInteraction.profile.markProfileSubmitted();
+          break;
+        }
+      }
+
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.prefix}/user-assets/avatar`,
+    koaGuard({
+      files: object({
+        file: uploadFileGuard.array().min(1),
+      }),
+      response: userAssetsGuard,
+      status: [200, 400, 403, 404, 500],
+    }),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+      const { interactionEvent } = experienceInteraction;
+
+      assertThat(
+        interactionEvent !== InteractionEvent.ForgotPassword,
+        new RequestError({ code: 'session.not_supported_for_forgot_password', status: 400 })
+      );
+      assertThat(
+        interactionEvent === InteractionEvent.Register,
+        new RequestError({ code: 'session.invalid_interaction_type', status: 400 })
+      );
+
+      const { storageProviderConfig } = SystemContext.shared;
+
+      const objectKeyPrefix = experienceInteraction.identifiedUserId
+        ? `${tenantId}/${experienceInteraction.identifiedUserId}`
+        : buildPendingAvatarUploadObjectKeyPrefix(tenantId, ctx.interactionDetails.jti);
+
+      const [file] = ctx.guard.files.file;
+
+      assertThat(file, 'guard.invalid_input');
+
+      ctx.body = await uploadAvatar({
+        file,
+        storageProviderConfig,
+        objectKeyPrefix,
+        logError: (error) => {
+          getConsoleLogFromContext(ctx).error(error);
+        },
+      });
+
+      return next();
+    }
+  );
+
+  router.put(
+    `${experienceRoutes.profile}/password`,
+    koaGuard({
+      body: z.object({
+        password: z.string(),
+      }),
+      status: [204, 400, 404, 422],
+    }),
+    async (ctx, next) => {
+      const { experienceInteraction, guard, createLog } = ctx;
+      const { password } = guard.body;
+
+      assertThat(
+        experienceInteraction.interactionEvent === InteractionEvent.ForgotPassword,
+        new RequestError({
+          code: 'session.invalid_interaction_type',
+          status: 400,
+        })
+      );
+
+      createLog(`Interaction.ForgotPassword.Profile.Update`);
+
+      // Guard interaction is identified
+      assertThat(
+        experienceInteraction.identifiedUserId,
+        new RequestError({
+          code: 'session.identifier_not_found',
+          status: 404,
+        })
+      );
+
+      await experienceInteraction.profile.setPasswordDigestWithValidation(password, true);
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}/mfa-enabled`,
+    koaGuard({ status: [204, 400, 403, 404] }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+
+      experienceInteraction.mfa.markMfaEnabled();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}/mfa-skipped`,
+    koaGuard({ status: [204, 400, 403, 404, 422] }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+
+      await experienceInteraction.mfa.skip();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.profile}/trusted-device`,
+    koaGuard({
+      body: z.object({ trusted: z.boolean() }),
+      status: [204, 400, 403, 404],
+    }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+      const { trusted } = ctx.guard.body;
+
+      await experienceInteraction.setTrustedDeviceOptInDecision(trusted);
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  // Mark optional additional MFA binding suggestion as skipped.
+  router.post(
+    `${experienceRoutes.mfa}/mfa-suggestion-skipped`,
+    koaGuard({ status: [204, 400, 404] }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+
+      experienceInteraction.mfa.skipAdditionalBindingSuggestion();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}/passkey-skipped`,
+    koaGuard({ status: [204, 400, 404] }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+
+      experienceInteraction.mfa.skipPasskey();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}/passkey`,
+    koaGuard({
+      body: z.object({
+        verificationId: z.string(),
+      }),
+      status: [204, 400, 404],
+    }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction, guard } = ctx;
+      const { verificationId } = guard.body;
+
+      const log = ctx.createLog(
+        `Interaction.${experienceInteraction.interactionEvent}.SignInPasskey.Submit`
+      );
+
+      log.append({
+        verificationId,
+      });
+
+      await experienceInteraction.mfa.addWebAuthnByVerificationId(verificationId, log);
+
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}`,
+    koaGuard({
+      body: z.object({
+        type: z.nativeEnum(MfaFactor),
+        verificationId: z.string(),
+      }),
+      status: [204, 400, 403, 404, 422],
+    }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction, guard } = ctx;
+      const { type, verificationId } = guard.body;
+
+      const log = ctx.createLog(
+        `Interaction.${experienceInteraction.interactionEvent}.BindMfa.${type}.Submit`
+      );
+
+      // A pure step-up only writes the factors it may enroll, plus backup codes to go with them;
+      // the email / phone factors would bind an identifier, which is only ever established.
+      if (experienceInteraction.isStepUp) {
+        const forbidden = new RequestError({
+          code: 'session.step_up.forbidden_route',
+          status: 403,
+        });
+
+        // Backup codes only come with a TOTP or passkey enrolled in this interaction, so a first
+        // factor alone can never replace the user's existing codes.
+        if (type === MfaFactor.BackupCode) {
+          assertThat(experienceInteraction.mfa.hasNewAuthenticatorFactor, forbidden);
+        } else {
+          const eligibility = await experienceInteraction.getStepUpEligibility();
+          assertThat(eligibility?.enrollableFactors.includes(type), forbidden);
+        }
+      }
+
+      log.append({
+        verificationId,
+      });
+
+      switch (type) {
+        case MfaFactor.TOTP: {
+          await experienceInteraction.mfa.addTotpByVerificationId(verificationId, log);
+          break;
+        }
+        case MfaFactor.WebAuthn: {
+          await experienceInteraction.mfa.addWebAuthnByVerificationId(verificationId, log);
+          break;
+        }
+        case MfaFactor.BackupCode: {
+          await experienceInteraction.mfa.addBackupCodeByVerificationId(verificationId, log);
+          break;
+        }
+        case MfaFactor.EmailVerificationCode: {
+          await experienceInteraction.profile.setProfileByVerificationId(
+            SignInIdentifier.Email,
+            verificationId,
+            log
+          );
+          const { primaryEmail } = experienceInteraction.profile.data;
+          // If the primary email is set, create a new MFA code verification record
+          // to bypass the MFA verification step.
+          if (primaryEmail) {
+            const codeVerification = createNewMfaCodeVerificationRecord(
+              libraries,
+              queries,
+              {
+                type: SignInIdentifier.Email,
+                value: primaryEmail,
+              },
+              true
+            );
+            experienceInteraction.setVerificationRecord(codeVerification);
+            // The email is now an MFA factor of the account: record that `bind` proof next to
+            // the `1fa` one the profile bind recorded for the same mailbox.
+            experienceInteraction.consumeForBindByType(
+              VerificationType.MfaEmailVerificationCode,
+              codeVerification.id
+            );
+          }
+          break;
+        }
+        case MfaFactor.PhoneVerificationCode: {
+          await experienceInteraction.profile.setProfileByVerificationId(
+            SignInIdentifier.Phone,
+            verificationId,
+            log
+          );
+          const { primaryPhone } = experienceInteraction.profile.data;
+          // If the primary phone is set, create a new MFA code verification record
+          // to bypass the MFA verification step.
+          if (primaryPhone) {
+            const codeVerification = createNewMfaCodeVerificationRecord(
+              libraries,
+              queries,
+              {
+                type: SignInIdentifier.Phone,
+                value: primaryPhone,
+              },
+              true
+            );
+            experienceInteraction.setVerificationRecord(codeVerification);
+            experienceInteraction.consumeForBindByType(
+              VerificationType.MfaPhoneVerificationCode,
+              codeVerification.id
+            );
+          }
+          break;
+        }
+      }
+
+      experienceInteraction.mfa.markMfaEnabled();
+
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+}
+/* eslint-enable max-lines */

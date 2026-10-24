@@ -1,0 +1,304 @@
+import { TemplateType } from '@logto/connector-kit';
+import { AdditionalIdentifier, SignInIdentifier, VerificationType } from '@logto/schemas';
+import { pickDefault } from '@logto/shared/esm';
+import type { Context } from 'koa';
+import type { IRouterParamContext } from 'koa-router';
+import { Provider } from 'oidc-provider';
+import Sinon from 'sinon';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import type Queries from '#src/tenants/Queries.js';
+import { type Partial2 } from '#src/test-utils/tenant.js';
+import { createContextWithRouteParameters } from '#src/utils/test-utils.js';
+
+import { MockTenant } from '../../test-utils/tenant.js';
+
+import { verificationRecordIdHeader } from './constants.js';
+import type { WithAuthContext } from './index.js';
+
+const { jest } = import.meta;
+
+const provider = new Provider('https://logto.test');
+const tenantContext = new MockTenant(provider);
+
+const mockAccessToken = {
+  accountId: 'fooUser',
+  clientId: 'fooClient',
+  scopes: new Set(['openid']),
+};
+
+const koaOidcAuth = await pickDefault(import('./koa-oidc-auth.js'));
+
+const createTenantWithVerificationRecord = (
+  data: Record<string, unknown>,
+  userId: string | undefined = mockAccessToken.accountId
+) =>
+  new MockTenant(provider, {
+    verificationRecords: {
+      findActiveVerificationRecordById: jest.fn(async (id: string) => ({
+        id,
+        userId,
+        data,
+        expiresAt: Date.now() + 60_000,
+      })),
+    },
+  } as unknown as Partial2<Queries>);
+
+afterEach(() => {
+  Sinon.restore();
+});
+
+describe('koaOidcAuth middleware', () => {
+  const baseCtx = createContextWithRouteParameters();
+
+  const ctx: WithAuthContext<Context & IRouterParamContext> = {
+    ...baseCtx,
+    auth: {
+      type: 'user',
+      id: '',
+      scopes: new Set(),
+    },
+  };
+
+  const authHeaderMissingError = new RequestError({
+    code: 'auth.authorization_header_missing',
+    status: 401,
+  });
+  const tokenNotSupportedError = new RequestError(
+    {
+      code: 'auth.authorization_token_type_not_supported',
+      status: 401,
+    },
+    { supportedTypes: ['Bearer'] }
+  );
+  const unauthorizedError = new RequestError({ code: 'auth.unauthorized', status: 401 });
+  const forbiddenError = new RequestError({ code: 'auth.forbidden', status: 403 });
+
+  const next = jest.fn();
+
+  beforeEach(() => {
+    ctx.auth = {
+      type: 'user',
+      id: '',
+      scopes: new Set(),
+    };
+    ctx.request = baseCtx.request;
+    jest.resetModules();
+  });
+
+  it('should set user auth with given sub returned from accessToken', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves(mockAccessToken);
+    await koaOidcAuth(tenantContext)(ctx, next);
+    expect(ctx.auth).toEqual({
+      type: 'user',
+      id: 'fooUser',
+      scopes: new Set(['openid']),
+      identityVerified: false,
+      clientId: mockAccessToken.clientId,
+      sessionUid: undefined,
+    });
+  });
+
+  it('should propagate sessionUid from the access token to ctx.auth', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves({
+      ...mockAccessToken,
+      sessionUid: 'fooSessionUid',
+    });
+    await koaOidcAuth(tenantContext)(ctx, next);
+    expect(ctx.auth).toEqual({
+      type: 'user',
+      id: 'fooUser',
+      scopes: new Set(['openid']),
+      identityVerified: false,
+      clientId: mockAccessToken.clientId,
+      sessionUid: 'fooSessionUid',
+    });
+  });
+
+  it('should set identityVerified with a verified password verification record', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+        [verificationRecordIdHeader]: 'verification-record-id',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves(mockAccessToken);
+
+    await koaOidcAuth(
+      createTenantWithVerificationRecord({
+        type: VerificationType.Password,
+        identifier: {
+          type: AdditionalIdentifier.UserId,
+          value: mockAccessToken.accountId,
+        },
+        verified: true,
+      })
+    )(ctx, next);
+
+    expect(ctx.auth.identityVerified).toBe(true);
+  });
+
+  it.each([
+    {
+      name: 'email',
+      type: VerificationType.EmailVerificationCode,
+      identifier: {
+        type: SignInIdentifier.Email,
+        value: 'foo@example.com',
+      },
+    },
+    {
+      name: 'phone',
+      type: VerificationType.PhoneVerificationCode,
+      identifier: {
+        type: SignInIdentifier.Phone,
+        value: '+1234567890',
+      },
+    },
+  ])(
+    'should set identityVerified with a verified user permission $name code verification record',
+    async ({ type, identifier }) => {
+      ctx.request = {
+        ...ctx.request,
+        headers: {
+          authorization: 'Bearer access_token',
+          [verificationRecordIdHeader]: 'verification-record-id',
+        },
+      };
+      Sinon.stub(provider.AccessToken, 'find').resolves(mockAccessToken);
+
+      await koaOidcAuth(
+        createTenantWithVerificationRecord({
+          type,
+          identifier,
+          templateType: TemplateType.UserPermissionValidation,
+          verified: true,
+        })
+      )(ctx, next);
+
+      expect(ctx.auth.identityVerified).toBe(true);
+    }
+  );
+
+  it('should not set identityVerified with a verified MFA binding code verification record', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+        [verificationRecordIdHeader]: 'verification-record-id',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves(mockAccessToken);
+
+    await koaOidcAuth(
+      createTenantWithVerificationRecord({
+        type: VerificationType.EmailVerificationCode,
+        identifier: {
+          type: SignInIdentifier.Email,
+          value: 'foo@example.com',
+        },
+        templateType: TemplateType.BindMfa,
+        verified: true,
+      })
+    )(ctx, next);
+
+    expect(ctx.auth.identityVerified).toBe(false);
+  });
+
+  it('should not set identityVerified with a verified WebAuthn registration record', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+        [verificationRecordIdHeader]: 'verification-record-id',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves(mockAccessToken);
+
+    await koaOidcAuth(
+      createTenantWithVerificationRecord({
+        type: VerificationType.WebAuthn,
+        userId: mockAccessToken.accountId,
+        verified: true,
+        registrationChallenge: 'challenge',
+        registrationRpId: 'logto.test',
+      })
+    )(ctx, next);
+
+    expect(ctx.auth.identityVerified).toBe(false);
+  });
+
+  it('expect to throw if authorization header is missing', async () => {
+    await expect(koaOidcAuth(tenantContext)(ctx, next)).rejects.toMatchError(
+      authHeaderMissingError
+    );
+  });
+
+  it('expect to throw if authorization header token type not recognized ', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'dummy access_token',
+      },
+    };
+
+    await expect(koaOidcAuth(tenantContext)(ctx, next)).rejects.toMatchError(
+      tokenNotSupportedError
+    );
+  });
+
+  it('expect to throw if access token is not found', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves();
+
+    await expect(koaOidcAuth(tenantContext)(ctx, next)).rejects.toMatchError(unauthorizedError);
+  });
+
+  it('expect to throw if sub is missing', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves({
+      ...mockAccessToken,
+      accountId: undefined,
+    });
+
+    await expect(koaOidcAuth(tenantContext)(ctx, next)).rejects.toMatchError(unauthorizedError);
+  });
+
+  it('expect to throw if access token does not have openid scope', async () => {
+    ctx.request = {
+      ...ctx.request,
+      headers: {
+        authorization: 'Bearer access_token',
+      },
+    };
+    Sinon.stub(provider.AccessToken, 'find').resolves({
+      ...mockAccessToken,
+      scopes: new Set(['foo']),
+    });
+
+    await expect(koaOidcAuth(tenantContext)(ctx, next)).rejects.toMatchError(forbiddenError);
+  });
+});

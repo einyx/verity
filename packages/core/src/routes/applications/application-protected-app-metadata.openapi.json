@@ -1,0 +1,60 @@
+{
+  "paths": {
+    "/api/applications/{id}/protected-app-metadata/custom-domains": {
+      "get": {
+        "summary": "Get application custom domains.",
+        "description": "Get custom domains of the specified application, the application type should be protected app.",
+        "responses": {
+          "200": {
+            "description": "An array of the application custom domains."
+          },
+          "400": {
+            "description": "Faild to sync the domain info from remote provider."
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a custom domain to the application.",
+        "description": "Add a custom domain to the application. You'll need to setup DNS record later.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "domain": {
+                    "description": "The domain to be added to the application."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The domain has been added to the application."
+          },
+          "409": {
+            "description": "The domain already exists."
+          },
+          "422": {
+            "description": "Exeeded the maximum number of domains allowed or the domain is invalid."
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/protected-app-metadata/custom-domains/{domain}": {
+      "delete": {
+        "summary": "Remove custom domain.",
+        "description": "Remove custom domain from the specified application.",
+        "responses": {
+          "204": {
+            "description": "The domain has been removed."
+          },
+          "404": {
+            "description": "Can not find the domain."
+          }
+        }
+      }
+    }
+  }
+}

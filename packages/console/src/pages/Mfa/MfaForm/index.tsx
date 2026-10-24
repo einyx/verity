@@ -1,0 +1,471 @@
+/* eslint-disable max-lines -- MFA settings share one form state and atomic save operation */
+import {
+  type AdaptiveMfa,
+  ConnectorType,
+  MfaFactor,
+  MfaPolicy,
+  OrganizationRequiredMfaPolicy,
+  SignInIdentifier,
+  type SignInExperience,
+  type SignIn,
+  type TrustedDevicePolicy,
+} from '@logto/schemas';
+import { useContext, useEffect, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
+import { Trans, useTranslation } from 'react-i18next';
+
+import DetailsForm from '@/components/DetailsForm';
+import FormCard from '@/components/FormCard';
+import InlineUpsell from '@/components/InlineUpsell';
+import UnsavedChangesAlertModal from '@/components/UnsavedChangesAlertModal';
+import { mfa } from '@/consts';
+import { isCloud } from '@/consts/env';
+import { SubscriptionDataContext } from '@/contexts/SubscriptionDataProvider';
+import { TenantsContext } from '@/contexts/TenantsProvider';
+import DynamicT from '@/ds-components/DynamicT';
+import FormField from '@/ds-components/FormField';
+import InlineNotification from '@/ds-components/InlineNotification';
+import Select from '@/ds-components/Select';
+import Switch from '@/ds-components/Switch';
+import TextLink from '@/ds-components/TextLink';
+import useApi from '@/hooks/use-api';
+import useEnabledConnectorTypes from '@/hooks/use-enabled-connector-types';
+import { trySubmitSafe } from '@/utils/form';
+import { isPaidPlan } from '@/utils/subscription';
+
+import { type MfaConfigForm, type MfaConfig } from '../types';
+
+import FactorLabel from './FactorLabel';
+import TrustedDeviceSettings from './TrustedDeviceSettings';
+import UpsellNotice from './UpsellNotice';
+import styles from './index.module.scss';
+import {
+  buildMfaPatchPayload,
+  convertMfaFormToConfig,
+  convertMfaConfigToForm,
+  getMfaRequirementMode,
+  getMfaRequirementState,
+  MfaRequirementMode,
+  normalizeSetUpPrompt,
+  validateBackupCodeFactor,
+} from './utils';
+
+type Props = {
+  readonly data: MfaConfig;
+  readonly adaptiveMfa?: AdaptiveMfa;
+  readonly trustedDevice?: TrustedDevicePolicy;
+  readonly signInMethods: SignIn['methods'];
+  readonly onMfaUpdated: (
+    updatedData: MfaConfig,
+    adaptiveMfa?: AdaptiveMfa,
+    trustedDevice?: TrustedDevicePolicy
+  ) => void;
+};
+
+function MfaForm({ data, adaptiveMfa, trustedDevice, signInMethods, onMfaUpdated }: Props) {
+  const {
+    currentSubscription: { planId, isEnterprisePlan },
+    currentSubscriptionQuota,
+    mutateSubscriptionQuotaAndUsages,
+  } = useContext(SubscriptionDataContext);
+  const { currentTenantId } = useContext(TenantsContext);
+  const { isConnectorTypeEnabled } = useEnabledConnectorTypes();
+
+  const isMfaDisabled =
+    isCloud && !currentSubscriptionQuota.mfaEnabled && !isPaidPlan(planId, isEnterprisePlan);
+
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const {
+    register,
+    reset,
+    formState: { isDirty, isSubmitting, errors, dirtyFields },
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+  } = useForm<MfaConfigForm>({
+    defaultValues: convertMfaConfigToForm(data, adaptiveMfa, trustedDevice),
+    mode: 'onChange',
+  });
+  const api = useApi();
+
+  const formValues = watch();
+
+  const isBackupCodeAllowed = useMemo(() => {
+    const { factors } = convertMfaFormToConfig(formValues);
+    return validateBackupCodeFactor(factors);
+  }, [formValues]);
+
+  const isEmailCodePrimarySignInMethod = useMemo(() => {
+    return signInMethods.some(
+      (method) => method.identifier === SignInIdentifier.Email && method.verificationCode
+    );
+  }, [signInMethods]);
+
+  const isPhoneCodePrimarySignInMethod = useMemo(() => {
+    return signInMethods.some(
+      (method) => method.identifier === SignInIdentifier.Phone && method.verificationCode
+    );
+  }, [signInMethods]);
+
+  const hasEmailConnector = isConnectorTypeEnabled(ConnectorType.Email);
+  const hasSmsConnector = isConnectorTypeEnabled(ConnectorType.Sms);
+
+  const isPolicySettingsDisabled = useMemo(() => {
+    if (isMfaDisabled) {
+      return true;
+    }
+    const { factors } = convertMfaFormToConfig(formValues);
+    return factors.length === 0;
+  }, [formValues, isMfaDisabled]);
+
+  useEffect(() => {
+    const { factors } = convertMfaFormToConfig(formValues);
+
+    if (factors.length > 0) {
+      return;
+    }
+
+    // Reset the `isMandatory` to false when there is no MFA factor
+    if (formValues.isMandatory) {
+      setValue('isMandatory', false);
+    }
+
+    // Reset the `setUpPrompt` to `NoPrompt` when there is no MFA factor
+    if (formValues.setUpPrompt !== MfaPolicy.NoPrompt) {
+      setValue('setUpPrompt', MfaPolicy.NoPrompt);
+    }
+
+    // Reset the `organizationRequiredMfaPolicy` to `NoPrompt` when there is no MFA factor
+    if (formValues.organizationRequiredMfaPolicy !== OrganizationRequiredMfaPolicy.NoPrompt) {
+      setValue('organizationRequiredMfaPolicy', OrganizationRequiredMfaPolicy.NoPrompt);
+    }
+
+    if (formValues.adaptiveMfaEnabled) {
+      setValue('adaptiveMfaEnabled', false);
+    }
+  }, [formValues, setValue]);
+
+  const optionalMfaPolicyOptions = useMemo(
+    () => [
+      {
+        value: MfaPolicy.NoPrompt,
+        title: t('mfa.no_prompt'),
+      },
+      {
+        value: MfaPolicy.PromptAtSignInAndSignUp,
+        title: t('mfa.prompt_at_sign_in_and_sign_up'),
+      },
+      {
+        value: MfaPolicy.PromptOnlyAtSignIn,
+        title: t('mfa.prompt_only_at_sign_in'),
+      },
+    ],
+    [t]
+  );
+
+  const nonSkippableMfaPromptOptions = useMemo(
+    () => [
+      {
+        value: MfaPolicy.PromptAtSignInAndSignUpMandatory,
+        title: t('mfa.prompt_at_sign_in_and_sign_up_mandatory'),
+      },
+      {
+        value: MfaPolicy.PromptOnlyAtSignInMandatory,
+        title: t('mfa.prompt_only_at_sign_in_mandatory'),
+      },
+    ],
+    [t]
+  );
+
+  const organizationEnabledMfaPolicyOptions = useMemo(
+    () => [
+      {
+        value: OrganizationRequiredMfaPolicy.NoPrompt,
+        title: t('mfa.no_prompt'),
+      },
+      {
+        value: OrganizationRequiredMfaPolicy.Mandatory,
+        title: t('mfa.prompt_at_sign_in_non_skippable'),
+      },
+    ],
+    [t]
+  );
+
+  const mfaRequirementOptions = useMemo(
+    () => [
+      {
+        value: MfaRequirementMode.Optional,
+        title: t('mfa.require_mfa_optional'),
+      },
+      {
+        value: MfaRequirementMode.Adaptive,
+        title: t('mfa.require_mfa_adaptive'),
+      },
+      {
+        value: MfaRequirementMode.Mandatory,
+        title: t('mfa.require_mfa_mandatory'),
+      },
+    ],
+    [t]
+  );
+
+  const mfaRequirementMode = useMemo(
+    () =>
+      getMfaRequirementMode({
+        isMandatory: formValues.isMandatory,
+        adaptiveMfaEnabled: formValues.adaptiveMfaEnabled,
+      }),
+    [formValues.isMandatory, formValues.adaptiveMfaEnabled]
+  );
+
+  useEffect(() => {
+    if (mfaRequirementMode === MfaRequirementMode.Mandatory && formValues.adaptiveMfaEnabled) {
+      // This effect normalizes legacy state after form hydration/watch updates.
+      // Older data can contain { isMandatory: true, adaptiveMfaEnabled: true },
+      // but the new 3-option requirement mode treats "Mandatory" as
+      // { isMandatory: true, adaptiveMfaEnabled: false }.
+      //
+      // Use `reset()` instead of `setValue()` so the normalized snapshot becomes
+      // the form baseline and we avoid introducing extra dirty changes from this
+      // internal normalization. `keepDirty` and `keepDirtyValues` preserve any
+      // existing user edits/state instead of clearing them.
+      reset(
+        { ...formValues, adaptiveMfaEnabled: false },
+        { keepDirty: true, keepDirtyValues: true }
+      );
+    }
+  }, [mfaRequirementMode, formValues, reset]);
+
+  const shouldShowSetUpPrompt = mfaRequirementMode !== MfaRequirementMode.Mandatory;
+  const shouldShowOrganizationRequiredMfaPolicy =
+    mfaRequirementMode === MfaRequirementMode.Optional;
+  const setUpPromptOptions =
+    mfaRequirementMode === MfaRequirementMode.Adaptive
+      ? nonSkippableMfaPromptOptions
+      : optionalMfaPolicyOptions;
+
+  const onSubmit = handleSubmit(
+    trySubmitSafe(async (formData) => {
+      const mfaConfig = convertMfaFormToConfig(formData);
+      if (!validateBackupCodeFactor(mfaConfig.factors)) {
+        return;
+      }
+
+      // Check connector availability for email and SMS verification codes
+      if (formData.emailVerificationCodeEnabled && !hasEmailConnector) {
+        toast.error(t('mfa.no_email_connector_error'));
+        return;
+      }
+
+      if (formData.phoneVerificationCodeEnabled && !hasSmsConnector) {
+        toast.error(t('mfa.no_sms_connector_error'));
+        return;
+      }
+
+      const payload = buildMfaPatchPayload(formData);
+      const {
+        mfa: updatedMfaConfig,
+        adaptiveMfa: updatedAdaptiveMfa,
+        trustedDevice: updatedTrustedDevice,
+      } = await api
+        .patch('api/sign-in-exp', {
+          json: payload,
+        })
+        .json<SignInExperience>();
+      mutateSubscriptionQuotaAndUsages();
+      reset(convertMfaConfigToForm(updatedMfaConfig, updatedAdaptiveMfa, updatedTrustedDevice));
+      toast.success(t('general.saved'));
+      onMfaUpdated(updatedMfaConfig, updatedAdaptiveMfa, updatedTrustedDevice);
+    })
+  );
+
+  return (
+    <>
+      <UpsellNotice className={styles.upsellNotice} />
+      <DetailsForm
+        isDirty={isDirty}
+        isSubmitting={isSubmitting}
+        onSubmit={onSubmit}
+        onDiscard={reset}
+      >
+        <FormCard
+          title="mfa.factors"
+          description="mfa.multi_factors_description"
+          learnMoreLink={{ href: mfa }}
+        >
+          <FormField title="mfa.multi_factors" headlineSpacing="large">
+            <div className={styles.factorField}>
+              <Switch
+                disabled={isMfaDisabled}
+                label={<FactorLabel type={MfaFactor.WebAuthn} />}
+                {...register('webAuthnEnabled')}
+              />
+              <Switch
+                disabled={isMfaDisabled}
+                label={<FactorLabel type={MfaFactor.TOTP} />}
+                {...register('totpEnabled')}
+              />
+              <div>
+                <Switch
+                  disabled={isMfaDisabled || isPhoneCodePrimarySignInMethod}
+                  label={<FactorLabel type={MfaFactor.PhoneVerificationCode} />}
+                  tooltip={
+                    isPhoneCodePrimarySignInMethod ? t('mfa.phone_primary_method_tip') : undefined
+                  }
+                  {...register('phoneVerificationCodeEnabled')}
+                />
+                {formValues.phoneVerificationCodeEnabled && !hasSmsConnector && (
+                  <InlineNotification className={styles.connectorWarning}>
+                    <Trans
+                      components={{
+                        a: <TextLink to="/connectors" />,
+                      }}
+                    >
+                      {t('mfa.no_sms_connector_warning', {
+                        link: t('mfa.setup_link'),
+                      })}
+                    </Trans>
+                  </InlineNotification>
+                )}
+              </div>
+              <div>
+                <Switch
+                  disabled={isMfaDisabled || isEmailCodePrimarySignInMethod}
+                  label={<FactorLabel type={MfaFactor.EmailVerificationCode} />}
+                  tooltip={
+                    isEmailCodePrimarySignInMethod ? t('mfa.email_primary_method_tip') : undefined
+                  }
+                  {...register('emailVerificationCodeEnabled')}
+                />
+                {formValues.emailVerificationCodeEnabled && !hasEmailConnector && (
+                  <InlineNotification className={styles.connectorWarning}>
+                    <Trans
+                      components={{
+                        a: <TextLink to="/connectors" />,
+                      }}
+                    >
+                      {t('mfa.no_email_connector_warning', {
+                        link: t('mfa.setup_link'),
+                      })}
+                    </Trans>
+                  </InlineNotification>
+                )}
+              </div>
+              <div className={styles.backupCodeField}>
+                <div className={styles.backupCodeDescription}>
+                  <DynamicT forKey="mfa.backup_code_setup_hint" />
+                </div>
+                <Switch
+                  disabled={isMfaDisabled}
+                  label={<FactorLabel type={MfaFactor.BackupCode} />}
+                  hasError={!isBackupCodeAllowed}
+                  {...register('backupCodeEnabled')}
+                />
+                {!isBackupCodeAllowed && (
+                  <InlineNotification>
+                    <DynamicT forKey="mfa.backup_code_error_hint" />
+                  </InlineNotification>
+                )}
+              </div>
+            </div>
+          </FormField>
+          {isMfaDisabled && (
+            <InlineUpsell
+              for="mfa"
+              className={styles.unlockMfaNotice}
+              actionButtonText="upsell.view_plans"
+            />
+          )}
+        </FormCard>
+        <FormCard
+          title="mfa.policy"
+          description="mfa.policy_description"
+          learnMoreLink={{ href: mfa }}
+        >
+          <FormField title="mfa.require_mfa" headlineSpacing="large">
+            <Select
+              hasSelectedOptionIndicator
+              value={mfaRequirementMode}
+              options={mfaRequirementOptions}
+              isReadOnly={isPolicySettingsDisabled}
+              onChange={(mode) => {
+                if (!mode) {
+                  return;
+                }
+
+                const nextState = getMfaRequirementState(mode);
+                const currentSetUpPrompt = formValues.setUpPrompt;
+                setValue('isMandatory', nextState.isMandatory, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+                setValue('adaptiveMfaEnabled', nextState.adaptiveMfaEnabled, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+
+                if (mode !== MfaRequirementMode.Mandatory) {
+                  setValue(
+                    'setUpPrompt',
+                    normalizeSetUpPrompt(currentSetUpPrompt, mode === MfaRequirementMode.Adaptive),
+                    {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    }
+                  );
+                }
+              }}
+            />
+          </FormField>
+          {shouldShowSetUpPrompt && (
+            <FormField title="mfa.set_up_prompt" headlineSpacing="large">
+              <Controller
+                control={control}
+                name="setUpPrompt"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    hasSelectedOptionIndicator
+                    value={value}
+                    options={setUpPromptOptions}
+                    isReadOnly={isPolicySettingsDisabled}
+                    onChange={onChange}
+                  />
+                )}
+              />
+            </FormField>
+          )}
+          {shouldShowOrganizationRequiredMfaPolicy && (
+            <FormField title="mfa.set_up_organization_required_mfa_prompt" headlineSpacing="large">
+              <Controller
+                control={control}
+                name="organizationRequiredMfaPolicy"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    // Fallback to `NoPrompt` if the value is not set
+                    hasSelectedOptionIndicator
+                    value={value ?? OrganizationRequiredMfaPolicy.NoPrompt}
+                    options={organizationEnabledMfaPolicyOptions}
+                    isReadOnly={isPolicySettingsDisabled}
+                    onChange={onChange}
+                  />
+                )}
+              />
+            </FormField>
+          )}
+        </FormCard>
+        <TrustedDeviceSettings
+          register={register}
+          errors={errors}
+          isDisabled={isPolicySettingsDisabled}
+          isDurationDirty={Boolean(dirtyFields.trustedDeviceDurationDays)}
+        />
+      </DetailsForm>
+      <UnsavedChangesAlertModal hasUnsavedChanges={isDirty} />
+    </>
+  );
+}
+
+export default MfaForm;
+/* eslint-enable max-lines */

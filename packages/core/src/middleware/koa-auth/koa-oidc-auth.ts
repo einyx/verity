@@ -1,0 +1,117 @@
+import { TemplateType } from '@logto/connector-kit';
+import { VerificationType } from '@logto/schemas';
+import type { MiddlewareType } from 'koa';
+import type { IRouterParamContext } from 'koa-router';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import {
+  verificationRecordDataGuard,
+  buildVerificationRecord,
+  type VerificationRecord,
+} from '#src/routes/experience/classes/verifications/index.js';
+import type Libraries from '#src/tenants/Libraries.js';
+import type Queries from '#src/tenants/Queries.js';
+import type TenantContext from '#src/tenants/TenantContext.js';
+import assertThat from '#src/utils/assert-that.js';
+
+import { verificationRecordIdHeader } from './constants.js';
+import { type WithAuthContext } from './types.js';
+import { extractBearerTokenFromHeaders } from './utils.js';
+
+const isUserPermissionVerificationRecord = (record: VerificationRecord) => {
+  if (!record.isVerified) {
+    return false;
+  }
+
+  switch (record.type) {
+    case VerificationType.Password: {
+      return true;
+    }
+    case VerificationType.EmailVerificationCode:
+    case VerificationType.PhoneVerificationCode: {
+      return record.templateType === TemplateType.UserPermissionValidation;
+    }
+    default: {
+      return false;
+    }
+  }
+};
+
+/**
+ * Checks whether the verification record exists, belongs to the given user, and can be used for
+ * user permission verification.
+ */
+const getVerificationRecordResultById = async ({
+  id,
+  queries,
+  libraries,
+  userId,
+}: {
+  id: string;
+  queries: Queries;
+  libraries: Libraries;
+  userId: string;
+}): Promise<boolean> => {
+  const record = await queries.verificationRecords.findActiveVerificationRecordById(id);
+  if (record?.userId !== userId) {
+    return false;
+  }
+
+  const result = verificationRecordDataGuard.safeParse({
+    ...record.data,
+    id: record.id,
+  });
+
+  if (!result.success) {
+    return false;
+  }
+
+  const instance = buildVerificationRecord(libraries, queries, result.data);
+  return isUserPermissionVerificationRecord(instance);
+};
+
+/**
+ * Auth middleware for OIDC opaque token
+ */
+export default function koaOidcAuth<StateT, ContextT extends IRouterParamContext, ResponseBodyT>(
+  tenant: TenantContext
+): MiddlewareType<StateT, WithAuthContext<ContextT>, ResponseBodyT> {
+  const authMiddleware: MiddlewareType<StateT, WithAuthContext<ContextT>, ResponseBodyT> = async (
+    ctx,
+    next
+  ) => {
+    const { request } = ctx;
+    const accessTokenValue = extractBearerTokenFromHeaders(request.headers);
+    const accessToken = await tenant.provider.AccessToken.find(accessTokenValue);
+
+    assertThat(accessToken, new RequestError({ code: 'auth.unauthorized', status: 401 }));
+
+    const { accountId, scopes, clientId, sessionUid } = accessToken;
+    assertThat(accountId, new RequestError({ code: 'auth.unauthorized', status: 401 }));
+    assertThat(scopes.has('openid'), new RequestError({ code: 'auth.forbidden', status: 403 }));
+
+    const verificationRecordId = request.headers[verificationRecordIdHeader];
+    const identityVerified =
+      typeof verificationRecordId === 'string'
+        ? await getVerificationRecordResultById({
+            id: verificationRecordId,
+            queries: tenant.queries,
+            libraries: tenant.libraries,
+            userId: accountId,
+          })
+        : false;
+
+    ctx.auth = {
+      type: 'user',
+      id: accountId,
+      scopes,
+      clientId,
+      identityVerified,
+      sessionUid,
+    };
+
+    return next();
+  };
+
+  return authMiddleware;
+}

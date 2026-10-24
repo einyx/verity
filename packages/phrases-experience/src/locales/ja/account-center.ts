@@ -1,0 +1,300 @@
+const account_center = {
+  home: {
+    title: 'ページが見つかりません',
+    description: 'このページは利用できません。',
+  },
+  page: {
+    title: 'アカウント',
+    security_title: 'セキュリティ',
+    security_description: 'アカウントの安全を確保するために、ここでアカウント設定を変更できます。',
+    profile_title: '個人情報',
+    profile_description: 'ここで個人情報を変更できます。',
+    sidebar_personal_info: '個人情報',
+    sidebar_security: 'セキュリティ',
+    sidebar_sessions: 'セッション',
+    support: 'サポート',
+    user_menu: 'ユーザーメニュー',
+    sign_out: 'サインアウト',
+  },
+  verification: {
+    title: 'セキュリティ確認',
+    description:
+      'アカウントの安全を守るため、ご本人であることを確認します。本人確認の方法を選択してください。',
+    error_send_failed: '認証コードの送信に失敗しました。しばらくしてからもう一度お試しください。',
+    error_invalid_code: '認証コードが無効か、有効期限が切れています。',
+    error_verify_failed: '認証に失敗しました。もう一度コードを入力してください。',
+    verification_required: '認証の有効期限が切れました。もう一度本人確認を行ってください。',
+    try_another_method: '別の方法で確認する',
+    no_available_methods_title: '利用可能な認証方法がありません',
+    no_available_methods_description:
+      '認証方法が設定されていません。まずアカウントにパスワード、メールアドレス、または電話番号を追加してください。',
+  },
+  password_verification: {
+    title: 'パスワードを確認',
+    description: 'アカウントを保護するため、パスワードを入力して本人確認してください。',
+    error_failed: 'パスワードが正しくありません。入力内容を確認してください。',
+  },
+  verification_method: {
+    password: {
+      name: 'パスワード',
+      description: 'パスワードを確認してください',
+    },
+    email: {
+      name: 'メール認証コード',
+      description: '認証コードをメールに送信',
+    },
+    phone: {
+      name: '電話認証コード',
+      description: '認証コードを電話番号に送信',
+    },
+  },
+  email: {
+    title: 'メールをリンク',
+    description: 'メールをリンクしてサインインやアカウント復旧に役立てましょう。',
+    verification_title: 'メール認証コードを入力',
+    verification_description: '認証コードをメールアドレス {{email_address}} に送信しました。',
+    success: 'メインのメールアドレスをリンクしました。',
+    verification_required: '認証の有効期限が切れました。もう一度本人確認を行ってください。',
+  },
+  phone: {
+    title: '電話番号をリンク',
+    description: 'サインインやアカウント復旧のために電話番号をリンクします。',
+    verification_title: 'SMS認証コードを入力',
+    verification_description: '認証コードを電話番号 {{phone_number}} に送信しました。',
+    success: 'メインの電話番号をリンクしました。',
+    verification_required: '認証の有効期限が切れました。もう一度本人確認を行ってください。',
+  },
+  username: {
+    title: 'ユーザー名を設定',
+    description: 'ユーザー名は英数字とアンダースコアのみ使用できます。',
+    policy_description: '{{requirements}}',
+    success: 'ユーザー名を更新しました。',
+  },
+  security: {
+    add: '追加',
+    change: '変更',
+    remove: '削除',
+    not_set: '未設定',
+    social_sign_in: 'ソーシャルサインイン',
+    social_not_linked: '未連携',
+    email_phone: 'メールアドレス / 電話番号',
+    email: 'メールアドレス',
+    phone: '電話番号',
+    password: 'パスワード',
+    configured: '設定済み',
+    not_configured: '未設定',
+    two_step_verification: '2段階認証',
+    authenticator_app: '認証アプリ',
+    passkeys: 'パスキー',
+    backup_codes: 'バックアップコード',
+    email_verification_code: 'メール認証コード',
+    phone_verification_code: '電話認証コード',
+    passkeys_count_one: '{{count}} 個のパスキー',
+    passkeys_count_other: '{{count}} 個のパスキー',
+    backup_codes_count_one: '{{count}} 個のコード',
+    backup_codes_count_other: '{{count}} 個のコード',
+    view: '表示',
+    manage: '管理',
+    turn_on_2_step_verification_description:
+      'セキュリティを強化します。サインイン時に2段階目の認証が求められます。',
+    turn_off_2_step_verification: '2段階認証を無効にする',
+    turn_off_2_step_verification_description:
+      '2段階認証を無効にすると、サインイン時の追加の保護レイヤーが削除されます。続行してもよろしいですか？',
+    disable_2_step_verification: '無効にする',
+    no_verification_method_warning:
+      '2つ目の認証方法が追加されていません。サインイン時の2段階認証を有効にするには、少なくとも1つ追加してください。',
+    passkey_sign_in_prompt: 'パスキーの設定を促す',
+    passkey_sign_in_prompt_description:
+      'オンにすると、より速く安全なサインインのためにパスキーの設定を求められます。',
+    account_removal: 'アカウント削除',
+    delete_your_account: 'アカウントを削除',
+    delete_account: 'アカウントを削除',
+    remove_username_confirmation_title: 'ユーザー名を削除',
+    remove_username_confirmation_description:
+      '削除すると、このユーザー名でサインインできなくなります。続行しますか？',
+    remove_email_confirmation_title: 'メールアドレスを削除',
+    remove_email_confirmation_description:
+      '削除すると、このメールアドレスでサインインできなくなります。続行しますか？',
+    remove_phone_confirmation_title: '電話番号を削除',
+    remove_phone_confirmation_description:
+      '削除すると、この電話番号でサインインできなくなります。続行しますか？',
+    email_removed: 'メールアドレスが正常に削除されました。',
+    phone_removed: '電話番号が正常に削除されました。',
+    username_removed: 'ユーザー名が正常に削除されました。',
+    trusted_devices: {
+      title: 'MFA 信頼済みデバイス',
+      current_device: '現在のデバイス',
+      expires_on: '{{date}} に期限切れ',
+      unknown_location: '不明な場所',
+      remove: '削除',
+      removed: '信頼済みデバイスを削除しました。',
+      loading: '読み込み中...',
+      empty: '信頼済みデバイスはありません。',
+      load_failed: '信頼済みデバイスを読み込めませんでした。もう一度お試しください。',
+      retry: '再試行',
+      remove_confirmation_title: '信頼済みデバイスを削除しますか？',
+      remove_confirmation_description:
+        '次回このデバイスでサインインするときは、MFA をもう一度完了する必要があります。現在のセッションは引き続き有効です。',
+    },
+  },
+  social: {
+    linked: '{{connector}}の連携に成功しました。',
+    not_enabled:
+      'このソーシャルサインイン方法は有効になっていません。管理者にお問い合わせください。',
+    removed: '{{connector}}の削除に成功しました。',
+    remove_confirmation_title: 'ソーシャルアカウントを削除',
+    remove_confirmation_description:
+      '{{connector}}を削除すると、再度追加するまでそのアカウントでサインインできなくなる可能性があります。',
+  },
+  password: {
+    title: 'パスワードを設定',
+    description: 'アカウントを守るために新しいパスワードを作成してください。',
+    success: 'パスワードを更新しました。',
+  },
+  code_verification: {
+    send: '認証コードを送信',
+    resend: 'まだ届きませんか？ <a>認証コードを再送</a>',
+    resend_countdown: 'まだ届きませんか？ {{seconds}} 秒後に再送できます',
+  },
+  email_verification: {
+    title: 'メールアドレスを確認',
+    prepare_description:
+      'アカウントの安全を守るため、ご本人であることを確認します。認証コードをメールに送信します。',
+    email_label: 'メールアドレス',
+    send: '認証コードを送信',
+    description:
+      '認証コードをメールアドレス {{email}} に送信しました。コードを入力して続行してください。',
+    resend: 'まだ届きませんか？ <a>認証コードを再送</a>',
+    not_received: 'まだ届きませんか？',
+    resend_action: '認証コードを再送',
+    resend_countdown: 'まだ届きませんか？ {{seconds}} 秒後に再送できます',
+    error_send_failed: '認証コードの送信に失敗しました。しばらくしてからもう一度お試しください。',
+    error_verify_failed: '認証に失敗しました。もう一度コードを入力してください。',
+    error_invalid_code: '認証コードが無効か、有効期限が切れています。',
+  },
+  phone_verification: {
+    title: '電話番号を確認',
+    prepare_description:
+      'アカウントの安全を守るため、ご本人であることを確認します。認証コードを電話に送信します。',
+    phone_label: '電話番号',
+    send: '認証コードを送信',
+    description: '認証コードを電話 {{phone}} に送信しました。コードを入力して続行してください。',
+    resend: 'まだ届きませんか？ <a>認証コードを再送</a>',
+    resend_countdown: 'まだ届きませんか？ {{seconds}} 秒後に再送できます',
+    error_send_failed: '認証コードの送信に失敗しました。しばらくしてからもう一度お試しください。',
+    error_verify_failed: '認証に失敗しました。もう一度コードを入力してください。',
+    error_invalid_code: '認証コードが無効か、有効期限が切れています。',
+  },
+  mfa: {
+    totp_already_added: '認証アプリはすでに追加されています。まず既存のものを削除してください。',
+    totp_not_enabled: '認証アプリ OTP は有効になっていません。管理者にお問い合わせください。',
+    backup_code_already_added:
+      'すでに有効なバックアップコードがあります。新しいコードを生成する前に、これらを使用するか削除してください。',
+    backup_code_not_enabled:
+      'バックアップコードは有効になっていません。管理者にお問い合わせください。',
+    backup_code_requires_other_mfa:
+      'バックアップコードを使用するには、まず他の MFA メソッドを設定する必要があります。',
+    passkey_not_enabled: 'パスキーが有効になっていません。管理者にお問い合わせください。',
+    passkey_already_registered:
+      'このパスキーはすでにアカウントに登録されています。別の認証器をご使用ください。',
+  },
+  update_success: {
+    default: {
+      title: '更新しました！',
+      description: 'あなたの情報が更新されました。',
+    },
+    email: {
+      title: 'メールアドレスを更新しました！',
+      description: 'メールアドレスが正常に更新されました。',
+    },
+    phone: {
+      title: '電話番号を更新しました！',
+      description: '電話番号が正常に更新されました。',
+    },
+    username: {
+      title: 'ユーザー名を変更しました！',
+      description: 'ユーザー名が正常に更新されました。',
+    },
+    password: {
+      title: 'パスワードを変更しました！',
+      description: 'パスワードが正常に更新されました。',
+    },
+    totp: {
+      title: '認証アプリを追加しました！',
+      description: '認証アプリがアカウントに正常にリンクされました。',
+    },
+    totp_replaced: {
+      title: '認証アプリが置き換えられました！',
+      description: '認証アプリが正常に置き換えられました。',
+    },
+    backup_code: {
+      title: 'バックアップコードが生成されました！',
+      description: 'バックアップコードが保存されました。安全な場所に保管してください。',
+    },
+    passkey: {
+      title: 'パスキーが追加されました！',
+      description: 'パスキーがアカウントに正常にリンクされました。',
+    },
+    social: {
+      title: 'ソーシャルアカウントをリンクしました！',
+      description: 'ソーシャルアカウントが正常にリンクされました。',
+    },
+  },
+  backup_code: {
+    title: 'バックアップコード',
+    description:
+      '2段階認証で問題が発生した場合、これらのバックアップコードのいずれかを使用してアカウントにアクセスできます。各コードは1回のみ使用できます。',
+    copy_hint: 'コピーして安全な場所に保存してください。',
+    generate_new_title: '新しいバックアップコードを生成',
+    generate_new: '新しいバックアップコードを生成',
+  },
+  passkey: {
+    title: 'パスキー',
+    added: '追加日: {{date}}',
+    last_used: '最後の使用: {{date}}',
+    never_used: '未使用',
+    unnamed: '名前なしのパスキー',
+    renamed: 'パスキーの名前を変更しました。',
+    deleted: 'パスキーが削除されました。',
+    add_another_title: '別のパスキーを追加',
+    add_another_description:
+      'デバイスの生体認証、セキュリティキー（例: YubiKey）、またはその他の利用可能な方法を使用してパスキーを登録してください。',
+    add_passkey: 'パスキーを追加',
+    delete_confirmation_title: 'パスキーを削除',
+    delete_confirmation_description: 'このパスキーを削除すると、認証に使用できなくなります。',
+    rename_passkey: 'パスキー名を変更',
+    rename_description: 'このパスキーの新しい名前を入力してください。',
+    name_this_passkey: 'このデバイスのパスキーに名前を付ける',
+    name_passkey_description:
+      'このデバイスの2段階認証の確認が完了しました。複数のキーがある場合に識別できるよう名前をカスタマイズしてください。',
+    name_input_label: '名前',
+  },
+  sessions: {
+    page_title: 'セッション',
+    page_description:
+      'アクティブなセッションと認可済みサードパーティアプリケーションを管理します。',
+    title: 'セッション',
+    current_session: '現在のセッション',
+    signed_in_at: '{{date}} にサインイン',
+    revoke_session: 'サインアウト',
+    revoke_session_title: 'セッションからサインアウト',
+    revoke_session_description:
+      'このセッションからサインアウトし、関連するすべてのアクセスを取り消します。続行しますか？',
+    no_other_sessions: '他にアクティブなセッションはありません。',
+    loading: '読み込み中...',
+    third_party_apps_title: 'サードパーティアプリ',
+    no_third_party_apps: '認可済みのサードパーティアプリケーションはありません。',
+    third_party_apps_load_failed:
+      'サードパーティアプリを読み込めませんでした。もう一度お試しください。',
+    granted_at: '{{date}} に認可',
+    dynamic_app: 'ダイナミックアプリ',
+    client_id: 'クライアント ID: {{clientId}}',
+    revoke_grant: '削除',
+    revoke_grant_title: 'サードパーティアプリのアクセスを削除',
+    revoke_grant_description:
+      'このアプリケーションに付与されたアクセスを取り消します。すでに発行されたアクセストークンは、有効期限が切れるまで有効なままの場合があります。続行しますか？',
+    revoke_grant_failed: '一部の認可の取り消しに失敗しました。もう一度お試しください。',
+  },
+};
+
+export default Object.freeze(account_center);

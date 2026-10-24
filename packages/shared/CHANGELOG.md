@@ -1,0 +1,304 @@
+# Change Log
+
+## 3.4.3
+
+### Patch Changes
+
+- 16f4b2e732: extend SSRF protection to webhook delivery and enterprise SSO connector requests
+
+  Outbound requests to URLs supplied through the Management API are now blocked when they resolve to a special-use address such as loopback, a private range, or the cloud metadata endpoint (`169.254.169.254`). Previously a tenant admin could point a webhook URL or an enterprise SSO connector at an internal address and read the response back from the API error, letting them reach services on the deployment's own network.
+
+  The check covers webhook delivery (including `POST /api/hooks/:id/test`), OIDC SSO connector discovery, token and userinfo requests, and SAML IdP metadata fetching. It runs when the connection is established, so a hostname that resolves to an internal address is rejected just like a literal IP, and every redirect hop is checked again.
+
+  ## Action required
+
+  Protection is enabled by default. If your deployment intentionally delivers webhooks or reaches SSO endpoints on a private network, list those destinations in `SSRF_ALLOWED_ADDRESSES` before starting Logto, as a comma-separated set of IP addresses or CIDR ranges:
+
+  ```
+  SSRF_ALLOWED_ADDRESSES=10.0.0.0/8,127.0.0.1
+  ```
+
+  Allowlisting the destinations is preferable to turning the protection off: every other special-use address, including the cloud metadata endpoint, stays blocked. Since CIMD accepts target URLs from unauthenticated callers, configuring an allowlist disables CIMD to prevent those callers from reaching private destinations. `SSRF_PROTECTION_DISABLED=true` also disables CIMD by turning the protection off entirely.
+
+  Both variables are only honored in self-hosted deployments. `OIDC_PROVIDER_SSRF_PROTECTION_DISABLED`, which previously covered only the OIDC provider's own requests, keeps working as an alias for `SSRF_PROTECTION_DISABLED`.
+
+## 3.4.2
+
+### Patch Changes
+
+- 58cb52c705: strengthen OIDC provider outbound request security with SSRF protection enabled by default
+
+  ## Action required
+
+  Self-hosted deployments that need to reach trusted relying-party endpoints on private networks must set `OIDC_PROVIDER_SSRF_PROTECTION_DISABLED=true` before starting Logto; otherwise, leave the variable unset.
+
+## 3.4.1
+
+### Patch Changes
+
+- 67b99bba85: add per-tenant username policy enforcement and mirror preferred_username from username by default
+
+  The sign-in experience now stores a per-tenant username policy (case sensitivity, length bounds, and allowed character types) that is enforced on end-user username writes: experience sign-up and profile fulfillment, the account API, and `/me`. Admin (Management API) writes keep the always-on baseline rules only.
+
+  Switching usernames to case-insensitive is guarded: `PATCH /api/sign-in-exp` is rejected with a 409 while usernames that differ only by case exist, and the new `GET /api/sign-in-exp/username-policy/case-sensitivity-conflicts` endpoint reports such conflicts.
+
+  For deployments using the legacy `CASE_SENSITIVE_USERNAME` environment variable: the effective case sensitivity is the per-tenant policy AND-combined with the env var, so usernames are treated case-insensitively if either is false. Existing `CASE_SENSITIVE_USERNAME=false` setups keep their behavior — the env var acts as a runtime override that forces case-insensitive handling for every tenant, and the per-tenant policy cannot re-enable case sensitivity while it is set. The env var is deprecated and slated for removal in the next major; migrate by unsetting it and configuring `usernamePolicy.caseSensitive` per tenant instead.
+
+  The OIDC `preferred_username` claim now falls back to the user's `username` when `profile.preferredUsername` is unset, so standards-compliant clients receive a usable value out of the box.
+
+## 3.4.0
+
+### Minor Changes
+
+- 3350b13ec8: add grace period support to private signing key rotation
+
+  This update adds support for a grace period during private signing key rotation, through the environment variable `PRIVATE_KEY_ROTATION_GRACE_PERIOD`, or CLI `--gracePeriod` option.
+
+  During the grace period, the new signing key is marked as "Next", and the existing signing key remains active. This allows for a smoother transition when rotating keys, as it provides a window of time for clients to refresh cached JWKS without experiencing downtime or authentication failures.
+
+  After the grace period ends, the new private signing key will transition to "Current" state, and the old signing key will be marked as "Previous".
+
+  Check out the [documentation](https://docs.meshx.io/logto-oss/using-cli/rotate-signing-keys) for more details.
+
+## 3.3.1
+
+### Patch Changes
+
+- 317f9744d1: allow disabling Postgres `statement_timeout` for PgBouncer/RDS Proxy
+
+  - add `DATABASE_STATEMENT_TIMEOUT` parsing in shared, core, and CLI
+  - set `DATABASE_STATEMENT_TIMEOUT=DISABLE_TIMEOUT` to omit the startup parameter
+
+## 3.3.0
+
+### Minor Changes
+
+- 35bbc4399: add phone number validation and parsing to ensure the correct format when updating an existing user’s primary phone number or creating a new user with a phone number
+
+## 3.2.0
+
+### Minor Changes
+
+- 2961d355d: bump node version to ^22.14.0
+
+## 3.1.4
+
+### Patch Changes
+
+- e11e57de8: bump dependencies for security update
+
+## 3.1.3
+
+### Patch Changes
+
+- a8080e891: bump dependencies
+
+## 3.1.2
+
+### Patch Changes
+
+- bc2a0ac03: add environment variable to override default database connection timeout
+
+  By default, out database connection timeout is set to 5 seconds, which might not be enough for some network conditions. This change allows users to override the default value by setting the `DATABASE_CONNECTION_TIMEOUT` environment variable.
+
+## 3.1.1
+
+### Patch Changes
+
+- 21bb35b12: add `normalizeError` method to `@logto/shared` package
+
+  Use this method to normalize error objects for logging. This method is useful for logging errors in a consistent format.
+
+## 3.1.0
+
+### Minor Changes
+
+- 31e60811d: use Node 20 LTS for engine requirement.
+
+  Note: We mark it as minor because Logto is shipping with Docker image and it's not a breaking change for users.
+
+### Patch Changes
+
+- acb7fd3fe: Add case sensitive username env variable
+- 9089dbf84: upgrade TypeScript to 5.3.3
+
+## 3.0.0
+
+### Major Changes
+
+- 18181f892: standardize id and secret generators
+
+  - Remove `buildIdGenerator` export from `@logto/shared`
+  - Add `generateStandardSecret` and `generateStandardShortId` exports to `@logto/shared`
+  - Align comment and implementation of `buildIdGenerator` in `@logto/shared`
+    - The comment stated the function will include uppercase letters by default, but it did not; Now it does.
+  - Use `generateStandardSecret` for all secret generation
+
+## 2.0.1
+
+### Patch Changes
+
+- 310698b0d: align cli output for a better looking
+
+## 2.0.0
+
+### Major Changes
+
+- 30033421c: - connector-kit: add `DemoConnector` type and demo connector ids
+  - core-kit: remove nanoid utils, add tenant model utils
+  - shared: remove models, add database types and universal export
+
+### Patch Changes
+
+- 4945b0be2: Apply security headers
+
+  Apply security headers to logto http request response using (helmetjs)[https://helmetjs.github.io/].
+
+  - [x] crossOriginOpenerPolicy
+  - [x] crossOriginEmbedderPolicy
+  - [x] crossOriginResourcePolicy
+  - [x] hidePoweredBy
+  - [x] hsts
+  - [x] ieNoOpen
+  - [x] noSniff
+  - [x] referrerPolicy
+  - [x] xssFilter
+  - [x] Content-Security-Policy
+
+## 1.0.3
+
+### Patch Changes
+
+- @logto/schemas@1.1.0
+
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [5b4da1e3d]
+  - @logto/schemas@1.0.7
+
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [621b09ba1]
+  - @logto/schemas@1.0.1
+
+## 1.0.0
+
+### Major Changes
+
+- 1c9160112: Packages are now ESM.
+
+### Minor Changes
+
+- 343b1090f: Add demo social connectors for new tenant
+- 343b1090f: Allow admin tenant admin to create tenants without limitation
+
+### Patch Changes
+
+- 38970fb88: Fix a Sign-in experience bug that may block some users to sign in.
+- 343b1090f: **Seed data for cloud**
+
+  - cli!: remove `oidc` option for `database seed` command as it's unused
+  - cli: add hidden `--cloud` option for `database seed` command to init cloud data
+  - cli, cloud: appending Redirect URIs to Admin Console will deduplicate values before update
+  - move `UrlSet` and `GlobalValues` to `@logto/shared`
+
+- Updated dependencies [343b1090f]
+- Updated dependencies [e63f5f8b0]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [c12717412]
+- Updated dependencies [343b1090f]
+- Updated dependencies [38970fb88]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [1c9160112]
+- Updated dependencies [1c9160112]
+- Updated dependencies [7fb689b73]
+- Updated dependencies [343b1090f]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [2d45cc3e6]
+  - @logto/schemas@1.0.0
+  - @logto/core-kit@1.1.0
+
+## 1.0.0-rc.1
+
+### Patch Changes
+
+- Updated dependencies [c12717412]
+  - @logto/schemas@1.0.0-rc.1
+
+## 1.0.0-rc.0
+
+### Patch Changes
+
+- Updated dependencies [f41fd3f0]
+- Updated dependencies [f41fd3f0]
+- Updated dependencies [f41fd3f0]
+  - @logto/schemas@1.0.0-rc.0
+
+## 1.0.0-beta.18
+
+### Patch Changes
+
+- Updated dependencies [df9e98dc]
+  - @logto/schemas@1.0.0-beta.18
+
+## 1.0.0-beta.17
+
+### Major Changes
+
+- 1c916011: Packages are now ESM.
+
+### Patch Changes
+
+- Updated dependencies [1c916011]
+- Updated dependencies [1c916011]
+  - @logto/schemas@1.0.0-beta.17
+
+## 1.0.0-beta.16
+
+### Patch Changes
+
+- 38970fb8: Fix a Sign-in experience bug that may block some users to sign in.
+- Updated dependencies [38970fb8]
+  - @logto/schemas@1.0.0-beta.16
+
+## 1.0.0-beta.15
+
+### Patch Changes
+
+- Updated dependencies
+  - @logto/schemas@1.0.0-beta.15
+
+## 1.0.0-beta.14
+
+### Patch Changes
+
+- Updated dependencies [2d45cc3e]
+  - @logto/schemas@1.0.0-beta.14
+
+## 1.0.0-beta.13
+
+### Patch Changes
+
+- @logto/schemas@1.0.0-beta.13
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [1.0.0-beta.12](https://github.com/logto-io/logto/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2022-10-19)
+
+### Bug Fixes
+
+- make packages public ([e24fd04](https://github.com/logto-io/logto/commit/e24fd0479bc20c92bd38b5e214abe441404ce496))
+
+## [1.0.0-beta.11](https://github.com/logto-io/logto/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2022-10-19)
+
+**Note:** Version bump only for package @logto/shared

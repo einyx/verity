@@ -1,0 +1,54 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: '{{types, list(type: disjunction;)}} é obrigatório',
+  general_invalid: 'O {{types, list(type: disjunction;)}} é inválido',
+  invalid_min_max_input: 'O valor de entrada deve estar entre {{minValue}} e {{maxValue}}',
+  invalid_min_max_length:
+    'O comprimento do valor de entrada deve estar entre {{minLength}} e {{maxLength}}',
+  username_required: 'Nome de usuário é obrigatório',
+  password_required: 'Senha é obrigatório',
+  username_exists: 'O nome de usuário já existe',
+  username_should_not_start_with_number: 'O nome de usuário não deve começar com um número',
+  username_invalid_charset: 'O nome de usuário deve conter apenas letras, números ou sublinhados.',
+  username_too_short: 'O nome de usuário deve ter pelo menos {{min}} caracteres.',
+  username_too_long: 'O nome de usuário deve ter no máximo {{max}} caracteres.',
+  username_uppercase_not_allowed: 'Letras maiúsculas não são permitidas em nomes de usuário.',
+  username_lowercase_not_allowed: 'Letras minúsculas não são permitidas em nomes de usuário.',
+  username_numbers_not_allowed: 'Números não são permitidos em nomes de usuário.',
+  username_underscore_not_allowed: 'Sublinhados não são permitidos em nomes de usuário.',
+  invalid_email: 'O e-mail é inválido',
+  invalid_phone: 'O número de telefone é inválido',
+  passwords_do_not_match: 'Suas senhas não correspondem.',
+  invalid_passcode: 'O código de verificação é inválido.',
+  device_code_required: 'O código é obrigatório.',
+  invalid_device_code: 'O código do dispositivo é inválido.',
+  device_flow_aborted: 'A solicitação de login foi interrompida.',
+  invalid_connector_auth: 'A autorização é inválida',
+  invalid_connector_request: 'Os dados do conector são inválidos',
+  unknown: 'Erro desconhecido.',
+  invalid_session: 'Sessão não encontrada. Volte e faça login novamente.',
+  timeout: 'Tempo limite excedido.',
+  password_rejected,
+  sso_not_enabled: 'O Single Sign-On não está habilitado para esta conta de e-mail.',
+  invalid_link: 'Link inválido',
+  invalid_link_description: 'Seu token de uso único pode ter expirado ou não é mais válido.',
+  captcha_verification_failed: 'Falha na verificação do captcha.',
+  send_verification_code_failed:
+    'Falha ao enviar o código de verificação. Tente novamente mais tarde.',
+  send_verification_code_failed_use_password:
+    'Falha ao enviar o código de verificação. Em vez disso, faça login com sua senha.',
+  terms_acceptance_required: 'Aceitação dos termos obrigatória',
+  terms_acceptance_required_description: 'Você deve aceitar os termos para continuar.',
+  something_went_wrong: 'Algo deu errado',
+  account_suspended: 'Conta suspensa',
+  account_suspended_description:
+    'Esta conta foi suspensa. Entre em contato com o administrador para obter ajuda.',
+  access_denied: 'Acesso negado',
+  application_access_denied:
+    'Você não tem permissão para acessar este aplicativo.\nEntre em contato com seu administrador para obter ajuda.',
+  feature_not_enabled:
+    'Você não tem permissão para acessar esse recurso. Entre em contato com seu administrador para obter ajuda.',
+};
+
+export default Object.freeze(error);

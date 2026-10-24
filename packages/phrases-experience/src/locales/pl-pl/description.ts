@@ -1,0 +1,151 @@
+const description = {
+  email: 'adres email',
+  phone_number: 'numer telefonu',
+  username: 'nazwa użytkownika',
+  reminder: 'Przypomnienie',
+  not_found: '404 Nie znaleziono',
+  agree_with_terms: 'Przeczytałem/am i zgadzam się z ',
+  agree_with_terms_modal: 'Do kontynuacji należy zaakceptować <link></link>.',
+  terms_of_use: 'Warunki korzystania',
+  sign_in: 'Zaloguj się',
+  privacy_policy: 'Polityka prywatności',
+  create_account: 'Utwórz konto',
+  switch_account: 'Przełącz konto',
+  or: 'lub',
+  and: 'i',
+  enter_passcode: 'Kod weryfikacyjny został wysłany na twoje {{address}} {{target}}',
+  passcode_sent: 'Kod weryfikacyjny został wysłany ponownie',
+  resend_after_seconds:
+    'Nie otrzymałeś jeszcze? Wyślij ponownie za <span>{{seconds}}</span> sekund',
+  resend_passcode: 'Nie otrzymałeś jeszcze? <a>Wyślij ponownie kod weryfikacyjny</a>',
+  create_account_id_exists: 'Konto z {{value}} już istnieje. Kontynuuj logowanie.',
+  link_account_id_exists: 'Konto z {{type}} {{value}} już istnieje. Czy chcesz je połączyć?',
+  sign_in_id_does_not_exist: 'Nie znaleziono konta dla {{value}}. Utworzyć nowe?',
+  sign_in_id_does_not_exist_alert: 'Konto z {{type}} {{value}} nie istnieje.',
+  create_account_id_exists_alert:
+    'Konto z {{type}} {{value}} jest połączone z innym kontem. Spróbuj inny {{type}}.',
+  social_identity_exist: '{{type}} {{value}} jest połączony z innym kontem. Spróbuj inny {{type}}.',
+  bind_account_title: 'Połącz lub utwórz konto',
+  social_create_account: 'Możesz utworzyć nowe konto.',
+  social_link_email: 'Możesz połączyć kolejny adres email',
+  social_link_phone: 'Możesz połączyć kolejny numer telefonu',
+  social_link_email_or_phone: 'Możesz połączyć kolejny adres email lub numer telefonu',
+  social_bind_with_existing:
+    'Znaleźliśmy powiązane konto, które zostało zarejestrowane, i możesz je bezpośrednio połączyć.',
+  skip_social_linking: 'Pominąć połączenie z istniejącym kontem?',
+  reset_password: 'Zresetuj hasło',
+  reset_password_description:
+    'Wpisz {{types, lista(type: złączonych;)}} związanego z twoim kontem, a wyślemy ci kod weryfikacyjny do zresetowania hasła.',
+  reset_password_magic_link_description:
+    'Wpisz adres e-mail powiązany z kontem, aby kontynuować resetowanie hasła.',
+  new_password: 'Nowe hasło',
+  set_password: 'Ustaw hasło',
+  password_changed: 'Hasło zmienione',
+  no_account: 'Nie masz jeszcze konta? ',
+  have_account: 'Masz już konto?',
+  enter_password: 'Wpisz hasło',
+  enter_password_for: 'Zaloguj się przy użyciu hasła do {{method}} {{value}}',
+  enter_username: 'Ustaw nazwę użytkownika',
+  enter_username_description:
+    'Nazwa użytkownika jest alternatywną formą logowania. Nazwa użytkownika powinna zawierać tylko litery, cyfry i podkreślenia.',
+  enter_username_policy_description:
+    'Nazwa użytkownika jest alternatywną formą logowania. {{requirements}}',
+  link_email: 'Połącz adres email',
+  link_phone: 'Połącz numer telefonu',
+  link_email_or_phone: 'Połącz adres email lub numer telefonu',
+  link_email_description: 'Dla zwiększenia bezpieczeństwa, proszę połączyć konto z adresem e-mail.',
+  link_phone_description:
+    'Dla zwiększenia bezpieczeństwa, proszę połączyć konto z numerem telefonu.',
+  link_email_or_phone_description:
+    'Dla zwiększenia bezpieczeństwa, proszę połączyć konto z adresem e-mail lub numerem telefonu.',
+  continue_with_more_information:
+    'Dla zwiększenia bezpieczeństwa, proszę uzupełnić poniższe informacje o koncie.',
+  create_your_account: 'Utwórz konto',
+  sign_in_to_your_account: 'Zaloguj się do swojego konta',
+  device_activation: 'Aktywacja urządzenia',
+  device_activation_description:
+    'Wpisz kod wyświetlony na twoim urządzeniu. Upewnij się, że jest zgodny, a następnie kontynuuj logowanie na tym urządzeniu.',
+  device_activation_error_description: 'Wpisz kod wyświetlony na twoim urządzeniu.',
+  device_activation_success: 'Twoje urządzenie jest teraz połączone!',
+  device_activation_success_description: 'Wróć do swojego urządzenia, aby kontynuować.',
+  no_region_code_found: 'Nie znaleziono kodu regionu',
+  verify_email: 'Potwierdź swój email',
+  verify_phone: 'Potwierdź swój numer telefonu',
+  password_requirements: 'Wymagania dotyczące hasła {{items, list}}.',
+  password_requirement: {
+    length_one: 'wymaga co najmniej {{count}} znaku',
+    length_two: 'wymaga co najmniej {{count}} znaki',
+    length_few: 'wymaga co najmniej {{count}} znaków',
+    length_many: 'wymaga co najmniej {{count}} znaków',
+    length_other: 'wymaga co najmniej {{count}} znaków',
+    character_types_one:
+      'powinno zawierać co najmniej {{count}} rodzaj liter wielkich, małych liter, cyfr i symboli',
+    character_types_two:
+      'powinno zawierać co najmniej {{count}} rodzaje liter wielkich, małych liter, cyfr i symboli',
+    character_types_few:
+      'powinno zawierać co najmniej {{count}} rodzaje liter wielkich, małych liter, cyfr i symboli',
+    character_types_many:
+      'powinno zawierać co najmniej {{count}} rodzaje liter wielkich, małych liter, cyfr i symboli',
+    character_types_other:
+      'powinno zawierać co najmniej {{count}} rodzaje liter wielkich, małych liter, cyfr i symboli',
+  },
+  username_requirements: 'Nazwa użytkownika {{items, list}}.',
+  username_requirement: {
+    length: 'musi mieć od {{min}} do {{max}} znaków',
+    characters: 'może zawierać tylko {{characters, list}}',
+  },
+  username_character: {
+    uppercase: 'wielkie litery',
+    lowercase: 'małe litery',
+    number: 'cyfry',
+    underscore: 'podkreślenia',
+  },
+  use: 'Użyj',
+  single_sign_on_email_form: 'Wpisz swój służbowy adres email',
+  single_sign_on_connectors_list:
+    'Twoja firma włączyła jednokrotne logowanie dla konta e-mail {{email}}. Możesz kontynuować logowanie za pomocą następujących dostawców SSO.',
+  single_sign_on_enabled: 'To konto ma włączone jednokrotne logowanie.',
+  authorize_title: 'Autoryzuj {{name}}',
+  unregistered_client_notice:
+    'Ta aplikacja jest deklarowana samodzielnie przez <hostname>{{host}}</hostname>, łącznie z nazwą i logo. Zweryfikuj nazwę hosta przed kontynuowaniem.',
+  request_permission: '{{name}} żąda dostępu do:',
+  grant_organization_access: 'Przyznaj dostęp do organizacji:',
+  authorize_personal_data_usage: 'Autoryzuj użycie twoich danych osobowych:',
+  authorize_organization_access: 'Autoryzuj dostęp do określonej organizacji:',
+  user_scopes: 'Dane osobowe użytkownika',
+  organization_scopes: 'Dostęp do organizacji',
+  authorize_agreement: `Autoryzując dostęp, zgadzasz się na <link></link> {{name}}.`,
+  authorize_agreement_with_redirect: `Autoryzując dostęp, zgadzasz się na <link></link> {{name}} i zostaniesz przekierowany do {{uri}}.`,
+  not_you: 'Nie ty?',
+  user_id: 'ID użytkownika: {{id}}',
+  redirect_to: 'Zostaniesz przekierowany do {{name}}.',
+  auto_agreement: 'Kontynuując, zgadzasz się na <link></link>.',
+  identifier_sign_in_description:
+    'Wprowadź swoje {{types, list(type: disjunction;)}} aby się zalogować.',
+  all_sign_in_options: 'Wszystkie opcje logowania',
+  identifier_register_description:
+    'Wprowadź swoje {{types, list(type: disjunction;)}} aby utworzyć nowe konto.',
+  all_account_creation_options: 'Wszystkie opcje tworzenia konta',
+  password_expired: 'Twoje hasło wygasło i musi zostać zresetowane przed zalogowaniem się.',
+  password_expiration_reset: 'Resetuj hasło',
+  back_to_sign_in: 'Wróć do logowania',
+  support_email: 'Email wsparcia: <link></link>',
+  support_website: 'Strona wsparcia: <link></link>',
+  switch_account_title: 'Jesteś obecnie zalogowany jako {{account}}',
+  switch_account_description:
+    'Aby kontynuować, zostaniesz wylogowany z obecnego konta i automatycznie przełączony na nowe konto.',
+  about_yourself: 'Opowiedz nam o sobie',
+  verify_identity: 'Zweryfikuj swoją tożsamość',
+  choose_verification_method: 'Wybierz sposób logowania',
+  verification_method: {
+    passkey: 'Klucz dostępu',
+    passkey_description: 'Weryfikacja przez urządzenie lub sprzęt USB',
+    password: 'Hasło',
+    password_description: 'Wpisz hasło',
+    email_verification_code: 'Kod weryfikacyjny e-mail',
+    phone_verification_code: 'Kod weryfikacyjny telefonu',
+    verification_code_description: 'Wyślij do {{target}}',
+  },
+};
+
+export default Object.freeze(description);

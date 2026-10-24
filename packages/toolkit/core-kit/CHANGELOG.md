@@ -1,0 +1,517 @@
+# Change Log
+
+## 2.14.0
+
+### Minor Changes
+
+- 9193c59: add `UserScope.PersonalAccessTokens` for authorizing personal access token management
+
+## 2.13.0
+
+### Minor Changes
+
+- ab106cdb82: add `UserScope.TrustedDevices` for authorizing trusted-device management
+
+### Patch Changes
+
+- ebfefb513d: fix date validation regex to match the complete string, rejecting trailing input after a valid date
+- 28c3c9283e: treat Gmail address aliases as the same address in custom email allowlist and blocklist rules
+
+  The matcher treats gmail.com and googlemail.com as equivalent and ignores local-part dots. The Console now shows custom email rule examples and Gmail matching behavior in the field descriptions, with shorter input placeholders.
+
+- Updated dependencies [7464c6a97a]
+- Updated dependencies [16f4b2e732]
+  - @logto/language-kit@1.4.0
+  - @logto/shared@3.4.3
+
+## 2.12.0
+
+### Minor Changes
+
+- af678dd84: add reusable email blocklist validation and matching helpers
+
+### Patch Changes
+
+- 1650be05e: fix email or email domain validation to match complete values and stricter domain labels
+- Updated dependencies [58cb52c705]
+  - @logto/shared@3.4.2
+
+## 2.11.0
+
+### Minor Changes
+
+- e1fadfb1a: add a shared username policy type, Zod guard, and default value
+- a88413689: add a shared username policy validator
+
+### Patch Changes
+
+- Updated dependencies [67b99bba85]
+  - @logto/shared@3.4.1
+
+## 2.10.0
+
+### Minor Changes
+
+- e4eaa5aef5: add custom CSP utility methods
+
+## 2.9.0
+
+### Minor Changes
+
+- 93523a1ae0: add subtle primary overlay color token for console themes
+
+  This adds the missing `--color-overlay-primary-subtle` token for both light and dark console themes.
+
+### Patch Changes
+
+- Updated dependencies [3350b13ec8]
+  - @logto/shared@3.4.0
+
+## 2.8.0
+
+### Minor Changes
+
+- 74c993a91e: introduce new `UserScope.Sessions` scope
+
+  This change introduces a new `urn:logto:scope:sessions` user scope to the Logto system.
+
+  This new scope does not issue any additional user claims, but serves as a permission marker for accessing session-related endpoints in the user account API. By including this scope in the user's permissions, applications can enable features such as session management and session revocation for that user.
+
+### Patch Changes
+
+- Updated dependencies [5ab931e7ac]
+  - @logto/language-kit@1.3.0
+
+## 2.7.1
+
+### Patch Changes
+
+- 57b0008ee8: add extended id token claims exports
+
+## 2.7.0
+
+### Minor Changes
+
+- ce65b07964: support wildcard patterns in redirect URIs
+
+  Added support for wildcard patterns (`*`) in redirect URIs to better support dynamic environments like preview deployments.
+
+  Rules (web only):
+
+  - Wildcards are allowed for http/https redirect URIs in the hostname and/or pathname.
+  - Wildcards are rejected in scheme, port, query, and hash.
+  - Hostname wildcard patterns must contain at least one dot to avoid overly broad patterns.
+
+### Patch Changes
+
+- Updated dependencies [317f9744d1]
+  - @logto/shared@3.3.1
+
+## 2.6.1
+
+### Patch Changes
+
+- 4cc321dbb: add a new regexp to match number and alphabet characters
+
+## 2.6.0
+
+### Minor Changes
+
+- 2961d355d: bump node version to ^22.14.0
+
+### Patch Changes
+
+- Updated dependencies [2961d355d]
+  - @logto/language-kit@1.2.0
+  - @logto/shared@3.2.0
+
+## 2.5.4
+
+### Patch Changes
+
+- e11e57de8: bump dependencies for security update
+- Updated dependencies [e11e57de8]
+  - @logto/language-kit@1.1.1
+  - @logto/shared@3.1.4
+
+## 2.5.3
+
+### Patch Changes
+
+- 62eb8ed8d: refactor user claims type and introduce `userClaimsList`
+
+  - Introduce a new exported variable `userClaimsList` containing all possible user claims.
+  - Utilize `userClaimsList` to derive the `UserClaim` type, ensuring consistency and maintainability.
+
+- Updated dependencies [a8080e891]
+  - @logto/shared@3.1.3
+
+## 2.5.2
+
+### Patch Changes
+
+- 239b81e31: loose redirect uri restrictions
+
+  Logto has been following the industry best practices for OAuth2.0 and OIDC from the start. However, in the real world, there are things we cannot control, like third-party services or operation systems like Windows.
+
+  This update relaxes restrictions on redirect URIs to allow the following:
+
+  1. A mix of native and HTTP(S) redirect URIs. For example, a native app can now use a redirect URI like `https://example.com`.
+  2. Native schemes without a period (`.`). For example, `myapp://callback` is now allowed.
+
+  When such URIs are configured, Logto Console will display a prominent warning. This change is backward-compatible and will not affect existing applications.
+
+  We hope this change will make it easier for you to integrate Logto with your applications.
+
+## 2.5.1
+
+### Patch Changes
+
+- 3c993d59c: add range request handling to url utilities
+
+## 2.5.0
+
+### Minor Changes
+
+- 0c70d65c7: define new `sso_identities` user claim to the userinfo endpoint response
+
+  - Define a new `sso_identities` user claim that will be used to store the user's SSO identities. The claim will be an array of objects with the following properties:
+    - `details`: detailed user info returned from the SSO provider.
+    - `issuer`: the issuer of the SSO provider.
+    - `identityId`: the user id of the user in the SSO provider.
+  - The new claims will share the same scope as the social `identities` claim.
+  - When the user `identities` scope is requested, the new `sso_identities` claim will be returned along with the `identities` claim in the userinfo endpoint response.
+
+## 2.4.0
+
+### Minor Changes
+
+- abffb9f95: full oidc standard claims support
+
+  We have added support for the remaining [OpenID Connect standard claims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims). Now, these claims are accessible in both ID tokens and the response from the `/me` endpoint.
+
+  Additionally, we adhere to the standard scopes - claims mapping. This means that you can retrieve most of the profile claims using the `profile` scope, and the `address` claim can be obtained by using the `address` scope.
+
+  For all newly introduced claims, we store them in the `user.profile` field.
+
+  > ![Note]
+  > Unlike other database fields (e.g. `name`), the claims stored in the `profile` field will fall back to `undefined` rather than `null`. We refrain from using `?? null` here to reduce the size of ID tokens, since `undefined` fields will be stripped in tokens.
+
+### Patch Changes
+
+- @logto/shared@3.1.0
+
+## 2.3.0
+
+### Minor Changes
+
+- 31e60811d: use Node 20 LTS for engine requirement.
+
+  Note: We mark it as minor because Logto is shipping with Docker image and it's not a breaking change for users.
+
+### Patch Changes
+
+- 9089dbf84: upgrade TypeScript to 5.3.3
+- Updated dependencies [acb7fd3fe]
+- Updated dependencies [9089dbf84]
+- Updated dependencies [31e60811d]
+  - @logto/shared@3.1.0
+  - @logto/language-kit@1.1.0
+
+## 2.2.1
+
+### Patch Changes
+
+- b4f702a86: userinfo endpoint will return `organization_data` claim if organization scope is requested
+
+  The claim includes all organizations that the user is a member of with the following structure:
+
+  ```json
+  {
+    "organization_data": [
+      {
+        "id": "organization_id",
+        "name": "organization_name",
+        "description": "organization_description"
+      }
+    ]
+  }
+  ```
+
+## 2.2.0
+
+### Minor Changes
+
+- 2c340d379: support `roles` scope for ID token to issue `roles` claim
+
+## 2.1.2
+
+### Patch Changes
+
+- Updated dependencies [18181f892]
+  - @logto/shared@3.0.0
+
+## 2.1.1
+
+### Patch Changes
+
+- 6f5a0acad: fix a bug that prevents user from customizing i18n translations in Sign-in Experience config
+
+## 2.1.0
+
+### Minor Changes
+
+- e8b0b1d02: feature: password policy
+
+  ### Summary
+
+  This feature enables custom password policy for users. Now it is possible to guard with the following rules when a user is creating a new password:
+
+  - Minimum length (default: `8`)
+  - Minimum character types (default: `1`)
+  - If the password has been pwned (default: `true`)
+  - If the password is exactly the same as or made up of the restricted phrases:
+    - Repetitive or sequential characters (default: `true`)
+    - User information (default: `true`)
+    - Custom words (default: `[]`)
+
+  If you are an existing Logto Cloud user or upgrading from a previous version, to ensure a smooth experience, we'll keep the original policy as much as possible:
+
+  > The original password policy requires a minimum length of 8 and at least 2 character types (letters, numbers, and symbols).
+
+  Note in the new policy implementation, it is not possible to combine lower and upper case letters into one character type. So the original password policy will be translated into the following:
+
+  - Minimum length: `8`
+  - Minimum character types: `2`
+  - Pwned: `false`
+  - Repetitive or sequential characters: `false`
+  - User information: `false`
+  - Custom words: `[]`
+
+  If you want to change the policy, you can do it:
+
+  - Logto Console -> Sign-in experience -> Password policy.
+  - Update `passwordPolicy` property in the sign-in experience via Management API.
+
+  ### Side effects
+  - All new users will be affected by the new policy immediately.
+  - Existing users will not be affected by the new policy until they change their password.
+  - We removed password restrictions when adding or updating a user via Management API.
+
+### Patch Changes
+
+- Updated dependencies [310698b0d]
+  - @logto/shared@2.0.1
+
+## 2.0.1
+
+### Patch Changes
+
+- e9c2c9a6d: Add new font tokens in core-kit
+
+## 2.0.0
+
+### Major Changes
+
+- 30033421c: - connector-kit: add `DemoConnector` type and demo connector ids
+  - core-kit: remove nanoid utils, add tenant model utils
+  - shared: remove models, add database types and universal export
+
+### Patch Changes
+
+- Updated dependencies [4945b0be2]
+- Updated dependencies [30033421c]
+  - @logto/shared@2.0.0
+
+## 1.1.0
+
+### Minor Changes
+
+- 343b1090f: Allow admin tenant admin to create tenants without limitation
+
+## 1.0.0
+
+### Minor Changes
+
+- 738675a7d: ## Improvements
+
+  - Exported seed constants and schemas.
+  - Add ID generation utilities `buildIdGenerator()` and `generateStandardId()`.
+
+### Patch Changes
+
+- Updated dependencies [738675a7d]
+  - @logto/language-kit@1.0.0
+
+## 1.0.0-beta.30
+
+### Minor Changes
+
+- 738675a7: ## Improvements
+
+  - Exported seed constants and schemas.
+  - Add ID generation utilities `buildIdGenerator()` and `generateStandardId()`.
+
+### Patch Changes
+
+- Updated dependencies [738675a7]
+  - @logto/language-kit@1.0.0-beta.30
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [1.0.0-beta.29](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.28...v1.0.0-beta.29) (2022-12-07)
+
+### Bug Fixes
+
+- exports info and lock dep version ([#45](https://github.com/logto-io/toolkit/issues/45)) ([2ac83b4](https://github.com/logto-io/toolkit/commit/2ac83b4f0ff17579456569fb67ba018ac493c1af))
+
+## [1.0.0-beta.28](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.27...v1.0.0-beta.28) (2022-12-06)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.26](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.25...v1.0.0-beta.26) (2022-11-23)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.25](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.24...v1.0.0-beta.25) (2022-11-22)
+
+### Bug Fixes
+
+- **core:** declarations ([#39](https://github.com/logto-io/toolkit/issues/39)) ([3140fdb](https://github.com/logto-io/toolkit/commit/3140fdbcc2db76bb76b4a5f5a5070de0dc12ff40))
+
+## [1.0.0-beta.24](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.23...v1.0.0-beta.24) (2022-11-22)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.21](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.20...v1.0.0-beta.21) (2022-11-11)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.20](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.19...v1.0.0-beta.20) (2022-10-21)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.19](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.18...v1.0.0-beta.19) (2022-10-19)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.18](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.17...v1.0.0-beta.18) (2022-10-12)
+
+### Bug Fixes
+
+- export url utilities in index file ([#23](https://github.com/logto-io/toolkit/issues/23)) ([0a7b4c8](https://github.com/logto-io/toolkit/commit/0a7b4c836fe6d566fc051fcf185df4dac352e308))
+
+## [1.0.0-beta.17](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2022-10-12)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.16](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2022-09-28)
+
+### Bug Fixes
+
+- **core,language:** avoid using path aliases ([#15](https://github.com/logto-io/toolkit/issues/15)) ([22db3ed](https://github.com/logto-io/toolkit/commit/22db3ed2daf3ee5906ffc864bb9bed1a826df842))
+
+## [1.0.0-beta.15](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2022-09-27)
+
+### Features
+
+- **language,core,connector:** init language-kit package ([#14](https://github.com/logto-io/toolkit/issues/14)) ([9a74fc4](https://github.com/logto-io/toolkit/commit/9a74fc4d34c9ce277b8734ab78735549dc3a3cda))
+
+## [1.0.0-beta.14](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.13...v1.0.0-beta.14) (2022-09-23)
+
+### Bug Fixes
+
+- remove unused file utils to avoid importing fs in browser ([#11](https://github.com/logto-io/toolkit/issues/11)) ([e1bda93](https://github.com/logto-io/toolkit/commit/e1bda93d1e95974f5e7128c48bb3a342cc9de358))
+
+## [1.0.0-beta.13](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.12...v1.0.0-beta.13) (2022-09-19)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.12](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2022-09-17)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## [1.0.0-beta.11](https://github.com/logto-io/toolkit/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2022-09-16)
+
+**Note:** Version bump only for package @logto/core-kit
+
+## 1.0.0-beta.10 (2022-09-16)
+
+### Features
+
+- initial commit ([56a4968](https://github.com/logto-io/toolkit/commit/56a496848168a4a9ae9ac7af83d51f1b8a6afe2c))
+
+## [1.0.0-beta.9](https://github.com/logto-io/logto/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2022-09-07)
+
+### Features
+
+- add Portuguese translation ([f268ecb](https://github.com/logto-io/logto/commit/f268ecb1a8d57d1e33225bec8852f3bc377dd478))
+
+### Bug Fixes
+
+- **console,ui:** fix locale guard issue in settings page ([e200578](https://github.com/logto-io/logto/commit/e2005780a39fa7b5f5c5e406f37805913b684c18))
+
+## [1.0.0-beta.8](https://github.com/logto-io/logto/compare/v1.0.0-beta.6...v1.0.0-beta.8) (2022-09-01)
+
+**Note:** Version bump only for package @logto/shared
+
+## [1.0.0-beta.6](https://github.com/logto-io/logto/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2022-08-30)
+
+**Note:** Version bump only for package @logto/shared
+
+## [1.0.0-beta.5](https://github.com/logto-io/logto/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2022-08-19)
+
+**Note:** Version bump only for package @logto/shared
+
+## [1.0.0-beta.4](https://github.com/logto-io/logto/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2022-08-11)
+
+### Bug Fixes
+
+- **shared:** fix dark color generator ([#1719](https://github.com/logto-io/logto/issues/1719)) ([3deb98c](https://github.com/logto-io/logto/commit/3deb98c18dfe54abda53e6de7592f40924e1f2f3))
+
+## [1.0.0-beta.3](https://github.com/logto-io/logto/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2022-08-01)
+
+### Features
+
+- **console:** add Next.js integration guide in admin console ([7d3f947](https://github.com/logto-io/logto/commit/7d3f94738f495de98464d23b6fdf18214d59005e))
+
+## [1.0.0-beta.1](https://github.com/logto-io/logto/compare/v1.0.0-beta.0...v1.0.0-beta.1) (2022-07-19)
+
+**Note:** Version bump only for package @logto/shared
+
+## [1.0.0-beta.0](https://github.com/logto-io/logto/compare/v1.0.0-alpha.4...v1.0.0-beta.0) (2022-07-14)
+
+**Note:** Version bump only for package @logto/shared
+
+## [1.0.0-alpha.3](https://github.com/logto-io/logto/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2022-07-07)
+
+**Note:** Version bump only for package @logto/shared
+
+### [0.1.2-alpha.5](https://github.com/logto-io/logto/compare/v0.1.2-alpha.4...v0.1.2-alpha.5) (2022-07-03)
+
+**Note:** Version bump only for package @logto/shared
+
+### [0.1.2-alpha.1](https://github.com/logto-io/logto/compare/v0.1.2-alpha.0...v0.1.2-alpha.1) (2022-07-02)
+
+**Note:** Version bump only for package @logto/shared
+
+### [0.1.1-alpha.0](https://github.com/logto-io/logto/compare/v0.1.0-internal...v0.1.1-alpha.0) (2022-07-01)
+
+### Features
+
+- **console,ui:** generate dark mode color in console ([#1231](https://github.com/logto-io/logto/issues/1231)) ([f72b21d](https://github.com/logto-io/logto/commit/f72b21d1602ab0fb35ef3e7d84f6c8ebd7e18b08))
+- **console:** add details summary component in guides ([693c4f0](https://github.com/logto-io/logto/commit/693c4f0422eb312190f2c7b0673e3ceaa8c41213))
+- **core,shared:** get /dashboard/users/active ([#953](https://github.com/logto-io/logto/issues/953)) ([1420bb2](https://github.com/logto-io/logto/commit/1420bb28cec9c0e20b4d0645a58e436135f87c83))
+- **demo-app:** implement (part 2) ([85a055e](https://github.com/logto-io/logto/commit/85a055efa4358cfb69c0d74f7aeaeb0bade024af))
+- **demo-app:** implementation ([#982](https://github.com/logto-io/logto/issues/982)) ([7f4f4f8](https://github.com/logto-io/logto/commit/7f4f4f84addf8a25c3d30f1ac3ceeef460afcf17))
+- **demo-app:** init ([#979](https://github.com/logto-io/logto/issues/979)) ([ad0aa8e](https://github.com/logto-io/logto/commit/ad0aa8e0c20a8d60f095b477e942b724fb53ca7d))
+- **shared,phrases-ui:** not allow hyphens in username ([#1319](https://github.com/logto-io/logto/issues/1319)) ([5e81966](https://github.com/logto-io/logto/commit/5e819665c7c1d584ff5cff25e4e0723122be78b2))
+- update field check rules ([#854](https://github.com/logto-io/logto/issues/854)) ([85a407c](https://github.com/logto-io/logto/commit/85a407c5f6f76fed0513acd6fb41943413935b5a))
+
+### Bug Fixes
+
+- `lint:report` script ([#730](https://github.com/logto-io/logto/issues/730)) ([3b17324](https://github.com/logto-io/logto/commit/3b17324d189b2fe47985d0bee8b37b4ef1dbdd2b))
+- **console:** dashboard chart style ([#1177](https://github.com/logto-io/logto/issues/1177)) ([cf47044](https://github.com/logto-io/logto/commit/cf470446e4458e748bbf6384adb96d69805a1991)), closes [#1178](https://github.com/logto-io/logto/issues/1178)
+- **console:** new platform tab colors ([#1158](https://github.com/logto-io/logto/issues/1158)) ([1bb770f](https://github.com/logto-io/logto/commit/1bb770fd1fa364f12c1c56a8542d36a3cf9647fe))
+- **core:** remove name regex ([#1109](https://github.com/logto-io/logto/issues/1109)) ([a790248](https://github.com/logto-io/logto/commit/a790248c091e444614652b08b05686e9934cb639))

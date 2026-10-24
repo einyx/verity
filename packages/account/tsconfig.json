@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base",
+  "include": [
+    "src",
+    "*.config.ts",
+    "../experience/src/include.d/**/*.d.ts",
+    "../experience/src/assets/index.d.ts"
+  ]
+}

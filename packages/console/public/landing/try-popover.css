@@ -1,0 +1,14 @@
+/* Try popover: a card that fades in under a Try button on hover or focus, with a small looping illustration. */
+.try-popover{position:fixed;z-index:60;width:264px;padding:14px;border-radius:14px;border:1px solid #e7e4de;background:#fff;color:#1f1e1c;box-shadow:0 12px 32px rgba(0,0,0,.16);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top left;pointer-events:none;transition:opacity .2s ease,transform .25s cubic-bezier(.2,.8,.2,1)}
+.try-popover.is-open{opacity:1;transform:none;pointer-events:auto}
+.try-popover h3{margin:10px 0 4px;font-size:.95rem;font-weight:600}
+.try-popover p{margin:0;font-size:.85rem;line-height:1.45;color:#6f6c66}
+.try-art{display:block;width:100%;height:96px}
+.try-art .cursor{animation:try-bob 2.6s ease-in-out infinite}
+.try-art .orbit{transform-origin:200px 48px;animation:try-orbit 7s linear infinite}
+.try-art .spark{transform-origin:center;transform-box:fill-box;animation:try-twinkle 2.2s ease-in-out infinite}
+@keyframes try-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes try-orbit{to{transform:rotate(360deg)}}
+@keyframes try-twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+@media (prefers-color-scheme: dark){.try-popover{background:#2a2926;color:#f4f2ee;border-color:#3a3834}.try-popover p{color:#a9a59c}}
+@media (prefers-reduced-motion: reduce){.try-popover{transition:none}.try-art *{animation:none!important}}

@@ -1,0 +1,153 @@
+import { ConnectorType } from '@logto/connector-kit';
+import { MfaFactor, SignInIdentifier } from '@logto/schemas';
+
+import { deleteUser } from '#src/api/admin-user.js';
+import { updateSignInExperience } from '#src/api/sign-in-experience.js';
+import { demoAppUrl } from '#src/constants.js';
+import { clearConnectorsByTypes, setSmsConnector } from '#src/helpers/connector.js';
+import { enableMandatoryMfaWithPhone, resetMfaSettings } from '#src/helpers/sign-in-experience.js';
+import { generateNewUser } from '#src/helpers/user.js';
+import ExpectExperience from '#src/ui-helpers/expect-experience.js';
+import { generatePhone, generatePassword, generateUsername, waitFor } from '#src/utils.js';
+
+describe('phone MFA binding', () => {
+  beforeAll(async () => {
+    await clearConnectorsByTypes([ConnectorType.Sms]);
+    await setSmsConnector();
+    await enableMandatoryMfaWithPhone();
+    await updateSignInExperience({
+      signUp: {
+        identifiers: [SignInIdentifier.Username],
+        password: true,
+        verify: false,
+      },
+      signIn: {
+        methods: [
+          {
+            identifier: SignInIdentifier.Username,
+            password: true,
+            verificationCode: false,
+            isPasswordPrimary: true,
+          },
+        ],
+      },
+      forgotPasswordMethods: [],
+    });
+  });
+
+  afterAll(async () => {
+    await clearConnectorsByTypes([ConnectorType.Sms]);
+    await resetMfaSettings();
+  });
+
+  it('should bind phone MFA on register', async () => {
+    const username = generateUsername();
+    const password = generatePassword();
+    const phone = generatePhone();
+    const experience = new ExpectExperience(await browser.newPage());
+    await experience.startWith(demoAppUrl, 'register');
+    await experience.toFillInput('identifier', username, { submit: true });
+    experience.toBeAt('register/password');
+    await experience.toFillNewPasswords(password);
+
+    await waitFor(500);
+    experience.toBeAt('mfa-binding/PhoneVerificationCode');
+    await experience.page.waitForSelector('input[name="identifier"]');
+    await experience.toFillInput('identifier', phone, { submit: true });
+    await experience.toCompleteVerification('continue', ConnectorType.Sms);
+    await experience.verifyThenEnd();
+  });
+
+  it('should bind phone MFA on sign in', async () => {
+    const { userProfile, user } = await generateNewUser({ username: true, password: true });
+    const phone = generatePhone();
+    const experience = new ExpectExperience(await browser.newPage());
+    await experience.startWith(demoAppUrl, 'sign-in');
+    await experience.toFillForm(
+      {
+        identifier: userProfile.username,
+        password: userProfile.password,
+      },
+      { submit: true }
+    );
+
+    await waitFor(500);
+    experience.toBeAt('mfa-binding/PhoneVerificationCode');
+    await experience.page.waitForSelector('input[name="identifier"]');
+    await experience.toFillInput('identifier', phone, { submit: true });
+    await experience.toCompleteVerification('continue', ConnectorType.Sms);
+    await experience.verifyThenEnd();
+
+    await deleteUser(user.id);
+  });
+
+  describe('trusted device opt-in', () => {
+    beforeAll(async () => {
+      await updateSignInExperience({ trustedDevice: { enabled: true, durationDays: 365 } });
+    });
+
+    afterAll(async () => {
+      await updateSignInExperience({ trustedDevice: { enabled: false } });
+    });
+
+    it('creates a trusted device from phone MFA binding and skips MFA on the next sign-in', async () => {
+      const { userProfile, user } = await generateNewUser({ username: true, password: true });
+      const experience = new ExpectExperience(await browser.newPage());
+
+      await experience.startWith(demoAppUrl, 'sign-in');
+      await experience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await experience.waitToBeAt(`mfa-binding/${MfaFactor.PhoneVerificationCode}`);
+      await experience.toFillInput('identifier', generatePhone(), { submit: true });
+      await experience.toCompleteVerification('continue', ConnectorType.Sms);
+      await experience.toClickButton('Continue');
+      await experience.toOptInTrustedDevice();
+      await experience.verifyThenEnd(false);
+      await experience.clearDemoAppSession();
+      await experience.page.close();
+      const trustedDeviceExperience = new ExpectExperience(await browser.newPage());
+
+      await trustedDeviceExperience.startWith(demoAppUrl, 'sign-in');
+      await trustedDeviceExperience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await trustedDeviceExperience.verifyThenEnd();
+
+      await deleteUser(user.id);
+    });
+
+    it('creates a trusted device from phone MFA verification and skips MFA on the next sign-in', async () => {
+      const { userProfile, user } = await generateNewUser({
+        username: true,
+        password: true,
+        primaryPhone: true,
+      });
+      const experience = new ExpectExperience(await browser.newPage());
+
+      await experience.startWith(demoAppUrl, 'sign-in');
+      await experience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await experience.waitToBeAt(`mfa-verification/${MfaFactor.PhoneVerificationCode}`);
+      await experience.toCompleteMfaVerification(ConnectorType.Sms);
+      await experience.toOptInTrustedDevice();
+      await experience.verifyThenEnd(false);
+      await experience.clearDemoAppSession();
+      await experience.page.close();
+      const trustedDeviceExperience = new ExpectExperience(await browser.newPage());
+
+      await trustedDeviceExperience.startWith(demoAppUrl, 'sign-in');
+      await trustedDeviceExperience.toFillForm(
+        { identifier: userProfile.username, password: userProfile.password },
+        { submit: true }
+      );
+      await trustedDeviceExperience.verifyThenEnd();
+
+      await deleteUser(user.id);
+    });
+  });
+});

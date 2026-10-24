@@ -1,0 +1,376 @@
+{
+  "tags": [
+    {
+      "name": "Dev feature",
+      "description": "In-development API surfaces. Hidden from public OpenAPI output unless dev features are enabled."
+    }
+  ],
+  "paths": {
+    "/api/landing-leads/{sessionId}/brief.pdf": {
+      "get": {
+        "summary": "Download confidential internal sales brief with budget advisory",
+        "description": "Admin user-token download for a selected admin-tenant lead. Contains saved contact details, sales notes, status, tags and stored visitor messages when available. Public website research is labeled AI-assisted with sources and date; inferred sales guidance is separate. Synthetic records are labeled DEMO DATA. Read-only; does not generate new research.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Confidential internal PDF.",
+            "content": { "application/pdf": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "403": { "description": "Insufficient authorization." },
+          "404": { "description": "Lead not found or dev features disabled." }
+        }
+      }
+    },
+    "/api/landing-leads/{sessionId}/slides.pptx": {
+      "get": {
+        "summary": "Download prospect-facing discovery slides",
+        "description": "Admin user-token download for a selected admin-tenant lead. Explicit whitelist: company, stated objective, AI-assisted public website research, source links/date, synthetic label and proposed discovery agenda. Excludes contact details, sales notes, status, tags, transcript and inferred sales guidance, including metadata and notes. Read-only; no new research or product/ROI claims.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Editable prospect-facing PPTX.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "403": { "description": "Insufficient authorization." },
+          "404": { "description": "Lead not found or dev features disabled." }
+        }
+      }
+    },
+    "/api/landing-lead-files/{kind}/{sessionId}": {
+      "get": {
+        "summary": "Download a signed lead export",
+        "description": "Signed notification/email link. Signature replaces the admin user token and binds kind, session and expiry. Reads only the selected admin-tenant lead. brief is confidential/internal; slides uses the same prospect whitelist as the direct PPTX download. No writes or new AI calls.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["brief", "slides"] }
+          },
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "expires", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "sig", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF or PPTX attachment according to kind.",
+            "content": {
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } },
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "403": { "description": "Invalid or expired signature." },
+          "404": { "description": "Unknown kind, missing signing configuration or lead not found." }
+        }
+      }
+    },
+    "/api/landing-leads": {
+      "get": {
+        "summary": "List landing chat leads",
+        "description": "Lists admin-tenant landing leads newest first. Conversations are loaded separately.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "default": 0 }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Case-insensitive substring match across every lead field (name, company, email, role, industry, interests, decision, contact details), plus the lead's notes and tags."
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "contacted",
+                "qualified",
+                "demo_requested",
+                "approved",
+                "provisioned",
+                "closed",
+                "rejected"
+              ]
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 50,
+              "description": "Case-sensitive exact match against the lead's tags. Combined with tagSearch using AND when both are provided."
+            }
+          },
+          {
+            "name": "tagSearch",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 50,
+              "description": "Case-insensitive substring match against the lead's tags. Combined with tag using AND when both are provided."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of leads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["leads", "totalCount"],
+                  "properties": {
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "Total number of matching admin-tenant leads before pagination."
+                    },
+                    "leads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "sessionId",
+                          "lead",
+                          "emailStatus",
+                          "status",
+                          "notes",
+                          "tags",
+                          "createdAt"
+                        ],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "sessionId": { "type": "string" },
+                          "lead": { "type": "object" },
+                          "emailStatus": {
+                            "type": "string",
+                            "enum": ["pending", "sent", "failed"]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "new",
+                              "contacted",
+                              "qualified",
+                              "demo_requested",
+                              "approved",
+                              "provisioned",
+                              "closed",
+                              "rejected"
+                            ]
+                          },
+                          "notes": { "type": "string" },
+                          "tags": { "type": "array", "items": { "type": "string" } },
+                          "companyProfile": { "type": ["object", "null"] },
+                          "createdAt": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "bookingUrl": { "type": ["string", "null"] }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "The token lacks the landing page scope, or is a machine token." }
+        }
+      }
+    },
+    "/api/landing-leads/stats": {
+      "get": {
+        "summary": "Aggregate the landing lead pipeline",
+        "description": "Admin-tenant creation counts across all stages. Rolling seven-day windows share one reference instant; weekly counts cover the twelve most recent complete UTC Monday-to-Sunday weeks, oldest first, including empty weeks. The current week is excluded. Known stages use pipeline order, followed by unknown stages.",
+        "tags": ["Dev feature"],
+        "responses": {
+          "200": {
+            "description": "Pipeline totals and creation counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["total", "byStage", "byWeek"],
+                  "properties": {
+                    "total": {
+                      "type": "integer",
+                      "description": "Sum of the counts across every stage."
+                    },
+                    "byStage": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["stage", "count", "last7Days", "previous7Days"],
+                        "properties": {
+                          "stage": { "type": "string" },
+                          "count": { "type": "integer" },
+                          "last7Days": { "type": "integer" },
+                          "previous7Days": { "type": "integer" }
+                        }
+                      }
+                    },
+                    "byWeek": {
+                      "type": "array",
+                      "minItems": 12,
+                      "maxItems": 12,
+                      "items": {
+                        "type": "object",
+                        "required": ["weekStart", "count"],
+                        "properties": {
+                          "weekStart": { "type": "string", "format": "date" },
+                          "count": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token lacks the landing page scope, or is a machine token."
+          },
+          "404": { "description": "Dev features are disabled." }
+        }
+      }
+    },
+    "/api/landing-leads/{sessionId}/transcript": {
+      "get": {
+        "summary": "Get a landing chat transcript",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "maxLength": 64 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["messages"],
+                  "properties": {
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["role", "content"],
+                        "properties": {
+                          "role": { "type": "string", "enum": ["user", "assistant"] },
+                          "content": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Conversation not found." }
+        }
+      }
+    },
+    "/api/landing-leads/{id}": {
+      "patch": {
+        "summary": "Update landing lead CRM fields",
+        "tags": ["Dev feature"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "contacted",
+                      "qualified",
+                      "demo_requested",
+                      "approved",
+                      "provisioned",
+                      "closed",
+                      "rejected"
+                    ]
+                  },
+                  "notes": { "type": "string", "maxLength": 4000 },
+                  "tags": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": { "type": "string", "minLength": 1, "maxLength": 50 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Lead updated." },
+          "400": { "description": "Invalid update." },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Lead not found." }
+        }
+      }
+    },
+    "/api/landing-leads/{sessionId}/assist": {
+      "post": {
+        "summary": "Generate advisory AI lead assistance",
+        "description": "Returns a summary, qualification, suggested next steps, and an unsent follow-up draft. Results are not persisted and do not trigger actions.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "maxLength": 64 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AI suggestions. See the LeadAssistResult schema in the response payload."
+          },
+          "403": { "description": "Forbidden." },
+          "404": { "description": "Lead not found." },
+          "503": { "description": "AI is not configured or could not produce a valid response." }
+        }
+      }
+    }
+  }
+}

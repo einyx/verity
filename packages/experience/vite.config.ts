@@ -1,0 +1,73 @@
+import react from '@vitejs/plugin-react';
+import browserslistToEsbuild from 'browserslist-to-esbuild';
+import { defineConfig, mergeConfig, type UserConfig } from 'vite';
+import viteCompression from 'vite-plugin-compression';
+import svgr from 'vite-plugin-svgr';
+
+import { defaultConfig, manualChunks } from '../../vite.shared.config';
+
+const buildConfig = (mode: string): UserConfig => ({
+  server: {
+    host: process.env.DEV_SERVER_HOST,
+    port: 5001,
+    hmr: {
+      port: 6001,
+    },
+  },
+  css: {
+    modules: {
+      generateScopedName:
+        // Keep backward compatibility with the old CSS modules naming in production
+        mode === 'development' ? '__[hash:base64:5]__[local]' : '[hash:base64:5]_[local]',
+    },
+  },
+  plugins: [
+    react(),
+    svgr(),
+    viteCompression({ disable: mode === 'development' }),
+    viteCompression({ disable: mode === 'development', algorithm: 'brotliCompress' }),
+  ],
+  define: {
+    // TODO: Remove this line after the experience package supports ESM unit test.
+    // Replace all the process.env references with import.meta.env in the experience package then.
+    // 'import.meta.env.DEV_FEATURES_ENABLED': JSON.stringify(process.env.DEV_FEATURES_ENABLED),
+
+    // Experience package does not support ESM unit test yet, can not use import.meta.env
+    // so we need to define the environment variables here.
+    'process.env': {
+      NODE_ENV: process.env.NODE_ENV,
+      DEV_FEATURES_ENABLED: process.env.DEV_FEATURES_ENABLED,
+    },
+  },
+  build: {
+    // Use the same browserslist configuration as in README.md.
+    // Consider using the esbuild target directly in the future.
+    target: browserslistToEsbuild('> 0.5%, last 2 versions, Firefox ESR, not dead'),
+    rollupOptions: {
+      output: {
+        // Tip: You can use `pnpx vite-bundle-visualizer` to analyze the bundle size
+        manualChunks: (id, meta) => {
+          if (/\/node_modules\/i18next[^/]*\//.test(id)) {
+            return 'i18next';
+          }
+
+          // Keep the Cap widget in its own lazy-loaded chunk, as it's only needed when Cap is the
+          // captcha provider and it registers a custom element once evaluated.
+          if (id.includes('/node_modules/cap-widget/')) {
+            return 'cap-widget';
+          }
+
+          for (const largePackage of ['libphonenumber-js', 'core-js']) {
+            if (id.includes(`/node_modules/${largePackage}/`)) {
+              return largePackage;
+            }
+          }
+
+          return manualChunks(id, meta);
+        },
+      },
+    },
+  },
+});
+
+export default defineConfig(({ mode }) => mergeConfig(defaultConfig, buildConfig(mode)));

@@ -1,0 +1,348 @@
+import {
+  type InteractionIdentifier,
+  type SignInIdentifier,
+  type CreateExperienceApiPayload,
+  type IdentificationApiPayload,
+  type InteractionEvent,
+  type MfaFactor,
+  type PasswordVerificationRequestBody,
+  type UpdateProfileApiPayload,
+  type VerificationCodeIdentifierPayload,
+  type WebAuthnAuthenticationOptions,
+  type WebAuthnVerificationPayload,
+} from '@logto/schemas';
+import { assert } from '@silverhand/essentials';
+
+import MockClient from '#src/client/index.js';
+
+import { experienceRoutes } from './const.js';
+import type { SanitizedInteractionStorageData, RedirectResponse } from './types.js';
+
+const isRedirectResponse = (data: unknown): data is RedirectResponse =>
+  typeof data === 'object' &&
+  data !== null &&
+  'redirectTo' in data &&
+  typeof data.redirectTo === 'string';
+
+export class ExperienceClient extends MockClient {
+  public extraHeaders: Record<string, string> = {};
+
+  private get headers() {
+    return { cookie: this.interactionCookie, ...this.extraHeaders };
+  }
+
+  public async identifyUser(payload: IdentificationApiPayload = {}) {
+    return this.api.post(experienceRoutes.identification, {
+      headers: this.headers,
+      json: payload,
+    });
+  }
+
+  public async updateInteractionEvent(payload: { interactionEvent: InteractionEvent }) {
+    return this.api
+      .put(`${experienceRoutes.prefix}/interaction-event`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json();
+  }
+
+  /**
+   * Init the interaction. Resolves with the redirect response when a step-up interaction was
+   * finished at creation because the pinned user cannot reach the requested authentication
+   * context, and with `undefined` otherwise.
+   */
+  public async initInteraction(
+    payload: CreateExperienceApiPayload
+  ): Promise<RedirectResponse | undefined> {
+    const response = await this.api.put(experienceRoutes.prefix, {
+      headers: this.headers,
+      json: payload,
+    });
+
+    this.mergeRawCookies(response.headers.getSetCookie());
+
+    if (response.status === 204) {
+      return;
+    }
+
+    const data: unknown = await response.json();
+
+    return isRedirectResponse(data) ? data : undefined;
+  }
+
+  public override async submitInteraction(): Promise<RedirectResponse> {
+    const response = await this.api.post(`${experienceRoutes.prefix}/submit`, {
+      headers: this.headers,
+    });
+
+    this.mergeRawCookies(response.headers.getSetCookie());
+
+    const body = await response.text();
+
+    if (!body) {
+      return { redirectTo: '' };
+    }
+
+    const data: unknown = JSON.parse(body);
+    assert(isRedirectResponse(data), new Error('Invalid submit interaction response'));
+
+    return data;
+  }
+
+  public async verifyPassword(payload: PasswordVerificationRequestBody) {
+    return this.api
+      .post(`${experienceRoutes.verification}/password`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async sendVerificationCode(payload: {
+    identifier: VerificationCodeIdentifierPayload;
+    interactionEvent: InteractionEvent;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/verification-code`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async verifyVerificationCode(payload: {
+    identifier: VerificationCodeIdentifierPayload;
+    verificationId: string;
+    code: string;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/verification-code/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async sendMfaVerificationCode(payload: {
+    identifierType: SignInIdentifier.Email | SignInIdentifier.Phone;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/mfa-verification-code`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async verifyMfaVerificationCode(payload: {
+    verificationId: string;
+    code: string;
+    identifierType: SignInIdentifier.Email | SignInIdentifier.Phone;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/mfa-verification-code/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async getSocialAuthorizationUri(
+    connectorId: string,
+    payload: {
+      redirectUri: string;
+      state: string;
+    }
+  ) {
+    return this.api
+      .post(`${experienceRoutes.verification}/social/${connectorId}/authorization-uri`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ authorizationUri: string; verificationId: string }>();
+  }
+
+  public async verifySocialAuthorization(
+    connectorId: string,
+    payload: {
+      verificationId: string;
+      connectorData: Record<string, unknown>;
+    }
+  ) {
+    return this.api
+      .post(`${experienceRoutes.verification}/social/${connectorId}/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async getEnterpriseSsoAuthorizationUri(
+    connectorId: string,
+    payload: {
+      redirectUri: string;
+      state: string;
+    }
+  ) {
+    return this.api
+      .post(`${experienceRoutes.verification}/sso/${connectorId}/authorization-uri`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ authorizationUri: string; verificationId: string }>();
+  }
+
+  public async verifyEnterpriseSsoAuthorization(
+    connectorId: string,
+    payload: {
+      verificationId: string;
+      connectorData: Record<string, unknown>;
+    }
+  ) {
+    return this.api
+      .post(`${experienceRoutes.verification}/sso/${connectorId}/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async getAvailableSsoConnectors(email: string) {
+    return this.api
+      .get(`${experienceRoutes.prefix}/sso-connectors`, {
+        headers: this.headers,
+        searchParams: { email },
+      })
+      .json<{ connectorIds: string[] }>();
+  }
+
+  public async createTotpSecret() {
+    return this.api
+      .post(`${experienceRoutes.verification}/totp/secret`, {
+        headers: this.headers,
+      })
+      .json<{ verificationId: string; secret: string; secretQrCode: string }>();
+  }
+
+  public async verifyTotp(payload: { verificationId?: string; code: string }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/totp/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async generateMfaBackupCodes() {
+    return this.api
+      .post(`${experienceRoutes.verification}/backup-code/generate`, {
+        headers: this.headers,
+      })
+      .json<{ verificationId: string; codes: string[] }>();
+  }
+
+  public async verifyBackupCode(payload: { code: string }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/backup-code/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async createNewPasswordIdentityVerification(payload: {
+    identifier: InteractionIdentifier;
+    password?: string;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/new-password-identity`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async resetPassword(payload: { password: string }) {
+    return this.api.put(`${experienceRoutes.profile}/password`, {
+      headers: this.headers,
+      json: payload,
+    });
+  }
+
+  public async updateProfile(payload: UpdateProfileApiPayload) {
+    return this.api.post(`${experienceRoutes.profile}`, {
+      headers: this.headers,
+      json: payload,
+    });
+  }
+
+  public async uploadAvatar(formData: FormData) {
+    return this.api.post(`${experienceRoutes.prefix}/user-assets/avatar`, {
+      headers: this.headers,
+      body: formData,
+    });
+  }
+
+  public async skipMfaBinding() {
+    return this.api.post(`${experienceRoutes.mfa}/mfa-skipped`, {
+      headers: this.headers,
+    });
+  }
+
+  public async skipMfaSuggestion() {
+    return this.api.post(`${experienceRoutes.mfa}/mfa-suggestion-skipped`, {
+      headers: this.headers,
+    });
+  }
+
+  public async bindMfa(type: MfaFactor, verificationId: string) {
+    return this.api.post(`${experienceRoutes.mfa}`, {
+      headers: this.headers,
+      json: { type, verificationId },
+    });
+  }
+
+  public async verifyOneTimeToken(payload: {
+    token: string;
+    identifier: InteractionIdentifier<SignInIdentifier.Email>;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/one-time-token/verify`, {
+        headers: this.headers,
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+
+  public async getInteractionData() {
+    return this.api
+      .get(experienceRoutes.interaction, {
+        headers: this.headers,
+      })
+      .json<SanitizedInteractionStorageData>();
+  }
+
+  public async createSignInPasskeyAuthentication(payload: {
+    identifier: { type: SignInIdentifier; value: string };
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/sign-in-passkey/authentication`, {
+        headers: { cookie: this.interactionCookie },
+        json: payload,
+      })
+      .json<{ verificationId: string; authenticationOptions: WebAuthnAuthenticationOptions }>();
+  }
+
+  public async verifySignInPasskeyAuthentication(payload: {
+    verificationId?: string;
+    payload: Omit<WebAuthnVerificationPayload, 'type'>;
+  }) {
+    return this.api
+      .post(`${experienceRoutes.verification}/sign-in-passkey/authentication/verify`, {
+        headers: { cookie: this.interactionCookie },
+        json: payload,
+      })
+      .json<{ verificationId: string }>();
+  }
+}

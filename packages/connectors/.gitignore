@@ -1,0 +1,6 @@
+# generated files
+/*/tsconfig.*
+/*/*.config.*
+
+# keep templates
+!/templates/**

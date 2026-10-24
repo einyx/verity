@@ -1,0 +1,1055 @@
+# Change Log
+
+## 1.46.0
+
+### Patch Changes
+
+- Updated dependencies [c5d7322]
+- Updated dependencies [9193c59]
+  - @logto/tenant-seed@0.0.1
+  - @logto/core-kit@2.14.0
+  - @logto/schemas@1.46.0
+
+## 1.45.0
+
+### Patch Changes
+
+- @logto/schemas@1.45.0
+
+## 1.44.0
+
+### Patch Changes
+
+- a2d6e83: explain existing PostgreSQL tenant roles before database seeding stops
+
+  The database seed command now checks for the roles it needs before creating tables. If roles from a previous Logto database remain in the PostgreSQL cluster, the command reports the conflict and explains why dropping the database did not remove them, so an administrator can clean them up safely before retrying.
+
+- Updated dependencies [655317e]
+- Updated dependencies [9af3b69]
+- Updated dependencies [022317f]
+- Updated dependencies [5bd627f]
+- Updated dependencies [3f9fd15]
+- Updated dependencies [c5bd438]
+- Updated dependencies [0429b3a]
+  - @logto/schemas@1.44.0
+
+## 1.43.0
+
+### Patch Changes
+
+- Updated dependencies [ebfefb513d]
+- Updated dependencies [ab106cdb82]
+- Updated dependencies [b64d46d495]
+- Updated dependencies [28c3c9283e]
+- Updated dependencies [8b2aaab9b0]
+- Updated dependencies [16f4b2e732]
+  - @logto/core-kit@2.13.0
+  - @logto/schemas@1.43.0
+  - @logto/shared@3.4.3
+  - @logto/connector-kit@5.1.1
+
+## 1.42.0
+
+### Patch Changes
+
+- Updated dependencies [af678dd84]
+- Updated dependencies [292da8db9]
+- Updated dependencies [1650be05e]
+- Updated dependencies [ea3ede350]
+- Updated dependencies [a1e0f2b680]
+- Updated dependencies [829646a4a]
+- Updated dependencies [58cb52c705]
+  - @logto/core-kit@2.12.0
+  - @logto/schemas@1.42.0
+  - @logto/shared@3.4.2
+
+## 1.41.0
+
+### Patch Changes
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [a305713bb2]
+- Updated dependencies [c7f17d6c5c]
+- Updated dependencies [d41082bd7d]
+- Updated dependencies [c2016a044c]
+- Updated dependencies [72820ac41e]
+- Updated dependencies [b7386a5113]
+- Updated dependencies [e1fadfb1a]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [a88413689]
+- Updated dependencies [eb45edbe34]
+  - @logto/connector-kit@5.1.0
+  - @logto/schemas@1.41.0
+  - @logto/core-kit@2.11.0
+  - @logto/shared@3.4.1
+
+## 1.40.1
+
+### Patch Changes
+
+- Updated dependencies [e4eaa5aef5]
+  - @logto/core-kit@2.10.0
+  - @logto/schemas@1.40.1
+
+## 1.40.0
+
+### Minor Changes
+
+- 32c9ea4d81: add `--dapc` (alias `--disable-admin-pwned-password-check`) option to both `install` and `db seed` commands for air-gapped OSS deployments.
+
+  The admin tenant's seeded password policy enables the Have I Been Pwned (HIBP) breach check by default, which sends an outbound request to `api.pwnedpasswords.com` on every admin password submission. This causes the first admin sign-up to hang on deployments where the endpoint is unreachable. Passing the option seeds the policy with the breach check disabled, so admin sign-up no longer depends on outbound network access.
+
+### Patch Changes
+
+- Updated dependencies [fafe81e8f]
+- Updated dependencies [617275158]
+- Updated dependencies [41a56f79e3]
+- Updated dependencies [16553c027]
+- Updated dependencies [32c9ea4d81]
+  - @logto/schemas@1.40.0
+  - @logto/connector-kit@5.0.1
+
+## 1.39.0
+
+### Minor Changes
+
+- 3350b13ec8: add grace period support to private signing key rotation
+
+  This update adds support for a grace period during private signing key rotation, through the environment variable `PRIVATE_KEY_ROTATION_GRACE_PERIOD`, or CLI `--gracePeriod` option.
+
+  During the grace period, the new signing key is marked as "Next", and the existing signing key remains active. This allows for a smoother transition when rotating keys, as it provides a window of time for clients to refresh cached JWKS without experiencing downtime or authentication failures.
+
+  After the grace period ends, the new private signing key will transition to "Current" state, and the old signing key will be marked as "Previous".
+
+  Check out the [documentation](https://docs.meshx.io/logto-oss/using-cli/rotate-signing-keys) for more details.
+
+### Patch Changes
+
+- Updated dependencies [93523a1ae0]
+- Updated dependencies [ab073bb65f]
+- Updated dependencies [3350b13ec8]
+  - @logto/core-kit@2.9.0
+  - @logto/schemas@1.39.0
+  - @logto/shared@3.4.0
+
+## 1.38.0
+
+### Patch Changes
+
+- Updated dependencies [7cee48bd97]
+- Updated dependencies [56cec74a00]
+- Updated dependencies [74c993a91e]
+- Updated dependencies [4e25126228]
+- Updated dependencies [5b7f1cb794]
+- Updated dependencies [4e25126228]
+- Updated dependencies [d2afe7351f]
+  - @logto/schemas@1.38.0
+  - @logto/core-kit@2.8.0
+  - @logto/connector-kit@5.0.0
+
+## 1.37.1
+
+### Patch Changes
+
+- Updated dependencies [57b0008ee8]
+  - @logto/core-kit@2.7.1
+  - @logto/schemas@1.37.1
+
+## 1.37.0
+
+### Minor Changes
+
+- 32d1562699: add out-of-the-box account center app
+
+  Summary
+
+  - Release the Account Center single-page app as a built-in Logto application for end users.
+  - Support profile updates for primary email, phone, username, and password with verification flows.
+  - Provide MFA management for TOTP, backup codes (download/regenerate), and passkeys (WebAuthn), including rename and delete actions.
+  - Gate sensitive operations behind password/email/phone verification and surface dedicated success screens.
+
+  To learn more about this feature, please refer to the documentation: https://docs.meshx.io/end-user-flows/account-settings/by-account-api
+
+### Patch Changes
+
+- Updated dependencies [32d1562699]
+- Updated dependencies [eced1f02d4]
+  - @logto/schemas@1.37.0
+
+## 1.36.0
+
+### Patch Changes
+
+- 317f9744d1: allow disabling Postgres `statement_timeout` for PgBouncer/RDS Proxy
+
+  - add `DATABASE_STATEMENT_TIMEOUT` parsing in shared, core, and CLI
+  - set `DATABASE_STATEMENT_TIMEOUT=DISABLE_TIMEOUT` to omit the startup parameter
+
+- Updated dependencies [7cbe315dde]
+- Updated dependencies [10a9e68f1d]
+- Updated dependencies [317f9744d1]
+- Updated dependencies [ce65b07964]
+  - @logto/schemas@1.36.0
+  - @logto/shared@3.3.1
+  - @logto/core-kit@2.7.0
+
+## 1.35.0
+
+### Patch Changes
+
+- Updated dependencies [a6858e76cf]
+- Updated dependencies [116dcf5e7d]
+- Updated dependencies [462e430445]
+- Updated dependencies [7c87ebc068]
+- Updated dependencies [116dcf5e7d]
+  - @logto/schemas@1.35.0
+  - @logto/connector-kit@4.7.0
+
+## 1.34.0
+
+### Patch Changes
+
+- Updated dependencies [900201a48c]
+- Updated dependencies [c3266a917a]
+  - @logto/schemas@1.34.0
+
+## 1.33.0
+
+### Patch Changes
+
+- @logto/schemas@1.33.0
+
+## 1.32.0
+
+### Patch Changes
+
+- Updated dependencies [ad4f9d6abf]
+- Updated dependencies [5da6792d40]
+- Updated dependencies [1fb8593659]
+- Updated dependencies [0ef4260e34]
+  - @logto/schemas@1.32.0
+  - @logto/connector-kit@4.6.0
+
+## 1.31.0
+
+### Patch Changes
+
+- Updated dependencies [bb385eb15d]
+  - @logto/schemas@1.31.0
+
+## 1.30.1
+
+### Patch Changes
+
+- Updated dependencies [4cc321dbb]
+  - @logto/core-kit@2.6.1
+  - @logto/schemas@1.30.1
+
+## 1.30.0
+
+### Patch Changes
+
+- Updated dependencies [9a4e11cf8]
+- Updated dependencies [34964af46]
+- Updated dependencies [34964af46]
+- Updated dependencies [0343699d7]
+- Updated dependencies [3f5533080]
+  - @logto/schemas@1.30.0
+  - @logto/connector-kit@4.4.0
+
+## 1.29.0
+
+### Patch Changes
+
+- Updated dependencies [f2c0a05ac]
+- Updated dependencies [db77aad7a]
+- Updated dependencies [a9324332a]
+- Updated dependencies [50d50f73b]
+  - @logto/schemas@1.29.0
+
+## 1.28.0
+
+### Patch Changes
+
+- Updated dependencies [35bbc4399]
+  - @logto/shared@3.3.0
+  - @logto/schemas@1.28.0
+
+## 1.27.0
+
+### Minor Changes
+
+- 2961d355d: bump node version to ^22.14.0
+
+### Patch Changes
+
+- 83e7be741: loose CLI version restriction on Node.js
+
+  Allows the CLI to run on a higher Node.js major version rather than exiting with an error. This is useful for users who are on a newer Node.js version but still want to use the CLI.
+
+- Updated dependencies [e69ea0373]
+- Updated dependencies [2961d355d]
+- Updated dependencies [0a76f3389]
+  - @logto/schemas@1.27.0
+  - @logto/connector-kit@4.3.0
+  - @logto/core-kit@2.6.0
+  - @logto/shared@3.2.0
+
+## 1.26.0
+
+### Patch Changes
+
+- Updated dependencies [13d04d776]
+  - @logto/schemas@1.26.0
+
+## 1.25.0
+
+### Patch Changes
+
+- Updated dependencies [1c7bdf9ba]
+- Updated dependencies [b0135bcd3]
+  - @logto/schemas@1.25.0
+  - @logto/connector-kit@4.2.0
+
+## 1.24.1
+
+### Patch Changes
+
+- cb261024b: fix cli add offical connectors command missing connectors bug
+
+  Fix the bug when running the cli commend `logto connectors add --official`, only 8 connectors are fetched from npm registry.
+  This fix update logic to query additional pages of results when fetching connectors from the npm registry.
+
+- e11e57de8: bump dependencies for security update
+- Updated dependencies [e11e57de8]
+  - @logto/connector-kit@4.1.1
+  - @logto/core-kit@2.5.4
+  - @logto/schemas@1.24.1
+  - @logto/shared@3.1.4
+
+## 1.24.0
+
+### Patch Changes
+
+- @logto/schemas@1.24.0
+
+## 1.23.1
+
+### Patch Changes
+
+- @logto/schemas@1.23.1
+
+## 1.23.0
+
+### Patch Changes
+
+- 217858950: fix fetch official connector list CLI command error
+
+  Due to changes in the npm registry API (`https://registry.npmjs.org/-/v1/search`) that our CLI add official connector depends on, the new API behavior returns irrelevant search results.
+
+  We need to manually filter out these irrelevant results to avoid potential infinite loops, where each loop triggers an API call, eventually hitting a rate limit and resulting in a status code 429.
+
+- Updated dependencies [f1b1d9e95]
+- Updated dependencies [239b81e31]
+  - @logto/schemas@1.23.0
+  - @logto/core-kit@2.5.2
+
+## 1.22.0
+
+### Patch Changes
+
+- Updated dependencies [640425414]
+- Updated dependencies [7ebef18e3]
+- Updated dependencies [640425414]
+  - @logto/schemas@1.22.0
+  - @logto/connector-kit@4.1.0
+
+## 1.21.0
+
+### Patch Changes
+
+- Updated dependencies [bc2a0ac03]
+  - @logto/shared@3.1.2
+  - @logto/schemas@1.21.0
+
+## 1.20.0
+
+### Minor Changes
+
+- 0183d0c33: split translate command from @logto/cli and create a standalone package
+
+  The "translate" command has greatly increased the size of the "@logto/cli" package, as it involves TypeScript code manipulation and has to use "typescrpt" as a "dependency".
+  In fact, only a small number of developers who want to contribute Logto will use this command, so we believe it's best to separate the less frequently used "translate" command from the "cli" package to keep it small and simple.
+
+  Please also be noted that this change is actually a breaking change for those who use the "translate" command. However, the CLI has to be bundle-released with the "Logto" open-source distribution, and we feel it is still too early to make a major version bump for Logto. Therefore, the "minor" bump is used this time.
+
+### Patch Changes
+
+- Updated dependencies [e0326c96c]
+- Updated dependencies [25187ef63]
+- Updated dependencies [479d5895a]
+  - @logto/schemas@1.20.0
+
+## 1.19.0
+
+### Minor Changes
+
+- 2d0502a42: add new cli command to setup proxy for developing and debugging custom ui locally
+
+  This command will establish a proxy tunnel between the following 3 entities together: your Logto cloud auth services, your application, and your custom sign-in UI.
+
+  Assuming you have a custom sign-in page running on `http://localhost:4000`.
+  Then you can execute the command this way:
+
+  ```bash
+  npm cli proxy --endpoint https://<tenant-id>.logto.app --port 9000 --experience-uri http://localhost:4000
+  ```
+
+  Or if you don't have your custom UI pages hosted on a dev server, you can use the `--experience-path` option to specify the path to your static files:
+
+  ```bash
+  npm cli proxy --endpoint https://<tenant-id>.logto.app --port 9000 --experience-path /path/to/your/custom/ui
+  ```
+
+  This command also works if you have enabled custom domain in your Logto tenant. E.g.:
+
+  ```bash
+  npm cli proxy --endpoint https://your-custom-domain.com --port 9000 --experience-path /path/to/your/custom/ui
+  ```
+
+  This should set up the proxy and it will be running on your local machine at `http://localhost:9000/`.
+
+  Finally, run your application and set its Logto endpoint to the proxy address `http://localhost:9000/` instead.
+
+  If all set up correctly, when you click the "sign-in" button in your application, you should be navigated to your custom sign-in page instead of Logto's built-in UI, along with valid session (cookies) that allows you to further interact with Logto experience API.
+
+  Happy coding!
+
+### Patch Changes
+
+- Updated dependencies [6477c6dee]
+- Updated dependencies [3a839f6d6]
+- Updated dependencies [b91ec0cd6]
+- Updated dependencies [d203c8d2f]
+- Updated dependencies [b188bb161]
+- Updated dependencies [62f5e5e0c]
+- Updated dependencies [d56bc2f73]
+- Updated dependencies [510f681fa]
+  - @logto/schemas@1.19.0
+  - @logto/phrases@1.13.0
+
+## 1.18.0
+
+### Patch Changes
+
+- Updated dependencies [6308ee185]
+- Updated dependencies [15953609b]
+- Updated dependencies [6308ee185]
+- Updated dependencies [942780fcf]
+- Updated dependencies [87615d58c]
+- Updated dependencies [9f33d997b]
+- Updated dependencies [061a30a87]
+- Updated dependencies [ef21c7a99]
+- Updated dependencies [136320584]
+- Updated dependencies [b52609a1e]
+- Updated dependencies [efa884c40]
+- Updated dependencies [b50ba0b7e]
+- Updated dependencies [d81e13d21]
+  - @logto/connector-kit@4.0.0
+  - @logto/phrases@1.12.0
+  - @logto/schemas@1.18.0
+  - @logto/phrases-experience@1.7.0
+
+## 1.17.0
+
+### Minor Changes
+
+- 25d67f33f: create a pre-configured role with Management API access when seeding the database
+
+### Patch Changes
+
+- 07ac3e87c: fix the translate CLI command by adding the missing import
+- Updated dependencies [25d67f33f]
+- Updated dependencies [e04d9523a]
+- Updated dependencies [b5104d8c1]
+- Updated dependencies [0c70d65c7]
+- Updated dependencies [76fd33b7e]
+  - @logto/schemas@1.17.0
+  - @logto/phrases@1.11.0
+  - @logto/core-kit@2.5.0
+
+## 1.16.0
+
+### Patch Changes
+
+- Updated dependencies [21bb35b12]
+- Updated dependencies [5b03030de]
+- Updated dependencies [e8c41b164]
+- Updated dependencies [21bb35b12]
+- Updated dependencies [3486b12e8]
+  - @logto/schemas@1.16.0
+  - @logto/phrases@1.10.1
+  - @logto/shared@3.1.1
+
+## 1.15.0
+
+### Patch Changes
+
+- Updated dependencies [5758f84f5]
+- Updated dependencies [57d97a4df]
+- Updated dependencies [abffb9f95]
+- Updated dependencies [746483c49]
+- Updated dependencies [2cbc591ff]
+- Updated dependencies [57d97a4df]
+- Updated dependencies [cc01acbd0]
+- Updated dependencies [951865859]
+- Updated dependencies [57d97a4df]
+- Updated dependencies [2c10c2423]
+  - @logto/phrases@1.10.0
+  - @logto/connector-kit@3.0.0
+  - @logto/core-kit@2.4.0
+  - @logto/schemas@1.15.0
+  - @logto/phrases-experience@1.6.1
+  - @logto/shared@3.1.0
+
+## 1.14.0
+
+### Patch Changes
+
+- @logto/schemas@1.14.0
+
+## 1.13.1
+
+### Patch Changes
+
+- @logto/schemas@1.13.1
+
+## 1.13.0
+
+### Minor Changes
+
+- e4c73e7bb: Add "--skip-core-check" option in translate cli commands, in order to support any arbitrary package name other than "phrases" and "phrases-experience".
+- 31e60811d: use Node 20 LTS for engine requirement.
+
+  Note: We mark it as minor because Logto is shipping with Docker image and it's not a breaking change for users.
+
+### Patch Changes
+
+- 9089dbf84: upgrade TypeScript to 5.3.3
+- b40bae9c5: update translate concurrency to 10
+- Updated dependencies [a2ce0be46]
+- Updated dependencies [acb7fd3fe]
+- Updated dependencies [9089dbf84]
+- Updated dependencies [04ec78a91]
+- Updated dependencies [32df9acde]
+- Updated dependencies [31e60811d]
+- Updated dependencies [32df9acde]
+- Updated dependencies [570a4ea9e]
+- Updated dependencies [570a4ea9e]
+- Updated dependencies [6befe6014]
+  - @logto/schemas@1.13.0
+  - @logto/shared@3.1.0
+  - @logto/connector-kit@2.1.0
+  - @logto/language-kit@1.1.0
+  - @logto/phrases-experience@1.6.0
+  - @logto/core-kit@2.3.0
+  - @logto/phrases@1.9.0
+
+## 1.12.0
+
+### Minor Changes
+
+- 4b90782ae: support sync phrases array keys and update concurrency to 5
+
+  as the new model works with more concurrency.
+
+### Patch Changes
+
+- Updated dependencies [9a7b19e49]
+- Updated dependencies [becf59169]
+- Updated dependencies [b4f702a86]
+- Updated dependencies [3e92a2032]
+- Updated dependencies [9a7b19e49]
+- Updated dependencies [9a7b19e49]
+  - @logto/phrases@1.8.0
+  - @logto/core-kit@2.2.1
+  - @logto/schemas@1.12.0
+  - @logto/phrases-experience@1.5.0
+
+## 1.11.0
+
+### Patch Changes
+
+- Updated dependencies [6727f629d]
+  - @logto/phrases@1.7.0
+  - @logto/phrases-experience@1.4.0
+  - @logto/schemas@1.11.0
+
+## 1.10.1
+
+### Patch Changes
+
+- 46d0d4c0b: convert private signing key type from string to JSON object, in order to provide additional information such as key ID and creation timestamp.
+- Updated dependencies [46d0d4c0b]
+- Updated dependencies [87df417d1]
+- Updated dependencies [d24aaedf5]
+  - @logto/schemas@1.10.1
+  - @logto/phrases@1.6.0
+  - @logto/connector-kit@2.0.0
+  - @logto/shared@3.0.0
+
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies [2c340d379]
+  - @logto/core-kit@2.2.0
+  - @logto/schemas@1.10.0
+
+## 1.9.2
+
+### Patch Changes
+
+- 18181f892: standardize id and secret generators
+
+  - Remove `buildIdGenerator` export from `@logto/shared`
+  - Add `generateStandardSecret` and `generateStandardShortId` exports to `@logto/shared`
+  - Align comment and implementation of `buildIdGenerator` in `@logto/shared`
+    - The comment stated the function will include uppercase letters by default, but it did not; Now it does.
+  - Use `generateStandardSecret` for all secret generation
+
+- Updated dependencies [18181f892]
+  - @logto/shared@3.0.0
+  - @logto/schemas@1.9.2
+  - @logto/core-kit@2.1.2
+
+## 1.9.1
+
+### Patch Changes
+
+- Updated dependencies [6f5a0acad]
+  - @logto/phrases-experience@1.3.1
+  - @logto/core-kit@2.1.1
+  - @logto/schemas@1.9.1
+
+## 1.9.0
+
+### Patch Changes
+
+- daf9674b6: keep original untranslated mark when syncing keys
+
+  When executing `pnpm cli translate sk --target all`:
+
+  - use JSDoc comment to stick with the standard approach
+  - if the value was originally untranslated, keep the mark
+
+  For example:
+
+  **Original**
+
+  ```ts
+  {
+    "hello": "Hello", // UNTRANSLATED
+    "world": "世界",
+  }
+  ```
+
+  **Now**
+
+  ```ts
+  {
+    /** UNTRANSLATED */
+    "hello": "Hello",
+    "world": "世界",
+  }
+  ```
+
+- f8408fa77: rename the package `phrases-ui` to `phrases-experience`
+- f6723d5e2: rename the package `ui` to `experience`
+- 310698b0d: align cli output for a better looking
+- Updated dependencies [e8b0b1d02]
+- Updated dependencies [f8408fa77]
+- Updated dependencies [17fd64e64]
+- Updated dependencies [f6723d5e2]
+- Updated dependencies [310698b0d]
+- Updated dependencies [5d78c7271]
+  - @logto/schemas@1.9.0
+  - @logto/phrases@1.5.0
+  - @logto/phrases-experience@1.3.0
+  - @logto/core-kit@2.1.0
+  - @logto/shared@2.0.1
+
+## 1.8.0
+
+### Minor Changes
+
+- ae0ef919f: Add key type option for the command of rotating oidc.privateKeys
+
+### Patch Changes
+
+- Updated dependencies [0b519e548]
+  - @logto/schemas@1.8.0
+
+## 1.7.0
+
+### Minor Changes
+
+- fde330a8b: add `translate sync-keys` command
+
+  This command is helpful for syncing keys from one language to another. Run `logto translate sync-keys --help` for details.
+
+### Patch Changes
+
+- Updated dependencies [5ccdd7f31]
+  - @logto/schemas@1.7.0
+
+## 1.6.0
+
+### Patch Changes
+
+- ecbecd8e4: improve translate prompt
+- Updated dependencies [e9c2c9a6d]
+- Updated dependencies [ecbecd8e4]
+  - @logto/core-kit@2.0.1
+  - @logto/schemas@1.6.0
+  - @logto/phrases@1.4.1
+
+## 1.5.0
+
+### Patch Changes
+
+- Updated dependencies [2cab3787c]
+- Updated dependencies [73666f8fa]
+- Updated dependencies [268dc50e7]
+- Updated dependencies [fa0dbafe8]
+- Updated dependencies [497d5b526]
+  - @logto/schemas@1.5.0
+  - @logto/phrases@1.4.0
+
+## 1.4.0
+
+### Patch Changes
+
+- 5d6720805: update default OpenAI concurrency to 1 for sync command
+- Updated dependencies [5d6720805]
+  - @logto/phrases@1.3.0
+  - @logto/schemas@1.4.0
+
+## 1.3.1
+
+### Patch Changes
+
+- @logto/schemas@1.3.1
+
+## 1.3.0
+
+### Patch Changes
+
+- Updated dependencies [beb6ebad5]
+  - @logto/schemas@1.3.0
+
+## 1.2.3
+
+### Patch Changes
+
+- @logto/schemas@1.2.3
+
+## 1.2.2
+
+### Patch Changes
+
+- @logto/schemas@1.2.2
+
+## 1.2.1
+
+### Patch Changes
+
+- @logto/schemas@1.2.1
+
+## 1.2.0
+
+### Minor Changes
+
+- 3c84d81ff: add `logto connector link` command to link local connectors without downloading from the remote
+- 736d6d212: `logto translate sync` to create missing files or translate untranslated phrases across all existing languages
+
+### Patch Changes
+
+- 91906f0eb: use current directory as instance path if no path input for cli
+- Updated dependencies [ae6a54993]
+- Updated dependencies [206fba2b5]
+- Updated dependencies [457cb2822]
+- Updated dependencies [4945b0be2]
+- Updated dependencies [c5eb3a2ba]
+- Updated dependencies [5553425fc]
+- Updated dependencies [30033421c]
+  - @logto/phrases@1.2.0
+  - @logto/phrases-ui@1.2.0
+  - @logto/schemas@1.2.0
+  - @logto/shared@2.0.0
+  - @logto/core-kit@2.0.0
+  - @logto/connector-kit@1.1.1
+
+## 1.1.0
+
+### Minor Changes
+
+- e2ec1f93e: add `translate create` and `translate list-tags` commands
+
+### Patch Changes
+
+- Updated dependencies [f9ca7cc49]
+- Updated dependencies [37714d153]
+- Updated dependencies [f3d60a516]
+- Updated dependencies [5c50957a9]
+- Updated dependencies [e9e8a6e11]
+  - @logto/phrases@1.1.0
+  - @logto/phrases-ui@1.1.0
+  - @logto/schemas@1.1.0
+  - @logto/shared@1.0.3
+
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [5b4da1e3d]
+  - @logto/schemas@1.0.7
+  - @logto/shared@1.0.2
+
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [621b09ba1]
+  - @logto/schemas@1.0.1
+  - @logto/shared@1.0.1
+
+## 1.0.1
+
+## 1.0.0
+
+### Major Changes
+
+- 343b1090f: **Seed data for cloud**
+
+  - cli!: remove `oidc` option for `database seed` command as it's unused
+  - cli: add hidden `--cloud` option for `database seed` command to init cloud data
+  - cli, cloud: appending Redirect URIs to Admin Console will deduplicate values before update
+  - move `UrlSet` and `GlobalValues` to `@logto/shared`
+
+- 1c9160112: Packages are now ESM.
+- f41fd3f05: drop settings table and add systems table
+
+  **BREAKING CHANGES**
+
+  - core: removed `GET /settings` and `PATCH /settings` API
+  - core: added `GET /configs/admin-console` and `PATCH /configs/admin-console` API
+    - `/configs/*` APIs are config/key-specific now. they may have different logic per key
+  - cli: change valid `logto db config` keys by removing `alterationState` and adding `adminConsole` since:
+    - OIDC configs and admin console configs are tenant-level configs (the concept of "tenant" can be ignored until we officially announce it)
+    - alteration state is still a system-wide config
+
+### Minor Changes
+
+- f41fd3f05: Add `logto database alteration rollback` command for running `down()` alteration scripts
+- 343b1090f: Allow admin tenant admin to create tenants without limitation
+- 343b1090f: Add CLI command to get/set db's system table value
+- f41fd3f05: - cli: use `ec` with `secp384r1` as the default key generation type
+  - core: use `ES384` as the signing algorithm for EC keys
+- 3ff2e90cd: **CLI**
+
+  **Rotate your private or secret key**
+
+  We add a new command `db config rotate <key>` to support key rotation via CLI.
+
+  When rotating, the CLI will generate a new key and prepend to the corresponding key array. Thus the old key is still valid and the service will use the new key for signing.
+
+  Run `logto db config rotate help` for detailed usage.
+
+  **Trim the private or secret key you don't need**
+
+  If you want to trim one or more out-dated private or secret key(s) from the config, use the command `db config trim <key>`. It will remove the last item (private or secret key) in the array.
+
+  You may remove the old key after a certain period (such as half a year) to allow most of your users have time to touch the new key.
+
+  If you want to remove multiple keys at once, just append a number to the command. E.g. `logto db config trim oidc.cookieKeys 3`.
+
+  Run `logto db config trim help` for detailed usage.
+
+### Patch Changes
+
+- 38970fb88: Fix a Sign-in experience bug that may block some users to sign in.
+- 7fb689b73: Fix version lifecycle script
+- 1c9160112: - Remove official connectors inquiry
+  - Fix default download url with current package version
+- Updated dependencies [343b1090f]
+- Updated dependencies [e63f5f8b0]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [c12717412]
+- Updated dependencies [343b1090f]
+- Updated dependencies [38970fb88]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [343b1090f]
+- Updated dependencies [1c9160112]
+- Updated dependencies [1c9160112]
+- Updated dependencies [7fb689b73]
+- Updated dependencies [343b1090f]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [f41fd3f05]
+- Updated dependencies [2d45cc3e6]
+  - @logto/schemas@1.0.0
+  - @logto/shared@1.0.0
+  - @logto/connector-kit@1.1.0
+  - @logto/core-kit@1.1.0
+
+## 1.0.0-rc.3
+
+## 1.0.0-rc.2
+
+### Patch Changes
+
+- Updated dependencies [c12717412]
+  - @logto/schemas@1.0.0-rc.1
+  - @logto/shared@1.0.0-rc.1
+
+## 1.0.0-rc.1
+
+## 1.0.0-rc.0
+
+### Major Changes
+
+- f41fd3f0: drop settings table and add systems table
+
+  **BREAKING CHANGES**
+
+  - core: removed `GET /settings` and `PATCH /settings` API
+  - core: added `GET /configs/admin-console` and `PATCH /configs/admin-console` API
+    - `/configs/*` APIs are config/key-specific now. they may have different logic per key
+  - cli: change valid `logto db config` keys by removing `alterationState` and adding `adminConsole` since:
+    - OIDC configs and admin console configs are tenant-level configs (the concept of "tenant" can be ignored until we officially announce it)
+    - alteration state is still a system-wide config
+
+### Minor Changes
+
+- f41fd3f0: Add `logto database alteration rollback` command for running `down()` alteration scripts
+- f41fd3f0: - cli: use `ec` with `secp384r1` as the default key generation type
+  - core: use `ES384` as the signing algorithm for EC keys
+
+### Patch Changes
+
+- Updated dependencies [f41fd3f0]
+- Updated dependencies [f41fd3f0]
+- Updated dependencies [f41fd3f0]
+  - @logto/schemas@1.0.0-rc.0
+  - @logto/shared@1.0.0-rc.0
+
+## 1.0.0-beta.19
+
+### Patch Changes
+
+- df9e98dc: Fix version lifecycle script
+- Updated dependencies [df9e98dc]
+  - @logto/schemas@1.0.0-beta.18
+  - @logto/shared@1.0.0-beta.18
+
+## 1.0.0-beta.18
+
+### Major Changes
+
+- 1c916011: Packages are now ESM.
+
+### Patch Changes
+
+- 1c916011: - Remove official connectors inquiry
+  - Fix default download url with current package version
+- Updated dependencies [1c916011]
+- Updated dependencies [1c916011]
+  - @logto/schemas@1.0.0-beta.17
+  - @logto/shared@1.0.0-beta.17
+
+## 1.0.0-beta.16
+
+### Patch Changes
+
+- 38970fb8: Fix a Sign-in experience bug that may block some users to sign in.
+- Updated dependencies [38970fb8]
+  - @logto/schemas@1.0.0-beta.16
+  - @logto/shared@1.0.0-beta.16
+
+## 1.0.0-beta.15
+
+### Patch Changes
+
+- Updated dependencies
+  - @logto/schemas@1.0.0-beta.15
+  - @logto/shared@1.0.0-beta.15
+
+## 1.0.0-beta.14
+
+### Patch Changes
+
+- Updated dependencies [2d45cc3e]
+  - @logto/schemas@1.0.0-beta.14
+  - @logto/shared@1.0.0-beta.14
+
+## 1.0.0-beta.13
+
+### Minor Changes
+
+- 3ff2e90c: **CLI**
+
+  **Rotate your private or secret key**
+
+  We add a new command `db config rotate <key>` to support key rotation via CLI.
+
+  When rotating, the CLI will generate a new key and prepend to the corresponding key array. Thus the old key is still valid and the service will use the new key for signing.
+
+  Run `logto db config rotate help` for detailed usage.
+
+  **Trim the private or secret key you don't need**
+
+  If you want to trim one or more out-dated private or secret key(s) from the config, use the command `db config trim <key>`. It will remove the last item (private or secret key) in the array.
+
+  You may remove the old key after a certain period (such as half a year) to allow most of your users have time to touch the new key.
+
+  If you want to remove multiple keys at once, just append a number to the command. E.g. `logto db config trim oidc.cookieKeys 3`.
+
+  Run `logto db config trim help` for detailed usage.
+
+### Patch Changes
+
+- @logto/schemas@1.0.0-beta.13
+- @logto/shared@1.0.0-beta.13
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [1.0.0-beta.12](https://github.com/logto-io/logto/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2022-10-19)
+
+**Note:** Version bump only for package @logto/cli
+
+## [1.0.0-beta.11](https://github.com/logto-io/logto/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2022-10-19)
+
+### Features
+
+- `npm create` compatibility ([a5cd73d](https://github.com/logto-io/logto/commit/a5cd73d961766c7c72180795051feabe9793fc7d))
+- **cli:** `db alteration deploy` command ([a5280a2](https://github.com/logto-io/logto/commit/a5280a2afd3d5822e78d1f115ab6f6fdbb993261))
+- **cli:** `db seed oidc` command ([911117a](https://github.com/logto-io/logto/commit/911117a785fd43ea03473f42835f2680cccca7be))
+- **cli:** `db seed` command ([5c7000d](https://github.com/logto-io/logto/commit/5c7000ddc30e316bd17f34d71d51c17016efec76))
+- **cli:** add `download-url` option for install ([5dda0a6](https://github.com/logto-io/logto/commit/5dda0a6dd0e04468c078e3581e68a614ce23404c))
+- **cli:** add connector command ([4ccbe4a](https://github.com/logto-io/logto/commit/4ccbe4ac6566aff0db1cd98a74441640677f6060))
+- **cli:** command `init/i/install` ([f05691b](https://github.com/logto-io/logto/commit/f05691b4319279a49bf0bc87ba656b7990d52e53))
+- **cli:** database config command ([0eb306a](https://github.com/logto-io/logto/commit/0eb306a61cf88b8be3be86852cb66b1d99ad713f))
+- **cli:** get/set db config key ([0eff1e3](https://github.com/logto-io/logto/commit/0eff1e3591129802f3e9b3286652ef6fc8619cf5))
+- **cli:** list connectors ([dcb9142](https://github.com/logto-io/logto/commit/dcb91428e6ef1021e383270e66d3e67bfc83e593))
+- **cli:** remove connectors ([7d257c4](https://github.com/logto-io/logto/commit/7d257c45bfa37298c287b3ac867acd0606c4f028))
+
+### Bug Fixes
+
+- add publish config for public packages ([#2192](https://github.com/logto-io/logto/issues/2192)) ([38f664c](https://github.com/logto-io/logto/commit/38f664c27c4927970f40336b04154a5803cb5dc0))
+- alteration script in dev ([9ebb3dd](https://github.com/logto-io/logto/commit/9ebb3ddfd963f6459ea332dbe1384058f77b453b))
+- **cli:** `chooseAlterationsByVersion` should contain the last `next` version alteration script ([#2175](https://github.com/logto-io/logto/issues/2175)) ([fd50304](https://github.com/logto-io/logto/commit/fd50304f5ff5ffbc985695eaa73c1bc56b1ca061))
+- **cli:** fix skip-when-exists option ([#2180](https://github.com/logto-io/logto/issues/2180)) ([4ce2073](https://github.com/logto-io/logto/commit/4ce207369228d404d919c491ba398acedcfd55fa))

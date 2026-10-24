@@ -1,0 +1,84 @@
+{
+  "name": "@logto/core-kit",
+  "version": "2.14.0",
+  "author": "Silverhand Inc. <contact@silverhand.io>",
+  "homepage": "https://github.com/logto-io/toolkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/logto-io/toolkit.git"
+  },
+  "license": "MPL-2.0",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
+    },
+    "./declaration": "./declaration/index.ts",
+    "./scss/*": "./scss/*.scss",
+    "./custom-jwt": {
+      "types": "./lib/custom-jwt/index.d.ts",
+      "node": "./lib/custom-jwt/index.js"
+    }
+  },
+  "types": "./lib/index.d.ts",
+  "files": [
+    "declaration",
+    "lib",
+    "scss"
+  ],
+  "scripts": {
+    "precommit": "lint-staged",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput --incremental",
+    "build": "rm -rf lib/ && tsc -p tsconfig.build.json",
+    "build:test": "pnpm build",
+    "lint": "eslint --ext .ts src",
+    "lint:report": "pnpm lint --format json --output-file report.json",
+    "prepack": "pnpm build",
+    "stylelint": "stylelint \"scss/**/*.scss\"",
+    "test": "vitest run src",
+    "test:watch": "vitest src --watch",
+    "test:ci": "pnpm run test --silent --coverage"
+  },
+  "engines": {
+    "node": "^22.14.0 || ^26.0.0"
+  },
+  "dependencies": {
+    "@logto/language-kit": "workspace:^",
+    "@logto/shared": "workspace:^",
+    "@silverhand/essentials": "^2.9.1",
+    "color": "^4.2.3"
+  },
+  "optionalDependencies": {
+    "zod": "3.24.3"
+  },
+  "devDependencies": {
+    "@silverhand/eslint-config": "6.0.1",
+    "@silverhand/eslint-config-react": "6.0.2",
+    "@silverhand/ts-config": "6.0.0",
+    "@silverhand/ts-config-react": "6.0.0",
+    "@types/color": "^4.0.0",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.3.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^8.56.0",
+    "lint-staged": "^15.0.0",
+    "postcss": "^8.5.18",
+    "prettier": "^3.5.3",
+    "stylelint": "^15.0.0",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.11"
+  },
+  "eslintConfig": {
+    "extends": "@silverhand"
+  },
+  "stylelint": {
+    "extends": "@silverhand/eslint-config-react/.stylelintrc"
+  },
+  "prettier": "@silverhand/eslint-config/.prettierrc",
+  "publishConfig": {
+    "access": "public"
+  }
+}

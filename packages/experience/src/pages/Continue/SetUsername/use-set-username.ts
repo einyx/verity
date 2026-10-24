@@ -1,0 +1,66 @@
+import { SignInIdentifier } from '@logto/schemas';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+import { fulfillProfile } from '@/apis/experience';
+import useApi from '@/hooks/use-api';
+import type { ErrorHandlers } from '@/hooks/use-error-handler';
+import useErrorHandler from '@/hooks/use-error-handler';
+import useGlobalRedirectTo from '@/hooks/use-global-redirect-to';
+import useSubmitInteractionErrorHandler from '@/hooks/use-submit-interaction-error-handler';
+import { SearchParameters, type ContinueFlowInteractionEvent } from '@/types';
+
+const useSetUsername = (interactionEvent: ContinueFlowInteractionEvent) => {
+  const [searchParameters] = useSearchParams();
+  const [errorMessage, setErrorMessage] = useState<string>();
+
+  const linkSocial = searchParameters.get(SearchParameters.LinkSocial);
+
+  const clearErrorMessage = useCallback(() => {
+    setErrorMessage('');
+  }, []);
+
+  const asyncAddProfile = useApi(fulfillProfile);
+  const handleError = useErrorHandler();
+  const redirectTo = useGlobalRedirectTo();
+
+  // Need to carry over link social param if additional profile fulfillment is required later
+  // TODO: find a better way to store the link social param globally in the flow
+  const submitInteractionErrorHandler = useSubmitInteractionErrorHandler(interactionEvent, {
+    linkSocial: linkSocial ?? undefined,
+  });
+
+  const errorHandlers: ErrorHandlers = useMemo(
+    () => ({
+      'user.username_already_in_use': (error) => {
+        setErrorMessage(error.message);
+      },
+      ...submitInteractionErrorHandler,
+    }),
+    [submitInteractionErrorHandler]
+  );
+
+  const onSubmit = useCallback(
+    async (username: string) => {
+      const [error, result] = await asyncAddProfile(
+        { type: SignInIdentifier.Username, value: username },
+        interactionEvent
+      );
+
+      if (error) {
+        await handleError(error, errorHandlers);
+
+        return;
+      }
+
+      if (result?.redirectTo) {
+        await redirectTo(result.redirectTo);
+      }
+    },
+    [asyncAddProfile, errorHandlers, handleError, interactionEvent, redirectTo]
+  );
+
+  return { errorMessage, clearErrorMessage, onSubmit };
+};
+
+export default useSetUsername;

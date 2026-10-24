@@ -1,0 +1,55 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: '{{types, list(type: disjunction;)}} ist erforderlich',
+  general_invalid: 'Die {{types, list(type: disjunction;)}} is ungültig',
+  invalid_min_max_input: 'Der Eingabewert sollte zwischen {{minValue}} und {{maxValue}} liegen',
+  invalid_min_max_length:
+    'Die Länge des Eingabewerts sollte zwischen {{minLength}} und {{maxLength}} liegen',
+  username_required: 'Benutzername ist erforderlich',
+  password_required: 'Passwort ist erforderlich',
+  username_exists: 'Benutzername existiert bereits',
+  username_should_not_start_with_number: 'Benutzername darf nicht mit einer Zahl beginnen',
+  username_invalid_charset: 'Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten',
+  username_too_short: 'Der Benutzername muss mindestens {{min}} Zeichen lang sein.',
+  username_too_long: 'Der Benutzername darf höchstens {{max}} Zeichen lang sein.',
+  username_uppercase_not_allowed: 'Großbuchstaben sind in Benutzernamen nicht erlaubt.',
+  username_lowercase_not_allowed: 'Kleinbuchstaben sind in Benutzernamen nicht erlaubt.',
+  username_numbers_not_allowed: 'Zahlen sind in Benutzernamen nicht erlaubt.',
+  username_underscore_not_allowed: 'Unterstriche sind in Benutzernamen nicht erlaubt.',
+  invalid_email: 'Die Email ist ungültig',
+  invalid_phone: 'Die Telefonnummer ist ungültig',
+  passwords_do_not_match: 'Passwörter stimmen nicht überein',
+  invalid_passcode: 'Der Bestätigungscode ist ungültig.',
+  device_code_required: 'Code ist erforderlich.',
+  invalid_device_code: 'Der Gerätecode ist ungültig.',
+  device_flow_aborted: 'Die Anmeldeanfrage wurde unterbrochen.',
+  invalid_connector_auth: 'Die Autorisierung ist ungültig',
+  invalid_connector_request: 'Connector Daten sind ungültig',
+  unknown: 'Unbekannter Fehler. Versuche es später noch einmal.',
+  invalid_session: 'Die Sitzung ist ungültig. Bitte melde dich erneut an.',
+  timeout: 'Zeitüberschreitung. Bitte melde dich erneut an.',
+  password_rejected,
+  sso_not_enabled: 'Single Sign-On ist für dieses E-Mail-Konto nicht aktiviert.',
+  invalid_link: 'Ungültiger Link',
+  invalid_link_description:
+    'Dein einmaliger Token ist möglicherweise abgelaufen oder nicht mehr gültig.',
+  captcha_verification_failed: 'Fehler beim Captcha-Verifizierung.',
+  send_verification_code_failed:
+    'Bestätigungscode konnte nicht gesendet werden. Bitte versuche es später noch einmal.',
+  send_verification_code_failed_use_password:
+    'Bestätigungscode konnte nicht gesendet werden. Bitte melde dich stattdessen mit deinem Passwort an.',
+  terms_acceptance_required: 'Zustimmung zu den Bedingungen erforderlich',
+  terms_acceptance_required_description: 'Du musst den Bedingungen zustimmen, um fortzufahren.',
+  something_went_wrong: 'Etwas ist schiefgegangen',
+  account_suspended: 'Konto gesperrt',
+  account_suspended_description:
+    'Dieses Konto wurde gesperrt. Bitte wende dich an den Administrator.',
+  access_denied: 'Zugriff verweigert',
+  application_access_denied:
+    'Sie haben keine Berechtigung, auf diese Anwendung zuzugreifen.\nBitte kontaktieren Sie Ihren Administrator um Hilfe.',
+  feature_not_enabled:
+    'Sie haben keine Berechtigung, auf diese Funktion zuzugreifen. Bitte kontaktieren Sie Ihren Administrator um Hilfe.',
+};
+
+export default Object.freeze(error);

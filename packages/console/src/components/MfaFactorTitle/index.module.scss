@@ -1,0 +1,16 @@
+@use '@/scss/underscore' as _;
+
+.factorTitle {
+  display: inline-flex;
+  align-items: center;
+  font: var(--font-label-2);
+}
+
+.factorIcon {
+  color: var(--color-text-secondary);
+  margin-inline-end: _.unit(3);
+}
+
+.factorTip {
+  margin-inline-start: _.unit(1);
+}

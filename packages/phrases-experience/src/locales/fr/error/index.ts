@@ -1,0 +1,59 @@
+import password_rejected from './password-rejected.js';
+
+const error = {
+  general_required: 'Le {{types, list(type: disjunction;)}} est requis',
+  general_invalid: "Le {{types, list(type: disjunction;)}} n'est pas valide",
+  invalid_min_max_input: 'La valeur saisie doit être comprise entre {{minValue}} et {{maxValue}}',
+  invalid_min_max_length:
+    'La longueur de la valeur saisie doit être comprise entre {{minLength}} et {{maxLength}}',
+  username_required: "Le nom d'utilisateur est requis",
+  password_required: 'Le mot de passe est requis',
+  username_exists: "Ce Nom d'utilisateur existe déjà",
+  username_should_not_start_with_number:
+    "Le nom d'utilisateur ne doit pas commencer par un chiffre",
+  username_invalid_charset:
+    "Le nom d'utilisateur ne doit contenir que des lettres, des chiffres ou des caractères de soulignement.",
+  username_too_short: "Le nom d'utilisateur doit comporter au moins {{min}} caractères.",
+  username_too_long: "Le nom d'utilisateur doit comporter au plus {{max}} caractères.",
+  username_uppercase_not_allowed:
+    "Les lettres majuscules ne sont pas autorisées dans les noms d'utilisateur.",
+  username_lowercase_not_allowed:
+    "Les lettres minuscules ne sont pas autorisées dans les noms d'utilisateur.",
+  username_numbers_not_allowed: "Les chiffres ne sont pas autorisés dans les noms d'utilisateur.",
+  username_underscore_not_allowed:
+    "Les caractères de soulignement ne sont pas autorisés dans les noms d'utilisateur.",
+  invalid_email: "L'email n'est pas valide",
+  invalid_phone: "Le numéro de téléphone n'est pas valide",
+  passwords_do_not_match: 'Les mots de passe ne correspondent pas',
+  invalid_passcode: 'Le code est invalide.',
+  device_code_required: 'Le code est requis.',
+  invalid_device_code: "Le code de l'appareil est invalide.",
+  device_flow_aborted: 'La demande de connexion a été interrompue.',
+  invalid_connector_auth: "L'autorisation n'est pas valide",
+  invalid_connector_request: 'Les données du connecteur ne sont pas valides',
+  unknown: 'Erreur inconnue.',
+  invalid_session: 'Session non trouvée. Veuillez revenir en arrière et vous connecter à nouveau.',
+  timeout: "Délai d'attente de la requête dépassé.",
+  password_rejected,
+  sso_not_enabled: "La authentification unique n'est pas activée pour ce compte de messagerie.",
+  invalid_link: 'Lien invalide',
+  invalid_link_description: "Votre jeton à usage unique a peut-être expiré ou n'est plus valide.",
+  captcha_verification_failed: 'Erreur lors de la vérification du captcha.',
+  send_verification_code_failed:
+    "Échec de l'envoi du code de vérification. Veuillez réessayer plus tard.",
+  send_verification_code_failed_use_password:
+    "Échec de l'envoi du code de vérification. Veuillez plutôt vous connecter avec votre mot de passe.",
+  terms_acceptance_required: 'Acceptation des conditions requise',
+  terms_acceptance_required_description: 'Vous devez accepter les conditions pour continuer.',
+  something_went_wrong: 'Quelque chose a mal tourné',
+  account_suspended: 'Compte suspendu',
+  account_suspended_description:
+    "Ce compte a été suspendu. Veuillez contacter l'administrateur pour obtenir de l'aide.",
+  access_denied: 'Accès refusé',
+  application_access_denied:
+    "Vous n'avez pas la permission d'accéder à cette application.\nVeuillez contacter votre administrateur pour obtenir de l'aide.",
+  feature_not_enabled:
+    "Vous n'avez pas la permission d'accéder à cette fonctionnalité. Veuillez contacter votre administrateur pour obtenir de l'aide.",
+};
+
+export default Object.freeze(error);

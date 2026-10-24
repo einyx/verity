@@ -1,0 +1,24 @@
+const single_sign_on = {
+  forbidden_domains: 'Domínios de e-mail público não são permitidos.',
+  duplicated_domains: 'Existem domínios duplicados.',
+  invalid_domain_format: 'Formato de domínio inválido.',
+  duplicate_connector_name: 'O nome do conector já existe. Por favor, escolha um nome diferente.',
+  idp_initiated_authentication_not_supported:
+    'A autenticação iniciada pelo IdP é suportada exclusivamente para conectores SAML.',
+  idp_initiated_authentication_invalid_application_type:
+    'Tipo de aplicativo inválido. Apenas aplicativos {{type}} são permitidos.',
+  idp_initiated_authentication_redirect_uri_not_registered:
+    'O redirect_uri não está registrado. Por favor, verifique as configurações do aplicativo.',
+  idp_initiated_authentication_client_callback_uri_not_found:
+    'O URI de callback da autenticação iniciada pelo cliente IdP não foi encontrado. Por favor, verifique as configurações do conector.',
+  sso_signing_unavailable:
+    'Não foi possível concluir o login com seu provedor de identidade. Entre em contato com seu administrador.',
+  can_not_delete_active_signing_key:
+    'Não é possível excluir a chave de assinatura ativa. Ative outra chave ou desative primeiro esta chave.',
+  can_not_deactivate_signing_key_in_use:
+    'Não é possível desativar a chave de assinatura enquanto as solicitações de autenticação assinadas estiverem habilitadas. Desative primeiro as solicitações de autenticação assinadas.',
+  active_signing_key_required:
+    'Nenhuma chave de assinatura ativa encontrada. Gere e ative uma chave de assinatura antes de habilitar as solicitações de autenticação assinadas.',
+};
+
+export default Object.freeze(single_sign_on);

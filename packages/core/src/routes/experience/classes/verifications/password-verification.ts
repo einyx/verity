@@ -1,0 +1,160 @@
+import {
+  AdditionalIdentifier,
+  type VerificationIdentifier,
+  VerificationType,
+  type User,
+  type PasswordVerificationRecordData,
+} from '@logto/schemas';
+import { generateStandardId } from '@logto/shared';
+import { conditional } from '@silverhand/essentials';
+
+import RequestError from '#src/errors/RequestError/index.js';
+import { verifyPasswordExpirationPolicy } from '#src/libraries/password-expiration.js';
+import type Libraries from '#src/tenants/Libraries.js';
+import type Queries from '#src/tenants/Queries.js';
+import assertThat from '#src/utils/assert-that.js';
+
+import { findUserByIdentifier } from '../utils.js';
+
+import { type IdentifierVerificationRecord } from './verification-record.js';
+
+export {
+  type PasswordVerificationRecordData,
+  passwordVerificationRecordDataGuard,
+} from '@logto/schemas';
+
+export class PasswordVerification implements IdentifierVerificationRecord<VerificationType.Password> {
+  /** Factory method to create a new `PasswordVerification` record using an identifier */
+  static create(libraries: Libraries, queries: Queries, identifier: VerificationIdentifier) {
+    return new PasswordVerification(libraries, queries, {
+      id: generateStandardId(),
+      type: VerificationType.Password,
+      identifier,
+      verified: false,
+    });
+  }
+
+  /**
+   * Factory method to create a new `PasswordVerification` record for the subject the interaction
+   * carries: it verifies against that user's credential and {@link identifyUser} returns that user.
+   */
+  static createForUser(libraries: Libraries, queries: Queries, userId: string) {
+    return PasswordVerification.create(libraries, queries, {
+      type: AdditionalIdentifier.UserId,
+      value: userId,
+    });
+  }
+
+  readonly type = VerificationType.Password;
+  readonly identifier: VerificationIdentifier;
+  readonly id: string;
+  private verified: boolean;
+
+  /**
+   * The constructor method is intended to be used internally by the interaction class
+   * to instantiate a `VerificationRecord` object from existing `PasswordVerificationRecordData`.
+   * It directly sets the instance properties based on the provided data.
+   * For creating a new verification record from context, use the static `create` method instead.
+   */
+  constructor(
+    private readonly libraries: Libraries,
+    private readonly queries: Queries,
+    data: PasswordVerificationRecordData
+  ) {
+    const { id, identifier, verified } = data;
+
+    this.id = id;
+    this.identifier = identifier;
+    this.verified = verified;
+  }
+
+  /** Returns whether the password verification has succeeded. */
+  get isVerified() {
+    return this.verified;
+  }
+
+  /** The user this record was created for (see {@link createForUser}), if not from an identifier. */
+  get userId(): string | undefined {
+    return conditional(
+      this.identifier.type === AdditionalIdentifier.UserId && this.identifier.value
+    );
+  }
+
+  markAsVerified(): void {
+    this.verified = true;
+  }
+
+  /**
+   * Verifies the password against the current identifier and returns the authenticated user.
+   *
+   * @throws RequestError with 401 status if user id suspended.
+   * @throws RequestError with 422 status if the user is not found or the password is incorrect.
+   */
+  async verify(password: string): Promise<User> {
+    const user = await findUserByIdentifier(this.queries, this.identifier);
+
+    // Throws an 422 error if the user is not found or the password is incorrect
+    const verifiedUser = await this.libraries.users.verifyUserPassword(user, password);
+
+    assertThat(
+      !verifiedUser.isSuspended,
+      new RequestError({ code: 'user.suspended', status: 401 })
+    );
+
+    this.verified = true;
+
+    return verifiedUser;
+  }
+
+  async identifyUser(): Promise<User> {
+    assertThat(
+      this.verified,
+      new RequestError({ code: 'session.verification_failed', status: 400 })
+    );
+
+    const user = await findUserByIdentifier(this.queries, this.identifier);
+
+    assertThat(
+      user,
+      new RequestError(
+        { code: 'user.user_not_exist', status: 404 },
+        {
+          identifier: this.identifier.value,
+        }
+      )
+    );
+
+    return user;
+  }
+
+  toJson(): PasswordVerificationRecordData {
+    const { id, type, identifier, verified } = this;
+
+    return {
+      id,
+      type,
+      identifier,
+      verified,
+    };
+  }
+
+  toSanitizedJson(): PasswordVerificationRecordData {
+    return this.toJson();
+  }
+
+  /**
+   * Checks the password expiration policy after the password has already been verified.
+   *
+   * The route keeps this outside the sentinel guard so expired passwords do not count as failed
+   * credential attempts.
+   *
+   * @throws RequestError with 422 status if the password is already expired, or if an enabled
+   * policy has an invalid valid period.
+   */
+  async verifyPasswordExpiration(user: User): Promise<void> {
+    const { passwordExpiration } =
+      await this.queries.signInExperiences.findDefaultSignInExperience();
+
+    verifyPasswordExpirationPolicy(passwordExpiration, user);
+  }
+}

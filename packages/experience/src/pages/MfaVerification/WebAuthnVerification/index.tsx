@@ -1,0 +1,59 @@
+import { VerificationType } from '@logto/schemas';
+import { useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { validate } from 'superstruct';
+
+import SectionLayout from '@/Layout/SectionLayout';
+import VerificationPageLayout from '@/Layout/VerificationPageLayout';
+import UserInteractionContext from '@/Providers/UserInteractionContextProvider/UserInteractionContext';
+import SwitchMfaFactorsLink from '@/components/SwitchMfaFactorsLink';
+import useWebAuthnOperation from '@/hooks/use-webauthn-operation';
+import ErrorPage from '@/pages/ErrorPage';
+import Button from '@/shared/components/Button';
+import { UserMfaFlow } from '@/types';
+import { webAuthnStateGuard } from '@/types/guard';
+import { isWebAuthnOptions } from '@/utils/webauthn';
+
+import styles from './index.module.scss';
+
+const WebAuthnVerification = () => {
+  const { state } = useLocation();
+  const [, webAuthnState] = validate(state, webAuthnStateGuard);
+  const { verificationIdsMap } = useContext(UserInteractionContext);
+  const verificationId = verificationIdsMap[VerificationType.WebAuthn];
+  const handleWebAuthn = useWebAuthnOperation(UserMfaFlow.MfaVerification);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  if (!webAuthnState || !verificationId) {
+    return <ErrorPage title="error.invalid_session" />;
+  }
+
+  const { options, ...flowState } = webAuthnState;
+
+  if (!isWebAuthnOptions(options)) {
+    return <ErrorPage title="error.invalid_session" />;
+  }
+
+  return (
+    <VerificationPageLayout title="mfa.verify_mfa_factors">
+      <SectionLayout
+        title="mfa.verify_via_passkey"
+        description="mfa.verify_via_passkey_description"
+      >
+        <Button
+          title="action.verify_via_passkey"
+          className={styles.verifyButton}
+          isLoading={isVerifying}
+          onClick={async () => {
+            setIsVerifying(true);
+            await handleWebAuthn(options, verificationId);
+            setIsVerifying(false);
+          }}
+        />
+      </SectionLayout>
+      <SwitchMfaFactorsLink flow={UserMfaFlow.MfaVerification} flowState={flowState} />
+    </VerificationPageLayout>
+  );
+};
+
+export default WebAuthnVerification;

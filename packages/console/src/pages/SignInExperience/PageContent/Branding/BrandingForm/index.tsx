@@ -1,0 +1,171 @@
+import { generateDarkColor } from '@logto/core-kit';
+import { Theme } from '@logto/schemas';
+import { useMemo, useCallback, useEffect } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+
+import LogoAndFavicon from '@/components/ImageInputs/LogoAndFavicon';
+import Button from '@/ds-components/Button';
+import Card from '@/ds-components/Card';
+import ColorPicker from '@/ds-components/ColorPicker';
+import FormField from '@/ds-components/FormField';
+import Select from '@/ds-components/Select';
+import Switch from '@/ds-components/Switch';
+import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
+
+import useBrandingEntitlements from '../../../hooks/use-branding-entitlements';
+import type { SignInExperienceForm } from '../../../types';
+import FormSectionTitle from '../../components/FormSectionTitle';
+
+import HideLogtoBrandingField from './HideLogtoBrandingField';
+import styles from './index.module.scss';
+import type { BrandingTemplateId } from './templates';
+import { brandingTemplates } from './templates';
+
+function BrandingForm() {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const {
+    access: { isReadOnly },
+  } = useCurrentTenantScopes();
+  const {
+    watch,
+    register,
+    unregister,
+    setValue,
+    control,
+    formState: { errors, isDirty },
+  } = useFormContext<SignInExperienceForm>();
+  const { isHideLogtoBrandingAvailable, isHideLogtoBrandingEnabled } = useBrandingEntitlements();
+
+  const isDarkModeEnabled = watch('color.isDarkModeEnabled');
+  const primaryColor = watch('color.primaryColor');
+  const darkPrimaryColor = watch('color.darkPrimaryColor');
+  // Show the template that matches the current values, so the dropdown reflects what is saved.
+  const selectedTemplate: BrandingTemplateId =
+    isDarkModeEnabled &&
+    primaryColor.toLowerCase() === brandingTemplates['meshx-dark'].primaryColor.toLowerCase()
+      ? 'meshx-dark'
+      : 'default';
+
+  const calculatedDarkPrimaryColor = useMemo(() => {
+    return generateDarkColor(primaryColor);
+  }, [primaryColor]);
+
+  const handleSelectTemplate = useCallback(
+    (templateId?: BrandingTemplateId) => {
+      if (!templateId) {
+        return;
+      }
+      const template = brandingTemplates[templateId];
+      setValue('color.primaryColor', template.primaryColor, { shouldDirty: true });
+      setValue('color.isDarkModeEnabled', template.isDarkModeEnabled, { shouldDirty: true });
+      setValue('color.darkPrimaryColor', template.darkPrimaryColor, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleResetColor = useCallback(() => {
+    setValue('color.darkPrimaryColor', calculatedDarkPrimaryColor, { shouldDirty: true });
+  }, [calculatedDarkPrimaryColor, setValue]);
+
+  useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+
+    // If it's enabled, the original dark mode color won't change, users need to click "reset".
+    if (!isDarkModeEnabled) {
+      handleResetColor();
+    }
+  }, [handleResetColor, isDarkModeEnabled, isDirty]);
+
+  useEffect(() => {
+    if (!isHideLogtoBrandingAvailable) {
+      unregister('hideLogtoBranding');
+    }
+  }, [isHideLogtoBrandingAvailable, unregister]);
+
+  return (
+    <Card>
+      <FormSectionTitle title="branding.title" />
+      <FormField title="sign_in_exp.color.template">
+        <Select<BrandingTemplateId>
+          value={selectedTemplate}
+          isReadOnly={isReadOnly}
+          options={[
+            { value: 'default', title: t('sign_in_exp.color.template_default') },
+            { value: 'meshx-dark', title: t('sign_in_exp.color.template_meshx_dark') },
+          ]}
+          onChange={handleSelectTemplate}
+        />
+      </FormField>
+      <FormField title="sign_in_exp.color.primary_color">
+        <Controller
+          name="color.primaryColor"
+          control={control}
+          render={({ field: { name, onChange, value } }) => (
+            <ColorPicker name={name} value={value} onChange={onChange} />
+          )}
+        />
+      </FormField>
+      <LogoAndFavicon
+        control={control}
+        register={register}
+        theme={Theme.Light}
+        type="company_logo"
+        logo={{ name: 'branding.logoUrl', error: errors.branding?.logoUrl }}
+        favicon={{
+          name: 'branding.favicon',
+          error: errors.branding?.favicon,
+        }}
+      />
+      <FormField title="sign_in_exp.color.dark_mode">
+        <Switch
+          label={t('sign_in_exp.color.dark_mode_description')}
+          {...register('color.isDarkModeEnabled')}
+        />
+      </FormField>
+      {isDarkModeEnabled && (
+        <>
+          <FormField title="sign_in_exp.color.dark_primary_color">
+            <Controller
+              name="color.darkPrimaryColor"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <ColorPicker value={value} onChange={onChange} />
+              )}
+            />
+            {!isReadOnly && calculatedDarkPrimaryColor !== darkPrimaryColor && (
+              <div className={styles.darkModeTip}>
+                {t('sign_in_exp.color.dark_mode_reset_tip')}
+                <Button
+                  type="text"
+                  size="small"
+                  title="sign_in_exp.color.reset"
+                  onClick={handleResetColor}
+                />
+              </div>
+            )}
+          </FormField>
+          <LogoAndFavicon
+            control={control}
+            register={register}
+            theme={Theme.Dark}
+            type="company_logo"
+            logo={{ name: 'branding.darkLogoUrl', error: errors.branding?.darkLogoUrl }}
+            favicon={{
+              name: 'branding.darkFavicon',
+              error: errors.branding?.darkFavicon,
+            }}
+          />
+        </>
+      )}
+      <HideLogtoBrandingField
+        variant={isHideLogtoBrandingAvailable ? 'switch' : 'oss-upsell'}
+        isEnabled={isHideLogtoBrandingEnabled}
+      />
+    </Card>
+  );
+}
+
+export default BrandingForm;

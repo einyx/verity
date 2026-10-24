@@ -1,0 +1,34 @@
+/** @type {import('@jest/types').Config.InitialOptions} */
+const config = {
+  roots: ['<rootDir>/src'],
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  transform: {
+    '^.+\\.(t|j)sx?$': [
+      '@swc/jest',
+      {
+        sourceMaps: true,
+        jsc: {
+          transform: {
+            react: {
+              runtime: 'automatic',
+            },
+          },
+        },
+      },
+    ],
+    '\\.(svg)$': 'jest-transformer-svg',
+    '\\.(png)$': 'jest-transform-stub',
+  },
+  moduleNameMapper: {
+    '^@/(.*)\\.svg\\?react$': '<rootDir>/src/$1.svg',
+    // Relative imports of `*.svg?react` (e.g. `./assets/au.svg?react`) resolve like the `@/` alias above.
+    '^(\\.{1,2}/.*)\\.svg\\?react$': '$1.svg',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@logto/shared/(.*)$': '<rootDir>/../shared/lib/$1',
+    '\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
+  },
+  transformIgnorePatterns: ['node_modules/(?!(.*(nanoid|jose|ky|@logto|@silverhand|@preact))/)'],
+};
+
+export default config;

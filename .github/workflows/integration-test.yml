@@ -1,0 +1,87 @@
+name: Integration Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    strategy:
+      matrix:
+        # Run the integration tests with and without dev features enabled
+        dev-features-enabled: [true, false]
+    # An error will occur if we use a newer version of Ubuntu in the CI environment, as it has restrictions on unprivileged user namespaces and sandbox usage, which prevents Chromium (used by Puppeteer) from launching properly during integration tests. So we lock the Ubuntu version to 22.04.
+    # See error record: https://github.com/logto-io/logto/actions/runs/12803809008/job/35697654974
+    runs-on: ubuntu-22.04
+    env:
+      INTEGRATION_TEST: true
+      DEV_FEATURES_ENABLED: ${{ matrix.dev-features-enabled }}
+
+    steps:
+      - uses: logto-io/actions-package-logto-artifact@v3
+        with:
+          artifact-name: integration-test-${{ github.sha }}-dev-features-${{ matrix.dev-features-enabled }}
+          pnpm-version: 10
+          node-version: ^24.7.0
+
+  run-logto:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [api, experience, console]
+        # Run the integration tests with and without dev features enabled
+        dev-features-enabled: [true, false]
+    needs: package
+    runs-on: ubuntu-22.04
+    env:
+      INTEGRATION_TEST: true
+      DEV_FEATURES_ENABLED: ${{ matrix.dev-features-enabled }}
+      # Mock servers for backchannel logout and webhook delivery listen on loopback, which the SSRF
+      # protection blocks. Allow just those addresses instead of disabling the protection. CIMD
+      # cannot be enabled while an allowlist is set.
+      SSRF_ALLOWED_ADDRESSES: 127.0.0.0/8,::1
+      # Key encryption key (KEK) for the secret vault used in integration tests
+$10000000000000000000000000000000000000000000000000000000000000000
+      DB_URL: postgres://postgres:postgres@localhost:5432/postgres
+      # Mock key for authorized status API access during integration tests
+      STATUS_API_KEY: test-status-api-key
+      # The public half of the fixture ES256 key pair the self-hosted license tests sign with, so
+      # the instance under test can install a license. See
+      # `packages/integration-tests/src/helpers/license.ts`; honored outside production and during
+      # integration tests.
+      SELF_HOSTED_LICENSE_PUBLIC_KEY: '{"kty":"EC","crv":"P-256","x":"r79NM6kQhcFX7GZwo6gh0qGMYapn3XkwwkcdW-EWXC4","y":"XElMflsuc4fEc3iUJc-LLuVpaAWfqm-vZEb_JzZEOi8"}'
+
+    steps:
+      - uses: logto-io/actions-run-logto-integration-tests@v4.0.1
+        with:
+          logto-artifact: integration-test-${{ github.sha }}-dev-features-${{ env.DEV_FEATURES_ENABLED }}
+          test-target: ${{ matrix.target }}
+          pnpm-version: 10
+          node-version: ^24.7.0
+
+  # Automatically rerun the workflow since the integration tests are moody
+  # From this genius: https://github.com/orgs/community/discussions/67654#discussioncomment-8038649
+  rerun-on-failure:
+    needs: run-logto
+    if: failure() && fromJSON(github.run_attempt) < 3 && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RERUN_REF: ${{ github.head_ref || github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          case "$RUN_ID" in
+            ''|*[!0-9]*) echo 'Invalid workflow run ID' >&2; exit 1 ;;
+          esac
+          gh workflow run rerun.yml --ref "$RERUN_REF" -F "run_id=$RUN_ID"

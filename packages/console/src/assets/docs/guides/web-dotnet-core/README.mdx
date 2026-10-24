@@ -1,0 +1,92 @@
+import UriInputField from '@/mdx-components/UriInputField';
+import Steps from '@/mdx-components/Steps';
+import Step from '@/mdx-components/Step';
+
+import SignInAndSignOutFlows from '../web-dotnet-core-mvc/fragments/_sign-in-and-sign-out-flows.mdx';
+import ConfigureRedirectUris from '../web-dotnet-core-mvc/fragments/_configure-redirect-uris.mdx';
+import Installation from '../web-dotnet-core-mvc/fragments/_installation.md';
+import AddAuthentication from '../web-dotnet-core-mvc/fragments/_add-authentication.mdx';
+import DisplayUserInformation from '../web-dotnet-core-mvc/fragments/_display-user-information.md';
+import Checkpoint from '../../fragments/_checkpoint.md';
+
+<Steps>
+
+<Step title="Add Logto SDK as a dependency">
+
+<Installation />
+
+</Step>
+
+<Step title="Add Logto authentication">
+
+<AddAuthentication {...props} />
+
+</Step>
+
+<Step title="Understand sign-in and sign-out flows">
+
+<SignInAndSignOutFlows />
+
+</Step>
+
+<Step title="Configure redirect URIs">
+
+<ConfigureRedirectUris />
+
+</Step>
+
+<Step title="Implement sign-in and sign-out">
+
+First, add the handler methods to your `PageModel`, for example:
+
+```csharp title="Pages/Index.cshtml.cs"
+public class IndexModel : PageModel
+{
+  public async Task OnPostSignInAsync()
+  {
+    await HttpContext.ChallengeAsync(new AuthenticationProperties
+    {
+      RedirectUri = "/"
+    });
+  }
+
+  public async Task OnPostSignOutAsync()
+  {
+    await HttpContext.SignOutAsync(new AuthenticationProperties
+    {
+      RedirectUri = "/"
+    });
+  }
+}
+```
+
+Then, add the buttons to your Razor page:
+
+```cshtml title="Pages/Index.cshtml"
+<p>Is authenticated: @User.Identity?.IsAuthenticated</p>
+<form method="post">
+  @if (User.Identity?.IsAuthenticated == true) {
+    <button type="submit" asp-page-handler="SignOut">Sign out</button>
+  } else {
+    <button type="submit" asp-page-handler="SignIn">Sign in</button>
+  }
+</form>
+```
+
+It will show the "Sign in" button if the user is not authenticated, and show the "Sign out" button if the user is authenticated.
+
+</Step>
+
+<Step title="Checkpoint: Test your application">
+
+<Checkpoint />
+
+</Step>
+
+<Step title="Display user information">
+
+<DisplayUserInformation />
+
+</Step>
+
+</Steps>

@@ -1,0 +1,24 @@
+const single_sign_on = {
+  forbidden_domains: 'ไม่อนุญาตโดเมนอีเมลสาธารณะ',
+  duplicated_domains: 'มีโดเมนซ้ำกัน',
+  invalid_domain_format: 'รูปแบบโดเมนไม่ถูกต้อง',
+  duplicate_connector_name: 'มีชื่อคอนเนกเตอร์นี้อยู่แล้ว กรุณาเลือกชื่ออื่น',
+  idp_initiated_authentication_not_supported:
+    'รองรับการรับรองความถูกต้องที่เริ่มต้นโดย IdP เฉพาะสำหรับ SAML connector เท่านั้น',
+  idp_initiated_authentication_invalid_application_type:
+    'ประเภทแอปพลิเคชันไม่ถูกต้อง อนุญาตเฉพาะแอปพลิเคชัน {{type}} เท่านั้น',
+  idp_initiated_authentication_redirect_uri_not_registered:
+    'redirect_uri ยังไม่ได้ลงทะเบียน กรุณาตรวจสอบการตั้งค่าแอปพลิเคชัน',
+  idp_initiated_authentication_client_callback_uri_not_found:
+    'ไม่พบ URI callback สำหรับการรับรองความถูกต้อง IdP-initiated ของ client กรุณาตรวจสอบการตั้งค่าคอนเนกเตอร์',
+  sso_signing_unavailable:
+    'ไม่สามารถเข้าสู่ระบบผ่านผู้ให้บริการข้อมูลประจำตัวของคุณได้ โปรดติดต่อผู้ดูแลระบบ',
+  can_not_delete_active_signing_key:
+    'ไม่สามารถลบคีย์ลงนามที่ใช้งานอยู่ได้ โปรดเปิดใช้งานคีย์อื่นหรือปิดใช้งานคีย์นี้ก่อน',
+  can_not_deactivate_signing_key_in_use:
+    'ไม่สามารถปิดใช้งานคีย์ลงนามได้ขณะที่คำขอการยืนยันตัวตนแบบลงนามเปิดใช้งานอยู่ โปรดปิดคำขอการยืนยันตัวตนแบบลงนามก่อน',
+  active_signing_key_required:
+    'ไม่พบคีย์ลงนามที่ใช้งานอยู่ โปรดสร้างและเปิดใช้งานคีย์ลงนามก่อนเปิดใช้คำขอการยืนยันตัวตนแบบลงนาม',
+};
+
+export default Object.freeze(single_sign_on);

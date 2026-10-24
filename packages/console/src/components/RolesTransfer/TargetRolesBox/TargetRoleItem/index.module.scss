@@ -1,0 +1,18 @@
+@use '@/scss/underscore' as _;
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: _.unit(2);
+  padding-inline: _.unit(4) _.unit(3);
+  user-select: none;
+
+  &:hover {
+    background-color: var(--color-hover);
+  }
+
+  .closeIcon {
+    margin-inline-start: _.unit(1);
+  }
+}

@@ -1,0 +1,105 @@
+const get_started = {
+  page_title: 'Loslegen',
+  title: 'Etwas zum Erkunden, um dir zu helfen, erfolgreich zu sein',
+  subtitle: 'Einige Dinge, die Sie tun können, um schnell den Wert von Logto zu erhalten',
+  greeting_morning: 'Guten Morgen, {{name}}',
+  greeting_afternoon: 'Guten Tag, {{name}}',
+  greeting_evening: 'Guten Abend, {{name}}',
+  develop: {
+    title: 'Entwicklung: Nehmen Sie sich 5 Minuten Zeit, um Ihre App zu integrieren',
+    title_cloud: 'Entwicklung: Integrieren Sie Ihre App in Minuten sicher',
+    subtitle_cloud:
+      'Oder nehmen Sie 5 Minuten Zeit, um Ihre App mit unseren vorgefertigten SDKs und Tutorials zu integrieren.',
+    try_mcp: 'Einfach-Prompt-Integration mit MCP ausprobieren',
+  },
+  customize: {
+    title: 'Anpassen: Liefern Sie ein großartiges Anmeldeerlebnis',
+    preview: {
+      title: 'Überprüfen Sie die Live-Vorschau des gerade angepassten Anmeldeerlebnisses',
+      subtitle: 'Testen Sie jetzt das Logto-Anmeldeerlebnis, um zu sehen, wie es funktioniert',
+    },
+    connector: {
+      title:
+        'Fügen Sie weitere Connectors hinzu, um weitere soziale Anmeldeverfahren zu unterstützen',
+      subtitle:
+        'Probieren Sie die passwortlose Anmeldung aus und ermöglichen Sie Ihren Kunden ein sicheres und reibungsloses Erlebnis',
+    },
+    continue_customizing: 'Mit der Anpassung fortfahren',
+    try_now: 'Jetzt ausprobieren',
+    add_more: 'Mehr hinzufügen',
+  },
+  secure: {
+    title: 'Sichern: Schützen Sie Ihre Ressourcen',
+  },
+  manage: {
+    title: 'Verwalten: Definieren Sie Zugriffssteuerung für Ihr Produkt und Ihre Benutzer',
+    rbac: {
+      title: 'Fügen Sie rollenbasierte Zugriffssteuerung hinzu, um Ihre Ressourcen zu schützen',
+      subtitle:
+        'Steuern Sie Ihre Ressource durch skalierbare Rollenautorisierung für verschiedene Anwendungsfälle.',
+    },
+    create_roles: 'Rollen erstellen',
+  },
+  convert_to_production: {
+    card_title: 'Bereit, live zu gehen? Vergiss nicht, dein Produktions-Setup zu starten!',
+    title: 'Halte dein Projekt nicht im Entwicklermodus fest',
+    subtitle:
+      'Du benutzt einen Entwicklermandanten zum kostenlosen Testen. Um live zu gehen, erstelle oder konvertiere zu einem Produktionsmandanten. Brauchst du etwas Eigenes? <a>Kontaktiere uns</a>',
+    convert_button: 'In Produktionsmandanten umwandeln',
+  },
+  oss_cloud: {
+    try: {
+      title: 'Sparen Sie sich den Betriebsaufwand und testen Sie Logto Cloud kostenlos',
+      badge: 'Empfohlen',
+      description:
+        'Erhalten Sie ein vollständig verwaltetes Logto ohne Wartungsaufwand, plus schnelle Integration mit MCP, Multi-Tenant-Unterstützung, Teamzusammenarbeit und alle Premium-Funktionen inklusive. Kostenloser Start ohne Kreditkarte.',
+      action: 'Logto Cloud entdecken',
+    },
+    private_cloud: {
+      title: 'Benötigen Sie Compliance oder eine individuelle Bereitstellung?',
+      card_title: 'Private Cloud',
+      description:
+        'Erhalten Sie eine dedizierte Logto-Instanz mit vollständiger Datenisolation, eigener Domain und SLA-Garantien. Ideal für Unternehmen mit strengen Anforderungen an Datenresidenz oder Compliance. Wir übernehmen die Infrastruktur, damit Sie sich auf Ihr Produkt konzentrieren können.',
+    },
+    sidebar: {
+      title: 'Konzentrieren Sie sich aufs Entwickeln, nicht aufs Hosting.',
+      description: 'Lassen Sie Logto Cloud die Auth-Infrastruktur für Sie übernehmen.',
+      action: 'Logto Cloud ausprobieren',
+    },
+  },
+  header: {
+    docs: 'Dokumentation',
+    create_app: 'Anwendung erstellen',
+  },
+  resources: {
+    title: 'Ressourcen',
+    open_docs: 'Dokumentation öffnen',
+    integrate: {
+      title: 'Anwendung integrieren',
+      description: 'Füge Anmeldung zu deiner App mit Anleitungen für gängige Frameworks hinzu.',
+    },
+    sign_in: {
+      title: 'Anmeldung anpassen',
+      description: 'Passe das Anmeldeerlebnis an dein Produkt an.',
+    },
+    rbac: {
+      title: 'Rollen und Berechtigungen verwalten',
+      description: 'Lege fest, worauf jeder Nutzer und jede App zugreifen darf.',
+    },
+    api: {
+      title: 'Management API nutzen',
+      description: 'Richte Mandanten automatisiert ein und verwalte Ressourcen per Code.',
+    },
+  },
+  models: {
+    title: 'Schnellstart',
+    create: 'Erstellen',
+  },
+  footer: {
+    help: 'Hilfe und Support',
+    feedback: 'Feedback',
+  },
+  view_all: 'Alle anzeigen →',
+};
+
+export default Object.freeze(get_started);

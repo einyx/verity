@@ -1,0 +1,206 @@
+const tenants = {
+  title: 'Einstellungen',
+  description: 'Effizientes Verwalten von Mandanteneinstellungen und Anpassen Ihrer Domain.',
+  oss_description:
+    'Ändern Sie hier Ihre Kontoeinstellungen und verwalten Sie Ihre persönlichen Informationen, um die Sicherheit Ihres Kontos zu gewährleisten.',
+  tabs: {
+    settings: 'Einstellungen',
+    members: 'Mitglieder',
+    domains: 'Domänen',
+    oidc_configs: 'OIDC-Konfigurationen',
+    subscription: 'Plan und Abrechnung',
+    billing_history: 'Abrechnungshistorie',
+    license: 'Lizenz',
+  },
+  license: {
+    purchase_title: 'SELF-HOSTED-PLÄNE',
+    purchase_description:
+      'Self-Hosted Pro und Enterprise schalten kostenpflichtige Funktionen auf deiner eigenen Instanz frei, etwa das Ausblenden des Logto-Brandings, eine eigene UI, Zusammenarbeit in der Konsole und unbegrenzte SAML-Anwendungen. Kaufe einen Plan, um deinen Lizenzschlüssel zu erhalten.',
+    purchase_button: 'Self-Hosted-Pläne ansehen',
+    install_title: 'LIZENZ INSTALLIEREN',
+    install_description:
+      'Füge den Lizenzschlüssel ein, den du nach dem Kauf eines Self-Hosted-Plans erhalten hast.',
+    install_button: 'Lizenz installieren',
+    key_field: 'Lizenzschlüssel',
+    key_field_description:
+      'Der Schlüssel wird auf deiner Instanz geprüft und verlässt sie nie. Kontaktiere Logto für einen neuen Schlüssel, wenn der vorhandene abgelaufen ist.',
+    key_placeholder: 'Füge hier deinen Lizenzschlüssel ein',
+    installed_toast: 'Lizenz erfolgreich installiert.',
+    details_title: 'LIZENZ',
+    details_description: 'Die auf dieser Instanz installierte Lizenz und was sie freischaltet.',
+    plan_field: 'Plan',
+    environment_field: 'Umgebung',
+    environment_production: 'Produktion',
+    environment_non_production: 'Nicht-Produktion',
+    expires_at_field: 'Läuft ab am',
+    installed_at_field: 'Installiert am',
+    last_refreshed_at_field: 'Zuletzt aktualisiert am',
+    grace_ends_at_field: 'Kulanzzeit endet am',
+    refresh_expired_description:
+      'Der Lizenzschlüssel ist am {{expiresAt}} abgelaufen. Lizenzierte Funktionen bleiben bis {{graceEndsAt}} verfügbar, während Logto versucht, ihn zu aktualisieren.',
+    refresh_refused_description:
+      'Die Lizenzaktualisierung wurde abgelehnt, weil die Lizenz {{reason}} ist. Lizenzierte Funktionen bleiben bis {{graceEndsAt}} verfügbar.',
+    refusal_reason_canceled: 'gekündigt',
+    refusal_reason_unpaid: 'unbezahlt',
+    refusal_reason_expired: 'abgelaufen',
+    refusal_reason_revoked: 'widerrufen',
+    refusal_reason_unknown: 'nicht verfügbar',
+    grace_expired_description:
+      'Die Kulanzzeit der Lizenz endete am {{graceEndsAt}}. Diese Bereitstellung verwendet wieder die OSS-Standards. Kontaktiere Logto für einen neuen Lizenzschlüssel und installiere ihn erneut.',
+    get_fresh_key_button: 'Neuen Lizenzschlüssel abrufen',
+    replace_button: 'Lizenz ersetzen',
+  },
+  members: {
+    card_title: 'Verwalten Sie Mandanten sicherer mit Logto Cloud',
+    card_description:
+      'Fügen Sie Ihrem Mandanten Admins oder Mitwirkende hinzu, ohne ein einzelnes Admin-Konto gemeinsam zu nutzen.',
+    card_action: 'Logto Cloud entdecken',
+    self_hosted_card_title: 'Verwalten Sie Mandanten sicherer mit Self-Hosted-Plänen',
+    self_hosted_card_description:
+      'Fügen Sie Ihrem Mandanten Admins oder Mitwirkende hinzu, ohne ein einzelnes Admin-Konto gemeinsam zu nutzen.',
+    self_hosted_card_action: 'Self-Hosted-Pläne entdecken',
+  },
+  settings: {
+    title: 'EINSTELLUNGEN',
+    description:
+      'Legen Sie den Mandantennamen fest und überprüfen Sie Ihre gehostete Datenregion und den Mandantentyp.',
+    tenant_id: 'Mieter-ID',
+    tenant_name: 'Mietername',
+    tenant_instance: 'Wähle deine Instanz aus',
+    tenant_instance_description:
+      'Wählen Sie, wo Ihr Mandant gehostet wird. Wählen Sie Logto Cloud für eine öffentliche geteilte Infrastruktur oder eine private Instanz für dedizierte Ressourcen.',
+    tenant_region: 'Gehostete Region der Daten',
+    tenant_region_description:
+      'Der physische Ort, an dem Ihre Mandantenressourcen (Benutzer, Apps, usw.) gehostet werden. Dies kann nach Erstellung nicht mehr geändert werden.',
+    tenant_region_tip:
+      'Ihre Mandantenressourcen werden in {{region}} gehostet. <a>Mehr erfahren</a>',
+    environment_tag_development: 'Entw',
+    environment_tag_production: 'Prod',
+    tenant_type: 'Mandantentyp',
+    development_description:
+      'Nur für Tests und sollte nicht in der Produktion verwendet werden. Es ist kein Abonnement erforderlich. Es verfügt über alle Pro-Funktionen, hat jedoch Einschränkungen wie ein Anmeldebanner.',
+    production_description:
+      'Vorgesehen für Apps, die von Endbenutzern verwendet werden und möglicherweise ein kostenpflichtiges Abonnement erfordern.',
+    tenant_info_saved: 'Mieterinformationen erfolgreich gespeichert.',
+    tenant_mfa: 'Multi-Faktor-Authentifizierung',
+    tenant_mfa_description:
+      'Verlangen Sie von Ihren Mitgliedern, dass sie die Multi-Faktor-Authentifizierung einrichten, um auf diesen Mandanten zuzugreifen.',
+    oss_description: 'Verwalten Sie, wie Mitglieder auf die Konsole dieser Instanz zugreifen.',
+    tenant_mfa_confirm_title: 'MFA für alle Mitglieder verlangen?',
+    tenant_mfa_confirm_description:
+      'Diese Mitglieder haben MFA noch nicht eingerichtet. Sie bleiben angemeldet und werden bei ihrer nächsten Anmeldung aufgefordert, MFA einzurichten:',
+    tenant_mfa_confirm_self:
+      'Sie haben MFA ebenfalls noch nicht eingerichtet. Richten Sie es vor Ihrer nächsten Anmeldung in Ihren Kontoeinstellungen ein.',
+    tenant_mfa_confirm_button: 'MFA verlangen',
+    tenant_mfa_setup_required:
+      'Dieser Mandant verlangt Multi-Faktor-Authentifizierung. Richten Sie sie jetzt ein, sonst werden Sie bei Ihrer nächsten Anmeldung dazu aufgefordert.',
+    tenant_mfa_setup_action: 'MFA einrichten',
+    enterprise_sso: 'Enterprise SSO',
+    enterprise_sso_description:
+      'Verfügbar in kostenpflichtigen Plänen. Kontaktieren Sie uns, um Enterprise SSO zu aktivieren, damit alle Mitglieder sich mit dem Identitätsanbieter Ihrer Organisation bei der Logto Cloud Console anmelden können.',
+  },
+  full_env_tag: {
+    development: 'Entwicklung',
+    production: 'Produktion',
+  },
+  view_only: {
+    tag: 'Nur Ansicht',
+    notification:
+      'Sie haben nur Ansichtszugriff auf diesen Mieter. Wenden Sie sich an einen Mieter-Administrator, wenn Sie Änderungen vornehmen müssen.',
+    hidden: 'Für Betrachter ausgeblendet',
+  },
+  deletion_card: {
+    title: 'LÖSCHEN',
+    tenant_deletion: 'Mieter löschen',
+    tenant_deletion_description:
+      'Das Löschen des Mandanten führt zur dauerhaften Entfernung aller zugehörigen Benutzerdaten und Konfigurationen. Bitte gehen Sie vorsichtig vor.',
+    tenant_deletion_button: 'Mieter löschen',
+  },
+  leave_tenant_card: {
+    title: 'VERLASSEN',
+    leave_tenant: 'Mieter verlassen',
+    leave_tenant_description:
+      'Alle Ressourcen im Mandanten bleiben erhalten, aber Sie haben keinen Zugriff mehr auf diesen Mandanten.',
+    last_admin_note:
+      'Um diesen Mandanten zu verlassen, stellen Sie sicher, dass mindestens ein weiteres Mitglied die Admin-Rolle hat.',
+  },
+  create_modal: {
+    title: 'Mieter erstellen',
+    subtitle: 'Erstellen Sie einen neuen Mandanten, der isolierte Ressourcen und Benutzer hat.',
+    tenant_id: 'Mieter-ID',
+    tenant_usage_purpose: 'Wofür möchten Sie diesen Mieter verwenden?',
+    development_description:
+      'Nur für Tests und sollte nicht in der Produktion verwendet werden. Es ist kein Abonnement erforderlich.',
+    development_description_for_private_regions:
+      'Nur für Tests und sollte nicht in der Produktion verwendet werden.',
+    development_hint:
+      'Es verfügt über alle Pro-Funktionen, hat jedoch Einschränkungen wie ein Anmeldebanner.',
+    production_description:
+      'Für die Nutzung durch Endbenutzer und möglicherweise ein kostenpflichtiges Abonnement.',
+    available_plan: 'Verfügbare Pläne:',
+    create_button: 'Mieter erstellen',
+    tenant_name_placeholder: 'Mein Mieter',
+    tenant_created: 'Mieter erfolgreich erstellt.',
+    invitation_failed:
+      'Einige Einladungen konnten nicht gesendet werden. Bitte versuchen Sie es später erneut unter Einstellungen -> Mitglieder.',
+    tenant_type_description: 'Dies kann nach Erstellung nicht geändert werden.',
+    tenant_id_invalid:
+      'Die Mandanten-ID darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten und darf {{max}} Zeichen nicht überschreiten.',
+    tenant_id_placeholder: 'Ihre Mandanten-ID',
+    tenant_id_tip:
+      'Passen Sie die Mandanten-ID an. Wenn leer gelassen, generiert Logto eine Standard-ID. Die Mandanten-ID kann nach der Erstellung nicht geändert werden.',
+  },
+  dev_tenant_migration: {
+    title:
+      'Sie können jetzt unsere Pro-Funktionen kostenlos testen, indem Sie einen neuen "Entwicklungsmieter" erstellen!',
+    affect_title: 'Wie betrifft das Sie?',
+    hint_1:
+      'Wir ersetzen die alten <strong> Umgebungstags </strong> durch zwei neue Mandantentypen: <strong> "Entwicklung" </strong> und <strong> "Produktion" </strong>.',
+    hint_2:
+      'Um einen reibungslosen Übergang und unterbrechungsfreie Funktionalität zu gewährleisten, werden alle früher erstellten Mandanten zum Mandantentyp <strong> Produktion </strong> mit Ihrem vorherigen Abonnement erhöht.',
+    hint_3: 'Keine Sorge, all Ihre anderen Einstellungen bleiben gleich.',
+    about_tenant_type: 'Über den Mandantentyp',
+  },
+  delete_modal: {
+    title: 'Mieter löschen',
+    description_line1:
+      'Sind Sie sicher, dass Sie Ihren Mandanten "<span>{{name}}</span>" mit dem Umgebungssuffixtag "<span>{{tag}}</span>" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und führt zur dauerhaften Löschung all Ihrer Daten und Mandanteninformationen.',
+    description_line2:
+      'Bevor Sie einen Mandanten löschen, können wir Ihnen vielleicht helfen. <span><a>Kontaktieren Sie uns per E-Mail</a></span>',
+    description_line3:
+      'Wenn Sie fortfahren möchten, geben Sie bitte den Mieter-Namen "<span>{{name}}</span>" zur Bestätigung ein.',
+    delete_button: 'Dauerhaft löschen',
+    cannot_delete_title: 'Diesen Mandanten kann nicht gelöscht werden',
+    cannot_delete_description:
+      'Entschuldigung, diesen Mandanten können Sie derzeit nicht löschen. Stellen Sie sicher, dass Sie sich im kostenlosen Tarif befinden und alle ausstehenden Rechnungen bezahlt haben.',
+  },
+  leave_tenant_modal: {
+    description: 'Sind Sie sicher, dass Sie diesen Mandanten verlassen möchten?',
+    leave_button: 'Verlassen',
+  },
+  tenant_landing_page: {
+    title: 'Du hast noch keinen Mandanten erstellt',
+    description:
+      'Um Ihr Projekt mit Logto zu konfigurieren, erstellen Sie bitte einen neuen Mandanten. Wenn Sie sich abmelden oder Ihr Konto löschen möchten, klicken Sie einfach auf die Avatar-Taste in der oberen rechten Ecke.',
+    create_tenant_button: 'Mandanten erstellen',
+  },
+  status: {
+    mau_exceeded: 'MAU überschritten',
+    token_exceeded: 'Token überschritten',
+    suspended: 'Gesperrt',
+    overdue: 'Überfällig',
+  },
+  tenant_suspended_page: {
+    title: 'Mieter gesperrt. Kontaktieren Sie uns, um den Zugriff wiederherzustellen.',
+    description_1:
+      'Es tut uns leid, Ihnen mitteilen zu müssen, dass Ihr Mieterkonto vorübergehend gesperrt wurde, da es unsachgemäß genutzt wurde. Dies umfasst die Überschreitung der MAU-Grenzen, überfällige Zahlungen oder andere unbefugte Aktionen.',
+    description_2:
+      'Wenn Sie weitere Informationen wünschen, Bedenken haben oder die volle Funktionalität wiederherstellen und Ihre Mieter entsperren möchten, zögern Sie nicht, uns umgehend zu kontaktieren.',
+  },
+  production_tenant_notification: {
+    text: 'Sie befinden sich in einem Entwicklungsmieter für kostenlose Tests. Erstellen Sie einen Produktionsmandanten, um live zu gehen.',
+    action: 'Mieter erstellen',
+  },
+};
+
+export default Object.freeze(tenants);

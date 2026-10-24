@@ -1,0 +1,101 @@
+import quota_item from './quota-item.js';
+import quota_table from './quota-table.js';
+import usage from './usage.js';
+
+const subscription = {
+  free_plan: 'Plan Darmowy',
+  free_plan_description:
+    'Dla projektów pobocznych i początkowych prób Logto. Brak wymaganej karty kredytowej.',
+  pro_plan: 'Plan Pro',
+  pro_plan_description: 'Dla firm, ciesz się bezstresową obsługą Logto.',
+  enterprise: 'Plan Przedsiębiorstwo',
+  enterprise_description: 'Dla dużych zespołów i firm z wymaganiami klasy enterprise.',
+  admin_plan: 'Plan administracyjny',
+  dev_plan: 'Plan deweloperski',
+  self_hosted_pro_plan: 'Plan Pro self-hosted',
+  self_hosted_enterprise_plan: 'Plan Przedsiębiorstwo self-hosted',
+  current_plan: 'Obecny plan',
+  current_plan_description:
+    'Oto Twój obecny plan. Łatwo możesz sprawdzić wykorzystanie swojego planu, sprawdzić nadchodzący rachunek i dokonać zmian w planie, jeśli jest to konieczne.',
+  plan_usage: 'Wykorzystanie planu',
+  plan_cycle: 'Cykl planu: {{period}}. Użycie odnawiane w dniu {{renewDate}}.',
+  next_bill: 'Twój nadchodzący rachunek',
+  next_bill_hint: 'Aby dowiedzieć się więcej o obliczeniach, zapoznaj się z tym <a>artykułem</a>.',
+  next_bill_tip:
+    'Ceny przedstawione tutaj są bez podatku i mogą podlegać niewielkiemu opóźnieniu w aktualizacjach. Kwota podatku zostanie obliczona na podstawie informacji, które podasz oraz lokalnych wymogów prawnych, i będzie wyświetlona na twoich fakturach.',
+  manage_payment: 'Zarządzanie płatnościami',
+  overfill_quota_warning:
+    'Osiągnąłeś limit swojej puli. Aby uniknąć problemów, zaktualizuj swój plan.',
+  upgrade_pro: 'Uaktualnij do Pro',
+  update_payment: 'Zaktualizuj płatność',
+  payment_error:
+    'Wykryto problem z płatnością. Nie można przetworzyć ${{price, number}} za poprzedni cykl. Zaktualizuj płatność, aby uniknąć zawieszenia usługi Logto.',
+  downgrade: 'Zdegradować',
+  current: 'Obecnie',
+  upgrade: 'Aktualizacja',
+  quota_table,
+  billing_history: {
+    invoice_column: 'Faktury',
+    status_column: 'Status',
+    amount_column: 'Kwota',
+    invoice_created_date_column: 'Data utworzenia faktury',
+    invoice_status: {
+      void: 'Anulowana',
+      paid: 'Opłacona',
+      open: 'Otwarta',
+      uncollectible: 'Zaległa',
+    },
+  },
+  quota_item,
+  cancel_feedback_modal: {
+    title: 'Szkoda, że odchodzisz',
+    description:
+      'Twoja subskrypcja została anulowana. Twoja opinia pomaga nam ulepszać Logto. Czytamy każdą odpowiedź.',
+    what_made_you_cancel: 'Co skłoniło Cię do anulowania?',
+    how_to_reconsider: 'Co moglibyśmy zrobić, abyś ponownie rozważył(a) decyzję?',
+  },
+  downgrade_modal: {
+    title: 'Czy na pewno chcesz zdegradować?',
+    description:
+      'Jeśli zdecydujesz się przełączyć na <targetName/>, pamiętaj, że nie będziesz już mieć dostępu do przyznanych wcześniej limitów i funkcji w <currentName/>. ',
+    before: 'Przed: <name/>',
+    after: 'Po: <name />',
+    downgrade: 'Zdegradować',
+  },
+  not_eligible_modal: {
+    downgrade_title: 'Nie spełniasz warunków do zmniejszenia',
+    downgrade_description:
+      'Upewnij się, że spełniasz następujące kryteria przed zmniejszeniem do <name/>.',
+    downgrade_help_tip: 'Potrzebna pomoc przy zmniejszaniu? <a>Skontaktuj się z nami</a>.',
+    upgrade_title: 'Przyjazne przypomnienie dla naszych szanowanych wczesnych użytkowników',
+    upgrade_description:
+      'Obecnie używasz więcej niż to, co pozwala <name />. Logto jest teraz oficjalne, z funkcjami dostosowanymi do każdego planu. Zanim rozważysz aktualizację do <name />, upewnij się, że spełniasz poniższe kryteria przed dokonaniem aktualizacji.',
+    upgrade_pro_tip: ' Lub rozważ aktualizację do Planu Pro.',
+    upgrade_help_tip: 'Potrzebna pomoc przy zwiększaniu? <a>Skontaktuj się z nami</a>.',
+    a_maximum_of: 'Maksymalnie <item/>',
+  },
+  billing_customer_modal: {
+    title: 'Wybierz konto rozliczeniowe',
+    description:
+      'Wybierz konto rozliczeniowe, które płaci za tę subskrypcję, lub rozpocznij nowe. Możesz zmienić szczegóły płatności na następnej stronie.',
+    account: 'Konto rozliczeniowe',
+    new_account: 'Nowe konto rozliczeniowe',
+    default_account: 'Domyślne',
+  },
+  upgrade_success: 'Pomyślnie uaktualniono do <name/>',
+  downgrade_success: 'Pomyślnie zdegradowano do <name/>',
+  subscription_check_pending:
+    'Twoja płatność została przetworzona. Konfiguracja subskrypcji trwa dłużej niż zwykle.',
+  no_subscription: 'Brak subskrypcji',
+  usage,
+  token_usage_notification: {
+    exceeded:
+      'Przekroczyłeś 100% limitu swojej puli. Użytkownicy nie będą mogli się prawidłowo zalogować. Proszę natychmiast dokonać aktualizacji, aby uniknąć niedogodności.',
+    close_to_limit:
+      'Prawie osiągnąłeś limit użycia tokenów. Logto przestanie przyznawać tokeny, jeśli twoje użycie przekroczy 100%. Proszę dokonać aktualizacji Planu Darmowego, aby uniknąć niedogodności.',
+    dev_plan_exceeded:
+      'Ten najemca osiągnął limit tokenów zgodnie z polityką limitu jednostki Logto.',
+  },
+};
+
+export default Object.freeze(subscription);

@@ -1,0 +1,126 @@
+import { ConsoleLog, GlobalValues, TtlCache } from '@logto/shared';
+import type { Optional } from '@silverhand/essentials';
+import { appendPath } from '@silverhand/essentials';
+import type { DatabasePool } from '@silverhand/slonik';
+import chalk from 'chalk';
+
+import { WellKnownCache } from '#src/caches/well-known.js';
+import { createLogtoConfigLibrary } from '#src/libraries/logto-config.js';
+import { createLogtoConfigQueries } from '#src/queries/logto-config.js';
+
+import createPoolByEnv from './create-pool.js';
+import loadOidcValues from './oidc.js';
+import { throwNotLoadedError } from './throw-errors.js';
+import { getTenantEndpoint } from './utils.js';
+
+/** Apps (also paths) for user tenants. */
+export enum UserApps {
+  Api = 'api',
+  Oidc = 'oidc',
+  DemoApp = 'demo-app',
+  DeviceDemoApp = 'device-demo-app',
+  AccountCenter = 'account',
+  WellKnown = '.well-known',
+}
+
+/** Apps (also paths) ONLY for the admin tenant. */
+export enum AdminApps {
+  Me = 'me',
+  Console = 'console',
+  Welcome = 'welcome',
+}
+
+export class EnvSet {
+  /** The value set for global configurations.  */
+  static values = new GlobalValues();
+
+  static get dbUrl() {
+    return this.values.dbUrl;
+  }
+
+  static sharedPool = createPoolByEnv(
+    this.dbUrl,
+    EnvSet.values.isUnitTest,
+    this.values.databasePoolSize,
+    EnvSet.values.databaseConnectionTimeout,
+    EnvSet.values.databaseStatementTimeout
+  );
+
+  #pool: Optional<DatabasePool>;
+  #oidc: Optional<Awaited<ReturnType<typeof loadOidcValues>>>;
+  #endpoint: Optional<URL>;
+
+  constructor(
+    public readonly tenantId: string,
+    public readonly databaseUrl: string
+  ) {}
+
+  get pool() {
+    if (!this.#pool) {
+      return throwNotLoadedError();
+    }
+
+    return this.#pool;
+  }
+
+  get oidc() {
+    if (!this.#oidc) {
+      return throwNotLoadedError();
+    }
+
+    return this.#oidc;
+  }
+
+  get endpoint() {
+    if (!this.#endpoint) {
+      return throwNotLoadedError();
+    }
+
+    return this.#endpoint;
+  }
+
+  async load(customDomain?: string) {
+    const pool = await createPoolByEnv(
+      this.databaseUrl,
+      EnvSet.values.isUnitTest,
+      EnvSet.values.databasePoolSize,
+      EnvSet.values.databaseConnectionTimeout,
+      EnvSet.values.databaseStatementTimeout
+    );
+
+    this.#pool = pool;
+
+    const consoleLog = new ConsoleLog(chalk.magenta('env-set'));
+    const wellKnownCache = new WellKnownCache(this.tenantId, new TtlCache(60_000));
+    const logtoConfigQueries = createLogtoConfigQueries(pool, wellKnownCache);
+
+    const { getOidcConfigs, promoteScheduledSigningKeyRotation } = createLogtoConfigLibrary({
+      logtoConfigs: logtoConfigQueries,
+      pool,
+      wellKnownCache,
+      cloudApiOrigin: EnvSet.values.cloudUrlSet.endpoint.origin,
+    });
+
+    await promoteScheduledSigningKeyRotation();
+
+    const [oidcConfigs, cimdConfig] = await Promise.all([
+      getOidcConfigs(consoleLog),
+      logtoConfigQueries.getCimdConfig(),
+    ]);
+    this.#endpoint = customDomain
+      ? new URL(customDomain)
+      : getTenantEndpoint(this.tenantId, EnvSet.values);
+    this.#oidc = await loadOidcValues(
+      appendPath(this.#endpoint, '/oidc').href,
+      oidcConfigs,
+      cimdConfig,
+      EnvSet.values.isDevFeaturesEnabled
+    );
+  }
+
+  async end() {
+    await this.#pool?.end();
+  }
+}
+
+export { getTenantEndpoint } from './utils.js';

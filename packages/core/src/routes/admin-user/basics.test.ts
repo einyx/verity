@@ -1,0 +1,625 @@
+/* eslint-disable max-lines */
+import crypto from 'node:crypto';
+
+import type { CreateUser, Role, SignInExperience, User } from '@logto/schemas';
+import { RoleType, UsersPasswordEncryptionMethod } from '@logto/schemas';
+import { createMockUtils, pickDefault } from '@logto/shared/esm';
+import { removeUndefinedKeys } from '@silverhand/essentials';
+import { StatementTimeoutError } from '@silverhand/slonik';
+
+import { mockSignInExperience, mockUser, mockUserResponse } from '#src/__mocks__/index.js';
+import { EnvSet } from '#src/env-set/index.js';
+import RequestError from '#src/errors/RequestError/index.js';
+import { type InsertUserResult } from '#src/libraries/user.js';
+import { koaManagementApiHooks } from '#src/middleware/koa-management-api-hooks.js';
+import type Libraries from '#src/tenants/Libraries.js';
+import type Queries from '#src/tenants/Queries.js';
+import { MockTenant, type Partial2 } from '#src/test-utils/tenant.js';
+import { createRequester } from '#src/utils/test-utils.js';
+
+const { jest } = import.meta;
+const { mockEsmWithActual } = createMockUtils(jest);
+
+const mockedQueries = {
+  signInExperiences: {
+    findDefaultSignInExperience: jest.fn(
+      async () =>
+        // @ts-expect-error
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        ({
+          signUp: {
+            identifiers: [],
+            password: false,
+            verify: false,
+          },
+        }) as SignInExperience
+    ),
+  },
+  users: {
+    findUserById: jest.fn(async (id: string) => mockUser),
+    hasUser: jest.fn(async () => mockHasUser()),
+    hasUserWithId: jest.fn(async (): Promise<boolean> => false),
+    hasUserWithEmail: jest.fn(async () => mockHasUserWithEmail()),
+    hasUserWithNormalizedPhone: jest.fn(async () => mockHasUserWithPhone()),
+    updateUserById: jest.fn(async (_, data: Partial<CreateUser>): Promise<User> => ({
+      ...mockUser,
+      ...data,
+    })),
+    deleteUserById: jest.fn(),
+    deleteUserIdentity: jest.fn(),
+  },
+  roles: {
+    findRolesByRoleNames: jest.fn(async (): Promise<Role[]> => [
+      {
+        tenantId: 'fake_tenant',
+        id: 'role_id',
+        name: 'admin',
+        description: 'none',
+        type: RoleType.User,
+        isDefault: false,
+      },
+    ]),
+  },
+  usersRoles: {
+    deleteUsersRolesByUserIdAndRoleId: jest.fn(),
+  },
+} satisfies Partial2<Queries>;
+
+const mockHasUser = jest.fn(async () => false);
+const mockHasUserWithEmail = jest.fn(async () => false);
+const mockHasUserWithPhone = jest.fn(async () => false);
+
+const { hasUser, hasUserWithId, findUserById, updateUserById, deleteUserIdentity, deleteUserById } =
+  mockedQueries.users;
+
+const { encryptUserPassword } = await mockEsmWithActual('#src/libraries/user.utils.js', () => ({
+  encryptUserPassword: jest.fn(() => ({
+    passwordEncrypted: 'password',
+    passwordEncryptionMethod: 'Argon2i',
+  })),
+}));
+
+const verifyUserPassword = jest.fn();
+const signOutUser = jest.fn();
+const usersLibraries = {
+  generateUserId: jest.fn(async () => 'fooId'),
+  insertUser: jest.fn(async (user: CreateUser): Promise<InsertUserResult> => [
+    {
+      ...mockUser,
+      ...removeUndefinedKeys(user), // No undefined values will be returned from database
+    },
+  ]),
+  verifyUserPassword,
+  signOutUser,
+} satisfies Partial<Libraries['users']>;
+
+const adminUserRoutes = await pickDefault(import('./basics.js'));
+
+describe('adminUserRoutes', () => {
+  const tenantContext = new MockTenant(undefined, mockedQueries, undefined, {
+    users: usersLibraries,
+  });
+  const userRequest = createRequester({
+    middlewares: [koaManagementApiHooks(tenantContext.libraries.hooks)],
+    authedRoutes: adminUserRoutes,
+    tenantContext,
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('GET /users/:userId', async () => {
+    const response = await userRequest.get('/users/foo');
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual(mockUserResponse);
+  });
+
+  it('GET /users/:userId should not include passwordDigest/passwordAlgorithm by default', async () => {
+    const response = await userRequest.get('/users/foo');
+    expect(response.status).toEqual(200);
+    expect(response.body).not.toHaveProperty('passwordDigest');
+    expect(response.body).not.toHaveProperty('passwordAlgorithm');
+  });
+
+  it('GET /users/:userId with includePasswordHash=true should include passwordDigest and passwordAlgorithm', async () => {
+    const response = await userRequest.get('/users/foo?includePasswordHash=true');
+    expect(response.status).toEqual(200);
+    expect(response.body).toHaveProperty('passwordDigest', mockUser.passwordEncrypted);
+    expect(response.body).toHaveProperty('passwordAlgorithm', mockUser.passwordEncryptionMethod);
+  });
+
+  it('POST /users', async () => {
+    const username = 'MJAtLogto';
+    const password = 'PASSWORD1234';
+    const name = 'Michael';
+    const { primaryEmail, primaryPhone } = mockUser;
+
+    const response = await userRequest
+      .post('/users')
+      .send({ primaryEmail, primaryPhone, username, password, name });
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual({
+      ...mockUserResponse,
+      id: 'fooId',
+      username,
+      name,
+    });
+
+    const [insertedUser] = usersLibraries.insertUser.mock.calls[0] as [CreateUser];
+    expect(insertedUser.passwordUpdatedAt).toBeDefined();
+  });
+
+  it('POST /users should be ok with simple passwords', async () => {
+    const username = 'MJAtLogto';
+    const name = 'Michael';
+
+    // Invalid input format
+    await expect(
+      userRequest.post('/users').send({ username, password: 'abc', name })
+    ).resolves.toHaveProperty('status', 200);
+  });
+
+  it('POST /users with password digest', async () => {
+    const username = 'MJAtLogto';
+    const name = 'Michael';
+
+    await expect(
+      userRequest.post('/users').send({
+        username,
+        name,
+        passwordDigest: crypto.createHash('md5').update('password').digest('hex'),
+        passwordAlgorithm: UsersPasswordEncryptionMethod.MD5,
+      })
+    ).resolves.toHaveProperty('status', 200);
+  });
+
+  describe('POST /users with custom id', () => {
+    const originalIsCloud = EnvSet.values.isCloud;
+
+    afterEach(() => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = originalIsCloud;
+    });
+
+    it('should create user with the given id in OSS', async () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = false;
+
+      const response = await userRequest
+        .post('/users')
+        .send({ id: 'legacy_id-01', username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveProperty('id', 'legacy_id-01');
+      expect(hasUserWithId).toHaveBeenCalledWith('legacy_id-01');
+      expect(usersLibraries.generateUserId).not.toHaveBeenCalled();
+      expect(usersLibraries.insertUser).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'legacy_id-01' })
+      );
+    });
+
+    it('should generate an id when not provided', async () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = false;
+
+      const response = await userRequest
+        .post('/users')
+        .send({ username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveProperty('id', 'fooId');
+      expect(hasUserWithId).not.toHaveBeenCalled();
+      expect(usersLibraries.generateUserId).toHaveBeenCalled();
+    });
+
+    it('should reject custom id in cloud', async () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = true;
+
+      const response = await userRequest
+        .post('/users')
+        .send({ id: 'legacy_id-01', username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(501);
+      expect(usersLibraries.insertUser).not.toHaveBeenCalled();
+    });
+
+    it('should throw if the given id is already in use', async () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = false;
+      hasUserWithId.mockResolvedValueOnce(true);
+
+      const response = await userRequest
+        .post('/users')
+        .send({ id: 'legacy_id-01', username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(422);
+      expect(usersLibraries.insertUser).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'auth0|5f7c8ec7c33c6c004bbafe82',
+      'google-oauth2|103547991597142817347',
+      'user@example.com',
+      'first.last+tag@example.com',
+      '3f2504e0-4f89-11d3-9a0c-0305e82c3301',
+      'user_01H8MZ2QK3V4X5Y6Z7',
+      'org:acme:user',
+      'dXNlcg==',
+      '...',
+      '.hidden',
+      'a..b',
+      'a'.repeat(128),
+    ])('should accept id %p', async (id) => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = false;
+
+      const response = await userRequest
+        .post('/users')
+        .send({ id, username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveProperty('id', id);
+    });
+
+    it.each([
+      '',
+      '.',
+      '..',
+      'a'.repeat(129),
+      'has space',
+      'slash/id',
+      'back\\slash',
+      'query?id',
+      'hash#id',
+      'percent%20id',
+    ])('should reject invalid id %p', async (id) => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = false;
+
+      const response = await userRequest
+        .post('/users')
+        .send({ id, username: 'MJAtLogto', name: 'Michael' });
+
+      expect(response.status).toEqual(400);
+      expect(usersLibraries.insertUser).not.toHaveBeenCalled();
+    });
+  });
+
+  it('POST /users should throw if username exists', async () => {
+    const mockHasUser = hasUser as jest.Mock;
+    mockHasUser.mockImplementationOnce(async () => true);
+
+    const username = 'MJAtLogto';
+    const password = 'PASSWORD1234';
+    const name = 'Michael';
+
+    await expect(
+      userRequest.post('/users').send({ username, password, name })
+    ).resolves.toHaveProperty('status', 422);
+  });
+
+  it('PATCH /users/:userId', async () => {
+    const name = 'Michael';
+    const avatar = 'http://www.michael.png';
+    const primaryEmail = 'bar@logto.io';
+    const primaryPhone = '222222';
+    const username = 'bar';
+
+    const response = await userRequest
+      .patch('/users/foo')
+      .send({ username, name, avatar, primaryEmail, primaryPhone });
+
+    expect(response.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith(
+      'foo',
+      {
+        primaryEmail,
+        primaryPhone,
+        username,
+        name,
+        avatar,
+      },
+      expect.anything()
+    );
+  });
+
+  it('PATCH /users/:userId should allow empty string for clearable fields', async () => {
+    const response = await userRequest
+      .patch('/users/foo')
+      .send({ name: '', avatar: '', primaryEmail: '' });
+    expect(response.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith(
+      'foo',
+      {
+        name: '',
+        avatar: '',
+        primaryEmail: '',
+      },
+      expect.anything()
+    );
+  });
+
+  it('PATCH /users/:userId should allow null values for clearable fields', async () => {
+    const response = await userRequest
+      .patch('/users/foo')
+      .send({ name: null, username: null, primaryPhone: null });
+    expect(response.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith(
+      'foo',
+      {
+        name: null,
+        username: null,
+        primaryPhone: null,
+      },
+      expect.anything()
+    );
+  });
+
+  it('PATCH /users/:userId should allow partial update', async () => {
+    const name = 'Michael';
+
+    const updateNameResponse = await userRequest.patch('/users/foo').send({ name });
+    expect(updateNameResponse.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith(
+      'foo',
+      {
+        name,
+      },
+      expect.anything()
+    );
+
+    const avatar = 'https://www.michael.png';
+    const updateAvatarResponse = await userRequest.patch('/users/foo').send({ avatar });
+    expect(updateAvatarResponse.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith(
+      'foo',
+      {
+        avatar,
+      },
+      expect.anything()
+    );
+  });
+
+  it('PATCH /users/:userId should throw when avatar URL is invalid', async () => {
+    const name = 'Michael';
+    const avatar = 'http://www.michael.png';
+
+    await expect(userRequest.patch('/users/foo').send({ avatar })).resolves.toHaveProperty(
+      'status',
+      200
+    );
+
+    await expect(
+      userRequest.patch('/users/foo').send({ name, avatar: 'non url' })
+    ).resolves.toHaveProperty('status', 400);
+  });
+
+  it('PATCH /users/:userId should throw if user cannot be found', async () => {
+    const name = 'Michael';
+    const avatar = 'http://www.michael.png';
+
+    findUserById.mockImplementationOnce(() => {
+      throw new Error(' ');
+    });
+
+    await expect(userRequest.patch('/users/foo').send({ name, avatar })).resolves.toHaveProperty(
+      'status',
+      500
+    );
+    expect(updateUserById).not.toBeCalled();
+  });
+
+  it('PATCH /users/:userId should throw if new username is already in use', async () => {
+    mockHasUser.mockImplementationOnce(async () => true);
+
+    await expect(
+      userRequest.patch('/users/foo').send({ username: 'test' })
+    ).resolves.toHaveProperty('status', 422);
+  });
+
+  it('PATCH /users/:userId should throw if new email has already linked to other accounts', async () => {
+    mockHasUserWithEmail.mockImplementationOnce(async () => true);
+
+    await expect(
+      userRequest.patch('/users/foo').send({ primaryEmail: 'test@email.com' })
+    ).resolves.toHaveProperty('status', 422);
+  });
+
+  it('PATCH /users/:userId should throw if new phone number has already linked to other accounts', async () => {
+    mockHasUserWithPhone.mockImplementationOnce(async () => true);
+
+    await expect(
+      userRequest.patch('/users/foo').send({ primaryPhone: '18688886666' })
+    ).resolves.toHaveProperty('status', 422);
+  });
+
+  it('PATCH /users/:userId/password', async () => {
+    const mockedUserId = 'foo';
+    const password = '1234asd$';
+    const response = await userRequest.patch(`/users/${mockedUserId}/password`).send({ password });
+    expect(findUserById).toHaveBeenCalledTimes(1);
+    const updateCalls = updateUserById.mock.calls as Array<[string, Partial<CreateUser>]>;
+    const passwordCall = updateCalls.find(([id]) => id === mockedUserId);
+    expect(typeof passwordCall?.[1].passwordEncrypted).toBe('string');
+    expect(passwordCall?.[1].passwordEncryptionMethod).toBe(UsersPasswordEncryptionMethod.Argon2i);
+    expect(typeof passwordCall?.[1].passwordUpdatedAt).toBe('number');
+    expect(passwordCall?.[1].isPasswordExpired).toBe(false);
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual({
+      ...mockUserResponse,
+    });
+  });
+
+  it('PATCH /users/:userId/password/expiration', async () => {
+    mockedQueries.signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      passwordExpiration: {
+        enabled: true,
+        validPeriodDays: 10,
+      },
+    });
+
+    const response = await userRequest
+      .patch('/users/foo/password/expiration')
+      .send({ isExpired: true });
+    expect(response.status).toEqual(200);
+    expect(updateUserById).toHaveBeenCalledWith('foo', {
+      isPasswordExpired: true,
+    });
+  });
+
+  it('PATCH /users/:userId/password/expiration should return 400 when expiration is disabled', async () => {
+    mockedQueries.signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      passwordExpiration: {
+        enabled: false,
+      },
+    });
+
+    const response = await userRequest
+      .patch('/users/foo/password/expiration')
+      .send({ isExpired: true });
+    expect(response.status).toEqual(400);
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /users/:userId/password/expiration should return 404 when user does not exist', async () => {
+    findUserById.mockRejectedValueOnce(
+      new RequestError({ code: 'user.user_not_exist', status: 404 })
+    );
+
+    const response = await userRequest
+      .patch('/users/foo/password/expiration')
+      .send({ isExpired: true });
+
+    expect(response.status).toEqual(404);
+    expect(mockedQueries.signInExperiences.findDefaultSignInExperience).not.toHaveBeenCalled();
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /users/:userId/password should throw if user cannot be found', async () => {
+    const notExistedUserId = 'notExistedUserId';
+    const dummyPassword = '1234asd$';
+
+    findUserById.mockImplementationOnce(async (userId) => {
+      if (userId === notExistedUserId) {
+        throw new Error(' ');
+      }
+
+      return mockUser;
+    });
+
+    await expect(
+      userRequest.patch(`/users/${notExistedUserId}/password`).send({ password: dummyPassword })
+    ).resolves.toHaveProperty('status', 500);
+    expect(encryptUserPassword).not.toHaveBeenCalled();
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('POST /users/:userId/password/verify', async () => {
+    const mockedUserId = 'foo';
+    const password = '1234asd$';
+    const response = await userRequest
+      .post(`/users/${mockedUserId}/password/verify`)
+      .send({ password });
+
+    expect(findUserById).toHaveBeenCalledWith(mockedUserId);
+    expect(verifyUserPassword).toHaveBeenCalledWith(mockUser, password);
+    expect(response.status).toEqual(204);
+  });
+
+  it('POST /users/:userId/password/verify should throw 400 if password is empty', async () => {
+    const password = '';
+    await expect(
+      userRequest.post(`/users/foo/password/verify`).send({ password })
+    ).resolves.toHaveProperty('status', 400);
+    expect(verifyUserPassword).not.toHaveBeenCalled();
+  });
+
+  it('POST /users/:userId/password/verify should throw if password is invalid', async () => {
+    const password = 'invalidPassword';
+    verifyUserPassword.mockImplementationOnce(async () => {
+      throw new RequestError({ code: 'session.invalid_credentials', status: 422 });
+    });
+    await expect(
+      userRequest.post(`/users/foo/password/verify`).send({ password })
+    ).resolves.toHaveProperty('status', 422);
+    expect(verifyUserPassword).toHaveBeenCalledWith(mockUser, password);
+  });
+
+  it('GET /users/:userId/has-password should return true if user has password', async () => {
+    const response = await userRequest.get(`/users/foo/has-password`);
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual({ hasPassword: true });
+  });
+
+  it('GET /users/:userId/has-password should return false if user does not have password', async () => {
+    findUserById.mockImplementationOnce(async () => ({ ...mockUser, passwordEncrypted: null }));
+    const response = await userRequest.get(`/users/foo/has-password`);
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual({ hasPassword: false });
+  });
+
+  it('PATCH /users/:userId/is-suspended', async () => {
+    const mockedUserId = 'foo';
+    const response = await userRequest
+      .patch(`/users/${mockedUserId}/is-suspended`)
+      .send({ isSuspended: true });
+    expect(updateUserById).toHaveBeenCalledWith(mockedUserId, { isSuspended: true });
+    expect(signOutUser).toHaveBeenCalledWith(mockedUserId);
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual({
+      ...mockUserResponse,
+      isSuspended: true,
+    });
+  });
+
+  it('DELETE /users/:userId', async () => {
+    const userId = 'fooUser';
+    const response = await userRequest.delete(`/users/${userId}`);
+    expect(response.status).toEqual(204);
+    expect(signOutUser).toHaveBeenCalledWith(userId);
+  });
+
+  it('DELETE /users/:userId should proceed with deletion when revocation times out', async () => {
+    const userId = 'fooUser';
+    signOutUser.mockRejectedValueOnce(new StatementTimeoutError(new Error('statement timeout')));
+    const response = await userRequest.delete(`/users/${userId}`);
+    expect(response.status).toEqual(204);
+    expect(deleteUserById).toHaveBeenCalledWith(userId);
+  });
+
+  it('DELETE /users/:userId should fail when revocation fails with a non-timeout error', async () => {
+    const userId = 'fooUser';
+    signOutUser.mockRejectedValueOnce(new Error('connection refused'));
+    const response = await userRequest.delete(`/users/${userId}`);
+    expect(response.status).toEqual(500);
+    expect(deleteUserById).not.toHaveBeenCalled();
+  });
+
+  it('DELETE /users/:userId should throw if user is deleting self', async () => {
+    const userId = 'foo';
+    const response = await userRequest.delete(`/users/${userId}`);
+    expect(response.status).toEqual(400);
+    expect(deleteUserIdentity).not.toHaveBeenCalled();
+  });
+
+  it('DELETE /users/:userId should throw if user cannot be found', async () => {
+    const notExistedUserId = 'notExistedUserId';
+
+    deleteUserById.mockImplementationOnce((userId) => {
+      if (userId === notExistedUserId) {
+        throw new Error(' ');
+      }
+    });
+
+    await expect(userRequest.delete(`/users/${notExistedUserId}`)).resolves.toHaveProperty(
+      'status',
+      500
+    );
+  });
+});
+/* eslint-enable max-lines */

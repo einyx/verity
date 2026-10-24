@@ -1,0 +1,234 @@
+import { AccountCenterControlValue, type SignInExperience, userProfileKeys } from '@logto/schemas';
+import { useCallback, useMemo, type ChangeEvent } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
+
+import FormCard from '@/components/FormCard';
+import PageMeta from '@/components/PageMeta';
+import CodeEditor from '@/ds-components/CodeEditor';
+import FormField from '@/ds-components/FormField';
+import InlineNotification from '@/ds-components/InlineNotification';
+import type { Option } from '@/ds-components/Select';
+import Switch from '@/ds-components/Switch';
+import TextLink from '@/ds-components/TextLink';
+
+import type {
+  AccountCenterFormValues,
+  AccountCenterFieldKey,
+  SignInExperienceForm,
+} from '../../types';
+import SignInExperienceTabWrapper from '../components/SignInExperienceTabWrapper';
+
+import AccountCenterField from './AccountCenterField';
+import DeleteAccountUrlField from './DeleteAccountUrlField';
+import IntegratePrebuiltUi from './IntegratePrebuiltUi';
+import SecretVaultSection from './SecretVaultSection';
+import WebauthnRelatedOriginsField from './WebauthnRelatedOriginsField';
+import { accountCenterSections } from './constants';
+import styles from './index.module.scss';
+
+type Props = {
+  readonly isActive: boolean;
+  readonly data: SignInExperience;
+};
+
+function AccountCenter({ isActive, data }: Props) {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const {
+    watch,
+    setValue,
+    control,
+    formState: { isSubmitting },
+  } = useFormContext<SignInExperienceForm & { accountCenter: AccountCenterFormValues }>();
+
+  const fieldOptions = useMemo<Array<Option<AccountCenterControlValue>>>(
+    () => [
+      {
+        value: AccountCenterControlValue.Off,
+        title: t('sign_in_exp.account_center.field_options.off'),
+      },
+      {
+        value: AccountCenterControlValue.Edit,
+        title: t('sign_in_exp.account_center.field_options.edit'),
+      },
+      {
+        value: AccountCenterControlValue.ReadOnly,
+        title: t('sign_in_exp.account_center.field_options.read_only'),
+      },
+    ],
+    [t]
+  );
+
+  const { enabled, fields } = watch('accountCenter');
+  const isAccountApiEnabled = enabled;
+
+  const isMfaEnabled = useMemo(() => {
+    return data.mfa.factors.length > 0;
+  }, [data.mfa]);
+
+  // When passkey sign-in is enabled, passkey can serve as a verification method, so the
+  // "no MFA factor configured" warning on the MFA field is no longer relevant.
+  const isPasskeySignInEnabled = Boolean(data.passkeySignIn.enabled);
+
+  const handleToggle = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setValue('accountCenter.enabled', event.target.checked, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleFieldChange = useCallback(
+    (field: AccountCenterFieldKey, value?: AccountCenterControlValue) => {
+      if (!value) {
+        return;
+      }
+
+      setValue(`accountCenter.fields.${field}`, value, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const profileFieldKeySet = useMemo(() => new Set<string>([...userProfileKeys, 'fullname']), []);
+
+  const getProfileFieldControlKey = useCallback(
+    (fieldName: string): AccountCenterFieldKey => {
+      if (fieldName === 'name' || fieldName === 'avatar') {
+        return fieldName;
+      }
+      if (profileFieldKeySet.has(fieldName)) {
+        return 'profile';
+      }
+      return 'customData';
+    },
+    [profileFieldKeySet]
+  );
+
+  const getProfileFieldDisabledReason = useCallback(
+    (fieldName: string): string | undefined => {
+      const controlKey = getProfileFieldControlKey(fieldName);
+      const controlValue = fields[controlKey];
+
+      if (controlValue !== AccountCenterControlValue.Off) {
+        return undefined;
+      }
+
+      switch (controlKey) {
+        case 'name': {
+          return t('sign_in_exp.account_center.profile_fields.disabled_hint.name');
+        }
+        case 'avatar': {
+          return t('sign_in_exp.account_center.profile_fields.disabled_hint.avatar');
+        }
+        case 'profile': {
+          return t('sign_in_exp.account_center.profile_fields.disabled_hint.profile');
+        }
+        default: {
+          return t('sign_in_exp.account_center.profile_fields.disabled_hint.custom_data');
+        }
+      }
+    },
+    [fields, getProfileFieldControlKey, t]
+  );
+
+  return (
+    <SignInExperienceTabWrapper isActive={isActive}>
+      {isActive && (
+        <PageMeta titleKey={['sign_in_exp.tabs.account_center', 'sign_in_exp.page_title']} />
+      )}
+      <FormCard
+        title="sign_in_exp.account_center.title"
+        description="sign_in_exp.account_center.description"
+        learnMoreLink={{ href: 'end-user-flows/account-settings/by-account-api' }}
+      >
+        <div className={styles.cardContent}>
+          <FormField title="sign_in_exp.account_center.enable_account_api" headlineSpacing="large">
+            <Switch
+              checked={enabled}
+              disabled={isSubmitting}
+              description="sign_in_exp.account_center.enable_account_api_description"
+              onChange={handleToggle}
+            />
+          </FormField>
+        </div>
+      </FormCard>
+      <IntegratePrebuiltUi getProfileFieldDisabledReason={getProfileFieldDisabledReason} />
+      {accountCenterSections.map((section) => (
+        <FormCard key={section.key} title={section.title} description={section.description}>
+          <div className={styles.cardContent}>
+            {section.key === 'accountSecurity' && (
+              <FormField
+                title="sign_in_exp.account_center.sections.account_security.security_verification.title"
+                headlineSpacing="large"
+              >
+                <InlineNotification variant="plain" hasIcon={false}>
+                  <Trans
+                    components={{
+                      strong: <strong />,
+                      a: (
+                        <TextLink
+                          targetBlank="noopener"
+                          href="https://docs.meshx.io/end-user-flows/account-settings/by-account-api#get-a-verification-record-id"
+                        />
+                      ),
+                    }}
+                  >
+                    {t(
+                      'sign_in_exp.account_center.sections.account_security.security_verification.description'
+                    )}
+                  </Trans>
+                </InlineNotification>
+              </FormField>
+            )}
+            {section.groups.map((group) => (
+              <FormField key={group.key} title={group.title} headlineSpacing="large">
+                <div className={styles.groupFields}>
+                  {group.items.map((item) => (
+                    <AccountCenterField
+                      key={item.key}
+                      item={item}
+                      value={fields[item.key]}
+                      isMfaEnabled={isMfaEnabled}
+                      isPasskeySignInEnabled={isPasskeySignInEnabled}
+                      isGlobalDisabled={!isAccountApiEnabled}
+                      fieldOptions={fieldOptions}
+                      onChange={handleFieldChange}
+                    />
+                  ))}
+                </div>
+              </FormField>
+            ))}
+            {section.key === 'accountSecurity' && (
+              <>
+                <WebauthnRelatedOriginsField isAccountApiEnabled={isAccountApiEnabled} />
+                <DeleteAccountUrlField isAccountApiEnabled={isAccountApiEnabled} />
+              </>
+            )}
+          </div>
+        </FormCard>
+      ))}
+      <SecretVaultSection isAccountApiEnabled={isAccountApiEnabled} />
+      <FormCard
+        title="sign_in_exp.account_center.custom_css.title"
+        description="sign_in_exp.account_center.custom_css.description"
+      >
+        <FormField title="sign_in_exp.custom_ui.css_code_editor_field_title">
+          <Controller
+            name="accountCenter.customCss"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <CodeEditor
+                className={styles.cssEditor}
+                language="scss"
+                value={value ?? undefined}
+                placeholder={t('sign_in_exp.custom_ui.css_code_editor_content_placeholder')}
+                onChange={onChange}
+              />
+            )}
+          />
+        </FormField>
+      </FormCard>
+    </SignInExperienceTabWrapper>
+  );
+}
+
+export default AccountCenter;

@@ -1,0 +1,12 @@
+@use '@/scss/underscore' as _;
+
+.checkboxes {
+  > :not(:first-child) {
+    margin-top: _.unit(3);
+  }
+}
+
+.inlineNote {
+  margin-top: _.unit(3);
+  padding: _.unit(3) _.unit(4);
+}

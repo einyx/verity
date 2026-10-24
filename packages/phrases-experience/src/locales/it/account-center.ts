@@ -1,0 +1,310 @@
+/* eslint-disable max-lines -- Locale catalog mirrors the complete Account Center phrase schema. */
+const account_center = {
+  home: {
+    title: 'Pagina non trovata',
+    description: 'Questa pagina non è disponibile.',
+  },
+  page: {
+    title: 'Account utente',
+    security_title: 'Sicurezza',
+    security_description:
+      'Modifica qui le impostazioni del tuo account per garantirne la sicurezza.',
+    profile_title: 'Informazioni personali',
+    profile_description: 'Modifica qui le tue informazioni personali.',
+    sidebar_personal_info: 'Informazioni personali',
+    sidebar_security: 'Sicurezza',
+    sidebar_sessions: 'Sessioni',
+    support: 'Supporto',
+    user_menu: 'Menu utente',
+    sign_out: 'Esci',
+  },
+  verification: {
+    title: 'Verifica di sicurezza',
+    description:
+      'Conferma che sei tu per proteggere la sicurezza del tuo account. Seleziona il metodo per verificare la tua identità.',
+    error_send_failed: 'Invio del codice di verifica non riuscito. Riprova più tardi.',
+    error_invalid_code: 'Il codice di verifica non è valido o è scaduto.',
+    error_verify_failed: 'Verifica non riuscita. Inserisci di nuovo il codice.',
+    verification_required: 'Verifica scaduta. Conferma di nuovo la tua identità.',
+    try_another_method: 'Prova un altro metodo di verifica',
+    no_available_methods_title: 'Nessun metodo di verifica disponibile',
+    no_available_methods_description:
+      'Non hai configurato alcun metodo di verifica. Aggiungi prima una password, un indirizzo e-mail o un numero di telefono al tuo account.',
+  },
+  password_verification: {
+    title: 'Verifica la password',
+    description:
+      'Per proteggere il tuo account, inserisci la password per confermare la tua identità.',
+    error_failed: 'Password errata. Controlla il tuo inserimento.',
+  },
+  verification_method: {
+    password: {
+      name: 'Password',
+      description: 'Verifica la tua password',
+    },
+    email: {
+      name: 'Codice di verifica e-mail',
+      description: 'Invia il codice di verifica alla tua e-mail',
+    },
+    phone: {
+      name: 'Codice di verifica telefonico',
+      description: 'Invia il codice di verifica al tuo numero di telefono',
+    },
+  },
+  email: {
+    title: "Collega l'email",
+    description: "Collega la tua email per accedere o per aiutare con il recupero dell'account.",
+    verification_title: 'Inserisci il codice di verifica e-mail',
+    verification_description:
+      'Il codice di verifica è stato inviato alla tua e-mail {{email_address}}.',
+    success: 'Email principale collegata correttamente.',
+    verification_required: 'Verifica scaduta. Conferma di nuovo la tua identità.',
+  },
+  phone: {
+    title: 'Collega numero di telefono',
+    description:
+      "Collega il tuo numero di telefono per accedere o aiutare con il recupero dell'account.",
+    verification_title: 'Inserisci il codice di verifica SMS',
+    verification_description:
+      'Il codice di verifica è stato inviato al tuo telefono {{phone_number}}.',
+    success: 'Telefono principale collegato correttamente.',
+    verification_required: 'Verifica scaduta. Conferma di nuovo la tua identità.',
+  },
+  username: {
+    title: 'Imposta nome utente',
+    description: 'Il nome utente può contenere solo lettere, numeri e trattini bassi.',
+    policy_description: '{{requirements}}',
+    success: 'Nome utente aggiornato con successo.',
+  },
+  security: {
+    add: 'Aggiungi',
+    change: 'Modifica',
+    remove: 'Rimuovi',
+    not_set: 'Non impostato',
+    social_sign_in: 'Accesso social',
+    social_not_linked: 'Non collegato',
+    email_phone: 'Posta elettronica / Telefono',
+    email: 'Posta elettronica',
+    phone: 'Telefono',
+    password: "Parola d'accesso",
+    configured: 'Configurato',
+    not_configured: 'Non configurato',
+    two_step_verification: 'Verifica in due passaggi',
+    authenticator_app: 'App di autenticazione',
+    passkeys: 'Passkeys',
+    backup_codes: 'Codici di backup',
+    email_verification_code: 'Codice di verifica e-mail',
+    phone_verification_code: 'Codice di verifica telefonico',
+    passkeys_count_one: '{{count}} passkey',
+    passkeys_count_other: '{{count}} passkey',
+    backup_codes_count_one: '{{count}} codice rimanente',
+    backup_codes_count_other: '{{count}} codici rimanenti',
+    view: 'Visualizza',
+    manage: 'Gestisci',
+    turn_on_2_step_verification_description:
+      "Aggiungi un ulteriore livello di sicurezza. Ti verrà richiesto un secondo passaggio di verifica all'accesso.",
+    turn_off_2_step_verification: 'Disattiva la verifica in due passaggi',
+    turn_off_2_step_verification_description:
+      "La disattivazione della verifica in due passaggi rimuoverà il livello di protezione aggiuntivo dal tuo account all'accesso. Sei sicuro di voler continuare?",
+    disable_2_step_verification: 'Disattiva',
+    no_verification_method_warning:
+      "Non hai aggiunto un secondo metodo di verifica. Aggiungine almeno uno per attivare la verifica in due passaggi all'accesso.",
+    passkey_sign_in_prompt: 'Richiedi la configurazione di un passkey',
+    passkey_sign_in_prompt_description:
+      'Quando è attivo, ti verrà chiesto di configurare un passkey per un accesso più rapido e sicuro.',
+    account_removal: "Eliminazione dell'account",
+    delete_your_account: 'Elimina il tuo account',
+    delete_account: "Elimina l'account",
+    remove_username_confirmation_title: 'Rimuovi il nome utente',
+    remove_username_confirmation_description:
+      'Una volta rimosso, non potrai più accedere con questo nome utente. Sei sicuro di voler continuare?',
+    remove_email_confirmation_title: "Rimuovi l'indirizzo email",
+    remove_email_confirmation_description:
+      'Una volta rimosso, non potrai più accedere con questo indirizzo email. Sei sicuro di voler continuare?',
+    remove_phone_confirmation_title: 'Rimuovi il numero di telefono',
+    remove_phone_confirmation_description:
+      'Una volta rimosso, non potrai più accedere con questo numero di telefono. Sei sicuro di voler continuare?',
+    email_removed: "L'indirizzo email è stato rimosso con successo.",
+    phone_removed: 'Il numero di telefono è stato rimosso con successo.',
+    username_removed: 'Il nome utente è stato rimosso con successo.',
+    trusted_devices: {
+      title: 'Dispositivi attendibili MFA',
+      current_device: 'Dispositivo attuale',
+      expires_on: 'Scade il {{date}}',
+      unknown_location: 'Posizione sconosciuta',
+      remove: 'Rimuovi',
+      removed: 'Dispositivo attendibile rimosso correttamente.',
+      loading: 'Caricamento...',
+      empty: 'Nessun dispositivo attendibile.',
+      load_failed: 'Impossibile caricare i dispositivi attendibili. Riprova.',
+      retry: 'Riprova',
+      remove_confirmation_title: 'Rimuovere il dispositivo attendibile?',
+      remove_confirmation_description:
+        'Al prossimo accesso su questo dispositivo dovrai completare nuovamente la MFA. La sessione attuale resterà attiva.',
+    },
+  },
+  social: {
+    linked: '{{connector}} collegato con successo.',
+    not_enabled:
+      'Questo metodo di accesso social non è abilitato. Contatta il tuo amministratore per assistenza.',
+    removed: '{{connector}} rimosso con successo.',
+    remove_confirmation_title: 'Rimuovi account social',
+    remove_confirmation_description:
+      'Se rimuovi {{connector}}, potresti non riuscire più ad accedere con questo account finché non lo aggiungi di nuovo.',
+  },
+  password: {
+    title: 'Imposta password',
+    description: 'Crea una nuova password per proteggere il tuo account.',
+    success: 'Password aggiornata con successo.',
+  },
+  code_verification: {
+    send: 'Invia codice di verifica',
+    resend: "Non l'hai ricevuto? <a>Reinvia il codice di verifica</a>",
+    resend_countdown: "Non l'hai ricevuto? Reinvia dopo {{seconds}} s.",
+  },
+  email_verification: {
+    title: 'Verifica la tua e-mail',
+    prepare_description:
+      'Conferma che sei tu per proteggere la sicurezza del tuo account. Invia il codice di verifica alla tua e-mail.',
+    email_label: 'Indirizzo email',
+    send: 'Invia codice di verifica',
+    description:
+      "Il codice di verifica è stato inviato all'e-mail {{email}}. Inserisci il codice per continuare.",
+    resend: "Non l'hai ricevuto? <a>Reinvia il codice di verifica</a>",
+    not_received: "Non l'hai ricevuto?",
+    resend_action: 'Reinvia il codice di verifica',
+    resend_countdown: "Non l'hai ricevuto? Reinvia dopo {{seconds}} s.",
+    error_send_failed: 'Invio del codice di verifica non riuscito. Riprova più tardi.',
+    error_verify_failed: 'Verifica non riuscita. Inserisci di nuovo il codice.',
+    error_invalid_code: 'Il codice di verifica non è valido o è scaduto.',
+  },
+  phone_verification: {
+    title: 'Verifica il tuo telefono',
+    prepare_description:
+      'Conferma che sei tu per proteggere la sicurezza del tuo account. Invia il codice di verifica al tuo telefono.',
+    phone_label: 'Numero di telefono',
+    send: 'Invia codice di verifica',
+    description:
+      'Il codice di verifica è stato inviato al tuo telefono {{phone}}. Inserisci il codice per continuare.',
+    resend: "Non l'hai ricevuto? <a>Reinvia il codice di verifica</a>",
+    resend_countdown: "Non l'hai ricevuto? Reinvia dopo {{seconds}} s.",
+    error_send_failed: 'Invio del codice di verifica non riuscito. Riprova più tardi.',
+    error_verify_failed: 'Verifica non riuscita. Inserisci di nuovo il codice.',
+    error_invalid_code: 'Il codice di verifica non è valido o è scaduto.',
+  },
+  mfa: {
+    totp_already_added:
+      "Hai già aggiunto un'app di autenticazione. Rimuovi prima quella esistente.",
+    totp_not_enabled:
+      "L'app di autenticazione OTP non è abilitata. Per assistenza, contatta il tuo amministratore.",
+    backup_code_already_added:
+      'Hai già codici di backup attivi. Utilizzali o rimuovili prima di generarne di nuovi.',
+    backup_code_not_enabled:
+      'Il codice di backup non è abilitato. Per assistenza, contatta il tuo amministratore.',
+    backup_code_requires_other_mfa:
+      'I codici di backup richiedono che venga prima configurato un altro metodo MFA.',
+    passkey_not_enabled: 'Passkey non è abilitato. Per assistenza, contatta il tuo amministratore.',
+    passkey_already_registered:
+      'Questa passkey è già registrata nel tuo account. Utilizza un autenticatore diverso.',
+  },
+  update_success: {
+    default: {
+      title: 'Aggiornato!',
+      description: 'Le tue informazioni sono state aggiornate.',
+    },
+    email: {
+      title: 'Email aggiornata!',
+      description: 'Il tuo indirizzo email è stato aggiornato con successo.',
+    },
+    phone: {
+      title: 'Numero di telefono aggiornato!',
+      description: 'Il tuo numero di telefono è stato aggiornato con successo.',
+    },
+    username: {
+      title: 'Nome utente cambiato!',
+      description: 'Il tuo nome utente è stato aggiornato con successo.',
+    },
+    password: {
+      title: 'Password cambiata!',
+      description: 'La tua password è stata aggiornata con successo.',
+    },
+    totp: {
+      title: 'App di autenticazione aggiunta!',
+      description: 'La tua app di autenticazione è stata collegata con successo al tuo account.',
+    },
+    totp_replaced: {
+      title: 'App di autenticazione sostituita!',
+      description: 'La tua app di autenticazione è stata sostituita con successo.',
+    },
+    backup_code: {
+      title: 'Codici di backup generati!',
+      description: 'I tuoi codici di backup sono stati salvati. Conservali in un luogo sicuro.',
+    },
+    passkey: {
+      title: 'Passkey aggiunto!',
+      description: 'Il tuo passkey è stato collegato con successo al tuo account.',
+    },
+    social: {
+      title: 'Account social collegato!',
+      description: 'Il tuo account social è stato collegato con successo.',
+    },
+  },
+  backup_code: {
+    title: 'Codici di backup',
+    description:
+      'Puoi utilizzare uno di questi codici di backup per accedere al tuo account se hai problemi durante la verifica in due passaggi in altri modi. Ogni codice può essere utilizzato una sola volta.',
+    copy_hint: 'Assicurati di copiarli e salvarli in un luogo sicuro.',
+    generate_new_title: 'Genera nuovi codici di backup',
+    generate_new: 'Genera nuovi codici di backup',
+  },
+  passkey: {
+    title: 'Passkeys',
+    added: 'Aggiunto: {{date}}',
+    last_used: 'Ultimo utilizzo: {{date}}',
+    never_used: 'Mai',
+    unnamed: 'Passkey senza nome',
+    renamed: 'Passkey rinominato con successo.',
+    deleted: 'Passkey rimosso con successo.',
+    add_another_title: 'Aggiungi un altro passkey',
+    add_another_description:
+      'Registra il tuo passkey utilizzando la biometria del dispositivo, le chiavi di sicurezza (es. YubiKey) o altri metodi disponibili.',
+    add_passkey: 'Aggiungi un passkey',
+    delete_confirmation_title: 'Rimuovi la tua passkey',
+    delete_confirmation_description:
+      'Se rimuovi questa passkey, non potrai più utilizzarla per la verifica.',
+    rename_passkey: 'Rinomina passkey',
+    rename_description: 'Inserisci un nuovo nome per questa passkey.',
+    name_this_passkey: 'Nomina questa passkey del dispositivo',
+    name_passkey_description:
+      "Hai verificato con successo questo dispositivo per l'autenticazione a due fattori. Personalizza il nome per riconoscerlo se hai più chiavi.",
+    name_input_label: 'Nome',
+  },
+  sessions: {
+    page_title: 'Sessioni',
+    page_description:
+      'Gestisci le tue sessioni attive e le applicazioni di terze parti autorizzate.',
+    title: 'Sessioni',
+    current_session: 'Sessione corrente',
+    signed_in_at: 'Accesso effettuato {{date}}',
+    revoke_session: 'Disconnetti',
+    revoke_session_title: 'Disconnetti sessione',
+    revoke_session_description:
+      'Questo disconnetterà la sessione e revocherà tutti gli accessi associati. Sei sicuro di voler continuare?',
+    no_other_sessions: 'Nessuna altra sessione attiva.',
+    loading: 'Caricamento...',
+    third_party_apps_title: 'App di terze parti',
+    no_third_party_apps: 'Nessuna applicazione di terze parti autorizzata.',
+    third_party_apps_load_failed: 'Impossibile caricare le app di terze parti. Riprova.',
+    granted_at: 'Autorizzato {{date}}',
+    dynamic_app: 'App dinamica',
+    client_id: 'ID client: {{clientId}}',
+    revoke_grant: 'Rimuovi',
+    revoke_grant_title: 'Rimuovi accesso app di terze parti',
+    revoke_grant_description:
+      "Questo revocherà l'accesso concesso a questa applicazione. I token di accesso già emessi potrebbero restare validi fino alla loro scadenza. Sei sicuro di voler continuare?",
+    revoke_grant_failed: 'Revoca di alcune autorizzazioni non riuscita. Riprova.',
+  },
+};
+
+export default Object.freeze(account_center);
+/* eslint-enable max-lines */

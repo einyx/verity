@@ -152,14 +152,14 @@ jobs:
           fetch-depth: 0
           path: ./fresh
 
-      # Fetch the current version by finding the latest tag starts with "v", e.g. "v1.0.0-beta.19"
-      - id: version
+      - name: Select released migration baseline
+        id: version
         working-directory: ./fresh
-        run: echo "current=$(git describe --match "@logto/core@*" --abbrev=0)" >> $GITHUB_OUTPUT
+        run: node .scripts/select-alteration-baseline.js
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.version.outputs.current }}
+          ref: ${{ steps.version.outputs.tag }}
           path: ./alteration
       # ** End **
 
@@ -224,8 +224,9 @@ jobs:
 
       - name: Revert fresh database to old
         working-directory: ./fresh
-        run: pnpm cli db alt r v$(echo ${{ steps.version.outputs.current }} | cut -d@ -f3)
+        run: pnpm cli db alt r "v$BASELINE_VERSION"
         env:
+          BASELINE_VERSION: ${{ steps.version.outputs.version }}
           ALTERATION_TEST: true
           DB_URL: postgres://postgres:postgres@localhost:5432/fresh
 

@@ -1,8 +1,9 @@
+// eslint-disable-next-line unicorn/prevent-abbreviations -- The test filename mirrors the existing documentation module path.
 import {
   buildDocumentsQuery,
   chunkSection,
-  createDocsSearch,
-  formatDocsContext,
+  createDocsSearch as createDocumentationSearch,
+  formatDocsContext as formatDocumentationContext,
   parseIndexUrls,
   parseSections,
 } from './landing-page-docs.js';
@@ -116,7 +117,7 @@ describe('createDocsSearch', () => {
   const fetchText = async (url: string) => (url.endsWith('llms.txt') ? '' : fullText);
 
   it('returns the best matching section above the threshold', async () => {
-    const search = createDocsSearch({ fetchText, embed });
+    const search = createDocumentationSearch({ fetchText, embed });
     const hits = await search.search('how does lineage work');
 
     expect(hits[0]?.title).toBe('Lineage');
@@ -124,38 +125,34 @@ describe('createDocsSearch', () => {
   });
 
   it('returns nothing for a question with no close match', async () => {
-    const search = createDocsSearch({ fetchText, embed });
+    const search = createDocumentationSearch({ fetchText, embed });
 
     expect(await search.search('what about the weather')).toEqual([]);
   });
 
   it('fails soft when the docs cannot be fetched, and waits before retrying', async () => {
-    let calls = 0;
     // Each load asks for the full export and the index, so only the export is counted as one attempt.
-    const failing = async (url: string) => {
-      if (url.endsWith('llms-full.txt')) {
-        calls += 1;
-      }
+    const failing = import.meta.jest.fn(async (url: string) => {
       throw new Error('offline');
-    };
-    let clock = 0;
-    const search = createDocsSearch({ fetchText: failing, embed, now: () => clock });
+    });
+    const now = import.meta.jest.fn(() => 0);
+    const search = createDocumentationSearch({ fetchText: failing, embed, now });
 
     expect(await search.search('lineage')).toEqual([]);
     expect(await search.search('lineage')).toEqual([]);
-    expect(calls).toBe(1);
+    expect(failing.mock.calls.filter(([url]) => url.endsWith('llms-full.txt'))).toHaveLength(1);
 
-    clock += 11 * 60 * 1000;
+    now.mockReturnValue(11 * 60 * 1000);
     await search.search('lineage');
-    expect(calls).toBe(2);
+    expect(failing.mock.calls.filter(([url]) => url.endsWith('llms-full.txt'))).toHaveLength(2);
   });
 });
 
 describe('formatDocsContext', () => {
   it('returns nothing without hits, and marks excerpts as reference text', () => {
-    expect(formatDocsContext([])).toBeUndefined();
+    expect(formatDocumentationContext([])).toBeUndefined();
 
-    const context = formatDocsContext([
+    const context = formatDocumentationContext([
       {
         title: 'Lineage',
         url: 'https://docs.meshx.io/lineage',

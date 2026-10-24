@@ -66,7 +66,8 @@ const moderateWithModel = async (text: string): Promise<boolean> => {
   }
 
   const body: unknown = await response.json();
-  const content = isRecord(body) && Array.isArray(body.choices) ? body.choices[0] : undefined;
+  const content: unknown =
+    isRecord(body) && Array.isArray(body.choices) ? body.choices[0] : undefined;
   const message =
     isRecord(content) && isRecord(content.message) ? content.message.content : undefined;
 

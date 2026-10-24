@@ -2,6 +2,8 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import request from 'supertest';
 
+import { type WithAuthContext } from '#src/middleware/koa-auth/types.js';
+
 import { type McpPortalStores, registerMcpPortalRoutes } from './mcp-portal.js';
 import { type ManagementApiRouter } from './types.js';
 
@@ -23,7 +25,9 @@ const createApp = (overrides: Partial<McpPortalStores> = {}) => {
   const stores = {
     portals: {
       list: jest.fn(async () => [portal]),
-      findByHostname: jest.fn(async () => {}),
+      findByHostname: jest.fn(async () => {
+        // No portal matches a hostname in these admin-route fixtures.
+      }),
       findById: jest.fn(async (id: string) => (id === portal.id ? portal : undefined)),
       add: jest.fn(async (input: { name: string; hostname: string }) => ({
         ...portal,
@@ -40,10 +44,14 @@ const createApp = (overrides: Partial<McpPortalStores> = {}) => {
     },
     upstreams: {
       listForPortal: jest.fn(async () => []),
-      findForPortal: jest.fn(async () => {}),
+      findForPortal: jest.fn(async () => {
+        // No upstream exists in this fixture.
+      }),
       add: jest.fn(),
       remove: jest.fn(async () => false),
-      update: jest.fn(async () => {}),
+      update: jest.fn(async () => {
+        // Updates are not exercised by these fixtures.
+      }),
     },
     ...overrides,
   } as unknown as McpPortalStores;
@@ -53,7 +61,8 @@ const createApp = (overrides: Partial<McpPortalStores> = {}) => {
   registerMcpPortalRoutes(router, async () => stores);
   app.use(async (ctx, next) => {
     // Stands in for Logto's management auth, which sets ctx.auth before these routes run.
-    ctx.auth = { id: 'admin-1' } as typeof ctx.auth;
+    const auth: WithAuthContext['auth'] = { type: 'user', id: 'admin-1', scopes: new Set() };
+    ctx.auth = auth;
     return next();
   });
   app.use(router.routes()).use(router.allowedMethods());
@@ -180,10 +189,14 @@ describe('mcp-portal admin routes', () => {
     const { callback, stores } = createApp({
       upstreams: {
         listForPortal: jest.fn(async () => [{ name: 'kubo', portalId: portal.id }]),
-        findForPortal: jest.fn(async () => {}),
+        findForPortal: jest.fn(async () => {
+          // No upstream lookup is needed during removal.
+        }),
         add: jest.fn(),
         remove,
-        update: jest.fn(async () => {}),
+        update: jest.fn(async () => {
+          // Updates are not exercised during removal.
+        }),
       } as unknown as McpPortalStores['upstreams'],
     });
 

@@ -23,6 +23,7 @@ import type { AnonymousRouter, RouterInitArgs } from './types.js';
 const requiredScope = 'mcp:use';
 const audit = createAudit();
 
+// eslint-disable-next-line import/no-unused-modules -- Public injection contract for endpoint consumers and tests.
 export type McpPortalEndpointDeps = {
   /** The stores for this request. Production reads the database; tests pass fakes. */
   load: () => Promise<McpPortalStores>;
@@ -59,13 +60,15 @@ const verifiedCaller = async (token: string, hostname: string, issuer: string) =
     requiredScope,
   });
 
-  return verify(token).catch((error: unknown) => {
+  try {
+    return await verify(token);
+  } catch (error: unknown) {
     if (error instanceof AuthError) {
       return;
     }
 
     throw error;
-  });
+  }
 };
 
 /** The caller's organizations that are granted to the portal. Undefined means the caller is refused. */
@@ -123,7 +126,8 @@ const parseBody = (raw: string): { value: unknown } | undefined => {
   }
 
   try {
-    return { value: JSON.parse(raw) as unknown };
+    const value: unknown = JSON.parse(raw);
+    return { value };
   } catch {
     return undefined;
   }

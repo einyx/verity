@@ -85,7 +85,7 @@ const BackupCodeBinding = ({ isRegenerate }: Props) => {
       }
 
       if (hasBackupCode && !isRegenerate) {
-        navigate(backupCodesManageRoute, { replace: true });
+        await navigate(backupCodesManageRoute, { replace: true });
       }
     };
 
@@ -192,7 +192,7 @@ const BackupCodeBinding = ({ isRegenerate }: Props) => {
       return;
     }
 
-    navigate(backupCodesSuccessRoute, { replace: true });
+    await navigate(backupCodesSuccessRoute, { replace: true });
   }, [
     addBackupCodeRequest,
     codes,
@@ -260,7 +260,9 @@ const BackupCodeBinding = ({ isRegenerate }: Props) => {
     >
       <div className={styles.container}>
         <div className={styles.backupCodes}>
-          {codes?.map((code) => <span key={code}>{code}</span>)}
+          {codes?.map((code) => (
+            <span key={code}>{code}</span>
+          ))}
         </div>
         <div className={styles.actions}>
           <Button

@@ -2,11 +2,15 @@ import { type CommonQueryMethods } from '@silverhand/slonik';
 
 import { canManageTenants, tenantAccessPolicyBody } from './cloud-tenant-access.js';
 
-const poolWith = (...answers: unknown[]) => {
-  const queue = [...answers];
-  const maybeOne = async () => queue.shift();
+const { jest } = import.meta;
 
-  return { maybeOne, query: async () => {} } as unknown as CommonQueryMethods;
+const poolWith = (...answers: unknown[]) => {
+  const maybeOne = jest.fn<Promise<unknown>, unknown[]>();
+  for (const answer of answers) {
+    maybeOne.mockResolvedValueOnce(answer);
+  }
+
+  return { maybeOne, query: jest.fn() } as unknown as CommonQueryMethods;
 };
 
 describe('canManageTenants', () => {

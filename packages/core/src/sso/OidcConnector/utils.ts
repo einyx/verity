@@ -32,7 +32,9 @@ import {
  */
 const describeRequestError = (error: unknown) => {
   if (error instanceof HTTPError) {
-    return { statusCode: error.response.statusCode, body: error.response.body };
+    // eslint-disable-next-line prefer-destructuring -- Keep Got's any-typed body explicitly unknown until it is serialized.
+    const body: unknown = error.response.body;
+    return { statusCode: error.response.statusCode, body };
   }
 
   return error instanceof Error ? `${error.name}: ${error.message}` : error;

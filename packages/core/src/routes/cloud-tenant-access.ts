@@ -6,6 +6,7 @@ import { z } from 'zod/v3';
 // primary email is on the allow-list. The allow-list is set from the admin tenant's console and stored in
 // the admin tenant's own config, so the console is the only place it can change.
 
+// eslint-disable-next-line import/no-unused-modules -- Retain the exported default policy for existing consumers.
 export const defaultTenantAccessDomains = ['meshx.io'] as const;
 
 const configKey = 'cloud_tenant_access';
@@ -60,7 +61,8 @@ export const canManageTenants = async (pool: Pool, userId: string): Promise<bool
     return true;
   }
 
-  const user = await pool.maybeOne<{ primaryEmail: string | undefined }>(sql`
+  // eslint-disable-next-line @typescript-eslint/ban-types -- SQL NULL is a real database value, not an omitted field.
+  const user = await pool.maybeOne<{ primaryEmail: string | null }>(sql`
     select primary_email as "primaryEmail"
     from users
     where tenant_id = ${adminTenantId} and id = ${userId}

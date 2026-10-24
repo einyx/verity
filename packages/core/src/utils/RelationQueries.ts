@@ -34,6 +34,15 @@ type CamelCaseIdObject<T extends string> = KeysToCamelCase<{
   [Key in `${T}_id`]: string;
 }>;
 
+// KeysToCamelCase's conditional mapped type loses its string-valued index signature for generic T.
+const relationIds = <T extends string>(data: CamelCaseIdObject<T>): Record<string, string> =>
+  // eslint-disable-next-line no-restricted-syntax -- Only widens keys of the existing string-ID contract; SQL still binds every value.
+  data as Record<string, string>;
+
+const relationId = <T extends string>(data: CamelCaseIdObject<T>, tableSingular: T): string =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Each schema's ID key is required by CamelCaseIdObject<T>.
+  relationIds(data)[camelCase(tableSingular + '_id')]!;
+
 /** Options for getting entities in a table. */
 export type GetEntitiesOptions = {
   limit: number;
@@ -136,10 +145,7 @@ export default class RelationQueries<
         data.map(
           (relation) =>
             sql`(${sql.join(
-              this.schemas.map(
-                // @ts-expect-error `tableSingular` loses its type here
-                ({ tableSingular }) => sql`${relation[camelCase(tableSingular + '_id')]}`
-              ),
+              this.schemas.map(({ tableSingular }) => sql`${relationId(relation, tableSingular)}`),
               sql`, `
             )})`
         ),
@@ -163,11 +169,11 @@ export default class RelationQueries<
    * ```
    */
   async delete(data: CamelCaseIdObject<Schemas[number]['tableSingular']>) {
-    const snakeCaseData = snakecaseKeys(data);
+    const snakeCaseData = snakecaseKeys(relationIds(data));
     const { rowCount } = await this.pool.query(sql`
       delete from ${this.table}
       where ${sql.join(
-        Object.entries(snakeCaseData).map(
+        Object.entries<string>(snakeCaseData).map(
           ([column, value]) => sql`${sql.identifier([column])} = ${value}`
         ),
         sql` and `
@@ -205,7 +211,7 @@ export default class RelationQueries<
     options?: GetEntitiesOptions
   ): Promise<[totalNumber: number, entities: ReadonlyArray<InferSchema<S>>]> {
     const { limit, offset } = options ?? {};
-    const snakeCaseWhere = snakecaseKeys(where);
+    const snakeCaseWhere = snakecaseKeys(relationIds(where));
     const forTable = sql.identifier([forSchema.table]);
     const mainSql = sql`
       from ${this.table}
@@ -214,7 +220,7 @@ export default class RelationQueries<
         forSchema.tableSingular + '_id',
       ])} = ${forTable}.id
       where ${sql.join(
-        Object.entries(snakeCaseWhere).map(
+        Object.entries<string>(snakeCaseWhere).map(
           ([column, value]) => sql`${sql.identifier([column])} = ${value}`
         ),
         sql` and `
@@ -260,10 +266,7 @@ export default class RelationQueries<
       where ${sql.join(
         this.schemas.map(
           ({ tableSingular }) =>
-            sql`${sql.identifier([tableSingular + '_id'])} = ${
-              // @ts-expect-error `tableSingular` loses its type here
-              ids[camelCase(tableSingular + '_id')]
-            }`
+            sql`${sql.identifier([tableSingular + '_id'])} = ${relationId(ids, tableSingular)}`
         ),
         sql` and `
       )}

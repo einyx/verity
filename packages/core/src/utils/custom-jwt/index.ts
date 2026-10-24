@@ -66,14 +66,12 @@ export const isAccessDeniedError = (
  * - create a new @see {ResponseError} with the extracted data
  */
 export const parseAzureFunctionsResponseError = (error: HTTPError): ResponseError => {
-  const { statusCode, statusMessage, headers, body } = error.response;
+  const { statusCode, statusMessage, headers } = error.response;
+  // eslint-disable-next-line prefer-destructuring -- Preserve unknown for Got's any-typed body before runtime validation.
+  const body: unknown = error.response.body;
 
-  const responseBody =
-    conditional(
-      typeof body === 'string' &&
-        // eslint-disable-next-line no-restricted-syntax
-        trySafe(() => JSON.parse(body) as unknown)
-    ) ?? body;
+  const responseBody: unknown =
+    conditional(typeof body === 'string' && trySafe((): unknown => JSON.parse(body))) ?? body;
 
   const parsedBody = errorResponseBodyGuard.omit({ error: true }).safeParse(responseBody);
 

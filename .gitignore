@@ -104,6 +104,7 @@ PROJECT-CONTEXT.md
 /artifacts/
 /.cyberstrike/
 /scripts/.tmp-*
+/packages/console/verify-*.mjs
 /session-*.md
 /session_*.md
 session-*.json

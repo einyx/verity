@@ -23,7 +23,7 @@
     "ci:lint": "pnpm -r --workspace-concurrency=2 lint",
     "ci:stylelint": "pnpm -r --workspace-concurrency=2 stylelint",
     "ci:test": "pnpm -r --workspace-concurrency=2 --no-bail test:ci && pnpm test:scripts",
-    "test:scripts": "node .scripts/compare-database.test.js && node --test .scripts/check-staged-secrets.test.js .scripts/check-private-files.test.js .scripts/build-lifecycle.test.js .scripts/check-upstream-workflows.test.js .scripts/jest-web-apis.test.js .scripts/public-configuration.test.js",
+    "test:scripts": "node .scripts/compare-database.test.js && node --test .scripts/check-staged-secrets.test.js .scripts/check-private-files.test.js .scripts/build-lifecycle.test.js .scripts/check-upstream-workflows.test.js .scripts/jest-web-apis.test.js .scripts/public-configuration.test.js .scripts/select-alteration-baseline.test.js",
     "test:integration": "./.scripts/integration/run.sh"
   },
   "devDependencies": {

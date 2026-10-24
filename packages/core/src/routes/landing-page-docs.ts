@@ -2,9 +2,12 @@
 // into sections, each section is embedded once, and every visitor question is matched against them.
 // Everything here fails soft: without the docs or embeddings, the chat answers from its own prompt.
 
-const docsOrigin = 'https://docs.meshx.io';
-const fullTextUrl = `${docsOrigin}/llms-full.txt`;
-const indexUrl = `${docsOrigin}/llms.txt`;
+// eslint-disable-next-line unicorn/prevent-abbreviations -- Keep the existing module filename compatible with consumer imports.
+import { z } from 'zod';
+
+const documentationOrigin = 'https://docs.meshx.io';
+const fullTextUrl = `${documentationOrigin}/llms-full.txt`;
+const indexUrl = `${documentationOrigin}/llms.txt`;
 const refreshMs = 24 * 60 * 60 * 1000;
 const retryAfterFailureMs = 10 * 60 * 1000;
 const maxDownloadChars = 2_000_000;
@@ -17,10 +20,13 @@ const embeddingModel = 'text-embedding-3-small';
 // AI-tool instructions in the export are not product content, so they are never retrieved.
 const skippedSections = new Set(['Agent Instructions']);
 
-export type DocChunk = { readonly title: string; readonly url: string; readonly text: string };
-export type DocHit = DocChunk & { readonly score: number };
+type DocumentChunk = { readonly title: string; readonly url: string; readonly text: string };
+type DocumentHit = DocumentChunk & { readonly score: number };
 
-type Entry = DocChunk & { readonly vector: readonly number[] };
+// eslint-disable-next-line import/no-unused-modules -- Preserve the existing exported type names for consumers.
+export type { DocumentChunk as DocChunk, DocumentHit as DocHit };
+
+type Entry = DocumentChunk & { readonly vector: readonly number[] };
 type Embed = (inputs: string[]) => Promise<number[][]>;
 type FetchText = (url: string) => Promise<string>;
 
@@ -41,34 +47,34 @@ export const parseSections = (fullText: string): Array<{ title: string; body: st
 export const parseIndexUrls = (indexText: string): Map<string, string> =>
   new Map(
     [...indexText.matchAll(/^- \[([^\]]+)]\((https:\/\/docs\.meshx\.io\/[^\s)]+?)\.md\)/gm)].map(
-      ([, title, url]) => [title ?? '', url ?? docsOrigin]
+      ([, title, url]) => [title ?? '', url ?? documentationOrigin]
     )
   );
 
 /** Splits one section into chunks of whole paragraphs, each close to the chunk size. */
-export const chunkSection = (title: string, url: string, body: string): DocChunk[] => {
-  const chunks: string[] = [];
-  let current = '';
+export const chunkSection = (title: string, url: string, body: string): DocumentChunk[] => {
+  const { chunks, current } = body.split(/\n{2,}/).reduce<{ chunks: string[]; current: string }>(
+    (state, paragraph) => {
+      if (state.current && state.current.length + paragraph.length + 2 > maxChunkChars) {
+        return { chunks: [...state.chunks, state.current], current: paragraph };
+      }
+      return {
+        chunks: state.chunks,
+        current: state.current ? `${state.current}\n\n${paragraph}` : paragraph,
+      };
+    },
+    { chunks: [], current: '' }
+  );
 
-  for (const paragraph of body.split(/\n{2,}/)) {
-    if (current && current.length + paragraph.length + 2 > maxChunkChars) {
-      chunks.push(current);
-      current = '';
-    }
-    current = current ? `${current}\n\n${paragraph}` : paragraph;
-  }
-
-  if (current) {
-    chunks.push(current);
-  }
-
-  return chunks.map((text) => ({ title, url, text }));
+  return [...chunks, ...(current ? [current] : [])].map((text) => ({ title, url, text }));
 };
 
-const cosine = (a: readonly number[], b: readonly number[]) => {
-  const dot = a.reduce((sum, value, index) => sum + value * (b[index] ?? 0), 0);
-  const norm = (vector: readonly number[]) => Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
-  const denominator = norm(a) * norm(b);
+const norm = (vector: readonly number[]) =>
+  Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+
+const cosine = (left: readonly number[], right: readonly number[]) => {
+  const dot = left.reduce((sum, value, index) => sum + value * (right[index] ?? 0), 0);
+  const denominator = norm(left) * norm(right);
 
   return denominator === 0 ? 0 : dot / denominator;
 };
@@ -83,6 +89,7 @@ const embedAll = async (inputs: string[], embed: Embed): Promise<number[][]> => 
 };
 
 /** Creates the search. The index is built on first use, refreshed daily, and retried after failures. */
+// eslint-disable-next-line unicorn/prevent-abbreviations -- Preserve the existing exported factory name.
 export const createDocsSearch = ({
   fetchText,
   embed,
@@ -92,9 +99,9 @@ export const createDocsSearch = ({
   readonly embed: Embed;
   readonly now?: () => number;
 }) => {
-  let entries: { items: Entry[]; loadedAt: number } | undefined;
-  let blockedUntil = 0;
-  let loading: Promise<Entry[]> | undefined;
+  const entries = new Map<string, { items: Entry[]; loadedAt: number }>();
+  const blockedUntil = new Map<string, number>();
+  const loading = new Map<string, Promise<Entry[]>>();
 
   const load = async (): Promise<Entry[]> => {
     const [full, index] = await Promise.all([
@@ -103,7 +110,7 @@ export const createDocsSearch = ({
     ]);
     const urls = parseIndexUrls(index);
     const chunks = parseSections(full).flatMap(({ title, body }) =>
-      chunkSection(title, urls.get(title) ?? docsOrigin, body)
+      chunkSection(title, urls.get(title) ?? documentationOrigin, body)
     );
     const vectors = await embedAll(
       chunks.map((chunk) => chunk.text),
@@ -113,35 +120,37 @@ export const createDocsSearch = ({
     return chunks.map((chunk, index) => ({ ...chunk, vector: vectors[index] ?? [] }));
   };
 
+  const refresh = async (): Promise<Entry[]> => {
+    try {
+      const items = await load();
+      entries.set('index', { items, loadedAt: now() });
+      return items;
+    } catch {
+      blockedUntil.set('index', now() + retryAfterFailureMs);
+      return entries.get('index')?.items ?? [];
+    } finally {
+      loading.delete('index');
+    }
+  };
+
   const index = async (): Promise<Entry[]> => {
-    if (entries && now() - entries.loadedAt < refreshMs) {
-      return entries.items;
+    const cached = entries.get('index');
+    if (cached && now() - cached.loadedAt < refreshMs) {
+      return cached.items;
     }
 
-    if (now() < blockedUntil) {
-      return entries?.items ?? [];
+    if (now() < (blockedUntil.get('index') ?? 0)) {
+      return cached?.items ?? [];
     }
 
-    loading ??= load()
-      .then((items) => {
-        entries = { items, loadedAt: now() };
+    const pending = loading.get('index') ?? refresh();
+    loading.set('index', pending);
 
-        return items;
-      })
-      .catch(() => {
-        blockedUntil = now() + retryAfterFailureMs;
-
-        return entries?.items ?? [];
-      })
-      .finally(() => {
-        loading = undefined;
-      });
-
-    return loading;
+    return pending;
   };
 
   return {
-    search: async (question: string): Promise<DocHit[]> => {
+    search: async (question: string): Promise<DocumentHit[]> => {
       const items = await index();
 
       if (items.length === 0) {
@@ -157,7 +166,8 @@ export const createDocsSearch = ({
       return items
         .map(({ vector, ...chunk }) => ({ ...chunk, score: cosine(queryVector, vector) }))
         .filter((hit) => hit.score >= minScore)
-        .sort((a, b) => b.score - a.score)
+        .slice()
+        .sort((left, right) => right.score - left.score)
         .slice(0, topK);
     },
   };
@@ -184,12 +194,13 @@ export const buildDocumentsQuery = (
 ): string =>
   [...history.filter((turn) => turn.role === 'user').map((turn) => turn.content), message]
     .slice(-recentTurnsForQuery)
-    .map(redactContactDetails)
+    .map((text) => redactContactDetails(text))
     .filter(Boolean)
     .join('\n');
 
 /** The text added to the model's context. It is reference material, never instructions. */
-export const formatDocsContext = (hits: readonly DocHit[]): string | undefined => {
+// eslint-disable-next-line unicorn/prevent-abbreviations -- Preserve the existing exported formatter name.
+export const formatDocsContext = (hits: readonly DocumentHit[]): string | undefined => {
   if (hits.length === 0) {
     return undefined;
   }
@@ -222,32 +233,36 @@ const fetchText: FetchText = async (url) => {
   return text;
 };
 
+const embed: Embed = async (inputs) => {
+  const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
+  const response = await fetch(`${endpoint}/embeddings`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,
+    },
+    body: JSON.stringify({ model: embeddingModel, input: inputs }),
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Embeddings returned ${response.status}`);
+  }
+
+  const body = z
+    .object({
+      data: z.array(z.object({ index: z.number(), embedding: z.array(z.number()) })),
+    })
+    .parse(await response.json());
+
+  return body.data
+    .slice()
+    .sort((left, right) => left.index - right.index)
+    .map((item) => item.embedding);
+};
+
 /** Production search. Uses the same OpenAI settings as the chat; without a key it finds nothing. */
 export const createProductionDocumentsSearch = () => {
-  const embed: Embed = async (inputs) => {
-    const endpoint = process.env.OPENAI_API_PROXY_ENDPOINT ?? 'https://api.openai.com/v1';
-    const response = await fetch(`${endpoint}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,
-      },
-      body: JSON.stringify({ model: embeddingModel, input: inputs }),
-      signal: AbortSignal.timeout(20_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Embeddings returned ${response.status}`);
-    }
-
-    const body = (await response.json()) as { data: Array<{ index: number; embedding: number[] }> };
-
-    return body.data
-      .slice()
-      .sort((a, b) => a.index - b.index)
-      .map((item) => item.embedding);
-  };
-
   const search = createDocsSearch({ fetchText, embed });
 
   return async (question: string) => formatDocsContext(await search.search(question));

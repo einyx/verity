@@ -47,7 +47,10 @@ test("workspace libraries expose their artifacts in clean CI lifecycle builds", 
     assert.equal(scripts.prepack, "pnpm build", `${name}: prepack`);
     assert.equal(scripts["build:test"], "pnpm build", `${name}: build:test`);
   }
-  assert.equal(packageJson("cloud").scripts["test:ci"], "pnpm run test --silent --coverage");
+  assert.equal(
+    packageJson("cloud").scripts["test:ci"],
+    "pnpm run test --silent --coverage",
+  );
 });
 
 test("recursive CI work stays bounded instead of launching every package at once", () => {
@@ -78,7 +81,10 @@ test("frontend CI suites cap Jest workers without raising test timeouts", () => 
 });
 
 test("Core bounds heavyweight V8 coverage workers without raising test timeouts", () => {
-  const config = readFileSync(new URL("../packages/core/jest.config.js", import.meta.url), "utf8");
+  const config = readFileSync(
+    new URL("../packages/core/jest.config.js", import.meta.url),
+    "utf8",
+  );
   assert.match(config, /^\s*maxWorkers: 2,$/m);
   assert.ok(!config.includes("testTimeout"));
 });

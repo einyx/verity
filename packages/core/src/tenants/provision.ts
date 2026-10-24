@@ -12,6 +12,7 @@ import { sql, type DatabaseTransactionConnection } from '@silverhand/slonik';
 
 import { EnvSet } from '#src/env-set/index.js';
 
+// eslint-disable-next-line import/no-unused-modules -- Preserve the exported provisioning input contract.
 export type ProvisionTenantInput = {
   name: string;
   tag: string;

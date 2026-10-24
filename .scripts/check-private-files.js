@@ -112,6 +112,10 @@ const isPrivatePath = (name) => {
       parts[0],
     ) ||
     /^\.tmp-/.test(base) ||
+    (parts.length === 3 &&
+      parts[0] === "packages" &&
+      parts[1] === "console" &&
+      /^verify-.*\.mjs$/.test(base)) ||
     /\.(pem|key|p12|pfx|keystore)$/.test(base) ||
     /^(id_rsa|id_dsa|id_ecdsa|id_ed25519)$/.test(base) ||
     /^(storage[-_.]?state|auth[-_.]?state)\.json$/.test(base) ||

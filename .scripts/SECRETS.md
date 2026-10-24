@@ -87,3 +87,6 @@ upload, so it cannot replace server-side push protection or credential rotation.
 Keep temporary agent output outside the repository by default. Any public test
 credentials must be disposable and never reused for production. Real exposed
 credentials must be revoked/rotated at the issuer even after history cleanup.
+Ad-hoc browser probes named `packages/console/verify-*.mjs` are private local
+tools too; checked-in browser regression tests should use the existing test
+directories rather than publishing local sign-in or device-verification scripts.

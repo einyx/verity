@@ -60,6 +60,7 @@ test("blocks private artifacts even when forcibly staged or already tracked", (c
     ".cyberstrike/report.md",
     ".superpowers/brainstorm/page.html",
     "scripts/.tmp-probe.cjs",
+    "packages/console/verify-lan-https.mjs",
     "browser-profile/Default/Cookies",
     "tests/.auth/state.json",
     "playwright/.auth/user.json",
@@ -314,14 +315,24 @@ test("missing pre-rewrite base scans all reachable commits without weakening det
 test("missing scan base still blocks private artifacts removed in a later commit", (context) => {
   const directory = repository(context);
   stage(directory, "readme.md");
-  assert.equal(run(directory, ["commit", "--quiet", "-m", "Clean root"]).status, 0);
+  assert.equal(
+    run(directory, ["commit", "--quiet", "-m", "Clean root"]).status,
+    0,
+  );
   stage(directory, ".claude/commands/private.md");
-  assert.equal(run(directory, ["commit", "--quiet", "-m", "Private export"]).status, 0);
+  assert.equal(
+    run(directory, ["commit", "--quiet", "-m", "Private export"]).status,
+    0,
+  );
   assert.equal(run(directory, ["rm", ".claude/commands/private.md"]).status, 0);
-  assert.equal(run(directory, ["commit", "--quiet", "-m", "Remove export"]).status, 0);
+  assert.equal(
+    run(directory, ["commit", "--quiet", "-m", "Remove export"]).status,
+    0,
+  );
   const head = run(directory, ["rev-parse", "HEAD"]).stdout.trim();
   const result = spawnSync("/bin/sh", [incomingScript, "e".repeat(40), head], {
-    cwd: directory, encoding: "utf8",
+    cwd: directory,
+    encoding: "utf8",
   });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /full reachable history/i);

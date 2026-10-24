@@ -14,8 +14,7 @@ import SecondaryPageLayout from '@ac/layouts/SecondaryPageLayout';
 import styles from './index.module.scss';
 
 export type IdentifierLabelKey =
-  | 'account_center.email_verification.email_label'
-  | 'account_center.phone_verification.phone_label';
+  'account_center.email_verification.email_label' | 'account_center.phone_verification.phone_label';
 
 type Props = {
   readonly identifierType: SignInIdentifierType.Email | SignInIdentifierType.Phone;

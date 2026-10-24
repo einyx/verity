@@ -99,7 +99,9 @@ export const mcpPortalOauthStart = <T extends ManagementApiRouter>(
       return next();
     };
 
-    const metadata = await discoverAuthorizationServer(new URL(upstream.url)).catch(() => {});
+    const metadata = await discoverAuthorizationServer(new URL(upstream.url)).catch(() => {
+      // Discovery failures intentionally use the unsupported-OAuth response below.
+    });
 
     if (!metadata) {
       return unsupported();
@@ -119,7 +121,9 @@ export const mcpPortalOauthStart = <T extends ManagementApiRouter>(
         ? current.clientId
         : await registerClient(metadata, { redirectUri, clientName: 'MeshX MCP Portal' }).then(
             ({ client_id: id }) => id,
-            () => {}
+            () => {
+              // Registration failures intentionally use the unsupported-OAuth response below.
+            }
           );
 
     if (!clientId) {

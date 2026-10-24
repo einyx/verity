@@ -38,10 +38,12 @@ export class LogtoAccountCenter extends LitElement {
       ${primaryEmail !== undefined && html`<logto-user-email></logto-user-email>`}
       ${primaryPhone !== undefined && html`<logto-user-phone></logto-user-phone>`}
       ${hasPassword !== undefined && html`<logto-user-password></logto-user-password>`}
-      ${identities !== undefined &&
-      Object.entries(identities).map(
-        ([target]) => html`<logto-social-identity target=${target}></logto-social-identity>`
-      )}
+      ${
+        identities !== undefined &&
+        Object.entries(identities).map(
+          ([target]) => html`<logto-social-identity target=${target}></logto-social-identity>`
+        )
+      }
     `;
   }
 }

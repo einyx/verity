@@ -1,6 +1,6 @@
 import { conditional } from '@silverhand/essentials';
 import camelcaseKeys from 'camelcase-keys';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import assertThat from '#src/utils/assert-that.js';
 

@@ -1,5 +1,5 @@
 import { type ToZodObject } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { eventGuard, type InteractionEvent } from '../../types/interaction-event.js';
 

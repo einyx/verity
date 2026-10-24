@@ -6,7 +6,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardShortId } from '@logto/shared';
 import { assert, conditional } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

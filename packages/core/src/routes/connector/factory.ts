@@ -1,5 +1,5 @@
 import { connectorFactoryResponseGuard } from '@logto/schemas';
-import { string, object } from 'zod';
+import { string, object } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

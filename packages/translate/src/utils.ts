@@ -12,7 +12,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import type PQueue from 'p-queue';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { coreDirectory, defaultPath } from './constants.js';
 

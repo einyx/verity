@@ -72,10 +72,6 @@ const renderPhone = ({ pageContext, initialEntries = [phoneRoute] }: PhoneRender
     </Routes>,
     {
       initialEntries,
-      future: {
-        v7_relativeSplatPath: true,
-        v7_startTransition: true,
-      },
     },
     {
       pageContext: {

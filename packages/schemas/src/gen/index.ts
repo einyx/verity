@@ -167,7 +167,7 @@ const generate = async () => {
       /* eslint-enable @silverhand/fp/no-mutating-methods */
 
       const importZod = conditionalString(
-        tableWithTypes.length > 0 && "import { z } from 'zod';\n\n"
+        tableWithTypes.length > 0 && "import { z } from 'zod/v3';\n\n"
       );
 
       const importTsTypes = conditionalString(

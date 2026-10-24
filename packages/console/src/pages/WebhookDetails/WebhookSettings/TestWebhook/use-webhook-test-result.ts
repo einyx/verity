@@ -1,6 +1,6 @@
 import { conditional, conditionalString } from '@silverhand/essentials';
 import { useState } from 'react';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { storageKeys } from '@/consts';
 import { safeParseJson } from '@/utils/json';

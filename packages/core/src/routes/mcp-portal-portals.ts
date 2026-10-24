@@ -1,5 +1,5 @@
 import { DuplicatePortalError, hostnamePattern } from '@logto/mcp-portal';
-import { array, object, string } from 'zod';
+import { array, object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import { clearCustomDomainCache } from '#src/utils/tenant.js';

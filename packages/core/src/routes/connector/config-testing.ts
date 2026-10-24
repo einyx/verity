@@ -11,7 +11,7 @@ import { ServiceConnector } from '@logto/connector-kit';
 import { phoneRegEx, emailRegEx } from '@logto/core-kit';
 import { jsonObjectGuard, ConnectorType } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
-import { string, object } from 'zod';
+import { string, object } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

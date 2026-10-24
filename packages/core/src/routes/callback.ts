@@ -7,7 +7,7 @@ import { accountCenterSocialStatePrefix } from '@logto/schemas';
 import type Koa from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import assertThat from '#src/utils/assert-that.js';

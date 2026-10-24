@@ -2,7 +2,7 @@ import { Prompt } from '@logto/js';
 import { experience, ExtraParamsKey, FirstScreen } from '@logto/schemas';
 import { NotFoundError } from '@silverhand/slonik';
 import { type MiddlewareType } from 'koa';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import type { WithInteractionDetailsContext } from '#src/middleware/koa-interaction-details.js';

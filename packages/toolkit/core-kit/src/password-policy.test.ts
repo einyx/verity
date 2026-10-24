@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll, vi } from 'vitest';
-import { ZodError } from 'zod';
+import { ZodError } from 'zod/v3';
 
 import { PasswordPolicyChecker } from './password-policy.js';
 

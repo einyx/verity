@@ -1,5 +1,5 @@
 import { SsoConnectors, SsoConnectorIdpInitiatedAuthConfigs } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const ssoConnectorCreateGuard = SsoConnectors.createGuard
   .pick({

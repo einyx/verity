@@ -12,7 +12,7 @@ import type { Nullable } from '@silverhand/essentials';
 import { sql } from '@silverhand/slonik';
 import type { Context } from 'koa';
 import Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

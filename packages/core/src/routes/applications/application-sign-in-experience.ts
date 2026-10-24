@@ -2,7 +2,7 @@ import {
   ApplicationSignInExperiences,
   applicationSignInExperienceCreateGuard,
 } from '@logto/schemas';
-import { object, string } from 'zod';
+import { object, string } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

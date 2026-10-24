@@ -17,7 +17,7 @@ import {
 import { deduplicate, type Optional, pick, pickState, trySafe } from '@silverhand/essentials';
 import { got, HTTPError } from 'got';
 import { type UnknownObject } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { type ScopeLibrary } from '#src/libraries/scope.js';

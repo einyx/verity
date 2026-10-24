@@ -1,7 +1,7 @@
 import { extendedIdTokenClaims } from '@logto/core-kit';
 import { type Nullable, type Optional } from '@silverhand/essentials';
-import type { ZodType } from 'zod';
-import { z } from 'zod';
+import type { ZodType } from 'zod/v3';
+import { z } from 'zod/v3';
 
 import {
   type MessageRateLimitOverride,

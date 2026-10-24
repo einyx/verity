@@ -1,6 +1,6 @@
 import { webAuthnAuthenticationOptionsGuard } from '@logto/schemas';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { generateWebAuthnAuthenticationOptions } from '#src/libraries/verification-helpers/webauthn.js';

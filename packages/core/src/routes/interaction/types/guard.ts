@@ -7,7 +7,7 @@ import {
   pendingMfaGuard,
   profileGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Social Authorization Uri Route Payload Guard
 export const socialAuthorizationUrlPayloadGuard = z.object({

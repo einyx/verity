@@ -1,4 +1,4 @@
-import { number, object, string, type z } from 'zod';
+import { number, object, string, type z } from 'zod/v3';
 
 export const subjectTokenResponseGuard = object({
   subjectToken: string(),

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const wecomConfigGuard = z.object({
   corpId: z.string(),

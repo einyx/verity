@@ -3,7 +3,7 @@ import type { Connector } from '@logto/schemas';
 import { ConnectorType } from '@logto/schemas';
 import { pickDefault, createMockUtils } from '@logto/shared/esm';
 import { type Nullable } from '@silverhand/essentials';
-import { any } from 'zod';
+import { any } from 'zod/v3';
 
 import {
   mockMetadata,

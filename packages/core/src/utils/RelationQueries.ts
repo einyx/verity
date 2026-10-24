@@ -2,7 +2,7 @@ import { type SchemaLike, type Table } from '@logto/shared';
 import { type CamelCase, type KeysToCamelCase } from '@silverhand/essentials';
 import { sql, type CommonQueryMethods } from '@silverhand/slonik';
 import snakecaseKeys from 'snakecase-keys';
-import { type z } from 'zod';
+import { type z } from 'zod/v3';
 
 import { expandFields } from '#src/database/utils.js';
 import { DeletionError } from '#src/errors/SlonikError/index.js';

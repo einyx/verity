@@ -6,7 +6,7 @@ import { Connectors, ConnectorType, connectorResponseGuard, type JsonObject } fr
 import { generateStandardShortId } from '@logto/shared';
 import { conditional } from '@silverhand/essentials';
 import cleanDeep from 'clean-deep';
-import { string, object } from 'zod';
+import { string, object } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

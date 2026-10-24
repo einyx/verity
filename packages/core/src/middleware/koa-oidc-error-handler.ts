@@ -2,7 +2,7 @@ import { appInsights } from '@logto/app-insights/node';
 import { condObject, isObject } from '@silverhand/essentials';
 import type { Middleware } from 'koa';
 import { errors } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';

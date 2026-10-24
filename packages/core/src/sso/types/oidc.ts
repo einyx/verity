@@ -1,5 +1,5 @@
 import { type CamelCaseKeys } from 'camelcase-keys';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export enum RequiredOidcScope {
   OPEN_ID = 'openid',

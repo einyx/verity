@@ -18,7 +18,7 @@ import {
   type KoaContextWithOIDC,
   type UnknownObject,
 } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { JwtCustomizerLibrary } from '#src/libraries/jwt-customizer.js';

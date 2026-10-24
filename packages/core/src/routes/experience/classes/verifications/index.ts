@@ -11,7 +11,7 @@ import {
   webAuthnVerificationRecordDataGuard,
   signInPasskeyVerificationRecordDataGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';

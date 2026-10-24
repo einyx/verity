@@ -1,6 +1,6 @@
 import nock from 'nock';
 import { describe, it, expect, afterEach } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   parseJson,

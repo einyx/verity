@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * User interaction events defined in Logto RFC 0004.

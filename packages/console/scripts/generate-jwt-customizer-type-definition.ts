@@ -10,7 +10,7 @@ import {
   jwtCustomizerUserInteractionContextGuard,
 } from '@logto/schemas';
 import prettier from 'prettier';
-import { type ZodTypeAny } from 'zod';
+import { type ZodTypeAny } from 'zod/v3';
 import { printNode, zodToTs } from 'zod-to-ts';
 
 import { jwtCustomizerApiContextTypeDefinition } from './custom-jwt-customizer-type-definition.js';
@@ -41,7 +41,13 @@ const inferTsDefinitionFromZod = (zodSchema: ZodTypeAny, identifier: string): st
    * This is a limitation of zod-to-ts. We can't infer the exact type of the Json objects.
    * This solution is hacky but it works for now. The impact is it will always define the type identifer as Record<string, unknown>.
    */
-  const { node } = zodToTs(zodSchema, 'Record<string, unknown>', { nativeEnums: 'union' });
+  // zod-to-ts 1.x consumes Zod 3's `_def` representation. Zod 4's `zod/v3` compatibility schemas
+  // retain that representation; the generator's stale `zod@^3` peer declaration cannot express it.
+  const { node } = zodToTs(
+    zodSchema as unknown as Parameters<typeof zodToTs>[0],
+    'Record<string, unknown>',
+    { nativeEnums: 'union' }
+  );
   const typeDefinition = printNode(node);
 
   return `type ${identifier} = ${typeDefinition};`;

@@ -1,4 +1,4 @@
-import type { ZodType, z } from 'zod';
+import type { ZodType, z } from 'zod/v3';
 
 import { type ConnectorMetadata } from './metadata.js';
 

@@ -1,5 +1,5 @@
 import { demoAppApplicationId, fullSignInExperienceGuard } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { updateSignInExperience } from '#src/api/sign-in-experience.js';
 import { demoAppUrl, logtoUrl } from '#src/constants.js';

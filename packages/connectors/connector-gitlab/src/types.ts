@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Define a configuration guard for GitLab
 export const gitlabConfigGuard = z.object({

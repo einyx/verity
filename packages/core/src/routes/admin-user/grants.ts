@@ -1,6 +1,6 @@
 import { getUserApplicationGrantsResponseGuard } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
-import { object, string, enum as zodEnum } from 'zod';
+import { object, string, enum as zodEnum } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

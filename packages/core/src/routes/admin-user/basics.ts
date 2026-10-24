@@ -9,7 +9,7 @@ import {
 } from '@logto/schemas';
 import { conditional, yes } from '@silverhand/essentials';
 import { StatementTimeoutError } from '@silverhand/slonik';
-import { boolean, literal, nativeEnum, object, string } from 'zod';
+import { boolean, literal, nativeEnum, object, string } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

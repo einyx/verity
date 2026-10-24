@@ -6,7 +6,7 @@
  *
  * Only keep the least necessary fields in the guards to align with the raw token payload that can be used for `extraTokenClaims` method.
  */
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const baseTokenPayloadGuardObject = {
   jti: z.string(),

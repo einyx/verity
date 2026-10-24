@@ -14,7 +14,7 @@ import { conditional, conditionalString, deduplicate } from '@silverhand/essenti
 import type Router from 'koa-router';
 import { type IRouterParamContext } from 'koa-router';
 import { errors } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { consent, getMissingScopes } from '#src/libraries/session/index.js';
 import koaAppAccessControl from '#src/middleware/koa-app-access-control.js';

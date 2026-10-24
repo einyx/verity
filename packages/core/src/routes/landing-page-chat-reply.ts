@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Reads the model's response for the landing page chat. Anything unexpected becomes "no reply", so
 // the visitor gets a clean message rather than a parsing error.

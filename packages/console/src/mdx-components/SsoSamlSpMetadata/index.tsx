@@ -1,7 +1,7 @@
 import { conditionalString } from '@silverhand/essentials';
 import { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import DomainSelector from '@/components/DomainSelector';
 import { isCloud } from '@/consts/env';

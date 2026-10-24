@@ -3,7 +3,7 @@ import {
   applicationUserConsentScopesResponseGuard,
   ApplicationUserConsentScopeType,
 } from '@logto/schemas';
-import { object, string, nativeEnum } from 'zod';
+import { object, string, nativeEnum } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 

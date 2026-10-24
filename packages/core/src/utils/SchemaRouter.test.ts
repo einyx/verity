@@ -1,6 +1,6 @@
 import { type GeneratedSchema } from '@logto/schemas';
 import type { Middleware } from 'koa';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 

@@ -1,7 +1,7 @@
 import type { ConnectorSession } from '@logto/connector-kit';
 import { connectorSessionGuard } from '@logto/connector-kit';
 import type { Provider } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   getInteractionFromProviderByJti,

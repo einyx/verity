@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import nodePath from 'node:path';
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // RFC 1123 hostname: lowercase labels of letters, digits and hyphens, no leading or trailing hyphen.
 export const hostnamePattern =

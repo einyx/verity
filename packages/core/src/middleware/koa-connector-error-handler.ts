@@ -1,7 +1,7 @@
 import { ConnectorError, ConnectorErrorCodes } from '@logto/connector-kit';
 import { trySafe } from '@silverhand/essentials';
 import type { Middleware } from 'koa';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 

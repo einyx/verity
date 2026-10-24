@@ -10,7 +10,7 @@ import {
   LogtoOidcConfigKeyType,
   oidcSessionConfigGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

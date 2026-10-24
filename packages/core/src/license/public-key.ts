@@ -1,6 +1,6 @@
 import { trySafe } from '@silverhand/essentials';
 import { type CryptoKey, importJWK } from 'jose';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 

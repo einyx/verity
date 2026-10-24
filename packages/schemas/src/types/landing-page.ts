@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Structured content contract for the marketing page. Layout is selected by the section type;
 // editors may order and repeat supported types, but cannot provide arbitrary markup.

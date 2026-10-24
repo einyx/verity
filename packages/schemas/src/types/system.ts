@@ -1,5 +1,5 @@
-import type { ZodType } from 'zod';
-import { z } from 'zod';
+import type { ZodType } from 'zod/v3';
+import { z } from 'zod/v3';
 
 // Alteration state
 export enum AlterationStateKey {

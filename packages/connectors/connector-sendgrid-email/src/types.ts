@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * @doc https://docs.sendgrid.com/api-reference/mail-send/mail-send#body

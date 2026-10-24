@@ -10,7 +10,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId, generateStandardSecret, getUserDisplayName } from '@logto/shared';
 import { addDays } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

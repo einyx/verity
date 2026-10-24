@@ -7,7 +7,7 @@ import {
   type OrganizationRoleKeys,
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { buildManagementApiContext } from '#src/libraries/hook/utils.js';
 import koaGuard from '#src/middleware/koa-guard.js';

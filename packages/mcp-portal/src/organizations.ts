@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /** Returns the IDs of the organizations the token's user belongs to. Throws when Logto cannot say. */
 export type OrganizationLookup = (accessToken: string) => Promise<string[]>;

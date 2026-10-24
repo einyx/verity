@@ -1,5 +1,5 @@
 import { type Optional } from '@silverhand/essentials';
-import { z, any } from 'zod';
+import { z, any } from 'zod/v3';
 
 import { languages } from './const.js';
 import type { LanguageTag } from './type.js';

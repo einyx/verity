@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isKeyInObject, isObject, type Optional } from '@silverhand/essentials';
 import type Router from 'koa-router';
 import { OpenAPIV3 } from 'openapi-types';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { type DeepPartial } from '#src/test-utils/tenant.js';

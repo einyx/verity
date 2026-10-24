@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { type PasswordPolicyChecker } from '@logto/core-kit';
 import { type User, UsersPasswordEncryptionMethod } from '@logto/schemas';
 import { condObject } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import assertThat from '#src/utils/assert-that.js';

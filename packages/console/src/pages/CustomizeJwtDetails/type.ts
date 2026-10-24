@@ -1,6 +1,6 @@
 import type { AccessTokenJwtCustomizer, ClientCredentialsJwtCustomizer } from '@logto/schemas';
 import { LogtoJwtTokenKeyType } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Action } from '../CustomizeJwt/utils/type';
 

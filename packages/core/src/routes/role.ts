@@ -2,7 +2,7 @@ import type { RoleResponse } from '@logto/schemas';
 import { RoleType, Roles, featuredApplicationGuard, featuredUserGuard } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { pickState, trySafe, tryThat } from '@silverhand/essentials';
-import { number, object, string, z } from 'zod';
+import { number, object, string, z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildManagementApiContext } from '#src/libraries/hook/utils.js';

@@ -46,7 +46,7 @@ const toggleAllowedChar = async (label: string) => {
 };
 
 const setLengthInput = async (input: ElementHandle<HTMLInputElement>, value: string) => {
-  await input.click({ clickCount: 3 });
+  await input.evaluate((element) => element.select());
   await input.type(value);
 };
 

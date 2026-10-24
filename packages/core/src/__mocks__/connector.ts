@@ -3,7 +3,7 @@ import type router from '@logto/cloud/routes';
 import { ConnectorPlatform, DemoConnector } from '@logto/connector-kit';
 import type { Connector } from '@logto/schemas';
 import { ConnectorType } from '@logto/schemas';
-import { any } from 'zod';
+import { any } from 'zod/v3';
 
 import type { LogtoConnector } from '#src/utils/connectors/types.js';
 

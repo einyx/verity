@@ -1,7 +1,7 @@
 import { SsoProviderName, SsoProviderType } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared/universal';
 import snakecaseKeys from 'snakecase-keys';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import OidcConnector from '../OidcConnector/index.js';
 import { type SingleSignOnFactory } from '../index.js';

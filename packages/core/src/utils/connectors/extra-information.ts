@@ -7,7 +7,7 @@ import {
 } from '@logto/schemas';
 import { conditional, type Nullable, pick } from '@silverhand/essentials';
 import cleanDeep from 'clean-deep';
-import { string, object } from 'zod';
+import { string, object } from 'zod/v3';
 
 import {
   type ApplicationContextInfo,

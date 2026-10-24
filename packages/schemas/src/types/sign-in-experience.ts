@@ -4,7 +4,7 @@ import {
   type GoogleOneTapConfig,
   googleOneTapConfigGuard,
 } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   type CustomProfileField,

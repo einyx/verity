@@ -2,7 +2,7 @@ import { appInsights } from '@logto/app-insights/node';
 import { UserScope } from '@logto/core-kit';
 import { VerificationType, AccountCenterControlValue, type User } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import type { HookContextManager } from '#src/libraries/hook/context-manager.js';

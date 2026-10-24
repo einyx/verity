@@ -1,5 +1,5 @@
 import { SubscriptionRedisCacheKey } from '@logto/schemas';
-import { type ZodType } from 'zod';
+import { type ZodType } from 'zod/v3';
 
 import { type Subscription, subscriptionCacheGuard } from '#src/utils/subscription/types.js';
 

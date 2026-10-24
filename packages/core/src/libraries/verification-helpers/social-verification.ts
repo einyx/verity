@@ -10,7 +10,7 @@ import type { SocialConnectorPayload } from '@logto/schemas';
 import { ConnectorType } from '@logto/schemas';
 import type { Context } from 'koa';
 import type { Provider } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import type { WithLogContext } from '#src/middleware/koa-audit-log.js';
 import type TenantContext from '#src/tenants/TenantContext.js';

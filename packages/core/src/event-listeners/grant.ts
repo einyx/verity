@@ -1,6 +1,6 @@
 import { GrantType, LogResult, token } from '@logto/schemas';
 import type { errors, KoaContextWithOIDC } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { assertLogContext } from '#src/middleware/koa-audit-log.js';
 

@@ -9,7 +9,7 @@ import {
 import { generateStandardId } from '@logto/shared';
 import type { MiddlewareType } from 'koa';
 import pRetry, { AbortError } from 'p-retry';
-import { object, z } from 'zod';
+import { object, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

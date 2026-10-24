@@ -4,7 +4,7 @@ import {
   userOnboardingDataKey,
 } from '@logto/schemas';
 import { useCallback, useMemo } from 'react';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { isCloud } from '@/consts/env';
 import useCurrentUser from '@/hooks/use-current-user';

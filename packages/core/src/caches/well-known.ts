@@ -15,7 +15,7 @@ import {
   messageRateLimitOverrideGuard,
 } from '@logto/schemas';
 import { type Nullable } from '@silverhand/essentials';
-import { type ZodType, z } from 'zod';
+import { type ZodType, z } from 'zod/v3';
 
 import { type ConnectorWellKnown, connectorWellKnownGuard } from '#src/utils/connectors/types.js';
 

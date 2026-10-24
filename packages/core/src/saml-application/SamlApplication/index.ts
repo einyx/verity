@@ -16,7 +16,7 @@ import camelcaseKeys, { type CamelCaseKeys } from 'camelcase-keys';
 import { XMLValidator } from 'fast-xml-parser';
 import { jwtVerify } from 'jose';
 import saml from 'samlify';
-import { ZodError, z } from 'zod';
+import { ZodError, z } from 'zod/v3';
 
 import { type EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

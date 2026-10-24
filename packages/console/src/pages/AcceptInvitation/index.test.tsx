@@ -90,7 +90,6 @@ jest.mock('react-router-dom', () => ({
 const renderAcceptInvitation = (entry: string) =>
   render(
     <MemoryRouter
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
       initialEntries={[entry]}
     >
       <AcceptInvitation />

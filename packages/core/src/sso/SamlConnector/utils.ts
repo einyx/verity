@@ -6,7 +6,7 @@ import { type Optional, appendPath, tryThat } from '@silverhand/essentials';
 import { conditional } from '@silverhand/essentials';
 import { HTTPError } from 'got';
 import * as saml from 'samlify';
-import { z, ZodError } from 'zod';
+import { z, ZodError } from 'zod/v3';
 
 import { ssoPath } from '#src/constants/index.js';
 import { ssrfProtectedGot } from '#src/utils/outbound-request.js';

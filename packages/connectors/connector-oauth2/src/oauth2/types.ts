@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * OAuth 2.0 Client Authentication methods that are used by Clients to authenticate to the Authorization Server when using the Token Endpoint.

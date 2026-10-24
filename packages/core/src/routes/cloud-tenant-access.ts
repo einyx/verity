@@ -1,6 +1,6 @@
 import { adminTenantId } from '@logto/schemas';
 import { sql, type CommonQueryMethods } from '@silverhand/slonik';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Who may manage customer tenants on this instance: an operator of the admin tenant, or a user whose
 // primary email is on the allow-list. The allow-list is set from the admin tenant's console and stored in

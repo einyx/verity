@@ -1,7 +1,7 @@
 import { jsonObjectGuard, subjectTokenResponseGuard } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { addSeconds } from 'date-fns';
-import { object, string } from 'zod';
+import { object, string } from 'zod/v3';
 
 import { subjectTokenExpiresIn, subjectTokenPrefix } from '#src/constants/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

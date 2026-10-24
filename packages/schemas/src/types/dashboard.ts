@@ -1,4 +1,4 @@
-import { number, object, array, string } from 'zod';
+import { number, object, array, string } from 'zod/v3';
 
 const dashboardUsersDataGuard = object({
   count: number(),

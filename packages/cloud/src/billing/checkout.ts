@@ -100,7 +100,7 @@ export const createCheckoutSession = async (
 const stripeStatusGuard = z.object({
   status: z.string().nullable().optional(),
   payment_status: z.string().optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 export type CheckoutStatus = {

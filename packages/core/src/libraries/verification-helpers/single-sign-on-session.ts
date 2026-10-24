@@ -1,6 +1,6 @@
 import { type Context } from 'koa';
 import type { Provider } from 'oidc-provider';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   singleSignOnConnectorSessionGuard,

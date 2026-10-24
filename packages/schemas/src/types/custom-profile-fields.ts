@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 import { type ToZodObject } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Users } from '../db-entries/user.js';
 import {

@@ -1,6 +1,6 @@
 import { applicationAccessControlGuard, type ApplicationAccessControl } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard, { parse } from '#src/middleware/koa-guard.js';

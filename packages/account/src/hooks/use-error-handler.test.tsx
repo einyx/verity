@@ -52,10 +52,6 @@ const renderTestButton = (error: unknown, errorHandlers?: ErrorHandlers) =>
       <TestButton error={error} errorHandlers={errorHandlers} />
     </ReauthPromptProvider>,
     {
-      future: {
-        v7_relativeSplatPath: true,
-        v7_startTransition: true,
-      },
     }
   );
 

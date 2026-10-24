@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { webAuthnTransportGuard } from '../foundations/jsonb-types/index.js';
 

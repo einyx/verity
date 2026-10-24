@@ -1,6 +1,6 @@
 import { SentinelActivityTargetType } from '@logto/schemas';
 import { sha256 } from 'hash-wasm';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import koaGuard from '../middleware/koa-guard.js';
 

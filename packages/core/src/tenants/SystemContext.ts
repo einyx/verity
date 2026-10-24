@@ -10,7 +10,7 @@ import {
   protectedAppConfigProviderDataGuard,
 } from '@logto/schemas';
 import type { CommonQueryMethods } from '@silverhand/slonik';
-import { type ZodType } from 'zod';
+import { type ZodType } from 'zod/v3';
 
 import { createSystemsQuery } from '#src/queries/system.js';
 import { devConsole } from '#src/utils/console.js';

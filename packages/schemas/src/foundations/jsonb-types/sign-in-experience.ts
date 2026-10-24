@@ -1,6 +1,6 @@
 import { hexColorRegEx } from '@logto/core-kit';
 import { languageTagGuard } from '@logto/language-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { Theme } from '../../types/theme.js';
 import { type ToZodObject } from '../../utils/zod.js';

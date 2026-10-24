@@ -9,7 +9,7 @@ import {
   type CallToolResult,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 

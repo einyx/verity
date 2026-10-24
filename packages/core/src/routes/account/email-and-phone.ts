@@ -1,6 +1,6 @@
 import { emailRegEx, phoneRegEx, UserScope } from '@logto/core-kit';
 import { VerificationType, AccountCenterControlValue } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import { assertFirstPartyClient } from '#src/utils/assert-first-party-client.js';

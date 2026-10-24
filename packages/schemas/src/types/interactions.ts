@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 import { emailRegEx, numberAndAlphabetRegEx, phoneRegEx, usernameRegEx } from '@logto/core-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import {
   AdditionalIdentifier,

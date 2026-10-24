@@ -10,7 +10,7 @@ import {
 import { sql } from '@silverhand/slonik';
 import type { Context } from 'koa';
 import Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

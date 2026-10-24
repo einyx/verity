@@ -4,7 +4,7 @@ import {
   type ConnectorSession,
   type SocialUserInfo,
 } from '@logto/connector-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject } from '../../utils/zod.js';
 import { encryptedTokenSetGuard, type EncryptedTokenSet } from '../secrets.js';

@@ -2,7 +2,7 @@ import { urlRegEx } from '@logto/connector-kit';
 import { conditionalString } from '@silverhand/essentials';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import FormCard from '@/components/FormCard';
 import DynamicT from '@/ds-components/DynamicT';

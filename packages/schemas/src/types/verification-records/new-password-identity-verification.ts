@@ -4,7 +4,7 @@
  * DO NOT use this verification record type in new code.
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { UsersPasswordEncryptionMethod } from '../../db-entries/custom-types.js';
 import { type ToZodObject } from '../../utils/zod.js';

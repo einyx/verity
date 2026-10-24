@@ -1,5 +1,5 @@
 import { emailRegEx, phoneRegEx } from '@logto/core-kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const emailIdentifierGuard = z.string().regex(emailRegEx);
 const phoneIdentifierGuard = z.string().regex(phoneRegEx);

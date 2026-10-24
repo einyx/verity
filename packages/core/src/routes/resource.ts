@@ -1,7 +1,7 @@
 import { isManagementApi, Resources, Scopes } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { yes } from '@silverhand/essentials';
-import { boolean, object, string } from 'zod';
+import { boolean, object, string } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

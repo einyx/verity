@@ -1,6 +1,6 @@
 import { AdditionalIdentifier, SentinelActivityAction, VerificationType } from '@logto/schemas';
 import { createMockUtils } from '@logto/shared/esm';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { mockUser } from '#src/__mocks__/user.js';
 import { EnvSet } from '#src/env-set/index.js';

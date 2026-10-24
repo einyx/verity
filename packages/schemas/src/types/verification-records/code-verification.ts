@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { SignInIdentifier, TemplateType } from '../../foundations/index.js';
 import { type ToZodObject } from '../../utils/zod.js';

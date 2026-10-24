@@ -2,7 +2,7 @@ import { CaptchaType, type SignInExperience } from '@logto/schemas';
 import { Trans } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import useSWR from 'swr';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { FormCardSkeleton } from '@/components/FormCard';
 import { recaptchaEnterpriseBringYourUi, turnstileBringYourUi } from '@/consts/external-links';

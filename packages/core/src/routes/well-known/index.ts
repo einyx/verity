@@ -1,5 +1,5 @@
 import { adminTenantId, fullSignInExperienceGuard } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

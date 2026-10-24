@@ -1,6 +1,6 @@
 import { notImplemented } from '@logto/cli/lib/connector/consts.js';
 import { ConnectorType } from '@logto/connector-kit';
-import { object, string } from 'zod';
+import { object, string } from 'zod/v3';
 
 import koaGuard from '#src/middleware/koa-guard.js';
 import assertThat from '#src/utils/assert-that.js';

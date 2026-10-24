@@ -3,7 +3,7 @@ import { appendPath, assert } from '@silverhand/essentials';
 import camelcaseKeys, { type CamelCaseKeys } from 'camelcase-keys';
 import { HTTPError } from 'got';
 import { createRemoteJWKSet, customFetch, jwtVerify, type JWTVerifyOptions } from 'jose';
-import { z, ZodError } from 'zod';
+import { z, ZodError } from 'zod/v3';
 
 import { ssrfProtectedFetch, ssrfProtectedGot } from '#src/utils/outbound-request.js';
 

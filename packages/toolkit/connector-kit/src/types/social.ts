@@ -1,7 +1,7 @@
 // MARK: Social connector
 import { type Optional } from '@silverhand/essentials';
 import { type Json } from '@withtyped/server';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject, type BaseConnector, type ConnectorType } from './foundation.js';
 

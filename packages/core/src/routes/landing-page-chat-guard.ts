@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Guards for the public landing-page demo chat. The chat is anonymous, so everything here is enforced
 // on the server: the published on/off switch, size and turn caps, rate limits, and the lead schema that

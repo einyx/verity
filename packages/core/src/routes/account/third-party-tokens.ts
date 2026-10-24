@@ -9,7 +9,7 @@ import {
   tokenSetMetadataGuard,
 } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { buildVerificationRecordByIdAndType } from '#src/libraries/verification.js';

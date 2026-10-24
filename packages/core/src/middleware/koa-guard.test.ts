@@ -1,5 +1,5 @@
 import { createMockUtils } from '@logto/shared/esm';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

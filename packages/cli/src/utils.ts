@@ -14,7 +14,7 @@ import { HttpsProxyAgent } from 'hpagent';
 import inquirer from 'inquirer';
 import type { Options } from 'ora';
 import ora from 'ora';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { coreDirectory, defaultPath } from './constants.js';
 

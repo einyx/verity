@@ -2,15 +2,16 @@ import type router from '@logto/cloud/routes';
 import { type ToZodObject } from '@logto/connector-kit';
 import { type LicenseQuota, type ReservedPlanId, type SelfHostedPlanId } from '@logto/schemas';
 import { type RouterRoutes } from '@withtyped/client';
-import { z, type ZodType } from 'zod';
+import { z as z4, type ZodType as ZodTypeV4 } from 'zod';
+import { z, type ZodType } from 'zod/v3';
 
 type GetRoutes = RouterRoutes<typeof router>['get'];
 type PostRoutes = RouterRoutes<typeof router>['post'];
 
-type RouteResponseType<T extends { search?: unknown; body?: unknown; response?: ZodType }> =
-  z.infer<NonNullable<T['response']>>;
-type RouteRequestBodyType<T extends { search?: unknown; body?: ZodType; response?: unknown }> =
-  z.infer<NonNullable<T['body']>>;
+type RouteResponseType<T extends { search?: unknown; body?: unknown; response?: ZodTypeV4 }> =
+  z4.infer<NonNullable<T['response']>>;
+type RouteRequestBodyType<T extends { search?: unknown; body?: ZodTypeV4; response?: unknown }> =
+  z4.infer<NonNullable<T['body']>>;
 
 type CompleteSubscription = RouteResponseType<GetRoutes['/api/tenants/my/subscription']>;
 type CompleteSubscriptionUsage = RouteResponseType<GetRoutes['/api/tenants/my/subscription-usage']>;

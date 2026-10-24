@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { type ToZodObject } from '../../utils/zod.js';
 import { bindWebAuthnGuard, type BindWebAuthn } from '../interactions.js';

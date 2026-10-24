@@ -4,7 +4,7 @@ import { authRequestInfoGuard, SamlApplicationSessions } from '@logto/schemas';
 import { generateStandardId, generateStandardShortId } from '@logto/shared';
 import { cond, removeUndefinedKeys, trySafe } from '@silverhand/essentials';
 import { addMinutes } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { spInitiatedSamlSsoSessionCookieName } from '#src/constants/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

@@ -12,7 +12,7 @@ import {
 import { generateStandardId, generateStandardSecret } from '@logto/shared';
 import { conditional, deduplicate, yes } from '@silverhand/essentials';
 import { subDays } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

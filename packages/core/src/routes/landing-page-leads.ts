@@ -4,7 +4,7 @@ import { got } from 'got';
 import type { Context } from 'koa';
 import { koaBody } from 'koa-body';
 import Router from 'koa-router';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';

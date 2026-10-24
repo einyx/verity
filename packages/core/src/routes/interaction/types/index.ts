@@ -10,7 +10,7 @@ import type {
   BindMfa,
   VerifyMfaResult,
 } from '@logto/schemas';
-import type { z } from 'zod';
+import type { z } from 'zod/v3';
 
 import type {
   accountIdIdentifierGuard,

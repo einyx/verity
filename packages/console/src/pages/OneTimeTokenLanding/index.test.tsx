@@ -47,7 +47,6 @@ type OneTimeTokenSignInOptions = {
 const renderOneTimeTokenLanding = (entry: string) =>
   render(
     <MemoryRouter
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
       initialEntries={[entry]}
     >
       <OneTimeTokenLanding />

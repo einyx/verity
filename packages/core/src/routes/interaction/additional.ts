@@ -12,7 +12,7 @@ import type Router from 'koa-router';
 import { type IRouterParamContext } from 'koa-router';
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { type PasscodeLibrary } from '#src/libraries/passcode.js';

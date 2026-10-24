@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /** The action target type of a sentinel activity. */
 export enum SentinelActivityTargetType {

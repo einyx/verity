@@ -3,7 +3,7 @@ import {
   applicationCreateGuard as originalApplicationCreateGuard,
   applicationPatchGuard as originalApplicationPatchGuard,
 } from '@logto/schemas';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const protectedAppAdditionalScopeGuard = z.enum(protectedAppAdditionalScopes);
 

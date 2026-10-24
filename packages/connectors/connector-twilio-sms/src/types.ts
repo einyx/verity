@@ -1,5 +1,5 @@
 import type { Nullable } from '@silverhand/essentials';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * @doc https://www.twilio.com/docs/sms/send-messages

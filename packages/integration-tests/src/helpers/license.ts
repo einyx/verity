@@ -1,6 +1,6 @@
 import { LicenseEnv, type LicensePayload, ReservedPlanId } from '@logto/schemas';
 import { SignJWT, importJWK } from 'jose';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * A throwaway ES256 key pair the self-hosted license integration tests sign keys with.

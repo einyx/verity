@@ -12,7 +12,7 @@ import {
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { format } from 'date-fns';
-import { object } from 'zod';
+import { object } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';

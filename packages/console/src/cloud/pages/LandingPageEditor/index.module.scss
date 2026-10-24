@@ -1216,6 +1216,19 @@
     box-sizing: border-box;
   }
 
+  /* The canvas holds the real page, whose own layout is wider than a phone. The frame scrolls inside
+     the canvas instead of widening the whole console. */
+  .liveCanvasBody iframe {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .liveCanvas {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
   /* Puck lays its workspace out as a four-column grid: the plugin rail, the outline, the canvas and
      the field panel. On a narrow screen that leaves the canvas a sliver, so the columns are
      rearranged: the rail stays, the canvas takes the width, the outline is dropped (the page outline
@@ -1244,6 +1257,8 @@
   [class*='_PuckCanvas'][class*='_PuckCanvas'] {
     grid-area: canvas;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   [class*='_Sidebar--left'][class*='_Sidebar--left'] {

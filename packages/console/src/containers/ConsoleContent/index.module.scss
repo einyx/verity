@@ -25,6 +25,17 @@
   [class='appInsightsWrapper'] > :not(svg) {
     @include _.main-content-width;
   }
+
+  // On a small device the content has to be able to shrink. The desktop minimum width would expand
+  // the layout viewport past the device width, and every media query would then be evaluated against
+  // that expanded width instead of the device's.
+  :global(html.isNarrow) .main > :not(svg):not(:global(.fullWidthPage)) {
+    min-width: 0;
+  }
+
+  :global(html.isNarrow) .main [class='appInsightsWrapper'] > :not(svg) {
+    min-width: 0;
+  }
 }
 
 .daisy {

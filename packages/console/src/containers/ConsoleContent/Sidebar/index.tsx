@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
+import { isNarrowViewport } from '@/hooks/use-narrow-viewport';
 import useMatchTenantPath from '@/hooks/use-tenant-pathname';
 
 import OssCloudCard from './OssCloudCard';
@@ -73,7 +74,8 @@ function Sidebar() {
   const { match } = useMatchTenantPath();
   const [width, setWidth] = useState(readStoredWidth);
   const widthRef = useRef(width);
-  const [isCollapsed, setIsCollapsed] = useState(readStoredCollapsed);
+  // On a small device the sidebar starts collapsed: the expanded one covers the content.
+  const [isCollapsed, setIsCollapsed] = useState(() => isNarrowViewport() || readStoredCollapsed());
   // Animate only the collapse and expand toggle. Dragging should follow the pointer without lag.
   const [isDragging, setIsDragging] = useState(false);
   // The expanded width is kept while collapsed, so expanding restores it.
@@ -128,7 +130,7 @@ function Sidebar() {
 
   return (
     <div
-      className={styles.sidebar}
+      className={classNames(styles.sidebar, !isCollapsed && styles.sidebarExpanded)}
       style={{ width: displayWidth, transition: isDragging ? 'none' : 'width 200ms ease-out' }}
     >
       {/* Like foundation-frontend's sidebar: the nav still scrolls, but no scrollbar is drawn. */}

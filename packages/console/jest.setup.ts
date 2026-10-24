@@ -16,8 +16,12 @@ void i18next.use(initReactI18next).init({
 /* eslint-disable @silverhand/fp/no-mutation */
 // @ts-expect-error monkey-patch for `crypto`
 crypto.subtle = webcrypto.subtle;
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+// The Node and DOM `TextEncoder`/`TextDecoder` types no longer line up, so the globals are filled
+// through the constructors' own types.
+/* eslint-disable no-restricted-syntax -- The Node and DOM types for these constructors no longer match, and the assignment is the point of the polyfill. */
+global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder;
+global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder;
+/* eslint-enable no-restricted-syntax */
 /* eslint-enable @silverhand/fp/no-mutation */
 
 // Node's `Request` (used by React Router's client requests) checks `instanceof AbortSignal` against

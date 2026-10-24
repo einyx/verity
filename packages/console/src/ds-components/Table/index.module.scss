@@ -7,6 +7,7 @@
   min-width: min-content;
 }
 
+
 .tableContainer {
   overflow: hidden;
   display: flex;
@@ -203,4 +204,15 @@
 
 .pagination {
   margin-top: _.unit(4);
+}
+
+/* On a small device a wide table scrolls inside its own card. Otherwise the table's minimum
+   content width would widen the page and make the whole console scroll sideways. */
+:global(html.isNarrow) .container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:global(html.isNarrow) .tableContainer {
+  overflow-x: auto;
 }

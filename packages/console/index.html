@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="utf-8" />
+    <!-- Without this, a phone lays the console out at the default 980 pixels and scrolls sideways,
+         and every media query is evaluated against that width instead of the device's. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="apple-touch-icon" sizes="180x180" href="./src/apple-touch-icon.png">
     <link rel="icon" href="./src/favicon.ico" />
 </head>

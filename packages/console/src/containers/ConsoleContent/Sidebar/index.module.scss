@@ -91,3 +91,14 @@
   height: 100%;
   @include _.shimmering-animation;
 }
+
+/* On a small device the expanded sidebar covers the content instead of pushing it aside, so the
+   page keeps the width of the device. The collapsed rail stays in the flow. */
+:global(html.isNarrow) .sidebarExpanded {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 12%);
+  border-top-right-radius: 0;
+}

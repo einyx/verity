@@ -39,6 +39,7 @@ import { AppThemeProvider } from './contexts/AppThemeProvider';
 import TenantsProvider, { TenantsContext } from './contexts/TenantsProvider';
 import Toast from './ds-components/Toast';
 import useCurrentUser from './hooks/use-current-user';
+import { useNarrowViewport } from './hooks/use-narrow-viewport';
 import initI18n from './i18n/init';
 
 void initI18n();
@@ -51,6 +52,11 @@ void initI18n();
  * get the current tenant ID from the URL.
  */
 function App() {
+  // The console is opened on phones as well. The narrow viewport has to be known before the content
+  // is laid out, because the desktop minimum width would otherwise expand the layout viewport and
+  // leave the page wider than the device.
+  useNarrowViewport();
+
   const router = createBrowserRouter(
     [
       // Cloud has no tenant in the root path: open the default tenant instead of reading the path as one.

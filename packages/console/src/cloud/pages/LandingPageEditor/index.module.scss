@@ -8,9 +8,12 @@
   box-sizing: border-box;
 }
 
-/* The console shell caps its direct children to a centred width; the editor uses the full pane. */
+/* The console shell caps its direct children to a centred width; the editor uses the full pane.
+   The shell also sets a desktop minimum width, which would keep the page wider than a phone and
+   stop the console from collapsing its own sidebar, so the editor drops it. */
 .shell.shell {
   max-width: none;
+  min-width: 0;
   margin: 0;
 }
 
@@ -1201,7 +1204,7 @@
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .liveCanvasBody {
     flex-direction: column;
   }
@@ -1211,5 +1214,45 @@
     flex-basis: auto;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  /* Puck lays its workspace out as a four-column grid: the plugin rail, the outline, the canvas and
+     the field panel. On a narrow screen that leaves the canvas a sliver, so the columns are
+     rearranged: the rail stays, the canvas takes the width, the outline is dropped (the page outline
+     stays reachable from the rail) and the field panel moves below the canvas.
+
+     The class names come from Puck's own stylesheet, so they are matched by their stable prefix
+     rather than their hashed suffix. Puck sets the same properties on more specific selectors, so
+     the attribute is repeated to win the cascade. */
+  [class*='_PuckLayout-inner'][class*='_PuckLayout-inner'][class*='_PuckLayout-inner'][class*='_PuckLayout-inner'] {
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-rows: auto minmax(320px, 1fr) auto;
+    grid-template-areas:
+      'header header'
+      'nav    canvas'
+      'drawer drawer';
+  }
+
+  [class*='_PuckLayout-header'][class*='_PuckLayout-header'] {
+    grid-area: header;
+  }
+
+  [class*='_PuckLayout-nav'][class*='_PuckLayout-nav'] {
+    grid-area: nav;
+  }
+
+  [class*='_PuckCanvas'][class*='_PuckCanvas'] {
+    grid-area: canvas;
+    min-width: 0;
+  }
+
+  [class*='_Sidebar--left'][class*='_Sidebar--left'] {
+    display: none;
+  }
+
+  [class*='_Sidebar--right'][class*='_Sidebar--right'] {
+    grid-area: drawer;
+    max-height: 60vh;
+    overflow-y: auto;
   }
 }

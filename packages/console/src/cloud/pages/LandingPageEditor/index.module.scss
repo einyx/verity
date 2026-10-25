@@ -1205,8 +1205,16 @@
 }
 
 @media (max-width: 1024px) {
+  /* The editor's own padding is room the preview needs more than the editor does. */
+  .shell {
+    padding: 12px;
+  }
+
   .liveCanvasBody {
     flex-direction: column;
+    /* The preview is a real page, which is wider than a phone. The frame keeps a phone's width and
+       the canvas scrolls sideways, so the page is shown whole rather than squeezed into a sliver. */
+    overflow-x: auto;
   }
 
   .elementProperties {
@@ -1216,12 +1224,10 @@
     box-sizing: border-box;
   }
 
-  /* The canvas holds the real page, whose own layout is wider than a phone. The frame scrolls inside
-     the canvas instead of widening the whole console. */
   .liveCanvasBody iframe {
     width: 100%;
-    max-width: 100%;
-    min-width: 0;
+    max-width: none;
+    min-width: 390px;
   }
 
   .liveCanvas {

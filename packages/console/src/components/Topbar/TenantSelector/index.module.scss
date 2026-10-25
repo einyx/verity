@@ -80,6 +80,25 @@ $dropdown-item-height: 40px;
   }
 }
 
+/* On a phone the topbar has little room, so the tenant card gives up its room: the name is cut and
+   the card shrinks to what is left. The environment tag keeps its place, since it says which
+   instance the console is pointed at. */
+:global(html.isNarrow) {
+  .currentTenantCard {
+    max-width: 108px;
+    margin-inline-start: _.unit(2);
+    gap: _.unit(1);
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .viewOnlyTag {
+    display: none;
+  }
+}
+
 .createTenantButton {
   all: unset;
   display: flex;

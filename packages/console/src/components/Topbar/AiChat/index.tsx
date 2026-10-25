@@ -106,7 +106,7 @@ function AiChat({ className }: Props) {
         })}
       >
         {Icon}
-        {t('inkeep_ai_bot.ask_ai_label')}
+        <span className={styles.askAiLabel}>{t('inkeep_ai_bot.ask_ai_label')}</span>
         <kbd className={styles.shortcut}>⌘K</kbd>
       </div>
       <Modal

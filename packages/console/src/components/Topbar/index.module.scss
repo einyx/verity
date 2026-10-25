@@ -95,3 +95,23 @@
   background-color: var(--color-error);
   margin-inline-start: _.unit(0.5);
 }
+
+/* On a phone the topbar has to fit the device width. The wordmark and the prompt-style Ask AI bar
+   take more room than the whole bar has, so they shrink to their icons and the tenant card gives up
+   room as well. Without this the bar is wider than the screen and the page scrolls sideways. */
+:global(html.isNarrow) {
+  .topbar {
+    gap: _.unit(1);
+    padding: 0 _.unit(2);
+  }
+
+  .wordmark {
+    width: 88px;
+  }
+
+  /* The button class is shared with the tenant card's own markup, so it is matched through the
+     topbar it sits in. */
+  .topbar .button {
+    padding: 0 _.unit(1);
+  }
+}

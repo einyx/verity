@@ -36,6 +36,11 @@
   :global(html.isNarrow) .main [class='appInsightsWrapper'] > :not(svg) {
     min-width: 0;
   }
+
+  // The right-hand padding is room the content needs more than the frame does.
+  :global(html.isNarrow) .main {
+    padding-inline: _.unit(2);
+  }
 }
 
 .daisy {

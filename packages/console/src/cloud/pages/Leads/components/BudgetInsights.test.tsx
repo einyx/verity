@@ -3,9 +3,10 @@ import { render, screen } from '@testing-library/react';
 import BudgetInsights from './BudgetInsights';
 
 const assessment = {
+  // Synthetic sentinels: any figure the payload may carry must stay unpublished.
   currency: 'USD',
-  demoMonthly: 150,
-  bankAnnualPlanningAnchor: 1_500_000,
+  demoMonthly: 999,
+  bankAnnualPlanningAnchor: 888_888,
   bankPeriodAssumption: 'annual, unconfirmed',
   opportunityBudgetStatus: 'not_disclosed',
   indicativeAnnualRange: { low: 1000, base: 2000, high: 3000 },
@@ -29,17 +30,11 @@ it('shows the budget status, a hypothetical suggestion and the discovery questio
 
 it('never publishes budget figures, ranges, confidence ratings or assessment dates', () => {
   render(<BudgetInsights assessment={assessment} />);
-  for (const text of [
-    'USD 150/month',
-    'USD 1,500,000/year',
-    'USD 1,000',
-    'USD 2,000',
-    'USD 3,000',
-    'Public scale context',
-    'Scope needs validation',
-  ]) {
+  for (const text of ['Public scale context', 'Scope needs validation']) {
     expect(screen.queryByText(text)).toBeNull();
   }
+  expect(screen.queryByText(/USD/)).toBeNull();
+  expect(screen.queryByText(/\d/)).toBeNull();
   expect(screen.queryByText(/UNCONFIRMED/)).toBeNull();
   expect(screen.queryByText(/Confidence/)).toBeNull();
   expect(screen.queryByText(/2026-10-24/)).toBeNull();

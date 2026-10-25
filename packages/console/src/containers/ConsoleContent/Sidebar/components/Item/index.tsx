@@ -5,6 +5,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import useTenantPathname from '@/hooks/use-tenant-pathname';
+
 import { getPath } from '../../utils';
 
 import styles from './index.module.scss';
@@ -32,6 +34,7 @@ function Item({
   const { t } = useTranslation(undefined, {
     keyPrefix: 'admin_console.tabs',
   });
+  const { getTo } = useTenantPathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const content = useMemo(
@@ -76,7 +79,7 @@ function Item({
 
   return (
     <Link
-      to={path ?? getPath(titleKey)}
+      to={getTo(`/${path ?? getPath(titleKey)}`)}
       className={classNames(styles.row, isActive && styles.active)}
     >
       {content}

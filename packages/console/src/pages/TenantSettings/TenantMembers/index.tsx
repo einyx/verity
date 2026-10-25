@@ -24,7 +24,10 @@ function TenantMembers() {
     access: { canInviteMember, canRemoveMember },
   } = useCurrentTenantScopes();
 
-  const isInvitationTab = match(`/tenant-settings/${TenantSettingsTabs.Members}/invitations`);
+  const membersPath = `/tenant-settings/${TenantSettingsTabs.Members}`;
+  const invitationsPath = `${membersPath}/invitations`;
+
+  const isInvitationTab = match(invitationsPath);
 
   const { invitationsKey } = useTenantMembersApi();
   const { mutate } = useSWRConfig();
@@ -38,7 +41,7 @@ function TenantMembers() {
             icon={<MembersIcon />}
             title="tenant_members.members"
             onClick={() => {
-              navigate('.');
+              void navigate(membersPath);
             }}
           />
           <Button
@@ -46,7 +49,7 @@ function TenantMembers() {
             icon={<InvitationIcon />}
             title="tenant_members.invitations"
             onClick={() => {
-              navigate('invitations');
+              void navigate(invitationsPath);
             }}
           />
           <Spacer />
@@ -83,7 +86,7 @@ function TenantMembers() {
 
             // Defer navigation to avoid modal closing render being interrupted
             startTransition(() => {
-              navigate('invitations');
+              void navigate(invitationsPath);
             });
           }}
         />

@@ -1,6 +1,7 @@
 /* eslint-disable max-lines -- The wizard's steps and resource cards live in one screen; split it into step components before lowering this limit. */
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
 import useSWR from 'swr';
 
 import BarGraphIcon from '@/assets/icons/bar-graph.svg?react';
@@ -87,7 +88,7 @@ function previewUrl(
 function KuboWizard() {
   const api = useApi();
   // Tenant-aware navigate, so the redirect stays under /<tenant>/console instead of the marketing root.
-  const { navigate } = useTenantPathname();
+  const { navigate, getTo } = useTenantPathname();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selected, setSelected] = useState<StackOption>();
   const [tenant, setTenant] = useState('');
@@ -122,7 +123,7 @@ function KuboWizard() {
           },
         })
         .json();
-      navigate('/infrastructure');
+      void navigate('/infrastructure');
     } catch (error: unknown) {
       setSubmitError(await readError(error));
     } finally {
@@ -322,15 +323,22 @@ function KuboWizard() {
                 <h3 className={wizardStyles.resourceName}>{card.title}</h3>
               </div>
               <p className={wizardStyles.resourceText}>{card.text}</p>
-              <a
-                className={wizardStyles.resourceButton}
-                href={card.action.href}
-                target={card.action.href.startsWith('/') ? undefined : '_blank'}
-                rel={card.action.href.startsWith('/') ? undefined : 'noopener noreferrer'}
-              >
-                <BookIcon className={wizardStyles.resourceBook} aria-hidden="true" />
-                {card.action.label}
-              </a>
+              {card.action.href.startsWith('/') ? (
+                <Link className={wizardStyles.resourceButton} to={getTo(card.action.href)}>
+                  <BookIcon className={wizardStyles.resourceBook} aria-hidden="true" />
+                  {card.action.label}
+                </Link>
+              ) : (
+                <a
+                  className={wizardStyles.resourceButton}
+                  href={card.action.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <BookIcon className={wizardStyles.resourceBook} aria-hidden="true" />
+                  {card.action.label}
+                </a>
+              )}
             </article>
           ))}
         </div>

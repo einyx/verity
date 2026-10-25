@@ -86,7 +86,11 @@ function useTenantPathname(): TenantPathname {
   /** Returns the pathname with the current tenant ID prepended. */
   const getPathname = useCallback(
     (pathname: string) => {
-      if (pathname.startsWith('/') && !pathname.startsWith(`/${tenantSegment}`)) {
+      // Compare whole path segments: a tenant named `d` must not swallow the `/dashboard` prefix.
+      const isTenantScoped =
+        pathname === `/${tenantSegment}` || pathname.startsWith(`/${tenantSegment}/`);
+
+      if (pathname.startsWith('/') && !isTenantScoped) {
         return joinPath(tenantSegment, pathname);
       }
       // Directly return the pathname if it's a relative pathname
@@ -116,11 +120,11 @@ function useTenantPathname(): TenantPathname {
       navigate: (to: To | number, options?: NavigateOptions) => {
         // Navigate to the given index in the history stack
         if (typeof to === 'number') {
-          navigate(to);
+          void navigate(to);
           return;
         }
 
-        navigate(getTo(to), options);
+        void navigate(getTo(to), options);
       },
       getPathname,
       getTo,

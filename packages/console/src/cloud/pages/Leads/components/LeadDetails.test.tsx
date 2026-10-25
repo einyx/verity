@@ -60,7 +60,7 @@ it('passes optional unknown budget data to the internal panel without changing l
   const profile = readProfile(budgetLead);
   expect(profile.budgetAssessment).toEqual({ inventedBudget: 999 });
   render(<LeadDetails {...props()} lead={budgetLead} profile={profile} />);
-  expect(screen.getByRole('region', { name: 'Internal budget advisory' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Internal budget context' })).toBeTruthy();
   expect(screen.getByText('No valid budget assessment yet.')).toBeTruthy();
   expect(screen.getByText('Still available')).toBeTruthy();
   expect(screen.getByLabelText('Sales notes')).toHaveProperty('value', props().notes);

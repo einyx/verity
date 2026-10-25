@@ -19,48 +19,55 @@ const assessment = {
   ],
 };
 
-it('separates annual advisory vendor pricing from unknown customer funds and fixed references', () => {
+it('shows the budget status, a hypothetical suggestion and the discovery questions', () => {
+  render(<BudgetInsights assessment={assessment} />);
+  expect(screen.getByText('Not disclosed')).toBeTruthy();
+  expect(screen.getByText(/Hypothetical suggestion for sales/)).toBeTruthy();
+  expect(screen.getByText('Who approves funding?')).toBeTruthy();
+  expect(screen.getByRole('link').getAttribute('href')).toBe('https://example.test/about');
+});
+
+it('never publishes budget figures, ranges, confidence ratings or assessment dates', () => {
   render(<BudgetInsights assessment={assessment} />);
   for (const text of [
     'USD 150/month',
-    'Not disclosed',
+    'USD 1,500,000/year',
     'USD 1,000',
     'USD 2,000',
     'USD 3,000',
     'Public scale context',
     'Scope needs validation',
-    'Who approves funding?',
   ]) {
-    expect(screen.getByText(text)).toBeTruthy();
+    expect(screen.queryByText(text)).toBeNull();
   }
-  expect(screen.getByText(/USD 1,500,000\/year.*UNCONFIRMED/)).toBeTruthy();
-  expect(screen.getByText(/not the customer’s confirmed budget or a binding quote/)).toBeTruthy();
-  expect(screen.getByText(/medium.*2026-10-24/)).toBeTruthy();
-  expect(screen.getByRole('link').getAttribute('href')).toBe('https://example.test/about');
+  expect(screen.queryByText(/UNCONFIRMED/)).toBeNull();
+  expect(screen.queryByText(/Confidence/)).toBeNull();
+  expect(screen.queryByText(/2026-10-24/)).toBeNull();
 });
 
-it.each([
-  undefined,
-  {},
-  { ...assessment, confidence: 'high' },
-  ...[-1, Number.NaN, Number.POSITIVE_INFINITY, 4000].map((low) => ({
-    ...assessment,
-    indicativeAnnualRange: { low, base: 2000, high: 3000 },
-  })),
-])('does not invent amounts for malformed or missing payloads', (value) => {
+it.each([undefined, {}])('shows no advisory content for a missing or empty payload %j', (value) => {
   render(<BudgetInsights assessment={value} />);
   expect(screen.getByText('Not disclosed')).toBeTruthy();
-  expect(screen.queryByText('USD 0')).toBeNull();
-  expect(screen.queryByText('USD 2,000')).toBeNull();
   expect(screen.getByText('No valid budget assessment yet.')).toBeTruthy();
+  expect(screen.queryByText('Who approves funding?')).toBeNull();
 });
 
-it('handles a valid sparse assessment with no range or evidence', () => {
+it('ignores a malformed scenario range without inventing amounts', () => {
+  render(
+    <BudgetInsights
+      assessment={{ ...assessment, indicativeAnnualRange: { low: 3, base: 2, high: 1 } }}
+    />
+  );
+  expect(screen.queryByText(/USD/)).toBeNull();
+  expect(screen.getByText('Who approves funding?')).toBeTruthy();
+});
+
+it('handles a valid sparse assessment with no evidence', () => {
   render(
     <BudgetInsights assessment={{ ...assessment, indicativeAnnualRange: null, evidence: [] }} />
   );
-  expect(screen.getByText('Insufficient evidence or scope for a range.')).toBeTruthy();
   expect(screen.queryByRole('link')).toBeNull();
+  expect(screen.getByText('Who approves funding?')).toBeTruthy();
 });
 
 // eslint-disable-next-line no-script-url -- Deliberately unsafe fixture verifies that evidence never creates a script link.

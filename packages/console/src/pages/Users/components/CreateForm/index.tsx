@@ -114,10 +114,10 @@ function CreateForm({ onClose, onCreate }: Props) {
       password={createdUserInfo.password}
       confirmButtonTitle="users.check_user_detail"
       onClose={() => {
-        navigate({ pathname: '/users', search });
+        void navigate({ pathname: '/users', search });
       }}
       onConfirm={() => {
-        navigate(`/users/${createdUserInfo.user.id}`, { replace: true });
+        void navigate(`/users/${createdUserInfo.user.id}`, { replace: true });
       }}
     />
   ) : (

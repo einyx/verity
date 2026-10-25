@@ -76,7 +76,7 @@ function ApiResourceDetails() {
     try {
       await api.delete(`api/resources/${data.id}`);
       toast.success(t('api_resource_details.api_resource_deleted', { name: data.name }));
-      navigate(`/api-resources`);
+      void navigate(`/api-resources`);
     } finally {
       setIsDeleting(false);
     }
@@ -92,7 +92,7 @@ function ApiResourceDetails() {
         guideId={guideId}
         apiResource={data}
         onClose={() => {
-          navigate(`/api-resources/${id}`);
+          void navigate(`/api-resources/${id}`);
         }}
       />
     );

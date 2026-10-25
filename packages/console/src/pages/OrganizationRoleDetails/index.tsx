@@ -60,7 +60,7 @@ function OrganizationRoleDetails() {
       await api.delete(`${organizationRolesEndpoint}/${data.id}`);
       toast.success(t('organization_role_details.deleted', { name: data.name }));
       await mutateGlobal(organizationRolesEndpoint);
-      navigate(organizationRolesPath, { replace: true });
+      void navigate(organizationRolesPath, { replace: true });
     } finally {
       setIsDeleting(false);
     }

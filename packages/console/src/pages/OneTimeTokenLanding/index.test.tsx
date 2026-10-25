@@ -46,9 +46,7 @@ type OneTimeTokenSignInOptions = {
 
 const renderOneTimeTokenLanding = (entry: string) =>
   render(
-    <MemoryRouter
-      initialEntries={[entry]}
-    >
+    <MemoryRouter initialEntries={[entry]}>
       <OneTimeTokenLanding />
     </MemoryRouter>
   );

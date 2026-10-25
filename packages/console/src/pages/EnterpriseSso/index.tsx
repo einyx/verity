@@ -81,7 +81,7 @@ function EnterpriseSso() {
             size="large"
             title="enterprise_sso.create"
             onClick={() => {
-              navigate(createEnterpriseSsoPathname);
+              void navigate(createEnterpriseSsoPathname);
             }}
           />
         )}
@@ -141,7 +141,7 @@ function EnterpriseSso() {
           },
         ]}
         rowClickHandler={({ id }) => {
-          navigate(buildDetailsPathname(id));
+          void navigate(buildDetailsPathname(id));
         }}
         pagination={{
           page,
@@ -165,7 +165,7 @@ function EnterpriseSso() {
                   size="large"
                   icon={<Plus />}
                   onClick={() => {
-                    navigate(createEnterpriseSsoPathname);
+                    void navigate(createEnterpriseSsoPathname);
                   }}
                 />
               )
@@ -180,11 +180,11 @@ function EnterpriseSso() {
           onClose={(ssoConnector) => {
             if (ssoConnector) {
               void mutate();
-              navigate(buildDetailsPathname(ssoConnector.id));
+              void navigate(buildDetailsPathname(ssoConnector.id));
               return;
             }
 
-            navigate(enterpriseSsoPathname);
+            void navigate(enterpriseSsoPathname);
           }}
         />
       )}

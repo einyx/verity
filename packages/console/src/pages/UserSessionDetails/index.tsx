@@ -258,7 +258,7 @@ function UserSessionDetails() {
           onRevokeCallback={() => {
             setShowRevokeConfirmModal(false);
             void mutateGlobal(`api/users/${userId}/sessions`);
-            navigate(-1);
+            void navigate(-1);
           }}
         />
       )}

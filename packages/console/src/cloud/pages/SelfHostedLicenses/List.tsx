@@ -48,7 +48,7 @@ function List() {
         },
       ]}
       rowClickHandler={({ id }) => {
-        navigate(`${GlobalRoute.SelfHostedLicenses}/${id}`);
+        void navigate(`${GlobalRoute.SelfHostedLicenses}/${id}`);
       }}
       placeholder={
         <div className={styles.empty}>

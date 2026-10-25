@@ -56,7 +56,7 @@ function WebhookLogs() {
       rowGroups={[{ key: 'logs', data: logs }]}
       rowIndexKey="id"
       rowClickHandler={({ id }) => {
-        navigate(id);
+        void navigate(id);
       }}
       filter={
         <div className={styles.filter}>

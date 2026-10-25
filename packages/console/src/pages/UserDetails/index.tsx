@@ -65,7 +65,7 @@ function UserDetails() {
     try {
       await api.delete(`api/users/${data.id}`);
       toast.success(t('user_details.deleted', { name: data.name }));
-      navigate('/users');
+      void navigate('/users');
     } finally {
       setIsDeleting(false);
     }

@@ -41,7 +41,7 @@ function Organizations() {
     isCloud && !isFeatureEnabled(currentSubscriptionQuota.organizationsLimit) && !isPaidTenant;
 
   const upgradePlan = useCallback(() => {
-    navigate(subscriptionPage);
+    void navigate(subscriptionPage);
   }, [navigate]);
 
   const handleCreate = () => {
@@ -54,7 +54,7 @@ function Organizations() {
         isOpen={isCreating}
         onClose={(createdId?: string) => {
           if (createdId) {
-            navigate(organizationsPathname + `/${createdId}`);
+            void navigate(organizationsPathname + `/${createdId}`);
             return;
           }
           setIsCreating(false);

@@ -37,7 +37,7 @@ function UpsellNotice({ isVisible, className }: Props) {
           type="primary"
           size="medium"
           onClick={() => {
-            navigate('/tenant-settings/subscription');
+            void navigate('/tenant-settings/subscription');
           }}
         />
       </div>

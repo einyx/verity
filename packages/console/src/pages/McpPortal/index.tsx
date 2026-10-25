@@ -23,7 +23,7 @@ function McpPortal() {
     return (
       <PortalList
         onOpen={(portal: Portal) => {
-          navigate(`${mcpPortalPathname}/${portal.id}`);
+          void navigate(`${mcpPortalPathname}/${portal.id}`);
         }}
       />
     );

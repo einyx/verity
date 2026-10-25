@@ -32,7 +32,7 @@ function OneTimeTokenLanding() {
 
     if (!oneTimeToken || !email) {
       // Navigate to root, which will handle tenant selection
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
       return;
     }
 

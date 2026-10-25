@@ -32,7 +32,7 @@ function CreateButton({ isDisabled, tokenType }: Props) {
 
   const onCreateButtonClick = useCallback(async () => {
     if (isCustomJwtEnabled) {
-      navigate(link);
+      void navigate(link);
       return;
     }
 
@@ -54,7 +54,7 @@ function CreateButton({ isDisabled, tokenType }: Props) {
 
     if (confirm) {
       // Navigate to subscription page by default
-      navigate('/tenant-settings/subscription');
+      void navigate('/tenant-settings/subscription');
     }
   }, [isCustomJwtEnabled, link, navigate, show, t]);
 

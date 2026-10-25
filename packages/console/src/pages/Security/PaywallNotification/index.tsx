@@ -32,7 +32,7 @@ function PaywallNotification({ className }: Props) {
           size: 'medium',
         }}
         onClick={() => {
-          navigate('/tenant-settings/subscription');
+          void navigate('/tenant-settings/subscription');
         }}
       >
         <Trans

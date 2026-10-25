@@ -81,7 +81,7 @@ function ProfileFieldDetailsForm({ data }: Props) {
         ),
         mutateGlobal(`api/custom-profile-fields/${data.name}`, undefined, { revalidate: false }),
       ]);
-      navigate(collectUserProfilePathname, { replace: true });
+      void navigate(collectUserProfilePathname, { replace: true });
     } finally {
       setIsDeleting(false);
     }

@@ -89,9 +89,7 @@ jest.mock('react-router-dom', () => ({
 
 const renderAcceptInvitation = (entry: string) =>
   render(
-    <MemoryRouter
-      initialEntries={[entry]}
-    >
+    <MemoryRouter initialEntries={[entry]}>
       <AcceptInvitation />
     </MemoryRouter>
   );

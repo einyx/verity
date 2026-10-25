@@ -31,7 +31,7 @@ export default function PaywallNotification() {
         }}
         className={styles.paywallNotification}
         onClick={() => {
-          navigate('/tenant-settings/subscription');
+          void navigate('/tenant-settings/subscription');
         }}
       >
         <Trans

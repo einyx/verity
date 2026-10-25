@@ -21,7 +21,7 @@ function Welcome() {
   useEffect(() => {
     // If authenticated, navigate to the console root page directly
     if (isAuthenticated) {
-      navigate('/');
+      void navigate('/');
     }
   }, [isAuthenticated, navigate]);
 

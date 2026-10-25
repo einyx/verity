@@ -28,7 +28,7 @@ function ExternalGoogleOneTapLanding() {
   useEffect(() => {
     if (isAuthenticated) {
       // Navigate to root, which will handle tenant selection
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
       return;
     }
 

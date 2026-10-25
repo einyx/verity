@@ -136,7 +136,7 @@ function TenantsProvider({ children }: Props) {
 
   const navigateTenant = useCallback(
     (tenantId: string) => {
-      navigate(`/${tenantId}`);
+      void navigate(`/${tenantId}`);
     },
     [navigate]
   );

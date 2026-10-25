@@ -124,7 +124,7 @@ function Connectors() {
             size="large"
             title="connectors.create"
             onClick={() => {
-              navigate(buildCreatePathname(ConnectorType.Social));
+              void navigate(buildCreatePathname(ConnectorType.Social));
             }}
           />
         )}
@@ -174,7 +174,7 @@ function Connectors() {
 
           const { type, id } = firstConnector;
 
-          navigate(
+          void navigate(
             `${type === ConnectorType.Social ? socialPathname : passwordlessPathname}/${id}`
           );
         }}
@@ -196,7 +196,7 @@ function Connectors() {
                     size="large"
                     icon={<Plus />}
                     onClick={() => {
-                      navigate(buildCreatePathname(ConnectorType.Social));
+                      void navigate(buildCreatePathname(ConnectorType.Social));
                     }}
                   />
                 )
@@ -217,23 +217,23 @@ function Connectors() {
              */
             if (id === ServiceConnector.Email) {
               const created = await createConnector({ connectorId: id });
-              navigate(`/connectors/${ConnectorsTabs.Passwordless}/${created.id}`, {
+              void navigate(`/connectors/${ConnectorsTabs.Passwordless}/${created.id}`, {
                 replace: true,
               });
               return;
             }
 
-            navigate(buildGuidePathname(createConnectorType, id), { replace: true });
+            void navigate(buildGuidePathname(createConnectorType, id), { replace: true });
 
             return;
           }
-          navigate(`${basePathname}/${tab}`);
+          void navigate(`${basePathname}/${tab}`);
         }}
       />
       <Guide
         connector={connectorToShowInGuide}
         onClose={() => {
-          navigate(`${basePathname}/${tab}`);
+          void navigate(`${basePathname}/${tab}`);
         }}
       />
     </div>

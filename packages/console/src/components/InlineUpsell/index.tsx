@@ -32,7 +32,7 @@ function InlineUpsell({ className, for: forFeature, actionButtonText }: Props) {
       action={actionButtonText ?? 'upsell.compare_plans'}
       className={classNames(styles.notification, className)}
       onClick={() => {
-        navigate('/tenant-settings/subscription');
+        void navigate('/tenant-settings/subscription');
       }}
     >
       <Trans

@@ -82,7 +82,7 @@ function ApiResources() {
             size="large"
             title="api_resources.create"
             onClick={() => {
-              navigate({
+              void navigate({
                 pathname: createApiResourcePathname,
                 search,
               });
@@ -122,7 +122,7 @@ function ApiResources() {
         ]}
         placeholder={<EmptyDataPlaceholder />}
         rowClickHandler={({ id }) => {
-          navigate(buildDetailsPathname(id));
+          void navigate(buildDetailsPathname(id));
         }}
         pagination={{
           page,
@@ -138,10 +138,10 @@ function ApiResources() {
         <CreateForm
           onClose={(newApiResource) => {
             if (newApiResource) {
-              navigate(`/api-resources/${newApiResource.id}`);
+              void navigate(`/api-resources/${newApiResource.id}`);
               return;
             }
-            navigate({
+            void navigate({
               pathname: apiResourcesPathname,
               search,
             });

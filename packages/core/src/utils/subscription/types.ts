@@ -2,8 +2,8 @@ import type router from '@logto/cloud/routes';
 import { type ToZodObject } from '@logto/connector-kit';
 import { type LicenseQuota, type ReservedPlanId, type SelfHostedPlanId } from '@logto/schemas';
 import { type RouterRoutes } from '@withtyped/client';
-import { z as z4, type ZodType as ZodTypeV4 } from 'zod';
-import { z, type ZodType } from 'zod/v3';
+import { type z as z4, type ZodType as ZodTypeV4 } from 'zod';
+import { z } from 'zod/v3';
 
 type GetRoutes = RouterRoutes<typeof router>['get'];
 type PostRoutes = RouterRoutes<typeof router>['post'];

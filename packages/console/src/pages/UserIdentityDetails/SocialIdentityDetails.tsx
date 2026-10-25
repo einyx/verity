@@ -157,7 +157,7 @@ function SocialIdentityDetails() {
             setShowDeleteConfirmModal(false);
             // Mutate the user identities data to remove the deleted identity
             void mutateGlobal(`api/users/${userId}/all-identities`);
-            navigate(-1);
+            void navigate(-1);
           }}
         />
       )}

@@ -56,7 +56,7 @@ function OrganizationDetails() {
 
     try {
       await api.delete(`api/organizations/${id}`);
-      navigate(pathname);
+      void navigate(pathname);
     } finally {
       setIsDeleting(false);
     }

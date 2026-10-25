@@ -74,7 +74,7 @@ function RoleDetails() {
       await api.delete(`api/roles/${data.id}`);
       toast.success(t('role_details.role_deleted', { name: data.name }));
       await mutateGlobal('api/roles');
-      navigate('/roles', { replace: true });
+      void navigate('/roles', { replace: true });
     } finally {
       setIsDeleting(false);
     }

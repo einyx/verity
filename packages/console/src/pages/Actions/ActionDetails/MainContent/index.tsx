@@ -68,7 +68,7 @@ function MainContent({ className, actionType, data, mutate, mode }: Props) {
 
       if (mode === ActionPageMode.Create) {
         toast.success(t('actions.created'));
-        navigate(getActionPagePath(actionType, ActionPageMode.Edit), { replace: true });
+        void navigate(getActionPagePath(actionType, ActionPageMode.Edit), { replace: true });
         return;
       }
 
@@ -94,7 +94,7 @@ function MainContent({ className, actionType, data, mutate, mode }: Props) {
         onDiscard={
           mode === ActionPageMode.Create
             ? () => {
-                navigate(actionsPath);
+                void navigate(actionsPath);
               }
             : reset
         }

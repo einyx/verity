@@ -67,10 +67,10 @@ function ProfileFieldList({ data }: Props) {
             role="button"
             tabIndex={0}
             onClick={() => {
-              navigate(collectUserProfileDetailsPathname.replace(':fieldName', name));
+              void navigate(collectUserProfileDetailsPathname.replace(':fieldName', name));
             }}
             onKeyDown={onKeyDownHandler(() => {
-              navigate(collectUserProfileDetailsPathname.replace(':fieldName', name));
+              void navigate(collectUserProfileDetailsPathname.replace(':fieldName', name));
             })}
           >
             <div className={styles.cell}>

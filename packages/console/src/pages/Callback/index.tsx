@@ -27,11 +27,11 @@ function Callback() {
 
     if (saved) {
       // Saved redirect is full pathname, no need to use `getTo`.
-      navigate(saved, { replace: true });
+      void navigate(saved, { replace: true });
       return;
     }
 
-    navigate('/', { replace: true });
+    void navigate('/', { replace: true });
   });
 
   return <AppLoading />;

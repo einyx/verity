@@ -153,7 +153,7 @@ function UserSocialIdentities({ userId }: Props) {
                   type="text"
                   size="small"
                   onClick={() => {
-                    navigate(`/users/${userId}/social-identities/${target}`);
+                    void navigate(`/users/${userId}/social-identities/${target}`);
                   }}
                 />
               ),

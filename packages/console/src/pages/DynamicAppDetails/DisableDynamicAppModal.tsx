@@ -28,7 +28,7 @@ function DisableDynamicAppModal({ onClose }: Props) {
       await mutate(cimdConfigEndpoint);
       toast.success(t('applications.dynamic_app.disabled'));
       onClose();
-      navigate('/applications/third-party-applications', { replace: true });
+      void navigate('/applications/third-party-applications', { replace: true });
     } finally {
       setIsSubmitting(false);
     }

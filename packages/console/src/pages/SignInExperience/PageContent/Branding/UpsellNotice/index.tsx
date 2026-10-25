@@ -25,7 +25,7 @@ function UpsellNotice() {
       <div className={styles.action}>
         <TextLink
           onClick={() => {
-            navigate('/tenant-settings/subscription');
+            void navigate('/tenant-settings/subscription');
           }}
         >
           {t('upsell.view_plans')}

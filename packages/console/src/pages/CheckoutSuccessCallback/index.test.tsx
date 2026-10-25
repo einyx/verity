@@ -101,9 +101,7 @@ const swrIntervals = () =>
     .map((call) => (call[2] as { refreshInterval?: number } | undefined)?.refreshInterval);
 
 const renderPage = () => (
-  <MemoryRouter
-    initialEntries={[`/checkout-success?${checkoutStateQueryKey}=state-1`]}
-  >
+  <MemoryRouter initialEntries={[`/checkout-success?${checkoutStateQueryKey}=state-1`]}>
     <CheckoutSuccessCallback />
   </MemoryRouter>
 );

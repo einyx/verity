@@ -192,7 +192,7 @@ function UserSsoIdentities({ userId }: Props) {
                   type="text"
                   size="small"
                   onClick={() => {
-                    navigate(`/users/${userId}/sso-identities/${ssoConnectorId}`);
+                    void navigate(`/users/${userId}/sso-identities/${ssoConnectorId}`);
                   }}
                 />
               ),

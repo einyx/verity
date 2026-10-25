@@ -45,7 +45,7 @@ function Captcha() {
       <Guide
         type={guideType.data}
         onClose={() => {
-          navigate(-1);
+          void navigate(-1);
         }}
       />
     );

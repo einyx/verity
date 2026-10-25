@@ -274,7 +274,7 @@ function Stack() {
     setDeleteError(undefined);
     try {
       await api.delete(`api/kubo/stacks/${namespace}/${name}?purge=${String(purgeNamespace)}`);
-      navigate('/infrastructure', { replace: true });
+      void navigate('/infrastructure', { replace: true });
     } catch (error_: unknown) {
       setDeleteError(error_ instanceof Error ? error_.message : 'Delete failed');
     } finally {

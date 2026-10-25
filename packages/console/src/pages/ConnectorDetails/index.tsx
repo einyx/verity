@@ -103,7 +103,7 @@ function ConnectorDetails() {
       toast.success(t('connector_details.connector_deleted'));
       await mutateGlobal('api/connectors');
 
-      navigate(getConnectorsPathname(isSocial), {
+      void navigate(getConnectorsPathname(isSocial), {
         replace: true,
       });
     } finally {
@@ -197,13 +197,13 @@ function ConnectorDetails() {
                  */
                 if (connectorId === ServiceConnector.Email) {
                   const created = await createConnector({ connectorId });
-                  navigate(`/connectors/${ConnectorsTabs.Passwordless}/${created.id}`, {
+                  void navigate(`/connectors/${ConnectorsTabs.Passwordless}/${created.id}`, {
                     replace: true,
                   });
                   return;
                 }
 
-                navigate(`${getConnectorsPathname(isSocial)}/guide/${connectorId}`);
+                void navigate(`${getConnectorsPathname(isSocial)}/guide/${connectorId}`);
               }
             }}
           />

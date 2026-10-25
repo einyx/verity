@@ -44,16 +44,13 @@ export const generateKeyPairAndCertificate = async (lifeSpanInYears: number) => 
     },
   ];
 
-  const { private: privateKey, cert: certificate } = await selfsigned.generate(
-    identityAttributes,
-    {
-      keyType: 'rsa',
-      keySize: 4096,
-      algorithm: 'sha256',
-      notBeforeDate: notBefore,
-      notAfterDate: notAfter,
-    }
-  );
+  const { private: privateKey, cert: certificate } = await selfsigned.generate(identityAttributes, {
+    keyType: 'rsa',
+    keySize: 4096,
+    algorithm: 'sha256',
+    notBeforeDate: notBefore,
+    notAfterDate: notAfter,
+  });
 
   return { privateKey, certificate, notAfter };
 };

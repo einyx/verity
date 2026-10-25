@@ -46,11 +46,11 @@ function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
         role="button"
         tabIndex={0}
         onClick={() => {
-          navigate('/');
+          void navigate('/');
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
-            navigate('/');
+            void navigate('/');
           }
         }}
       >

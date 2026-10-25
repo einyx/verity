@@ -34,7 +34,7 @@ function useDeleteConnector(ssoConnectorId?: string) {
       // Reset the sso-connectors data to refresh the list.
       await mutateGlobal('api/sso-connectors');
 
-      navigate(enterpriseSsoPathname, { replace: true });
+      void navigate(enterpriseSsoPathname, { replace: true });
     } finally {
       setIsDeleting(false);
     }

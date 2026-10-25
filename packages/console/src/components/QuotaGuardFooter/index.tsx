@@ -37,7 +37,7 @@ function QuotaGuardFooter({ children, isLoading, onClickUpgrade, isContactUsPref
                   return;
                 }
                 // Navigate to subscription page by default
-                navigate('/tenant-settings/subscription');
+                void navigate('/tenant-settings/subscription');
               },
             })}
       />

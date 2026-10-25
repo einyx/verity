@@ -69,7 +69,7 @@ function SamlApplicationDetailsContent({ data, onApplicationUpdated }: Props) {
       toast.success(
         t('application_details.application_deleted', { name: samlApplicationData?.name })
       );
-      navigate(
+      void navigate(
         samlApplicationData?.isThirdParty
           ? '/applications/third-party-applications'
           : '/applications'

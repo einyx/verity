@@ -111,14 +111,14 @@ function Applications({ tab }: Props) {
          * Navigate to the application details page if no framework guide is selected or the selected guide is third party
          */
         if (selectedGuide === null || selectedGuide?.metadata.skipGuideAfterCreation) {
-          navigate(`/applications/${newApp.id}`, { replace: true });
+          void navigate(`/applications/${newApp.id}`, { replace: true });
           setSelectedGuide(undefined);
           return;
         }
 
         // Create application from the framework guide
         if (selectedGuide) {
-          navigate(`/applications/${newApp.id}/guide/${selectedGuide.id}`, { replace: true });
+          void navigate(`/applications/${newApp.id}/guide/${selectedGuide.id}`, { replace: true });
           setSelectedGuide(undefined);
           return;
         }
@@ -140,7 +140,7 @@ function Applications({ tab }: Props) {
   }, []);
 
   const onCreate = useCallback(() => {
-    navigate({
+    void navigate({
       pathname: createApplicationPathname,
       search,
     });
@@ -246,7 +246,7 @@ function Applications({ tab }: Props) {
             },
           ]}
           rowClickHandler={({ id }) => {
-            navigate(buildDetailsPathname(id));
+            void navigate(buildDetailsPathname(id));
           }}
           pagination={{
             ...pagination,
@@ -259,7 +259,7 @@ function Applications({ tab }: Props) {
       <GuideLibraryModal
         isOpen={isCreating && !isReadOnly}
         onClose={() => {
-          navigate(-1);
+          void navigate(-1);
         }}
         onSelectGuide={onSelectGuide}
       />

@@ -151,7 +151,7 @@ function AuditLogTable({ applicationId, userId, className }: Props) {
       rowIndexKey="id"
       columns={columns}
       rowClickHandler={({ id }) => {
-        navigate(id);
+        void navigate(id);
       }}
       filter={
         <div className={styles.filter}>

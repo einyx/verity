@@ -5,7 +5,6 @@
   let selected;
   let menu;
   let menuTarget;
-  let actions;
   let lastDoc;
   const post = (data) => window.parent.postMessage(data, location.origin);
   const safeLink = (value) => {
@@ -120,11 +119,9 @@
     selected = element;
     selected.dataset.cmsSelected = 'true';
     post({ type: 'meshx-cms-select-element', selection: describe(element) });
-    if (actions) actions.hidden = false;
   };
   const close = (restore = true) => {
     menu?.remove(); menu = undefined;
-    actions?.setAttribute('aria-expanded', 'false');
     if (restore && menuTarget?.isConnected) menuTarget.focus();
   };
   const open = (target, x = 16, y = 56) => {
@@ -163,7 +160,6 @@
     menu.style.left = `${Math.max(8, Math.min(x, innerWidth - box.width - 8))}px`;
     menu.style.top = `${Math.max(8, Math.min(y, innerHeight - box.height - 8))}px`;
     menu.querySelector('button:not(:disabled)')?.focus();
-    actions?.setAttribute('aria-expanded', 'true');
   };
   bind();
   window.LandingElements = { fill, describe };
@@ -174,15 +170,17 @@
   // so the editor styles ship as a file next to this script.
   const style = document.createElement('link');
   style.rel = 'stylesheet';
-  style.href = '/console/landing/landing-elements.css?v=bafa73cb71';
+  style.href = '/console/landing/landing-elements.css?v=3809cac5a1';
   document.head.append(style);
-  actions = document.createElement('button');
-  actions.type = 'button'; actions.className = 'cms-element-actions'; actions.textContent = 'Actions';
-  actions.setAttribute('aria-haspopup', 'menu'); actions.setAttribute('aria-expanded', 'false');
-  actions.addEventListener('click', () => open(selected || document.querySelector('main'), innerWidth - 250, 48));
-  document.body.append(actions);
+  // The editor owns this control outside the preview so it never covers the website navigation.
+  window.addEventListener('message', (event) => {
+    if (event.origin !== location.origin || event.source !== window.parent) return;
+    if (event.data?.type === 'meshx-cms-open-actions') {
+      open(selected || document.querySelector('main'), innerWidth - 250, 8);
+    }
+  });
   document.addEventListener('click', (event) => {
-    if (!(event.target instanceof Element) || event.target.closest('.cms-context-menu, .cms-element-actions, .cms-move-handle')) return;
+    if (!(event.target instanceof Element) || event.target.closest('.cms-context-menu, .cms-move-handle')) return;
     const element = targetElement(event.target);
     if (!element) return;
     select(element);
@@ -192,7 +190,7 @@
     if (!(event.target instanceof Element)) return;
     event.preventDefault(); event.stopImmediatePropagation(); open(event.target, event.clientX, event.clientY);
   }, true);
-  document.addEventListener('pointerdown', (event) => { if (menu && !menu.contains(event.target) && event.target !== actions) close(false); });
+  document.addEventListener('pointerdown', (event) => { if (menu && !menu.contains(event.target)) close(false); });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') { close(); return; }
     if ((event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) && event.target instanceof Element) { event.preventDefault(); open(event.target); return; }

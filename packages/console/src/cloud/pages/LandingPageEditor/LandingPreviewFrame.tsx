@@ -123,6 +123,19 @@ function LandingPreviewFrame({
 
   return (
     <>
+      <button
+        type="button"
+        className={styles.previewActionsButton}
+        aria-haspopup="menu"
+        onClick={() => {
+          frameRef.current?.contentWindow?.postMessage(
+            { type: 'meshx-cms-open-actions' },
+            window.location.origin
+          );
+        }}
+      >
+        Actions
+      </button>
       {/* The landing page is our own static site on this origin. It must run its scripts and make
           same-origin requests to load its copy and report edits, so a sandbox that combines both flags
           would stop it working. */}

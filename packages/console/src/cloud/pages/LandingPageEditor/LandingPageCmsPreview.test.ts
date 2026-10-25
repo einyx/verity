@@ -23,6 +23,26 @@ const postDraft = (sections: unknown[]) => {
   );
 };
 
+it('keeps editor actions outside the site header and accepts only its parent toolbar', () => {
+  expect(document.querySelector('.cms-element-actions')).toBeNull();
+  window.dispatchEvent(
+    new MessageEvent('message', {
+      origin: 'https://untrusted.example',
+      source: window.parent,
+      data: { type: 'meshx-cms-open-actions' },
+    })
+  );
+  expect(document.querySelector('.cms-context-menu')).toBeNull();
+  window.dispatchEvent(
+    new MessageEvent('message', {
+      origin: window.location.origin,
+      source: window.parent,
+      data: { type: 'meshx-cms-open-actions' },
+    })
+  );
+  expect(document.querySelector('.cms-context-menu')).not.toBeNull();
+});
+
 beforeEach(() => {
   window.history.replaceState({}, '', '/console/landing-preview?cmsPreview=1');
   // The preview-mode guard must observe a parent frame in this jsdom test.

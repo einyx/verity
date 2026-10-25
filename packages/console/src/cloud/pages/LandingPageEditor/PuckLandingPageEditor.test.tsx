@@ -71,6 +71,17 @@ it('switches between compact-screen panels without unmounting the preview', () =
   expect(screen.getByTitle('Landing page preview')).toBe(frame);
 });
 
+it('opens preview actions from the editor toolbar instead of covering the website header', () => {
+  renderEditor(jest.fn());
+  const frame = screen.getByTitle<HTMLIFrameElement>('Landing page preview');
+  const postMessage = jest.spyOn(frame.contentWindow!, 'postMessage');
+  fireEvent.click(screen.getByText('Actions', { selector: 'button' }));
+  expect(postMessage).toHaveBeenCalledWith(
+    { type: 'meshx-cms-open-actions' },
+    window.location.origin
+  );
+});
+
 it('adds and selects a text section and sends the updated document to the real page canvas', async () => {
   const onChange = jest.fn();
   renderEditor(onChange);

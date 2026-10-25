@@ -1099,6 +1099,7 @@
 }
 
 .liveCanvas {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -1108,9 +1109,12 @@
 
 .liveCanvasToolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  min-height: 56px;
+  padding: 10px 108px 10px 16px;
+  box-sizing: border-box;
   border-bottom: 1px solid #e5e5e5;
   background: #fff;
   color: #57534e;
@@ -1136,6 +1140,24 @@
       outline: 2px solid #d92d20;
       outline-offset: 2px;
     }
+  }
+}
+
+.previewActionsButton {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  background: #fff;
+  color: #292524;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #315da8;
+    outline-offset: 2px;
   }
 }
 

@@ -1102,6 +1102,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .liveCanvasToolbar {
@@ -1139,23 +1141,27 @@
 
 .liveCanvasBody {
   display: flex;
+  container-type: inline-size;
   align-items: flex-start;
   min-width: 0;
+  padding: 16px;
+  background: #eef0f3;
 
   iframe {
     flex: 1;
     min-width: 0;
+    height: 68vh;
+    min-height: 480px;
+    border-radius: 4px;
   }
 }
+
 
 .elementProperties {
   position: sticky;
   top: 0;
-  flex: 0 0 280px;
-  max-height: 75vh;
-  overflow-y: auto;
+  min-width: 0;
   padding: 16px;
-  border-left: 1px solid #e5e5e5;
   background: #fff;
   color: #292524;
 
@@ -1227,53 +1233,139 @@
   .liveCanvasBody iframe {
     width: 100%;
     max-width: none;
-    min-width: 390px;
+    min-width: 0;
   }
 
   .liveCanvas {
     max-width: 100%;
     overflow: hidden;
   }
+}
 
-  /* Puck lays its workspace out as a four-column grid: the plugin rail, the outline, the canvas and
-     the field panel. On a narrow screen that leaves the canvas a sliver, so the columns are
-     rearranged: the rail stays, the canvas takes the width, the outline is dropped (the page outline
-     stays reachable from the rail) and the field panel moves below the canvas.
+/* Puck owns draft/history state, not a second editor shell. Keep the chrome light and readable
+   even when the surrounding console is dark; the real website remains isolated in its iframe. */
+.editorWorkspace {
+  --color-text: #24262b;
+  --color-text-secondary: #626873;
+  --color-layer-1: #fff;
+  --color-layer-2: #f1f3f6;
+  --color-border: #dce0e6;
+  --color-brand: #315da8;
+  --color-primary: #315da8;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 300px;
+  align-items: start;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-text);
+  color-scheme: light;
+  overflow: hidden;
+}
 
-     The class names come from Puck's own stylesheet, so they are matched by their stable prefix
-     rather than their hashed suffix. Puck sets the same properties on more specific selectors, so
-     the attribute is repeated to win the cascade. */
-  [class*='_PuckLayout-inner'][class*='_PuckLayout-inner'][class*='_PuckLayout-inner'][class*='_PuckLayout-inner'] {
-    grid-template-columns: 48px minmax(0, 1fr);
-    grid-template-rows: auto minmax(320px, 1fr) auto;
-    grid-template-areas:
-      'header header'
-      'nav    canvas'
-      'drawer drawer';
+.editorSections,
+.editorInspector {
+  min-width: 0;
+  max-height: 76vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.editorSections {
+  padding: 12px 8px;
+  border-right: 1px solid var(--color-border);
+}
+
+.editorInspector {
+  border-left: 1px solid var(--color-border);
+}
+
+.editorPaneHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text);
   }
 
-  [class*='_PuckLayout-header'][class*='_PuckLayout-header'] {
-    grid-area: header;
+  /* stylelint-disable-next-line no-descending-specificity -- Pane controls are separate from outline-action buttons. */
+  button {
+    min-height: 36px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--color-text);
+    cursor: pointer;
   }
+}
 
-  [class*='_PuckLayout-nav'][class*='_PuckLayout-nav'] {
-    grid-area: nav;
+.editorPanelTabs {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+
+  /* stylelint-disable-next-line no-descending-specificity -- Panel-switch controls never appear inside outline actions. */
+  button {
+    min-height: 44px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: #e9eff9;
+      color: #254f94;
+    }
   }
+}
 
-  [class*='_PuckCanvas'][class*='_PuckCanvas'] {
-    grid-area: canvas;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-  }
+.editorEmpty {
+  padding: 0 20px 20px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
 
-  [class*='_Sidebar--left'][class*='_Sidebar--left'] {
+@media (min-width: 1201px) {
+  .editorPanelTabs {
     display: none;
   }
+}
 
-  [class*='_Sidebar--right'][class*='_Sidebar--right'] {
-    grid-area: drawer;
-    max-height: 60vh;
-    overflow-y: auto;
+@media (max-width: 1200px) {
+  .editorWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+
+    &[data-panel='preview'] > .editorSections,
+    &[data-panel='preview'] > .editorInspector,
+    &[data-panel='sections'] > .liveCanvas,
+    &[data-panel='sections'] > .editorInspector,
+    &[data-panel='properties'] > .liveCanvas,
+    &[data-panel='properties'] > .editorSections {
+      display: none;
+    }
+  }
+}
+
+/* Preserve a real phone viewport instead of clipping the site's typography when editor chrome
+   leaves less than 390px. Only the embedded page scales; editing controls remain full size. */
+@container (max-width: 389px) {
+  .liveCanvasBody iframe {
+    flex: none;
+    width: 390px;
+    max-width: none;
+    // Leave typed CSS division to the browser, rather than evaluating it in Sass.
+    zoom: unquote('calc(100cqw / 390px)');
   }
 }

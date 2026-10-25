@@ -48,9 +48,33 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+it('uses one inspector and keeps the preview separate from the editor controls', async () => {
+  renderEditor(jest.fn());
+  // Puck stays visibility:hidden in jsdom because it cannot measure a real viewport.
+  expect(screen.getByLabelText('Page preview').tagName).toBe('SECTION');
+  expect(screen.getByLabelText('Properties').tagName).toBe('ASIDE');
+  expect(screen.queryByText('Publish', { selector: 'button' })).toBeNull();
+  expect(screen.getAllByText('Undo', { selector: 'button' })).toHaveLength(1);
+  expect(screen.getByText('Sections', { selector: 'button' })).toBeTruthy();
+});
+
+it('switches between compact-screen panels without unmounting the preview', () => {
+  renderEditor(jest.fn());
+  const frame = screen.getByTitle('Landing page preview');
+  const workspace = screen.getByLabelText('Editor panels').parentElement;
+  fireEvent.click(screen.getByText('Sections', { selector: 'button' }));
+  expect(workspace?.dataset.panel).toBe('sections');
+  fireEvent.click(screen.getByText('Properties', { selector: 'button' }));
+  expect(workspace?.dataset.panel).toBe('properties');
+  fireEvent.click(screen.getByText('Preview', { selector: 'button' }));
+  expect(workspace?.dataset.panel).toBe('preview');
+  expect(screen.getByTitle('Landing page preview')).toBe(frame);
+});
+
 it('adds and selects a text section and sends the updated document to the real page canvas', async () => {
   const onChange = jest.fn();
   renderEditor(onChange);
+  fireEvent.click(screen.getByText('Add section', { selector: 'button' }));
   const label = await screen.findByText('Text section', { selector: 'span' });
   fireEvent.click(label.closest('button')!);
   await waitFor(() => {

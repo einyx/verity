@@ -1,9 +1,8 @@
-import { type Config, type Plugin, usePuck } from '@puckeditor/core';
+import { type Config, usePuck } from '@puckeditor/core';
 import { createContext, useContext } from 'react';
 
 import { useConfirmModal } from '@/hooks/use-confirm-modal';
 
-import { componentsIcon, outlineIcon, sectionsIcon } from './LandingEditorIcons';
 import {
   isCustomLandingSectionComponent,
   landingSectionComponentNames,
@@ -37,8 +36,9 @@ function useEditorNavigation() {
   return navigation;
 }
 
-function SectionEntries() {
+export function SectionEntries({ onSelect }: { readonly onSelect?: () => void }) {
   const { activeSection, selectSection } = useEditorNavigation();
+  const { appState, dispatch } = usePuck<EditorConfig>();
 
   return (
     <div className={styles.puckComponentList}>
@@ -50,6 +50,16 @@ function SectionEntries() {
           aria-current={activeSection === key ? 'location' : undefined}
           onClick={() => {
             selectSection(key);
+            onSelect?.();
+            const index = appState.data.content.findIndex(
+              (block) => block.type === landingSectionComponentNames[key]
+            );
+            if (index >= 0) {
+              dispatch({
+                type: 'setUi',
+                ui: { itemSelector: { index, zone: 'root:default-zone' } },
+              });
+            }
           }}
         >
           <span className={styles.puckSectionEntryCopy}>
@@ -62,7 +72,7 @@ function SectionEntries() {
   );
 }
 
-function SectionLibraryPanel() {
+export function SectionLibraryPanel({ onSelect }: { readonly onSelect?: () => void }) {
   const { appState, dispatch, getPermissions } = usePuck<EditorConfig>();
   const { content } = appState.data;
   const canAdd = getPermissions().insert && content.length < 40;
@@ -97,6 +107,7 @@ function SectionLibraryPanel() {
             className={styles.puckComponentCard}
             disabled={!canAdd}
             onClick={() => {
+              onSelect?.();
               dispatch({
                 type: 'insert',
                 componentType: type,
@@ -137,7 +148,7 @@ function SectionLibraryPanel() {
   );
 }
 
-function AddedSectionsPanel() {
+export function AddedSectionsPanel({ onSelect }: { readonly onSelect?: () => void }) {
   const { appState, dispatch, getPermissions } = usePuck<EditorConfig>();
   const { show } = useConfirmModal();
   const customSections = appState.data.content.flatMap((block, index) =>
@@ -145,6 +156,7 @@ function AddedSectionsPanel() {
   );
   const canEdit = getPermissions().edit;
   const selectBlock = (index: number) => {
+    onSelect?.();
     dispatch({ type: 'setUi', ui: { itemSelector: { index, zone: 'root:default-zone' } } });
   };
 
@@ -248,37 +260,3 @@ function AddedSectionsPanel() {
     </div>
   );
 }
-
-export const sectionLibraryPlugin: Plugin = {
-  // This is a constrained catalog of schema-backed blocks, not a generic HTML builder.
-  name: 'blocks',
-  label: 'Components',
-  icon: componentsIcon,
-  render: () => <SectionLibraryPanel />,
-};
-
-export const addedSectionsPlugin: Plugin = {
-  name: 'added-sections',
-  label: 'Added sections',
-  icon: sectionsIcon,
-  render: () => <AddedSectionsPanel />,
-};
-
-export const pageOutlinePlugin: Plugin = {
-  // The fixed outline corresponds to the built-in site sections and their designed order.
-  name: 'landing-outline',
-  label: 'Page outline',
-  icon: outlineIcon,
-  render: () => (
-    <div className={styles.puckPluginContent}>
-      <div className={styles.puckPluginHeading}>
-        <h2>Page outline</h2>
-        <span>{sectionKeys.length} built in</span>
-      </div>
-      <p className={styles.puckPluginHint}>
-        The designed sections stay in place. Select one to jump to it and edit its content.
-      </p>
-      <SectionEntries />
-    </div>
-  ),
-};

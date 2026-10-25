@@ -1,17 +1,11 @@
 import { landingPageSectionGuard } from '@logto/schemas';
-import { Puck, fieldsPlugin, type Config } from '@puckeditor/core';
+import { Puck, type Config } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { isRecord } from './ContentEditor';
 import { PageCanvas, PreviewContext } from './LandingPageCanvas';
-import {
-  EditorNavigationContext,
-  addedSectionsPlugin,
-  pageOutlinePlugin,
-  sectionLibraryPlugin as puckComponentsPlugin,
-  type EditorNavigation,
-} from './LandingPageNavigation';
+import { EditorNavigationContext, type EditorNavigation } from './LandingPageNavigation';
 import {
   landingPagePuckData,
   landingSectionConfig,
@@ -128,16 +122,9 @@ function PuckLandingPageEditor({
           <Puck
             config={config}
             data={data}
-            height="78vh"
             permissions={{ drag: true, duplicate: true, delete: true, edit: true, insert: true }}
             headerTitle="Landing page"
             iframe={{ enabled: false }}
-            plugins={[
-              puckComponentsPlugin,
-              fieldsPlugin({ label: 'Section' }),
-              addedSectionsPlugin,
-              pageOutlinePlugin,
-            ]}
             onChange={(next) => {
               const rootDocument = next.root.props?.document;
               const priorSections =
@@ -155,7 +142,9 @@ function PuckLandingPageEditor({
                 onChange(updated);
               }
             }}
-          />
+          >
+            <PageCanvas />
+          </Puck>
         </div>
       </EditorNavigationContext.Provider>
     </PreviewContext.Provider>

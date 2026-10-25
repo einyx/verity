@@ -1,4 +1,4 @@
-import { type Config, usePuck } from '@puckeditor/core';
+import { Puck, type Config, usePuck } from '@puckeditor/core';
 import {
   createContext,
   useContext,
@@ -17,7 +17,12 @@ import {
   type LandingElementSelection,
 } from './LandingElementModel';
 import LandingElementProperties from './LandingElementProperties';
-import { EditorNavigationContext } from './LandingPageNavigation';
+import {
+  AddedSectionsPanel,
+  EditorNavigationContext,
+  SectionEntries,
+  SectionLibraryPanel,
+} from './LandingPageNavigation';
 import LandingPreviewFrame from './LandingPreviewFrame';
 import {
   landingPagePuckData,
@@ -47,6 +52,8 @@ const singletonTypes = new Set(['hero', 'closingCta']);
 
 export function PageCanvas() {
   const [selection, setSelection] = useState<LandingElementSelection>();
+  const [panel, setPanel] = useState<'preview' | 'sections' | 'properties'>('preview');
+  const [showLibrary, setShowLibrary] = useState(false);
   const preview = useContext(PreviewContext);
   const navigation = useContext(EditorNavigationContext);
   const { appState, dispatch, history } =
@@ -96,6 +103,7 @@ export function PageCanvas() {
 
   const selectElement = (next: LandingElementSelection) => {
     setSelection(next);
+    setPanel('properties');
     if (next.sectionId) {
       const index = currentDocument.sections.findIndex((section) => section.id === next.sectionId);
       if (index >= 0) {
@@ -116,6 +124,7 @@ export function PageCanvas() {
     }
 
     if (action === 'edit') {
+      showSectionProperties();
       dispatch({
         type: 'setUi',
         ui: { itemSelector: { index, zone: 'root:default-zone' } },
@@ -187,6 +196,7 @@ export function PageCanvas() {
               ? appState.data.content.length
               : closingIndex;
 
+    showSectionProperties();
     dispatch({
       type: 'insert',
       componentType: landingSectionComponentNames[type],
@@ -200,46 +210,86 @@ export function PageCanvas() {
     });
   };
 
+  const showSectionProperties = () => {
+    setSelection(undefined);
+    setPanel('properties');
+  };
+
   return (
-    <div className={styles.liveCanvas}>
-      <div className={styles.liveCanvasToolbar}>
-        <button type="button" disabled={!history.hasPast} onClick={history.back}>
-          Undo
-        </button>
-        <button type="button" disabled={!history.hasFuture} onClick={history.forward}>
-          Redo
-        </button>
-        <span>Click to edit · Right-click for actions</span>
+    <div className={styles.editorWorkspace} data-panel={panel}>
+      <div className={styles.editorPanelTabs} aria-label="Editor panels">
+        {(['sections', 'preview', 'properties'] as const).map((name) => (
+          <button
+            key={name}
+            type="button"
+            aria-pressed={panel === name}
+            onClick={() => {
+              setPanel(name);
+            }}
+          >
+            {name === 'sections' ? 'Sections' : name === 'preview' ? 'Preview' : 'Properties'}
+          </button>
+        ))}
       </div>
-      <div className={styles.liveCanvasBody}>
-        <LandingPreviewFrame
-          draft={currentDocument}
-          locale={preview.locale}
-          activeSection={navigation.activeSection}
-          onEdit={(path, value) => {
-            // Accept only existing copy fields, never arbitrary message-supplied object paths.
-            if (
-              typeof readAtPath(currentDocument, path) === 'string' ||
-              /^copy\.[\w-]+\.[a-z-]+$/.test(path)
-            ) {
-              updateDocument(setAtPath(currentDocument, path, value));
-            }
-          }}
-          onSelectLink={preview.onSelectLink}
-          onMove={(id, offsetX, offsetY) => {
-            const target =
-              selection?.id === id
-                ? selection
-                : { id, kind: 'image' as const, fields: {}, values: {} };
-            const next = updateElementField(currentDocument, target, 'x', offsetX);
-            updateDocument(updateElementField(next, target, 'y', offsetY));
-          }}
-          onAddSection={addSection}
-          onSelectElement={selectElement}
-          onElementEdit={editElement}
-          onSectionAction={sectionAction}
-        />
-        {selection && (
+      <aside className={styles.editorSections} aria-label="Page sections">
+        <div className={styles.editorPaneHeading}>
+          <h2>Sections</h2>
+          <button
+            type="button"
+            aria-expanded={showLibrary}
+            onClick={() => {
+              setShowLibrary(!showLibrary);
+            }}
+          >
+            {showLibrary ? 'Close library' : 'Add section'}
+          </button>
+        </div>
+        {showLibrary && <SectionLibraryPanel onSelect={showSectionProperties} />}
+        <SectionEntries onSelect={showSectionProperties} />
+        <AddedSectionsPanel onSelect={showSectionProperties} />
+      </aside>
+      <section className={styles.liveCanvas} aria-label="Page preview">
+        <div className={styles.liveCanvasToolbar}>
+          <button type="button" disabled={!history.hasPast} onClick={history.back}>
+            Undo
+          </button>
+          <button type="button" disabled={!history.hasFuture} onClick={history.forward}>
+            Redo
+          </button>
+          <span>Click to edit · Right-click for actions</span>
+        </div>
+        <div className={styles.liveCanvasBody}>
+          <LandingPreviewFrame
+            draft={currentDocument}
+            locale={preview.locale}
+            activeSection={navigation.activeSection}
+            onEdit={(path, value) => {
+              // Accept only existing copy fields, never arbitrary message-supplied object paths.
+              if (
+                typeof readAtPath(currentDocument, path) === 'string' ||
+                /^copy\.[\w-]+\.[a-z-]+$/.test(path)
+              ) {
+                updateDocument(setAtPath(currentDocument, path, value));
+              }
+            }}
+            onSelectLink={preview.onSelectLink}
+            onMove={(id, offsetX, offsetY) => {
+              const target =
+                selection?.id === id
+                  ? selection
+                  : { id, kind: 'image' as const, fields: {}, values: {} };
+              const next = updateElementField(currentDocument, target, 'x', offsetX);
+              updateDocument(updateElementField(next, target, 'y', offsetY));
+            }}
+            onAddSection={addSection}
+            onSelectElement={selectElement}
+            onElementEdit={editElement}
+            onSectionAction={sectionAction}
+          />
+        </div>
+      </section>
+      <aside className={styles.editorInspector} aria-label="Properties">
+        {selection ? (
           <LandingElementProperties
             key={selection.id}
             selection={selection}
@@ -249,10 +299,24 @@ export function PageCanvas() {
             }}
             onClose={() => {
               setSelection(undefined);
+              setPanel('preview');
             }}
           />
+        ) : (
+          <>
+            <div className={styles.editorPaneHeading}>
+              <h2>Section properties</h2>
+            </div>
+            {appState.ui.itemSelector ? (
+              <Puck.Fields />
+            ) : (
+              <p className={styles.editorEmpty}>
+                Select a section or click an element in the preview to edit it.
+              </p>
+            )}
+          </>
         )}
-      </div>
+      </aside>
     </div>
   );
 }

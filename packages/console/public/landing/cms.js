@@ -544,6 +544,9 @@
   );
 
   function attachPositionControls() {
+    // Authored-element controls use the same stable IDs and offsets as the inspector. Keep the
+    // legacy wrapper controls only for previews that do not load the element editor.
+    if (window.LandingElements) return;
     for (const el of document.querySelectorAll('[data-cms-image], [data-cms-movable]')) {
       if (!(el instanceof HTMLElement) || el.dataset.cmsMoveControlAttached === 'true') {
         continue;

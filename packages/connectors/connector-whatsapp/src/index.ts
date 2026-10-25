@@ -1,6 +1,5 @@
 import { assert } from '@silverhand/essentials';
 import { got, HTTPError } from 'got';
-import { z } from 'zod/v3';
 
 import type {
   GetConnectorConfig,
@@ -15,6 +14,7 @@ import {
   ConnectorType,
   getConfigTemplateByType,
 } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 import { defaultMetadata, endpoint } from './constant.js';
 import type { WhatsAppMessagePayload } from './types.js';

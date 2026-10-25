@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import { oidcPromptsGuard } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 export const azureADConfigGuard = z.object({
   clientId: z.string(),

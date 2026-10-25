@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import { oauth2ConfigGuard } from '@logto/connector-oauth';
+import { z } from 'zod/v3';
 
 export const huggingfaceConnectorConfigGuard = oauth2ConfigGuard.pick({
   clientId: true,

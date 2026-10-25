@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import { emailServiceBrandingGuard } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 export const emailServiceBasicConfigGuard = z
   .object({

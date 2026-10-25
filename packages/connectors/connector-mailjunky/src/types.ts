@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import { templateTypeGuard, TemplateType } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 /**
  * MailJunky API Request Body

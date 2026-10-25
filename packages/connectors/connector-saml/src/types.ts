@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import type * as saml from 'samlify';
+import { z } from 'zod/v3';
 
 import {
   assertionBinding,

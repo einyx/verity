@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod/v3';
 
 import type {
   CreateConnector,
@@ -16,6 +15,7 @@ import {
   jsonGuard,
   tokenResponseGuard,
 } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 import { defaultMetadata } from './constant.js';
 import { mockSocialConfigGuard } from './types.js';

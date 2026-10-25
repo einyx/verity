@@ -1,4 +1,5 @@
 import type { Nullable, Optional } from '@silverhand/essentials';
+
 import { z } from 'zod/v3';
 
 const nullishToUndefined = <T = unknown>(input: Nullable<T>): Optional<T> => {

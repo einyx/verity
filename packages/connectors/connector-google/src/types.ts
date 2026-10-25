@@ -1,6 +1,5 @@
-import { z } from 'zod/v3';
-
 import { GoogleConnector } from '@logto/connector-kit';
+import { z } from 'zod/v3';
 
 export const accessTokenResponseGuard = z.object({
   access_token: z.string(),

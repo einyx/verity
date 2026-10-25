@@ -29,7 +29,14 @@ type PageRow = {
   draft: LandingPageDocument;
   published: Nullable<LandingPageDocument>;
   publishedVersion: Nullable<number>;
+  updatedAt?: string;
 };
+
+const publishBody = z.object({
+  /** The draft's updated time as the editor last saw it. Publish refuses when it is behind, so one
+   * editor cannot silently publish another editor's newer content. */
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
+});
 
 type VersionRow = {
   version: number;
@@ -65,11 +72,17 @@ export const landingPageRoutes = (envSet: EnvSet) => {
 
   const readPage = async (): Promise<PageRow> => {
     const pool = await EnvSet.sharedPool;
-    const row = await pool.maybeOne<PageRow>(sql`
+    const row = await pool.maybeOne<{
+      draft: LandingPageDocument;
+      published: Nullable<LandingPageDocument>;
+      publishedVersion: Nullable<number>;
+      updatedAt: Date | undefined;
+    }>(sql`
       select
         draft,
         published,
-        published_version as "publishedVersion"
+        published_version as "publishedVersion",
+        updated_at as "updatedAt"
       from landing_pages
       where tenant_id = ${adminTenantId}
     `);
@@ -82,6 +95,7 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       draft: landingPageDocumentGuard.parse(row.draft),
       published: row.published && landingPageDocumentGuard.parse(row.published),
       publishedVersion: row.publishedVersion,
+      updatedAt: row.updatedAt?.toISOString(),
     };
   };
 
@@ -141,12 +155,20 @@ export const landingPageRoutes = (envSet: EnvSet) => {
   // history inside the transaction, so concurrent publishes cannot reuse one.
   router.post(
     '/api/landing-page/publish',
-    koaGuard({ status: [200, 401, 403, 404] }),
+    koaGuard({ body: publishBody, status: [200, 401, 403, 404, 409] }),
     async (ctx, next) => {
       const userId = await authenticateEditor(ctx);
       const pool = await EnvSet.sharedPool;
 
       const page = await readPage();
+      const { expectedUpdatedAt } = ctx.guard.body;
+
+      // The editor sends the draft time it last saw. When it is behind, someone else saved in the
+      // meantime: refuse rather than silently publish their content.
+      assertThat(
+        !expectedUpdatedAt || !page.updatedAt || expectedUpdatedAt === page.updatedAt,
+        new RequestError({ code: 'entity.edit_conflict', status: 409 })
+      );
 
       await pool.transaction(async (transaction) => {
         const { latest } = await transaction.one<{ latest: number }>(sql`

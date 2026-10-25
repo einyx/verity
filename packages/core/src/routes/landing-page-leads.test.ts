@@ -424,21 +424,13 @@ describe('landing leads routes', () => {
       budgetAssessment: undefined,
     });
     const body = JSON.stringify(response.body);
-    for (const forbidden of [
-      'USD 150',
-      '1,500,000',
-      '1500000',
-      '12000',
-      '24000',
-      '48000',
-      'Confidence',
-      '2026-10-24',
-      'demoMonthly',
-      'bankAnnualPlanningAnchor',
-      'indicativeAnnualRange',
-    ]) {
+    for (const forbidden of ['Confidence', 'assessedAt', 'indicativeAnnualRange', 'rationale']) {
       expect(body).not.toContain(forbidden);
     }
+    expect(body).not.toMatch(/USD\s?[\d,]/);
+    expect(body).not.toMatch(/\b\d{1,3}(,\d{3})+\b/);
+    // The assessment carries no assessment date of its own.
+    expect(JSON.stringify(projected)).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
   it('sends the brief as a PDF file, not JSON', async () => {

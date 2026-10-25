@@ -92,21 +92,18 @@ describe('budget export audience boundary', () => {
     }
     // No budget figure, scenario range, confidence rating or assessment date is published.
     for (const forbidden of [
-      'USD 150/month',
-      'USD 1,500,000/year',
       'UNCONFIRMED',
       'Confidence',
       'Annual USD scenario range',
-      '2026-10-24',
-      'USD 12,000',
-      'USD 24,000',
-      'USD 48,000',
       'BUDGET_RATIONALE',
       'BUDGET_ASSUMPTION',
       'budget advisory',
     ]) {
       expect(text).not.toContain(forbidden);
     }
+    expect(text).not.toMatch(/USD\s?[\d,]/);
+    expect(text).not.toMatch(/\b\d{1,3}(,\d{3})+\b/);
+    expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}/);
     expect(text).not.toMatch(/\d\s*%/);
     expect(input).toEqual(before);
   });
@@ -116,8 +113,7 @@ describe('budget export audience boundary', () => {
     expect(html).toContain('Budget context and discovery - internal only');
     expect(html).toContain('BUDGET_DISCOVERY');
     expect(html).toContain('Confidential / Internal');
-    expect(html).not.toContain('USD 150/month');
-    expect(html).not.toContain('USD 1,500,000/year');
+    expect(html).not.toMatch(/USD\s?[\d,]/);
     expect(html).not.toContain('Confidence');
   });
 
@@ -195,8 +191,7 @@ describe('budget export audience boundary', () => {
         expect(part).toContain('Actual opportunity budget: not disclosed');
         expect(part).toContain('Hypothetical suggestion for sales');
         expect(part).not.toContain('Confidence');
-        expect(part).not.toContain('USD 150');
-        expect(part).not.toContain('USD 1,500,000');
+        expect(part).not.toMatch(/USD\s?[\d,]/);
         expect(part).not.toContain('"prospect"');
       }
       expect(text.logical).toContain('Confidential');

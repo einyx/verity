@@ -89,11 +89,13 @@ it('uses tenant-bound explicit company/decision and persists a guarded budget al
   const savedProfile = saveLeadCompanyProfile.mock.calls[0]?.[2];
   expect(savedProfile?.summary).toBe('Independent summary');
   expect(savedProfile?.budgetAssessment).toMatchObject({
-    demoMonthly: 150,
-    bankAnnualPlanningAnchor: 1_500_000,
     opportunityBudgetStatus: 'not_disclosed',
     evidence: sources,
   });
+  // No reference amount is stored with the lead.
+  expect(savedProfile?.budgetAssessment).not.toHaveProperty('demoMonthly');
+  expect(savedProfile?.budgetAssessment).not.toHaveProperty('bankAnnualPlanningAnchor');
+  expect(savedProfile?.budgetAssessment).not.toHaveProperty('scenarioLabel');
   const modelCalls = fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST');
   const budgetCall = modelCalls.find(([, init]) =>
     String(init?.body).includes('"max_tokens":1000')

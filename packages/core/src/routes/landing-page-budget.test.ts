@@ -53,7 +53,7 @@ describe('parseBudgetAssessment', () => {
       evidence: raw.evidence,
     });
   });
-  it('owns the USD anchors and labels independently of model overrides', () => {
+  it('stores no reference amount, currency or scenario label, and keeps the not-disclosed status', () => {
     const result: BudgetAssessment | undefined = parseBudgetAssessment(
       {
         ...raw,
@@ -67,16 +67,16 @@ describe('parseBudgetAssessment', () => {
       now
     );
     expect(result).toMatchObject({
-      currency: 'USD',
-      demoMonthly: 150,
-      bankAnnualPlanningAnchor: 1_500_000,
-      bankPeriodAssumption: 'annual, unconfirmed',
       opportunityBudgetStatus: 'not_disclosed',
       confidence: 'medium',
       assessedAt: now.toISOString(),
     });
-    expect(result?.scenarioLabel).toContain('vendor commercial scenarios');
-    expect(result?.scenarioLabel).toContain('not');
+    // No reference amount, currency or scenario label is stored at all.
+    expect(result).not.toHaveProperty('currency');
+    expect(result).not.toHaveProperty('demoMonthly');
+    expect(result).not.toHaveProperty('bankAnnualPlanningAnchor');
+    expect(result).not.toHaveProperty('bankPeriodAssumption');
+    expect(result).not.toHaveProperty('scenarioLabel');
     expect(budgetAssessmentGuard.safeParse(result).success).toBe(true);
     expect(budgetAssessmentInputGuard.safeParse(input).success).toBe(true);
   });
@@ -183,7 +183,7 @@ describe('assessCompanyBudget', () => {
         new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(raw) } }] }))
       );
     const result = await assessCompanyBudget(input, { ...options, fetch: fetcher });
-    expect(result?.demoMonthly).toBe(150);
+    expect(result?.opportunityBudgetStatus).toBe('not_disclosed');
     expect(fetcher).toHaveBeenCalledTimes(1);
     const [url, init] = fetcher.mock.calls[0]!;
     expect(url).toBe(options.endpoint);

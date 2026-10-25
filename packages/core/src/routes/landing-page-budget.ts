@@ -32,16 +32,11 @@ const evidenceGuard = z.object({
   signal: z.string().trim().min(1).max(500),
 });
 const notesGuard = z.array(z.string().trim().min(1).max(1000)).max(12);
-const scenarioLabel =
-  'AI advisory vendor commercial scenarios in annual USD; not the customer’s confirmed budget or binding quotes. Public spend indicators are context only; revenue-percentage heuristics are prohibited.';
 
+// The assessment never carries a reference amount, a currency or a scenario label: only the
+// not-disclosed status, the model notes and the public evidence are stored.
 export const budgetAssessmentGuard = z.object({
-  currency: z.literal('USD'),
-  demoMonthly: z.literal(150),
-  bankAnnualPlanningAnchor: z.literal(1_500_000),
-  bankPeriodAssumption: z.literal('annual, unconfirmed'),
   opportunityBudgetStatus: z.literal('not_disclosed'),
-  scenarioLabel: z.literal(scenarioLabel),
   indicativeAnnualRange: annualRangeGuard.nullable(),
   confidence: z.enum(['low', 'medium']),
   businessType: z.string().max(200).optional(),
@@ -104,12 +99,7 @@ export function parseBudgetAssessment(
     const hasScenarioBasis = evidence.length > 0 && data.assumptions.length > 0;
     return budgetAssessmentGuard.parse({
       ...data,
-      currency: 'USD',
-      demoMonthly: 150,
-      bankAnnualPlanningAnchor: 1_500_000,
-      bankPeriodAssumption: 'annual, unconfirmed',
       opportunityBudgetStatus: 'not_disclosed',
-      scenarioLabel,
       indicativeAnnualRange: hasScenarioBasis ? data.indicativeAnnualRange : null,
       confidence:
         discardedCitation || !hasScenarioBasis || data.indicativeAnnualRange === null

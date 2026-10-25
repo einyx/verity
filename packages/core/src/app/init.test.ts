@@ -9,6 +9,7 @@ import { EnvSet } from '#src/env-set/index.js';
 const { jest } = import.meta;
 
 const getTenantId = jest.fn();
+const getConsoleRedirectUrl = jest.fn();
 const tenantPoolGet = jest.fn();
 const trackException = jest.fn();
 
@@ -29,6 +30,9 @@ jest.unstable_mockModule('#src/tenants/index.js', () => ({
 
 jest.unstable_mockModule('#src/utils/tenant.js', () => ({
   getTenantId,
+  getConsoleRedirectUrl,
+  landingAssetPrefix: '/console/landing/',
+  landingPreviewPath: '/console/landing-preview',
 }));
 
 const initI18n = await pickDefault(import('../i18n/init.js'));
@@ -66,6 +70,18 @@ describe('App Init', () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  it('sends a console path to the admin console', async () => {
+    getConsoleRedirectUrl.mockReturnValueOnce(new URL('https://admin.logto.mock/console'));
+
+    const app = new Koa();
+    await initApp(app);
+
+    const response = await request(app.callback()).get('/console');
+
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toBe('https://admin.logto.mock/console');
   });
 
   it('serves the static landing page in local development', async () => {

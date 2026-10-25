@@ -17,7 +17,12 @@ import { EnvSet } from '#src/env-set/index.js';
 import { TenantNotFoundError, tenantPool } from '#src/tenants/index.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
 import { buildAppInsightsTelemetry } from '#src/utils/request.js';
-import { getTenantId } from '#src/utils/tenant.js';
+import {
+  getConsoleRedirectUrl,
+  getTenantId,
+  landingAssetPrefix,
+  landingPreviewPath,
+} from '#src/utils/tenant.js';
 
 const logListening = (type: 'core' | 'admin' = 'core') => {
   const urlSet = type === 'core' ? EnvSet.values.urlSet : EnvSet.values.adminUrlSet;
@@ -57,7 +62,6 @@ const readLandingPage = async (): Promise<string | undefined> => {
 // The landing page HTML loads its assets from `/console/landing/...` and its favicons from `/favicon...`
 // on the root of every domain. Serve those files from the landing build on domain-based cloud hosts;
 // anything that is not an existing file falls through to normal routing.
-const landingAssetPrefix = '/console/landing/';
 const landingRootAssetPrefix = '/favicon';
 
 const serveLandingPreview = async (ctx: Koa.Context, next: Koa.Next) => {
@@ -85,7 +89,7 @@ const isLandingRouteEnabled = (pathname: string, isLandingPreview: boolean) => {
 
 const serveLandingAsset = async (ctx: Koa.Context, next: Koa.Next) => {
   const { pathname } = ctx.URL;
-  const isLandingPreview = pathname === '/console/landing-preview';
+  const isLandingPreview = pathname === landingPreviewPath;
   const isLandingAsset =
     pathname.startsWith(landingAssetPrefix) || pathname.startsWith(landingRootAssetPrefix);
 
@@ -145,6 +149,23 @@ export default async function initApp(app: Koa): Promise<void> {
   });
 
   app.use(serveLandingAsset);
+
+  // The Console is served by the admin endpoint. A console path on another origin (e.g. the site's
+  // own domain, where the landing page links to the Console) is handled by that tenant's app and
+  // renders its "not found" page, so send the browser to the admin Console instead.
+  app.use(async (ctx, next) => {
+    if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
+      return next();
+    }
+
+    const redirectUrl = getConsoleRedirectUrl(ctx.URL);
+
+    if (!redirectUrl) {
+      return next();
+    }
+
+    ctx.redirect(redirectUrl.href);
+  });
 
   // The landing page's demo request lives on the root as a modal. Old demo links point at /demo, so a
   // browser visit is sent to the root with the modal's anchor, which the landing page opens on load.

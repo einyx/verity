@@ -28,7 +28,7 @@ mockEsm('#src/caches/index.js', () => ({
   redisCache: mockRedisCache,
 }));
 
-const { getTenantId, clearCustomDomainCache } = await import('./tenant.js');
+const { getTenantId, clearCustomDomainCache, getConsoleRedirectUrl } = await import('./tenant.js');
 
 const getTenantIdFirstElement = async (url: URL) => {
   const [tenantId] = await getTenantId(url);
@@ -227,5 +227,91 @@ describe('getTenantId()', () => {
      * miss here would resolve to `undefined`.
      */
     await expect(getTenantIdFirstElement(new URL('https://logto.mock.com'))).resolves.toBe('fresh');
+  });
+});
+
+describe('getConsoleRedirectUrl()', () => {
+  const backupEnv = process.env;
+
+  afterEach(() => {
+    process.env = backupEnv;
+  });
+
+  it('should send a console path on another origin to the admin console', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://site.logto.mock',
+      ADMIN_ENDPOINT: 'https://admin.logto.mock',
+    };
+
+    expect(getConsoleRedirectUrl(new URL('https://site.logto.mock/console'))?.href).toBe(
+      'https://admin.logto.mock/console'
+    );
+    expect(
+      getConsoleRedirectUrl(new URL('https://site.logto.mock/console/default/dashboard?tab=1'))
+        ?.href
+    ).toBe('https://admin.logto.mock/console/default/dashboard?tab=1');
+  });
+
+  it('should not redirect a request that already targets the admin endpoint', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://site.logto.mock',
+      ADMIN_ENDPOINT: 'https://admin.logto.mock',
+    };
+
+    expect(getConsoleRedirectUrl(new URL('https://admin.logto.mock/console'))).toBeUndefined();
+  });
+
+  it('should not redirect the landing page, which is served on every origin', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://site.logto.mock',
+      ADMIN_ENDPOINT: 'https://admin.logto.mock',
+    };
+
+    expect(
+      getConsoleRedirectUrl(new URL('https://site.logto.mock/console/landing-preview'))
+    ).toBeUndefined();
+    expect(
+      getConsoleRedirectUrl(new URL('https://site.logto.mock/console/landing/index.css'))
+    ).toBeUndefined();
+  });
+
+  it('should not redirect a path that is not the console', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://site.logto.mock',
+      ADMIN_ENDPOINT: 'https://admin.logto.mock',
+    };
+
+    expect(getConsoleRedirectUrl(new URL('https://site.logto.mock/'))).toBeUndefined();
+    expect(getConsoleRedirectUrl(new URL('https://site.logto.mock/sign-in'))).toBeUndefined();
+  });
+
+  it('should not redirect in multi-tenancy, where the console belongs to the cloud admin domain', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://*.logto.mock',
+      ADMIN_ENDPOINT: 'https://admin.logto.mock',
+    };
+
+    expect(getConsoleRedirectUrl(new URL('https://site.logto.mock/console'))).toBeUndefined();
+  });
+
+  it('should not redirect when no admin endpoint is known', () => {
+    process.env = {
+      ...backupEnv,
+      NODE_ENV: 'production',
+      ENDPOINT: 'https://site.logto.mock',
+      ADMIN_DISABLE_LOCALHOST: '1',
+    };
+
+    expect(getConsoleRedirectUrl(new URL('https://site.logto.mock/console'))).toBeUndefined();
   });
 });

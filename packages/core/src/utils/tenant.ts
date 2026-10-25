@@ -1,6 +1,6 @@
-import { adminTenantId, defaultTenantId } from '@logto/schemas';
+import { adminTenantId, defaultTenantId, ossConsolePath } from '@logto/schemas';
 import { type UrlSet } from '@logto/shared';
-import { conditionalString, trySafe } from '@silverhand/essentials';
+import { conditionalString, joinPath, trySafe } from '@silverhand/essentials';
 import { type CommonQueryMethods } from '@silverhand/slonik';
 
 import {
@@ -18,12 +18,65 @@ import { devConsole } from './console.js';
 const normalizePathname = (pathname: string) =>
   pathname + conditionalString(!pathname.endsWith('/') && '/');
 
+/** The path of the Console app, e.g. `/console`. */
+export const consolePath = ossConsolePath;
+
+/** The landing page preview, which is served on every origin. */
+export const landingPreviewPath = `${ossConsolePath}/landing-preview`;
+
+/** The landing page assets, which are served on every origin. */
+export const landingAssetPrefix = `${ossConsolePath}/landing/`;
+
 const isEndpointOf = (current: URL, endpoint: URL) => {
   // Make sure current pathname fragments start with endpoint's
   return (
     current.origin === endpoint.origin &&
     normalizePathname(current.pathname).startsWith(normalizePathname(endpoint.pathname))
   );
+};
+
+const isConsolePath = (pathname: string) =>
+  pathname === consolePath || pathname.startsWith(`${consolePath}/`);
+
+const isLandingPath = (pathname: string) =>
+  pathname === landingPreviewPath || pathname.startsWith(landingAssetPrefix);
+
+/**
+ * Get the URL the Console should be served from, when the current request asks for the Console on
+ * an origin that does not serve it.
+ *
+ * The Console is mounted on the admin tenant app, which is only served on the admin endpoint. A
+ * console path that arrives on another origin (e.g. the site's own domain) is handled by that
+ * tenant's app and renders its "not found" page, so the browser is sent to the admin Console
+ * instead.
+ *
+ * Only single-tenant deployments redirect: with multi-tenancy the Console belongs to the cloud
+ * admin domain, and a tenant domain must not point at it.
+ *
+ * @param url The current request's URL
+ * @returns The admin Console URL, or `undefined` when the request should be served as is
+ */
+export const getConsoleRedirectUrl = (url: URL): URL | undefined => {
+  const {
+    values: { isMultiTenancy, adminUrlSet },
+  } = EnvSet;
+
+  if (isMultiTenancy || !isConsolePath(url.pathname) || isLandingPath(url.pathname)) {
+    return;
+  }
+
+  // The admin endpoint serves the Console already.
+  if (adminUrlSet.deduplicated().some((endpoint) => isEndpointOf(url, endpoint))) {
+    return;
+  }
+
+  const adminEndpoint = trySafe(() => adminUrlSet.endpoint);
+
+  if (!adminEndpoint) {
+    return;
+  }
+
+  return new URL(joinPath(adminEndpoint.pathname, url.pathname) + url.search, adminEndpoint.origin);
 };
 
 const matchDomainBasedTenantId = (pattern: URL, url: URL) => {

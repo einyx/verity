@@ -7,7 +7,6 @@
 
 import { assert } from '@silverhand/essentials';
 import { got } from 'got';
-import { z } from 'zod/v3';
 
 import type {
   GetConnectorConfig,
@@ -24,6 +23,7 @@ import {
   parseJson,
 } from '@logto/connector-kit';
 import dayjs from 'dayjs';
+import { z } from 'zod/v3';
 
 import {
   alipayEndpoint,

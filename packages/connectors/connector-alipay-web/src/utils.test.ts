@@ -23,7 +23,9 @@ describe('signingParameters', () => {
     code: '7ffeb112fbb6495c9e7dfb720380DD39',
   };
 
-  const verifySignature = (parameters: typeof testingParameters) => {
+  const verifySignature = (
+    parameters: typeof testingParameters & Record<string, string | undefined>
+  ) => {
     const signedParameters = signingParameters(parameters);
     const { sign, ...unsignedParameters } = signedParameters;
     const signingContent = Object.entries(unsignedParameters)
@@ -36,7 +38,7 @@ describe('signingParameters', () => {
     verifier.update(signingContent, 'utf8');
     verifier.end();
 
-    expect(verifier.verify(mockedAlipayPublicKey, sign, 'base64')).toBe(true);
+    expect(verifier.verify(mockedAlipayPublicKey, sign ?? '', 'base64')).toBe(true);
 
     return signedParameters.sign;
   };

@@ -45,51 +45,32 @@ const userMessages = (transcript: unknown): string[] =>
       )
     : [];
 
-/** Groups the thousands the same way in every document, without depending on a runtime locale. */
-const usd = (amount: number) => `USD ${amount.toLocaleString('en-US')}`;
-
-/** A list of notes, or a single line saying that none were stored. */
-const optionalNotes = (
-  values: readonly string[] | undefined,
-  label: string,
-  prefix: string
-): string[] =>
-  values && values.length > 0
-    ? values.map((value) => `${prefix}: ${value}`)
-    : [`${label}: not available`];
-
 /** The public evidence behind the assessment, with the source it came from. */
 const budgetEvidenceLines = (budget: BudgetAssessment | undefined): string[] =>
   budget && budget.evidence.length > 0
     ? budget.evidence.flatMap(({ sourceUrl, quote, signal }) => [
         `Public evidence context: ${signal}`,
-        `Source: ${sourceUrl}; source publication date: not disclosed; assessment date: ${budget.assessedAt}`,
+        `Source: ${sourceUrl}; source publication date: not disclosed`,
         `Source quote: ${quote}`,
       ])
     : ['Public evidence: not available'];
 
-/** Stored advisory data is unknown at this boundary, including for non-route callers. */
+/**
+ * Stored advisory data is unknown at this boundary, including for non-route callers.
+ *
+ * Only what sales may act on is published: the budget status, a hypothetical suggestion and the
+ * discovery questions with their public evidence. No budget figure, scenario range, confidence
+ * rating or assessment date is ever written into a report; those stay internal.
+ */
 const budgetLines = (value: unknown): string[] => {
   const parsed = budgetAssessmentGuard.safeParse(value);
   const budget = parsed.success ? parsed.data : undefined;
-  const range = budget?.indicativeAnnualRange;
   return [
-    `Assessment: ${budget ? 'available' : 'not available'}`,
-    'Opportunity budget: not disclosed',
-    'Internal vendor commercial scenario only; not known company funds or a binding quote.',
-    'Demo reference: USD 150/month; not a customer budget.',
-    'Bank planning anchor: USD 1,500,000/year - UNCONFIRMED annual period assumption; not observed company spend or available funds.',
-    ...(budget ? [`Scenario label: ${budget.scenarioLabel}`] : []),
-    range
-      ? `Annual USD scenario range: low ${usd(range.low)}; base ${usd(range.base)}; high ${usd(range.high)}`
-      : 'Annual USD scenario range: not available',
-    `Confidence: ${budget?.confidence ?? 'not available'}`,
-    `Assessment date: ${budget?.assessedAt ?? 'not available'}`,
-    ...(budget?.businessType ? [`Business type hypothesis: ${budget.businessType}`] : []),
-    ...(budget?.scaleHypothesis ? [`Scale hypothesis: ${budget.scaleHypothesis}`] : []),
-    ...optionalNotes(budget?.assumptions, 'Assumptions', 'Assumption'),
-    ...optionalNotes(budget?.rationale, 'Rationale', 'Rationale'),
-    ...optionalNotes(budget?.discoveryQuestions, 'Discovery questions', 'Discovery question'),
+    'Actual opportunity budget: not disclosed',
+    'Hypothetical suggestion for sales: explore pricing as a scenario in discovery, confirm the customer’s actual budget and scope, then quote only against what they confirm. No budget figure is asserted here.',
+    ...(budget
+      ? budget.discoveryQuestions.map((question) => `Discovery question: ${question}`)
+      : []),
     ...budgetEvidenceLines(budget),
   ];
 };
@@ -161,7 +142,7 @@ export const buildExportContent = (input: BriefInput) => {
       ],
     },
     {
-      title: 'Budget advisory - internal only',
+      title: 'Budget context and discovery - internal only',
       lines: budgetLines(profile?.budgetAssessment),
     },
     {

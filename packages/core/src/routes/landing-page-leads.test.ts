@@ -4,6 +4,7 @@ import Koa from 'koa';
 import request from 'supertest';
 
 import { type BriefInput } from './landing-page-brief.js';
+import { parseBudgetAssessment } from './landing-page-budget.js';
 import type { DailyLeadCount, LeadStageBucket } from './landing-page-lead-stats.js';
 import { signLeadFileQuery } from './landing-page-signed.js';
 
@@ -366,6 +367,78 @@ describe('landing leads routes', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- supertest types the body as any; the shape is checked here.
     expect(response.body.leads.map((row: Row) => row.id)).toEqual(['lead-3', 'lead-2', 'lead-1']);
     expect(response.body.leads[0]).not.toHaveProperty('messages');
+  });
+
+  it('returns no budget figure to the console', async () => {
+    const budgetAssessment = parseBudgetAssessment(
+      {
+        indicativeAnnualRange: { low: 12_000, base: 24_000, high: 48_000 },
+        confidence: 'medium',
+        rationale: ['Scale context only.'],
+        assumptions: ['Scope needs validation.'],
+        discoveryQuestions: ['Who approves spend?'],
+        evidence: [
+          {
+            sourceUrl: 'https://budget.example.invalid/about',
+            quote: 'A verbatim quote.',
+            signal: 'scale context only',
+          },
+        ],
+      },
+      {
+        company: 'Example Company',
+        sources: [{ url: 'https://budget.example.invalid/about', text: 'A verbatim quote.' }],
+      },
+      new Date('2026-10-24T10:00:00Z')
+    );
+    state.leads = [
+      { ...lead(1), companyProfile: { summary: 'Regional carrier', budgetAssessment } },
+      {
+        ...lead(2),
+        companyProfile: { summary: 'Other carrier', budgetAssessment: { bad: 'shape' } },
+      },
+    ];
+
+    const response = await get('/api/landing-leads');
+    expect(response.status).toBe(200);
+    const rows = response.body.leads as Row[];
+    const projected = rows.find((row) => row.id === 'lead-1')?.companyProfile;
+    const malformed = rows.find((row) => row.id === 'lead-2')?.companyProfile;
+    expect(projected).toEqual({
+      summary: 'Regional carrier',
+      budgetAssessment: {
+        opportunityBudgetStatus: 'not_disclosed',
+        discoveryQuestions: ['Who approves spend?'],
+        evidence: [
+          {
+            sourceUrl: 'https://budget.example.invalid/about',
+            quote: 'A verbatim quote.',
+            signal: 'scale context only',
+          },
+        ],
+      },
+    });
+    // A malformed assessment reads as absent instead of as invented content.
+    expect(malformed).toEqual({
+      summary: 'Other carrier',
+      budgetAssessment: undefined,
+    });
+    const body = JSON.stringify(response.body);
+    for (const forbidden of [
+      'USD 150',
+      '1,500,000',
+      '1500000',
+      '12000',
+      '24000',
+      '48000',
+      'Confidence',
+      '2026-10-24',
+      'demoMonthly',
+      'bankAnnualPlanningAnchor',
+      'indicativeAnnualRange',
+    ]) {
+      expect(body).not.toContain(forbidden);
+    }
   });
 
   it('sends the brief as a PDF file, not JSON', async () => {

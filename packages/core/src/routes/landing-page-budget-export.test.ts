@@ -74,45 +74,51 @@ const pdfTexts = async (bytes: Uint8Array) => {
 };
 
 describe('budget export audience boundary', () => {
-  it('renders validated advisory context internally without mutating input', () => {
+  it('publishes the budget status, a hypothetical suggestion and the discovery questions only', () => {
     expect(assessment).toBeDefined();
     const before = structuredClone(input);
     const text = internalText(input);
     for (const expected of [
-      'Budget advisory - internal only',
-      'Assessment: available',
-      'Opportunity budget: not disclosed',
-      'USD 150/month',
-      'USD 1,500,000/year',
-      'UNCONFIRMED',
-      'vendor commercial scenario',
-      'not known company funds',
-      'binding quote',
-      'Confidence: medium',
-      '2026-10-24',
-      'low USD 12,000',
-      'base USD 24,000',
-      'high USD 48,000',
-      'BUDGET_RATIONALE',
-      'BUDGET_ASSUMPTION',
+      'Budget context and discovery - internal only',
+      'Actual opportunity budget: not disclosed',
+      'Hypothetical suggestion for sales',
       'BUDGET_DISCOVERY',
       'BUDGET_SIGNAL',
       'BUDGET_QUOTE',
       'https://budget.example.invalid/about',
-      'source publication date: not disclosed; assessment date: 2026-10-24',
-      assessment?.scenarioLabel ?? '',
+      'source publication date: not disclosed',
     ]) {
       expect(text).toContain(expected);
+    }
+    // No budget figure, scenario range, confidence rating or assessment date is published.
+    for (const forbidden of [
+      'USD 150/month',
+      'USD 1,500,000/year',
+      'UNCONFIRMED',
+      'Confidence',
+      'Annual USD scenario range',
+      '2026-10-24',
+      'USD 12,000',
+      'USD 24,000',
+      'USD 48,000',
+      'BUDGET_RATIONALE',
+      'BUDGET_ASSUMPTION',
+      'budget advisory',
+    ]) {
+      expect(text).not.toContain(forbidden);
     }
     expect(text).not.toMatch(/\d\s*%/);
     expect(input).toEqual(before);
   });
 
-  it('includes advisory context in the internal HTML document', () => {
+  it('includes the discovery questions in the internal HTML document', () => {
     const html = brief.buildBriefHtml(input);
-    expect(html).toContain('Budget advisory - internal only');
-    expect(html).toContain('BUDGET_RATIONALE');
+    expect(html).toContain('Budget context and discovery - internal only');
+    expect(html).toContain('BUDGET_DISCOVERY');
     expect(html).toContain('Confidential / Internal');
+    expect(html).not.toContain('USD 150/month');
+    expect(html).not.toContain('USD 1,500,000/year');
+    expect(html).not.toContain('Confidence');
   });
 
   it.each([
@@ -132,13 +138,14 @@ describe('budget export audience boundary', () => {
     const before = structuredClone(value);
     const text = internalText(value);
     expect(text).toContain('Company summary survives.');
-    expect(text).toContain('Assessment: not available');
-    expect(text).toContain('Opportunity budget: not disclosed');
+    expect(text).toContain('Actual opportunity budget: not disclosed');
+    expect(text).toContain('Hypothetical suggestion for sales');
     expect(text).not.toContain('BUDGET_');
+    expect(text).not.toContain('USD');
     expect(value).toEqual(before);
   });
 
-  it('admits a valid null range without inventing amounts', () => {
+  it('publishes no scenario range when the assessment has none', () => {
     const text = internalText({
       ...input,
       profile: {
@@ -146,10 +153,10 @@ describe('budget export audience boundary', () => {
         budgetAssessment: { ...assessment, indicativeAnnualRange: null, confidence: 'low' },
       },
     });
-    expect(text).toContain('Assessment: available');
-    expect(text).toContain('Annual USD scenario range: not available');
-    expect(text).toContain('Confidence: low');
-    expect(text).not.toContain('USD 12,000');
+    expect(text).toContain('Actual opportunity budget: not disclosed');
+    expect(text).toContain('BUDGET_DISCOVERY');
+    expect(text).not.toContain('USD');
+    expect(text).not.toContain('Confidence');
   });
 
   it('keeps the exact prospect whitelist and every actual PPTX archive entry free of budget', async () => {
@@ -178,22 +185,23 @@ describe('budget export audience boundary', () => {
   });
 
   it.each([assessment, undefined])(
-    'preserves budget and not-disclosed status in real PDF logical text and internal attachment',
+    'preserves the budget status and discovery questions in real PDF logical text and internal attachment',
     async (budgetAssessment) => {
       const value = { ...input, profile: { ...input.profile, budgetAssessment } };
       const before = structuredClone(value);
       const text = await pdfTexts(await brief.renderBriefPdf(value));
       for (const part of [text.logical, text.attachment]) {
-        expect(part).toContain('Budget advisory - internal only');
-        expect(part).toContain('Opportunity budget: not disclosed');
-        expect(part).toContain(
-          budgetAssessment ? 'Confidence: medium' : 'Confidence: not available'
-        );
+        expect(part).toContain('Budget context and discovery - internal only');
+        expect(part).toContain('Actual opportunity budget: not disclosed');
+        expect(part).toContain('Hypothetical suggestion for sales');
+        expect(part).not.toContain('Confidence');
+        expect(part).not.toContain('USD 150');
+        expect(part).not.toContain('USD 1,500,000');
         expect(part).not.toContain('"prospect"');
       }
       expect(text.logical).toContain('Confidential');
       if (budgetAssessment) {
-        expect(text.logical).toContain('BUDGET_RATIONALE');
+        expect(text.logical).toContain('BUDGET_DISCOVERY');
         expect(text.attachment).toContain('BUDGET_QUOTE');
       }
       expect(value).toEqual(before);

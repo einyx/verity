@@ -66,6 +66,34 @@ type LeadRow = {
   createdAt: string | number | Date;
 };
 
+/**
+ * The console panel publishes no budget figure. Only the status, the discovery questions and the
+ * public evidence are returned; figures, scenario ranges, confidence ratings and assessment dates
+ * stay on the server.
+ */
+const consoleBudgetAssessment = (value: unknown) => {
+  const parsed = budgetAssessmentGuard.safeParse(value);
+
+  if (!parsed.success) {
+    // eslint-disable-next-line unicorn/no-useless-undefined -- A malformed assessment must read as absent, not as an empty one.
+    return undefined;
+  }
+
+  const { opportunityBudgetStatus, discoveryQuestions, evidence } = parsed.data;
+
+  return { opportunityBudgetStatus, discoveryQuestions, evidence };
+};
+
+const consoleCompanyProfile = (profile: Record<string, unknown> | undefined) => {
+  if (!profile) {
+    return profile;
+  }
+
+  const budgetAssessment = consoleBudgetAssessment(profile.budgetAssessment);
+
+  return { ...profile, budgetAssessment };
+};
+
 const toPageNumber = (value: unknown, fallback: number, max: number) => {
   const parsed = Number(value);
 
@@ -221,7 +249,10 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
 
     // The scheduling link for "book a meeting" comes from configuration; without it the console hides the button.
     ctx.body = {
-      leads,
+      leads: leads.map((lead) => ({
+        ...lead,
+        companyProfile: consoleCompanyProfile(lead.companyProfile),
+      })),
       totalCount: total,
       bookingUrl: process.env.LANDING_LEAD_BOOKING_URL ?? null,
     };

@@ -28,6 +28,19 @@ const landingPageChatReplyGuard = z.object({ reply: z.string(), submitted: z.boo
 
 const landingPageBase = '/api/landing-page';
 
+/** The draft save response's publish precondition: the server's draft updated time. */
+const landingPageEditorWriteGuard = z.object({ updatedAt: z.string().optional() });
+
+/** A landing page API call failed. `status` carries the HTTP status, e.g. 409 on a publish conflict. */
+class LandingPageRequestError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`Landing page request failed: ${status}`);
+    this.status = status;
+  }
+}
+
 const request = async (
   getToken: () => Promise<string | undefined>,
   path: string,
@@ -44,7 +57,7 @@ const request = async (
   });
 
   if (!response.ok) {
-    throw new Error(`Landing page request failed: ${response.status}`);
+    throw new LandingPageRequestError(response.status);
   }
 
   return response.json();
@@ -64,7 +77,8 @@ export const useLandingPage = () => {
   );
 
   // The editor keeps the draft as loose data while it is being typed; the schema check happens here,
-  // so a bad document fails with the validation message instead of reaching the server.
+  // so a bad document fails with the validation message instead of reaching the server. Returns the
+  // draft's updated time, which the editor then presents when publishing.
   const saveDraft = useCallback(
     async (document: unknown) => {
       const body = await request(getToken, '/draft', {
@@ -73,14 +87,26 @@ export const useLandingPage = () => {
       });
       const next = landingPageResponseGuard.parse(body);
       await mutate(next, { revalidate: false });
+      // The updated time rides outside the document guard, so the editor can use it as a publish
+      // precondition without widening the document schema.
+      const { updatedAt } = await landingPageEditorWriteGuard.catch({}).parseAsync(body);
+      return { updatedAt };
     },
     [getToken, mutate]
   );
 
-  const publish = useCallback(async () => {
-    const body = await request(getToken, '/publish', { method: 'POST' });
-    await mutate(landingPageResponseGuard.parse(body), { revalidate: false });
-  }, [getToken, mutate]);
+  // Publishes the current draft. When another editor saved in the meantime, the server answers 409
+  // and the editor shows the conflict instead of silently publishing their content.
+  const publish = useCallback(
+    async (expectedUpdatedAt?: string) => {
+      const body = await request(getToken, '/publish', {
+        method: 'POST',
+        body: expectedUpdatedAt ? { expectedUpdatedAt } : undefined,
+      });
+      await mutate(landingPageResponseGuard.parse(body), { revalidate: false });
+    },
+    [getToken, mutate]
+  );
 
   const rollback = useCallback(
     async (version: number) => {
@@ -118,7 +144,9 @@ export const useLandingPage = () => {
       rollback,
       listVersions,
       sendChat,
+      // Re-reads the editor view, e.g. after a publish conflict shows the newer draft.
+      refresh: async () => mutate(),
     }),
-    [data, error, isLoading, saveDraft, publish, rollback, listVersions, sendChat]
+    [data, error, isLoading, saveDraft, publish, rollback, listVersions, sendChat, mutate]
   );
 };

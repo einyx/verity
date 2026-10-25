@@ -24,15 +24,18 @@ const document = {
   ),
 };
 
+const savedAt = '2026-10-25T10:00:00.000Z';
+
 const landingPage = {
   data: { draft: document, published: null, publishedVersion: null } satisfies LandingPageResponse,
   error: undefined,
   isLoading: false,
-  saveDraft: jest.fn().mockResolvedValue(undefined),
+  saveDraft: jest.fn().mockResolvedValue({ updatedAt: savedAt }),
   publish: jest.fn().mockResolvedValue(undefined),
   rollback: jest.fn().mockResolvedValue(undefined),
   listVersions: jest.fn().mockResolvedValue([]),
   sendChat: jest.fn().mockResolvedValue({ reply: 'Hello', submitted: false }),
+  refresh: jest.fn().mockResolvedValue(undefined),
 };
 
 beforeEach(() => {
@@ -58,4 +61,19 @@ it('renders the Puck page canvas and keeps Demo chat settings above it', async (
       expect.objectContaining({ demoChat: { enabled: false } })
     );
   });
+});
+
+it('publishes against the saved draft and warns when another editor changed it first', async () => {
+  landingPage.publish.mockRejectedValueOnce({ status: 409 });
+  render(<LandingPageEditor />);
+
+  const publishButton = await screen.findByRole('button', { name: 'Publish to website' });
+  fireEvent.click(publishButton);
+  fireEvent.click(publishButton);
+
+  await waitFor(() => {
+    expect(landingPage.publish).toHaveBeenCalledWith(savedAt);
+  });
+  expect(await screen.findByText(/The draft changed while you were editing/)).toBeTruthy();
+  expect(landingPage.refresh).toHaveBeenCalled();
 });

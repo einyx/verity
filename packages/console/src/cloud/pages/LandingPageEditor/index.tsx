@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { z } from 'zod/v3';
 
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
 import useManageLandingPageGuard from '@/cloud/hooks/use-manage-landing-page-guard';
@@ -21,8 +22,11 @@ const demoChatLabel = 'Demo chat';
 // One plain sentence per section, so the editor explains itself without a manual.
 const demoChatHint = 'Turn the demo chat on or off. Off keeps the static request form on the site.';
 
+// The publish conflict carries its HTTP status and nothing else the editor needs.
+const publishConflictGuard = z.object({ status: z.literal(409) });
+
 function LandingPageEditorContent() {
-  const { data, error, saveDraft, publish, rollback, listVersions } = useLandingPage();
+  const { data, error, saveDraft, publish, rollback, listVersions, refresh } = useLandingPage();
   const [draft, setDraft] = useState<unknown>();
   const [versions, setVersions] = useState<LandingPageVersion[]>([]);
   const [versionsError, setVersionsError] = useState(false);
@@ -57,6 +61,16 @@ function LandingPageEditorContent() {
       await action();
       setMessage(success);
     } catch (error_: unknown) {
+      // A 409 status marks the publish conflict; other errors surface their own message.
+      if (publishConflictGuard.safeParse(error_).success) {
+        // Another editor saved first. Their draft is now the server's draft; re-read it and let this
+        // editor review it before publishing.
+        setMessage(
+          'The draft changed while you were editing. Review the latest draft, save, and publish again.'
+        );
+        void refresh();
+        return;
+      }
       setMessage(error_ instanceof Error ? error_.message : String(error_));
     } finally {
       setBusy(false);
@@ -137,7 +151,9 @@ function LandingPageEditorContent() {
                 className={styles.secondaryButton}
                 disabled={busy}
                 onClick={() => {
-                  void run(async () => saveDraft(currentDraft), 'Draft saved.');
+                  void run(async () => {
+                    await saveDraft(currentDraft);
+                  }, 'Draft saved.');
                 }}
               >
                 Save draft
@@ -150,8 +166,8 @@ function LandingPageEditorContent() {
                   confirmOrRun(
                     { kind: 'publish' },
                     async () => {
-                      await saveDraft(currentDraft);
-                      await publish();
+                      const saved = await saveDraft(currentDraft);
+                      await publish(saved.updatedAt);
                     },
                     'Published.'
                   );

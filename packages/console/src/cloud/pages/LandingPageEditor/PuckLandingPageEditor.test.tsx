@@ -82,6 +82,44 @@ it('opens preview actions from the editor toolbar instead of covering the websit
   );
 });
 
+it('records an image drag as one undoable draft change and keeps the preview open', async () => {
+  const onChange = jest.fn();
+  renderEditor(onChange);
+  const frame = screen.getByTitle<HTMLIFrameElement>('Landing page preview');
+  const send = (data: unknown) => {
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: window.location.origin,
+          source: frame.contentWindow,
+          data,
+        })
+      );
+    });
+  };
+  send({
+    type: 'meshx-cms-select-element',
+    selection: { id: 'test-image', kind: 'image', fields: {}, values: {} },
+  });
+  expect(screen.getByLabelText('Editor panels').parentElement?.dataset.panel).toBe('preview');
+  send({ type: 'meshx-cms-move', id: 'test-image', x: 40, y: 30 });
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]).toHaveProperty('elements.test-image', { x: 40, y: 30 });
+  });
+  const undo = screen.getByText<HTMLButtonElement>('Undo', { selector: 'button' });
+  await waitFor(() => {
+    expect(undo.disabled).toBe(false);
+  });
+  fireEvent.click(undo);
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]).not.toHaveProperty('elements.test-image');
+  });
+  fireEvent.click(screen.getByText('Redo', { selector: 'button' }));
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]).toHaveProperty('elements.test-image', { x: 40, y: 30 });
+  });
+});
+
 it('adds and selects a text section and sends the updated document to the real page canvas', async () => {
   const onChange = jest.fn();
   renderEditor(onChange);

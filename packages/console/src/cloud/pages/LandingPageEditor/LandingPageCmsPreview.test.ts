@@ -4,6 +4,7 @@ const rendererSource = readFileSync(`${process.cwd()}/public/landing/landing-ren
 const cmsSource = readFileSync(`${process.cwd()}/public/landing/cms.js`, 'utf8');
 const elementsSource = readFileSync(`${process.cwd()}/public/landing/landing-elements.js`, 'utf8');
 const landingHtml = readFileSync(`${process.cwd()}/public/landing/index.html`, 'utf8');
+const previewListeners: { cleanup?: () => void } = {};
 const sendDraftDocument = (document_: unknown) =>
   window.dispatchEvent(
     new MessageEvent('message', {
@@ -44,6 +45,19 @@ it('keeps editor actions outside the site header and accepts only its parent too
 });
 
 beforeEach(() => {
+  const windowListeners = jest.spyOn(window, 'addEventListener');
+  const documentListeners = jest.spyOn(document, 'addEventListener');
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- Dispose only the listeners installed by this test's evaluated preview scripts.
+  previewListeners.cleanup = () => {
+    for (const [type, listener, options] of windowListeners.mock.calls) {
+      window.removeEventListener(type, listener, options);
+    }
+    for (const [type, listener, options] of documentListeners.mock.calls) {
+      document.removeEventListener(type, listener, options);
+    }
+    windowListeners.mockRestore();
+    documentListeners.mockRestore();
+  };
   window.history.replaceState({}, '', '/console/landing-preview?cmsPreview=1');
   // The preview-mode guard must observe a parent frame in this jsdom test.
   // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- define the browser's readonly parent property for iframe simulation.
@@ -70,6 +84,85 @@ const sentSelections = () =>
   sentMessages()
     .filter((data) => data.type === 'meshx-cms-select-element')
     .map((data) => data.selection as { kind?: string });
+
+const pointer = (target: EventTarget, type: string, clientX: number, clientY: number) => {
+  const event = new MouseEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    clientX,
+    clientY,
+    button: 0,
+  });
+  // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- jsdom lacks PointerEvent; add the pointer identity to this test event only.
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  target.dispatchEvent(event);
+};
+
+it('drags a selected image from its saved offsets and commits only once on release', () => {
+  const image = document.querySelector<HTMLElement>('footer img')!;
+  const id = image.dataset.cmsElement!;
+  sendDraftDocument({ elements: { [id]: { x: 20, y: -10 } } });
+  image.click();
+  const handle = document.querySelector<HTMLButtonElement>('.cms-move-handle')!;
+  expect(handle).not.toBeNull();
+  pointer(handle, 'pointerdown', 100, 100);
+  pointer(handle, 'pointermove', 130, 120);
+  expect(image.style.translate).toBe('50px 10px');
+  expect(sentMessages().filter(({ type }) => type === 'meshx-cms-move')).toHaveLength(0);
+  pointer(handle, 'pointerup', 130, 120);
+  expect(sentMessages().filter(({ type }) => type === 'meshx-cms-move')).toEqual([
+    { type: 'meshx-cms-move', id, x: 50, y: 10 },
+  ]);
+});
+
+it('cancels a drag without saving and supports bounded keyboard nudges', () => {
+  const image = document.querySelector<HTMLElement>('footer img')!;
+  image.click();
+  const originalTranslate = image.style.translate;
+  const handle = document.querySelector<HTMLButtonElement>('.cms-move-handle')!;
+  expect(handle).not.toBeNull();
+  pointer(handle, 'pointerdown', 0, 0);
+  pointer(handle, 'pointermove', 50, 60);
+  handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  expect(image.style.translate).toBe(originalTranslate);
+  expect(sentMessages().filter(({ type }) => type === 'meshx-cms-move')).toHaveLength(0);
+  handle.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true })
+  );
+  expect(sentMessages()).toContainEqual({
+    type: 'meshx-cms-move',
+    id: image.dataset.cmsElement,
+    x: 10,
+    y: 0,
+  });
+  handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  expect(sentMessages()).toContainEqual({
+    type: 'meshx-cms-move',
+    id: image.dataset.cmsElement,
+    x: 11,
+    y: 0,
+  });
+});
+
+it('bounds image moves and restores the starting position on pointer cancellation', () => {
+  const image = document.querySelector<HTMLElement>('footer img')!;
+  image.click();
+  const handle = document.querySelector<HTMLButtonElement>('.cms-image-drag-handle')!;
+  pointer(handle, 'pointerdown', 0, 0);
+  pointer(handle, 'pointermove', 1000, -1000);
+  expect(image.style.translate).toBe('400px -400px');
+  pointer(handle, 'pointercancel', 1000, -1000);
+  expect(sentMessages().filter(({ type }) => type === 'meshx-cms-move')).toHaveLength(0);
+  pointer(handle, 'pointerdown', 0, 0);
+  pointer(handle, 'pointermove', 1000, -1000);
+  pointer(handle, 'pointerup', 1000, -1000);
+  expect(sentMessages()).toContainEqual({
+    type: 'meshx-cms-move',
+    id: image.dataset.cmsElement,
+    x: 400,
+    y: -400,
+  });
+});
 
 it('selects header links and images with element-specific properties rather than navigating', () => {
   const link = document.querySelector<HTMLElement>('header a[href]:not(:has(svg))');
@@ -106,6 +199,7 @@ it('applies and then removes page-level overrides without destroying authored ic
 });
 
 afterEach(() => {
+  previewListeners.cleanup?.();
   window.history.replaceState({}, '', '/');
 });
 

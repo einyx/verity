@@ -2,10 +2,13 @@
 (() => {
   const preview = new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
   const originals = new WeakMap();
+  const positions = new WeakMap();
   let selected;
   let menu;
   let menuTarget;
   let lastDoc;
+  let moveHandle;
+  let drag;
   const post = (data) => window.parent.postMessage(data, location.origin);
   const safeLink = (value) => {
     if (typeof value !== 'string' || /[\\\u0000-\u0020]/.test(value)) return false;
@@ -109,15 +112,93 @@
       element.style.objectFit = ['cover', 'contain'].includes(override.fit) ? override.fit : original.fit;
       const x = Number.isInteger(override.x) && Math.abs(override.x) <= 400 ? override.x : 0;
       const y = Number.isInteger(override.y) && Math.abs(override.y) <= 400 ? override.y : 0;
+      positions.set(element, { x, y });
       element.style.translate = x || y ? `${x}px ${y}px` : original.translate;
       if (element.nextElementSibling?.matches('[data-cms-replacement]')) element.nextElementSibling.style.translate = element.style.translate;
     }
-    if (selected && !selected.isConnected) selected = undefined;
+    if (selected && !selected.isConnected) { selected = undefined; moveHandle?.remove(); }
+    positionHandle();
+  };
+  const offset = (value) => Number.isInteger(value) && Math.abs(value) <= 400 ? value : 0;
+  const clamp = (value) => Math.max(-400, Math.min(400, Math.round(value)));
+  const imageTarget = () => selected?.nextElementSibling?.matches('[data-cms-replacement]') ? selected.nextElementSibling : selected;
+  const positionHandle = () => {
+    if (!moveHandle || !selected?.isConnected) return;
+    const box = imageTarget().getBoundingClientRect();
+    moveHandle.hidden = box.bottom < 0 || box.top > innerHeight;
+    moveHandle.style.left = `${Math.max(8, Math.min(box.left, innerWidth - 120))}px`;
+    moveHandle.style.top = `${Math.max(8, Math.min(box.top, innerHeight - 44))}px`;
+  };
+  const paintMove = (x, y) => {
+    positions.set(selected, { x, y });
+    selected.style.translate = `${x}px ${y}px`;
+    if (imageTarget() !== selected) imageTarget().style.translate = selected.style.translate;
+    positionHandle();
+  };
+  const finishDrag = (commit) => {
+    if (!drag) return;
+    const current = drag;
+    drag = undefined;
+    if (commit && (current.x !== current.startX || current.y !== current.startY)) {
+      post({ type: 'meshx-cms-move', id: selected.dataset.cmsElement, x: current.x, y: current.y });
+    } else {
+      positions.set(selected, { x: current.startX, y: current.startY });
+      selected.style.translate = current.translate;
+      if (imageTarget() !== selected) imageTarget().style.translate = current.translate;
+    }
+    if (moveHandle.hasPointerCapture?.(current.pointerId)) moveHandle.releasePointerCapture(current.pointerId);
+    positionHandle();
+  };
+  const attachMoveHandle = () => {
+    finishDrag(false);
+    moveHandle?.remove();
+    moveHandle = undefined;
+    if (!preview || !selected.matches('img, svg')) return;
+    moveHandle = document.createElement('button');
+    moveHandle.type = 'button';
+    moveHandle.className = 'cms-move-handle cms-image-drag-handle';
+    moveHandle.dataset.visible = 'true';
+    moveHandle.textContent = 'Move image';
+    moveHandle.setAttribute('aria-label', 'Move image: drag or use arrow keys; Shift for 10 pixels');
+    moveHandle.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      const stored = positions.get(selected);
+      const x = offset(stored?.x), y = offset(stored?.y);
+      drag = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, startX: x, startY: y, x, y, translate: selected.style.translate };
+      moveHandle.setPointerCapture?.(event.pointerId);
+      moveHandle.focus();
+    });
+    moveHandle.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      drag.x = clamp(drag.startX + event.clientX - drag.clientX);
+      drag.y = clamp(drag.startY + event.clientY - drag.clientY);
+      paintMove(drag.x, drag.y);
+    });
+    moveHandle.addEventListener('pointerup', (event) => { if (event.pointerId === drag?.pointerId) finishDrag(true); });
+    moveHandle.addEventListener('pointercancel', () => finishDrag(false));
+    moveHandle.addEventListener('lostpointercapture', () => finishDrag(false));
+    moveHandle.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') { finishDrag(false); return; }
+      const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+      if (!direction || drag) return;
+      event.preventDefault();
+      const stored = positions.get(selected);
+      const step = event.shiftKey ? 10 : 1;
+      const x = clamp(offset(stored?.x) + direction[0] * step), y = clamp(offset(stored?.y) + direction[1] * step);
+      paintMove(x, y);
+      post({ type: 'meshx-cms-move', id: selected.dataset.cmsElement, x, y });
+    });
+    document.body.append(moveHandle);
+    positionHandle();
   };
   const select = (element) => {
+    finishDrag(false);
+    if (element.matches('[data-cms-replacement]') && element.previousElementSibling?.matches('svg[data-cms-element]')) element = element.previousElementSibling;
     document.querySelectorAll('[data-cms-selected]').forEach((item) => item.removeAttribute('data-cms-selected'));
     selected = element;
     selected.dataset.cmsSelected = 'true';
+    attachMoveHandle();
     post({ type: 'meshx-cms-select-element', selection: describe(element) });
   };
   const close = (restore = true) => {
@@ -164,13 +245,15 @@
   bind();
   window.LandingElements = { fill, describe };
   if (!preview) return;
+  window.addEventListener('scroll', positionHandle, { passive: true });
+  window.addEventListener('resize', positionHandle);
   // The editor styles ship as a separate file: the page's content security policy allows
   // same-origin stylesheets but blocks inline style blocks, and the file keeps the version hash
   // in the URL so a changed stylesheet is never served from a stale cache.
   // so the editor styles ship as a file next to this script.
   const style = document.createElement('link');
   style.rel = 'stylesheet';
-  style.href = '/console/landing/landing-elements.css?v=3809cac5a1';
+  style.href = '/console/landing/landing-elements.css?v=e1dc7377b5';
   document.head.append(style);
   // The editor owns this control outside the preview so it never covers the website navigation.
   window.addEventListener('message', (event) => {
@@ -192,7 +275,7 @@
   }, true);
   document.addEventListener('pointerdown', (event) => { if (menu && !menu.contains(event.target)) close(false); });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') { close(); return; }
+    if (event.key === 'Escape') { finishDrag(false); close(); return; }
     if ((event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) && event.target instanceof Element) { event.preventDefault(); open(event.target); return; }
     if (!menu) return;
     if (event.key === 'Tab') { close(false); return; }

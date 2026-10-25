@@ -103,7 +103,7 @@ export function PageCanvas() {
 
   const selectElement = (next: LandingElementSelection) => {
     setSelection(next);
-    setPanel('properties');
+    setPanel(next.kind === 'image' ? 'preview' : 'properties');
     if (next.sectionId) {
       const index = currentDocument.sections.findIndex((section) => section.id === next.sectionId);
       if (index >= 0) {

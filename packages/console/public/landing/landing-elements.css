@@ -54,3 +54,27 @@ html body [data-cms-selected][data-cms-selected][data-cms-selected] {
   opacity: 0.4;
   cursor: default;
 }
+
+.cms-move-handle.cms-image-drag-handle {
+  position: fixed;
+  z-index: 2147483002;
+  min-height: 44px;
+  width: auto;
+  height: auto;
+  display: block;
+  padding: 8px 12px;
+  border: 1px solid #315da8;
+  border-radius: 6px;
+  background: #fff;
+  color: #254f94;
+  font: 13px system-ui, sans-serif;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cms-image-drag-handle[hidden] { display: none; }
+.cms-image-drag-handle:active { cursor: grabbing; }
+.cms-image-drag-handle:focus-visible { outline: 2px solid #315da8; outline-offset: 2px; }

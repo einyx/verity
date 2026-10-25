@@ -31,7 +31,7 @@ const SingleSignOnConnectors = () => {
   useEffect(() => {
     // Return to the previous page if no email and no connectors are available in the context
     if (!ssoEmail || ssoConnectors.length === 0) {
-      navigate('../email', {
+      void navigate('../email', {
         replace: true,
       });
     }

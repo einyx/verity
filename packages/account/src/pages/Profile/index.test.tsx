@@ -184,8 +184,7 @@ const renderProfile = ({
 
   return renderWithPageContext(
     <Profile />,
-    {
-    },
+    {},
     {
       pageContext: {
         accountCenterSettings: {

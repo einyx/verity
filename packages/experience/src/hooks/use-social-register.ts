@@ -36,7 +36,7 @@ const useSocialRegister = (connectorId: string, { replace, onEmailBlocked }: Opt
        * Therefore, skip the check for `Manual` policy.
        */
       if (agreeToTermsPolicy !== AgreeToTermsPolicy.Manual && !(await termsValidation())) {
-        navigate('/' + experience.routes.signIn);
+        void navigate('/' + experience.routes.signIn);
         return;
       }
 

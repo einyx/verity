@@ -40,7 +40,7 @@ const RegisterFooter = () => {
       return;
     }
 
-    navigate('/single-sign-on/email');
+    void navigate('/single-sign-on/email');
   }, [agreeToTermsPolicy, navigate, termsValidation]);
 
   if (params.get(ExtraParamsKey.OneTimeToken)) {

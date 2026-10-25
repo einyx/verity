@@ -35,7 +35,7 @@ const ResetPassword = () => {
     () => ({
       'session.verification_session_not_found': async (error) => {
         await show({ type: 'alert', ModalContent: error.message, cancelText: 'action.got_it' });
-        navigate(-2);
+        void navigate(-2);
       },
       'user.same_password': (error) => {
         setErrorMessage(error.message);
@@ -63,7 +63,7 @@ const ResetPassword = () => {
       // Clear the forgot password identifier input value
       setForgotPasswordIdentifierInputValue(undefined);
       setToast(t('description.password_changed'));
-      navigate('/sign-in', { replace: true });
+      void navigate('/sign-in', { replace: true });
     },
     [
       asyncResetPassword,

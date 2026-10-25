@@ -27,7 +27,7 @@ const useEmailBlockedErrorHandler = ({ onConfirm }: Options = {}): ErrorHandlers
         return;
       }
 
-      navigate(-1);
+      void navigate(-1);
     },
     [navigate, onConfirm, show]
   );

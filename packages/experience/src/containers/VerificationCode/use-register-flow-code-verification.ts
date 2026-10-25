@@ -79,7 +79,7 @@ const useRegisterFlowCodeVerification = (
         }
       },
       onCancel: () => {
-        navigate(-1);
+        void navigate(-1);
       },
     });
   }, [

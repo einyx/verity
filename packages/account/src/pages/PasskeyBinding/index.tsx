@@ -186,7 +186,7 @@ const PasskeyBinding = () => {
       return;
     }
 
-    navigate(passkeySuccessRoute, { replace: true });
+    void navigate(passkeySuccessRoute, { replace: true });
   }, [
     addWebAuthnRequest,
     handleError,

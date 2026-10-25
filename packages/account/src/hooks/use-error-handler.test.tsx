@@ -51,8 +51,7 @@ const renderTestButton = (error: unknown, errorHandlers?: ErrorHandlers) =>
     <ReauthPromptProvider>
       <TestButton error={error} errorHandlers={errorHandlers} />
     </ReauthPromptProvider>,
-    {
-    }
+    {}
   );
 
 describe('useErrorHandler', () => {

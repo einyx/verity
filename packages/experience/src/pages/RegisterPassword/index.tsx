@@ -41,7 +41,7 @@ const RegisterPassword = () => {
       // Incase previous page submitted username has been taken
       'user.username_already_in_use': async (error) => {
         await show({ type: 'alert', ModalContent: error.message, cancelText: 'action.got_it' });
-        navigate(-1);
+        void navigate(-1);
       },
       ...preRegisterErrorHandler,
       ...passwordRejectionErrorHandler,

@@ -53,7 +53,7 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
         /**
          * Redirect to the MFA binding page if there are multiple available factors.
          */
-        navigate({ pathname: `/${flow}` }, { replace, state });
+        void navigate({ pathname: `/${flow}` }, { replace, state });
         return;
       }
 
@@ -96,7 +96,7 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
       /**
        * Redirect to the specific MFA factor page.
        */
-      navigate({ pathname: `/${flow}/${factor}` }, { replace, state });
+      void navigate({ pathname: `/${flow}/${factor}` }, { replace, state });
     },
     [
       navigate,
@@ -113,7 +113,7 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
     (flow: UserMfaFlow) => {
       return async (error: RequestErrorBody) => {
         if (error.code === 'user.suggest_mfa') {
-          navigate({ pathname: `/mfa-onboarding` }, { replace });
+          void navigate({ pathname: `/mfa-onboarding` }, { replace });
           return;
         }
 

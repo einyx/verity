@@ -5,14 +5,18 @@ import type { AlipayNativeConfig } from './types.js';
 export const mockedTimestamp = '2022-02-22 22:22:22';
 
 const mockedAlipayKeyPair = generateKeyPairSync('rsa', { modulusLength: 2048 });
-const mockedAlipayPrivateKey = mockedAlipayKeyPair.privateKey.export({
-  type: 'pkcs8',
-  format: 'pem',
-});
-export const mockedAlipayPublicKey = mockedAlipayKeyPair.publicKey.export({
-  type: 'spki',
-  format: 'pem',
-});
+const mockedAlipayPrivateKey = mockedAlipayKeyPair.privateKey
+  .export({
+    type: 'pkcs8',
+    format: 'pem',
+  })
+  .toString();
+export const mockedAlipayPublicKey = mockedAlipayKeyPair.publicKey
+  .export({
+    type: 'spki',
+    format: 'pem',
+  })
+  .toString();
 
 export const mockedAlipayNativeConfig: AlipayNativeConfig = {
   appId: '2021000000000000',

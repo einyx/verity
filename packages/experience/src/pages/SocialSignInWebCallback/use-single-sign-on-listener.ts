@@ -36,7 +36,7 @@ const useSingleSignOnRegister = ({ onEmailBlocked }: SingleSignOnRegisterOptions
        * Therefore, skip the check for `Manual` policy.
        */
       if (agreeToTermsPolicy !== AgreeToTermsPolicy.Manual && !(await termsValidation())) {
-        navigate('/' + experience.routes.signIn);
+        void navigate('/' + experience.routes.signIn);
         return;
       }
 
@@ -95,7 +95,7 @@ const useSingleSignOnListener = (connectorId: string) => {
   const singleSignOnAuthorizationRequest = useApi(signInWithSso);
 
   const navigateToSignIn = useCallback(() => {
-    navigate('/' + experience.routes.signIn, { replace: true });
+    void navigate('/' + experience.routes.signIn, { replace: true });
   }, [navigate]);
 
   const registerSingleSignOnIdentity = useSingleSignOnRegister({

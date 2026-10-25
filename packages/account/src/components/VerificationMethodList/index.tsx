@@ -61,7 +61,7 @@ const VerificationMethodList = () => {
         setVerifyingMethod(undefined);
       }
     : () => {
-        navigate(-1);
+        void navigate(-1);
       };
 
   if (verifyingMethod === VerificationMethod.Password) {

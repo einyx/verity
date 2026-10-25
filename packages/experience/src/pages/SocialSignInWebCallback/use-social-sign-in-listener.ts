@@ -56,7 +56,7 @@ const useSocialSignInListener = (connectorId: string) => {
   const redirectTo = useGlobalRedirectTo();
 
   const navigateToSignIn = useCallback(() => {
-    navigate('/' + experience.routes.signIn, { replace: true });
+    void navigate('/' + experience.routes.signIn, { replace: true });
   }, [navigate]);
 
   const registerWithSocial = useSocialRegister(connectorId, {
@@ -81,7 +81,7 @@ const useSocialSignInListener = (connectorId: string) => {
         if (socialSignInSettings.automaticAccountLinking) {
           await bindSocialRelatedUser(verificationId);
         } else {
-          navigate(`/social/link/${connectorId}`, {
+          void navigate(`/social/link/${connectorId}`, {
             replace: true,
             state: { relatedUser },
           });
@@ -237,7 +237,7 @@ const useSocialSignInListener = (connectorId: string) => {
 
       if (!result.valid) {
         setToast(t(`error.${result.error}`));
-        navigate('/' + experience.routes.signIn);
+        void navigate('/' + experience.routes.signIn);
         return;
       }
     } else {
@@ -246,7 +246,7 @@ const useSocialSignInListener = (connectorId: string) => {
 
       if (!result.valid) {
         setToast(t(`error.${result.error}`));
-        navigate('/' + experience.routes.signIn);
+        void navigate('/' + experience.routes.signIn);
         return;
       }
     }

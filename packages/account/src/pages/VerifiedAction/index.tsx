@@ -77,7 +77,7 @@ const VerifiedAction = () => {
 
   useEffect(() => {
     if (verificationId && action && accountCenterSettings && isActionAllowed) {
-      navigate(-1);
+      void navigate(-1);
     }
   }, [accountCenterSettings, action, isActionAllowed, navigate, verificationId]);
 

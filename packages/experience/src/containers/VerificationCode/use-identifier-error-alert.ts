@@ -39,7 +39,7 @@ const useIdentifierErrorAlert = () => {
           method: t(`description.${method === SignInIdentifier.Email ? 'email' : 'phone_number'}`),
         },
       });
-      navigate(-1);
+      void navigate(-1);
     },
     [navigate, show, t]
   );

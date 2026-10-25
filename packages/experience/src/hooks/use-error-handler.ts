@@ -46,7 +46,7 @@ const useErrorHandler = () => {
             errorHandlers?.[code] ??
             (terminalPath
               ? () => {
-                  navigate(terminalPath, { replace: true });
+                  void navigate(terminalPath, { replace: true });
                 }
               : errorHandlers?.global);
 

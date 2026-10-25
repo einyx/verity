@@ -42,7 +42,7 @@ const Chooser = () => {
     <>
       <button
         onClick={() => {
-          navigate('/factor');
+          void navigate('/factor');
         }}
       >
         Open factor

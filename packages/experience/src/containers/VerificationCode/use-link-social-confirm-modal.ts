@@ -39,7 +39,7 @@ const useLinkSocialConfirmModal = () => {
           await linkWithSocial(identifierVerificationId, socialVerificationId);
         },
         onCancel: () => {
-          navigate(-1);
+          void navigate(-1);
         },
       });
     },

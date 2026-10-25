@@ -53,7 +53,7 @@ const MfaVerificationOutlet = () => {
 
   useEffect(() => {
     if (isPureStepUp && !method) {
-      navigate(stepUpRoutes.landing, { replace: true });
+      void navigate(stepUpRoutes.landing, { replace: true });
     }
   }, [isPureStepUp, method, navigate]);
 

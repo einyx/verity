@@ -89,7 +89,7 @@ const useSendVerificationCode = (flow: UserFlow, replaceCurrentPage?: boolean) =
         // Store the verification ID in the context so that we can use it in the next step
         setVerificationId(codeVerificationTypeMap[identifier], result.verificationId);
 
-        navigate(
+        void navigate(
           {
             pathname: `/${flow}/verification-code`,
             search: window.location.search,

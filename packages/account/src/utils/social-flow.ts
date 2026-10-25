@@ -29,7 +29,7 @@ const navigateToSecurity = (navigate: NavigateFunction) => {
     return;
   }
 
-  navigate(securityRoute, { replace: true });
+  void navigate(securityRoute, { replace: true });
 };
 
 export const finalizeSocialFlowSuccess = async ({
@@ -44,7 +44,7 @@ export const finalizeSocialFlowSuccess = async ({
   if (successMessage && setToast) {
     setToast(successMessage);
   }
-  navigate(socialSuccessRoute, { replace: true });
+  void navigate(socialSuccessRoute, { replace: true });
 };
 
 export const finalizeSocialFlowFailure = ({

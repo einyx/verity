@@ -43,7 +43,7 @@ const useSendMfaVerificationCode = ({ replace, errorHandlers }: Options = {}) =>
         // Store the verification ID in the context so that we can use it in the next step
         setVerificationId(codeVerificationTypeMap[identifier], result.verificationId);
 
-        navigate(
+        void navigate(
           `/mfa-verification/${identifier === 'email' ? MfaFactor.EmailVerificationCode : MfaFactor.PhoneVerificationCode}`,
           { replace, state: flowState }
         );

@@ -55,11 +55,11 @@ const useNavigateWithPreservedSearchParams = () => {
   const navigateWithSearchParams: NavigateFunction = useCallback(
     (firstArg: To | number, options?: NavigateOptions) => {
       if (typeof firstArg === 'number') {
-        navigate(firstArg);
+        void navigate(firstArg);
         return;
       }
 
-      navigate(getTo(firstArg), options);
+      void navigate(getTo(firstArg), options);
     },
     [getTo, navigate]
   );

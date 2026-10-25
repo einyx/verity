@@ -47,7 +47,7 @@ const ErrorPage = ({
         <NavBar
           isHidden={isNavbarHidden}
           onBack={() => {
-            navigate(-1);
+            void navigate(-1);
           }}
         />
       )}
@@ -71,7 +71,7 @@ const ErrorPage = ({
               }
 
               if (primaryAction.to) {
-                navigate(primaryAction.to, { replace: primaryAction.replace });
+                void navigate(primaryAction.to, { replace: primaryAction.replace });
               }
             }}
           />

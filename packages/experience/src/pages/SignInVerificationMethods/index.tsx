@@ -75,7 +75,7 @@ const SignInVerificationMethods = () => {
             descriptionKey="description.verification_method.password_description"
             Icon={LockIcon}
             onClick={() => {
-              navigate({ pathname: `/${UserFlow.SignIn}/password` });
+              void navigate({ pathname: `/${UserFlow.SignIn}/password` });
             }}
           />
         )}

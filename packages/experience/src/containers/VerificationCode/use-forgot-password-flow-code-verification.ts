@@ -33,7 +33,7 @@ const useForgotPasswordFlowCodeVerification = (
           identifier.value
         ),
       'user.new_password_required_in_profile': () => {
-        navigate(`/${UserFlow.ForgotPassword}/reset`, { replace: true });
+        void navigate(`/${UserFlow.ForgotPassword}/reset`, { replace: true });
       },
       ...generalVerificationCodeErrorHandlers,
     }),
@@ -62,7 +62,7 @@ const useForgotPasswordFlowCodeVerification = (
       }
 
       if (result) {
-        navigate(`/${UserFlow.SignIn}`, { replace: true });
+        void navigate(`/${UserFlow.SignIn}`, { replace: true });
       }
     },
     [

@@ -26,7 +26,7 @@ const ForgotPasswordLink = ({ className, ...identifierData }: Props) => {
           value: identifierData.value ?? '',
         });
 
-        navigate(`/${UserFlow.ForgotPassword}`);
+        void navigate(`/${UserFlow.ForgotPassword}`);
       }}
     />
   );

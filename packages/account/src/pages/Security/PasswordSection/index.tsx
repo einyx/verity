@@ -41,7 +41,7 @@ const PasswordSection = () => {
                 className={styles.changeButton}
                 onClick={() => {
                   setPendingReturn(getPendingReturn() ?? window.location.href);
-                  navigate(passwordRoute);
+                  void navigate(passwordRoute);
                 }}
               >
                 {t('account_center.security.change')}

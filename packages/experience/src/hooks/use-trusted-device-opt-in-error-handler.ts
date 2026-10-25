@@ -22,7 +22,7 @@ const useTrustedDeviceOptInErrorHandler = (interactionEvent: ContinueFlowInterac
           return;
         }
 
-        navigate(
+        void navigate(
           { pathname: `/${experience.routes.trustedDevice}` },
           { replace: true, state: { ...data, interactionEvent } }
         );

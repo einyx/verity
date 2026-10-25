@@ -35,7 +35,10 @@ const useStartTotpBinding = () => {
 
         setVerificationId(VerificationType.TOTP, verificationId);
 
-        navigate({ pathname: `/${UserMfaFlow.MfaBinding}/${MfaFactor.TOTP}` }, { replace, state });
+        void navigate(
+          { pathname: `/${UserMfaFlow.MfaBinding}/${MfaFactor.TOTP}` },
+          { replace, state }
+        );
       }
     },
     [asyncCreateTotpSecret, handleError, navigate, setVerificationId]

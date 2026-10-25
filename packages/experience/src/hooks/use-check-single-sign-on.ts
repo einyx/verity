@@ -79,7 +79,7 @@ const useCheckSingleSignOn = () => {
         return true;
       }
 
-      navigate(`/${experience.routes.sso}/connectors`);
+      void navigate(`/${experience.routes.sso}/connectors`);
       return true;
     },
     [

@@ -143,7 +143,7 @@ const NavigateToLandingAgain = () => {
       type="button"
       onClick={() => {
         void load(true);
-        navigate(`${stepUpRoutes.landing}?again=1`);
+        void navigate(`${stepUpRoutes.landing}?again=1`);
       }}
     >
       arrive again

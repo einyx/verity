@@ -45,7 +45,7 @@ const useSubjectProofCallback = (connectorId: string, type: 'social' | 'sso') =>
 
     if (!result.valid) {
       setToast(t(`error.${result.error}`));
-      navigate(unknownSessionRoute, { replace: true });
+      void navigate(unknownSessionRoute, { replace: true });
       return;
     }
 
@@ -63,13 +63,13 @@ const useSubjectProofCallback = (connectorId: string, type: 'social' | 'sso') =>
           ? verifySocialVerification(connectorId, payload)
           : verifySsoVerification(connectorId, payload));
         await identifyUser({ verificationId: result.verificationId });
-        navigate(stepUpRoutes.landing, { replace: true });
+        void navigate(stepUpRoutes.landing, { replace: true });
       } catch (error) {
         await handleError(error, {
           ...stepUpErrorHandlers,
           // No account creation or linking fallback is valid for a pinned subject.
           global: () => {
-            navigate(unknownSessionRoute, { replace: true });
+            void navigate(unknownSessionRoute, { replace: true });
           },
         });
       } finally {

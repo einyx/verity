@@ -203,7 +203,7 @@ const IdentifierBindingPage = <VerifyPayload, BindPayload>({
       }
 
       await refreshUserInfo();
-      navigate(successRedirect, { replace: true });
+      void navigate(successRedirect, { replace: true });
     },
     [
       bindIdentifierRequest,

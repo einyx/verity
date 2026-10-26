@@ -467,9 +467,7 @@ const applyReply = async (
   if (lead && !pending) {
     // The lead is saved first, so a failed email still leaves a record for the team to follow up.
     const record = { sessionId, lead, emailStatus: 'pending' as const };
-    await recordLeadSafely(deps.recordLead, record);
-
-    // The Kubo request and company research run once per conversation. If the email fails and the visitor
+    await recordLeadSafely(deps.recordLead, record);    // The Kubo request and company research run once per conversation. If the email fails and the visitor
     // tries again, the retry only sends the email; it must not file a second demo or post a second Slack message.
     if (!session.filed) {
       // Company research starts as soon as the lead is saved, not after the email, so a failed email
@@ -492,19 +490,19 @@ const applyReply = async (
       state.sessions.set(sessionId, { ...session, filed: true });
     }
 
+    let emailStatus: 'sent' | 'failed' = 'sent';
     try {
       await deps.sendLead(lead);
     } catch {
-      await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'failed' });
-      // The visitor is told the request did not go through, so a lead is never lost silently.
-      return error(
-        503,
-        'landing_page.chat_delivery_failed',
-        'We could not send your request. Please try again or use the request form.'
-      );
+      // The lead is saved either way. The confirmation email is an internal side effect, so the
+      // visitor still gets the success reply - a "didn't go through" message would only cause a
+      // duplicate submission. emailStatus: 'failed' flags the lead for follow-up on the Leads page.
+      emailStatus = 'failed';
+      // eslint-disable-next-line no-console -- The chat route has no request logger, and this message holds no lead details.
+      console.error('Landing page chat: the lead email could not be sent.');
     }
 
-    await recordLeadSafely(deps.recordLead, { ...record, emailStatus: 'sent' });
+    await recordLeadSafely(deps.recordLead, { ...record, emailStatus });
 
     state.sessions.set(sessionId, {
       ...session,

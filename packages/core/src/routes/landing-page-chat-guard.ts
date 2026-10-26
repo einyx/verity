@@ -40,7 +40,8 @@ export const demoContactMethods = ['email', 'whatsapp', 'phone', 'linkedin'] as 
 const demoLeadGuard = z
   .object({
     firstName: z.string().trim().min(1).max(80),
-    lastName: z.string().trim().min(1).max(80),
+    // A last name is welcome but not required: visitors who give only a first name can still submit.
+    lastName: z.string().trim().min(1).max(80).optional(),
     email: z.string().trim().email().max(254),
     company: z.string().trim().min(1).max(120),
     role: z.string().trim().max(120).optional(),

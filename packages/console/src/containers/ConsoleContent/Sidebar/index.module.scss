@@ -23,10 +23,11 @@
 }
 
 .toggleRowCollapsed {
-  // Collapsed: centered over the icon column. The icons start at the rail's left inset
-  // (_.unit(6)), so the 24px toggle needs the same inset to line up with them.
+  // Collapsed: centered over the icon column (the icons start at _.unit(6)), and pushed down
+  // _.unit(3) so the rail's 24px rounded top corner does not clip the button.
   position: static;
   justify-content: flex-start;
+  margin-top: _.unit(3);
   margin-bottom: _.unit(4);
   padding-left: _.unit(6);
 }

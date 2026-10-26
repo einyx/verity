@@ -167,7 +167,8 @@ export function AddedSectionsPanel({ onSelect }: { readonly onSelect?: () => voi
         <span>{customSections.length}</span>
       </div>
       <p className={styles.puckPluginHint}>
-        Select, move, or remove custom sections. Built-in page sections keep their designed order.
+        Select, move, or remove custom sections. Reorder any section on the page: right-click it
+        and choose Move section up or down.
       </p>
       <div className={styles.puckOutlineList}>
         {customSections.length === 0 ? (

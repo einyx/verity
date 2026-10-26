@@ -225,14 +225,11 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
 
   // Members of a tenant are the users in its organization in the admin tenant. A caller sees the list only
   // when they are a member themselves, so one tenant's members are not visible to other users.
+  // The admin tenant is allowed too: its organization holds the instance's operators.
   router.get(
     '/api/tenants/:tenantId/members',
     koaGuard({ status: [200, 304, 401, 403] }),
     async (ctx, next) => {
-      assertThat(
-        ctx.params.tenantId !== adminTenantId,
-        new RequestError({ code: 'entity.not_found', status: 404 })
-      );
       const userId = await authenticateTenantMember(ctx, ctx.params.tenantId ?? '');
       const organizationId = getTenantOrganizationId(ctx.params.tenantId ?? '');
       const pool = await EnvSet.sharedPool;

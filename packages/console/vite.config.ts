@@ -8,7 +8,7 @@ import { defineConfig, mergeConfig, type UserConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
 import svgr from 'vite-plugin-svgr';
 
-import { defaultConfig, manualChunks } from '../../vite.shared.config';
+import { defaultConfig } from '../../vite.shared.config';
 
 // We need to explicitly import the `.env` file and use `define` later because we do not have a
 // prefix for our environment variables which it is required in Vite.
@@ -65,44 +65,44 @@ const buildConfig = (mode: string): UserConfig => ({
     rollupOptions: {
       output: {
         // Tip: You can use `pnpx vite-bundle-visualizer` to analyze the bundle size
-        manualChunks: (id, meta) => {
-          // Packages that call React APIs at module load (@assistant-ui, Radix and Inkeep's forwardRef wrappers)
-          // must share the react chunk. Split out on their own, they import react while it is still loading,
-          // which blanks the console with "Cannot read properties of undefined (reading 'forwardRef')" or
-          // "The superclass is not a constructor".
-          if (id.includes('/node_modules/@assistant-ui/')) {
-            return 'react';
-          }
-
+        manualChunks: (id) => {
+          // Keep every node_modules package in one chunk. Splitting react from the other deps
+          // makes the chunk graph cyclic (a deps chunk imports a deps chunk that imports react),
+          // and a cycle evaluates in whichever order the build happens to emit - the console
+          // then blanks with "The superclass is not a constructor" (found on the Oct 2026 demo
+          // deploy). Re-split only after verifying the emitted chunk graph is acyclic.
           if (/\/node_modules\/(cose-base|layout-base|cytoscape|cytoscape-[^/]*)\//.test(id)) {
             return 'cytoscape';
           }
 
-          if (/\/node_modules\/(|@inkeep|@radix-ui|prism-react-renderer)\//.test(id)) {
-            return 'react';
+          if (id.includes('/@logto/')) {
+            return '@logto';
           }
 
-          // When this dependency is introduced by @inkeep/cxkit-react, it will cause runtime errors
-          // if it is not bundled with react.
-          if (id.includes('/hastscript/')) {
-            return 'react';
-          }
-
-          for (const largePackage of [
-            'libphonenumber-js',
-            'mermaid',
-            'elkjs',
-            'katex',
-            'refractor',
-            'lodash',
-            'lodash-es',
-          ]) {
-            if (id.includes(`/node_modules/${largePackage}/`)) {
-              return largePackage;
+          if (id.includes('/node_modules/')) {
+            // Large lazy libraries keep their own chunks for caching; none of them import
+            // react, so these edges stay one-directional and cannot cycle.
+            for (const largePackage of [
+              'libphonenumber-js',
+              'mermaid',
+              'elkjs',
+              'katex',
+              'refractor',
+              'lodash',
+              'lodash-es',
+            ]) {
+              if (id.includes(`/node_modules/${largePackage}/`)) {
+                return largePackage;
+              }
             }
+
+            return 'vendors';
           }
 
-          return manualChunks(id, meta);
+          const match = /\/lib\/locales\/([^/]+)/.exec(id);
+          if (match?.[1]) {
+            return `phrases-${match[1]}`;
+          }
         },
       },
     },

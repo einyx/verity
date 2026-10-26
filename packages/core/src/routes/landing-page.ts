@@ -76,7 +76,7 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       draft: LandingPageDocument;
       published: Nullable<LandingPageDocument>;
       publishedVersion: Nullable<number>;
-      updatedAt: Date | undefined;
+      updatedAt: Date | string | undefined;
     }>(sql`
       select
         draft,
@@ -95,7 +95,9 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       draft: landingPageDocumentGuard.parse(row.draft),
       published: row.published && landingPageDocumentGuard.parse(row.published),
       publishedVersion: row.publishedVersion,
-      updatedAt: row.updatedAt?.toISOString(),
+      // The driver hands the timestamp back as a Date or as a string; the editor compares it as an
+      // ISO string, so normalize both shapes instead of assuming one.
+      updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : row.updatedAt?.toISOString(),
     };
   };
 

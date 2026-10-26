@@ -36,12 +36,12 @@ import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
 import { mountAdminRoutes } from './admin-routes.js';
 import { mountAdminTenantApps } from './admin-tenant-apps.js';
-import { createSharedHitStore } from './routes/landing-page-chat-counters.js';
+import { createSharedHitStore } from '#src/routes/landing-page-chat-counters.js';
 import {
   createChatState,
   createProductionChatDeps,
   landingPageChatRoutes,
-} from './routes/landing-page-chat.js';
+} from '#src/routes/landing-page-chat.js';
 import { mountBaseMiddleware } from './base-middleware.js';
 import {
   getSigningKeyRotationState,

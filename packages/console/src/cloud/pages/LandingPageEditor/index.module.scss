@@ -12,6 +12,8 @@
 .topbarLayout {
   flex-direction: column;
   gap: 12px;
+  // Override the shell's flex-start so the topbar and the workspace stretch to the full width.
+  align-items: stretch;
 }
 
 .editorTopbar {

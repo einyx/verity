@@ -38,6 +38,10 @@ const publishBody = z.object({
   expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
 });
 
+/** The driver hands a timestamp back as epoch milliseconds; the routes work with ISO strings. */
+const toIsoTimestamp = (value: Date | string | number): string =>
+  value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+
 type VersionRow = {
   version: number;
   document: LandingPageDocument;
@@ -76,7 +80,7 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       draft: LandingPageDocument;
       published: Nullable<LandingPageDocument>;
       publishedVersion: Nullable<number>;
-      updatedAt: Date | string | undefined;
+      updatedAt: Date | string | number | undefined;
     }>(sql`
       select
         draft,
@@ -95,9 +99,9 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       draft: landingPageDocumentGuard.parse(row.draft),
       published: row.published && landingPageDocumentGuard.parse(row.published),
       publishedVersion: row.publishedVersion,
-      // The driver hands the timestamp back as a Date or as a string; the editor compares it as an
-      // ISO string, so normalize both shapes instead of assuming one.
-      updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : row.updatedAt?.toISOString(),
+      // The driver hands a timestamp back as epoch milliseconds, so the editor's ISO string has to be
+      // built from it, the same way the rest of the routes read their timestamps.
+      updatedAt: row.updatedAt === undefined ? undefined : toIsoTimestamp(row.updatedAt),
     };
   };
 

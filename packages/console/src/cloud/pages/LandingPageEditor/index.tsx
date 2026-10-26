@@ -5,7 +5,7 @@ import { z } from 'zod/v3';
 import { type LandingPageVersion, useLandingPage } from '@/cloud/hooks/use-landing-page';
 import useManageLandingPageGuard from '@/cloud/hooks/use-manage-landing-page-guard';
 
-import ContentEditor, { isRecord } from './ContentEditor';
+import { isRecord } from './ContentEditor';
 import { setAtPath } from './LandingPreviewFrame';
 import PuckLandingPageEditor from './PuckLandingPageEditor';
 import styles from './index.module.scss';
@@ -16,11 +16,6 @@ import styles from './index.module.scss';
 
 /** Two clicks confirm a live change: the first arms it, the second runs it. */
 type Pending = { kind: 'publish' } | { kind: 'rollback'; version: number } | undefined;
-
-const demoChatLabel = 'Demo chat';
-
-// One plain sentence per section, so the editor explains itself without a manual.
-const demoChatHint = 'Turn the demo chat on or off. Off keeps the static request form on the site.';
 
 // The publish conflict carries its HTTP status and nothing else the editor needs.
 const publishConflictGuard = z.object({ status: z.literal(409) });
@@ -128,61 +123,37 @@ function LandingPageEditorContent() {
 
   return (
     // `fullWidthPage` opts this page out of the console's centred width cap.
-    <div className={`${styles.shell} fullWidthPage`}>
-      <div className={styles.content}>
-        <aside className={styles.side}>
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Publish</h2>
-            <div className={styles.statusRow}>
-              {data?.publishedVersion ? (
-                <span className={styles.liveBadge}>Live: version {data.publishedVersion}</span>
-              ) : (
-                <span className={styles.draftBadge}>Not published yet</span>
-              )}
-              {message && (
-                <span role="status" className={styles.message}>
-                  {message}
-                </span>
-              )}
-            </div>
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                disabled={busy}
-                onClick={() => {
-                  void run(async () => {
-                    await saveDraft(currentDraft);
-                  }, 'Draft saved.');
+    <div className={`${styles.shell} ${styles.topbarLayout} fullWidthPage`}>
+      <div className={styles.editorTopbar}>
+        <h1 className={styles.topbarTitle}>Landing page</h1>
+        <span className={data?.publishedVersion ? styles.liveBadge : styles.draftBadge}>
+          {data?.publishedVersion ? `Live: version ${data.publishedVersion}` : 'Not published yet'}
+        </span>
+        {message && (
+          <span role="status" className={styles.message}>
+            {message}
+          </span>
+        )}
+        {isRecord(currentDraft) && 'demoChat' in currentDraft && (
+          <section aria-label="Demo chat content" className={styles.demoChatToggle}>
+            <label className={styles.checkField}>
+              <input
+                type="checkbox"
+                checked={isRecord(currentDraft.demoChat) && currentDraft.demoChat.enabled === true}
+                onChange={(event) => {
+                  const enabled = event.target.checked;
+                  setDraft((current: unknown) => setAtPath(current, 'demoChat.enabled', enabled));
                 }}
-              >
-                Save draft
-              </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                disabled={busy}
-                onClick={() => {
-                  confirmOrRun(
-                    { kind: 'publish' },
-                    async () => {
-                      const saved = await saveDraft(currentDraft);
-                      await publish(saved.updatedAt);
-                    },
-                    'Published.'
-                  );
-                }}
-              >
-                {publishLabel}
-              </button>
-            </div>
+              />
+              <span>Demo chat on the site</span>
+            </label>
           </section>
-
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Earlier versions</h2>
-            <p className={styles.sectionHint}>
-              Each publish is kept. You can make an earlier one live again.
-            </p>
+        )}
+        <details className={styles.versionsMenu}>
+          <summary className={styles.versionsSummary}>
+            Versions{versions.length > 0 ? ` · ${versions.length}` : ''}
+          </summary>
+          <div className={styles.versionsPop}>
             {versionsError && (
               <p role="alert" className={styles.error}>
                 Could not load earlier versions. Reload the page to try again.
@@ -191,7 +162,7 @@ function LandingPageEditorContent() {
             {!versionsError && versions.length === 0 && (
               <p className={styles.sectionHint}>
                 {data?.publishedVersion
-                  ? 'Loading earlier versions…'
+                  ? 'No earlier versions kept yet.'
                   : 'Nothing is published yet. Publish a draft to create the first version.'}
               </p>
             )}
@@ -223,48 +194,48 @@ function LandingPageEditorContent() {
                 </li>
               ))}
             </ul>
-          </section>
-        </aside>
-        <div className={styles.main}>
-          <header className={styles.header}>
-            <h1 className={styles.title}>Landing page</h1>
-            <p className={styles.subtitle}>
-              Edit the live page in place. Save draft keeps changes private; publish puts them on
-              the site.
-            </p>
-          </header>
-
-          {isRecord(currentDraft) && 'demoChat' in currentDraft && (
-            <section
-              className={`${styles.section} ${styles.demoChatSection}`}
-              aria-label="Demo chat content"
-            >
-              <header className={styles.sectionHeader}>
-                <h2 className={styles.sectionName}>{demoChatLabel}</h2>
-                <p className={styles.sectionHint}>{demoChatHint}</p>
-              </header>
-              <div className={styles.sectionBody}>
-                <ContentEditor
-                  label={demoChatLabel}
-                  value={currentDraft.demoChat}
-                  onChange={(value) => {
-                    setDraft((current: unknown) => setAtPath(current, 'demoChat', value));
-                  }}
-                />
-              </div>
-            </section>
-          )}
-
-          <PuckLandingPageEditor
-            document={currentDraft}
-            locale={previewLocale}
-            onLocaleChange={setPreviewLocale}
-            onChange={setDraft}
-            onEdit={editField}
-            onMove={moveImage}
-          />
+          </div>
+        </details>
+        <div className={styles.topbarActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            disabled={busy}
+            onClick={() => {
+              void run(async () => {
+                await saveDraft(currentDraft);
+              }, 'Draft saved.');
+            }}
+          >
+            Save draft
+          </button>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            disabled={busy}
+            onClick={() => {
+              confirmOrRun(
+                { kind: 'publish' },
+                async () => {
+                  const saved = await saveDraft(currentDraft);
+                  await publish(saved.updatedAt);
+                },
+                'Published.'
+              );
+            }}
+          >
+            {publishLabel}
+          </button>
         </div>
       </div>
+      <PuckLandingPageEditor
+        document={currentDraft}
+        locale={previewLocale}
+        onLocaleChange={setPreviewLocale}
+        onChange={setDraft}
+        onEdit={editField}
+        onMove={moveImage}
+      />
     </div>
   );
 }

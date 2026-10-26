@@ -123,4 +123,4 @@ export class EnvSet {
   }
 }
 
-export { getTenantEndpoint } from './utils.js';
+export { getTenantEndpoint, getTenantLocalhost } from './utils.js';

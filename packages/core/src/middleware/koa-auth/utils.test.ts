@@ -96,9 +96,30 @@ describe('getAdminTenantTokenValidationSet', () => {
     });
   });
 
-  it('keeps using remote OIDC discovery and JWKS in Cloud', async () => {
+  it('reads the local admin tenant keys in Cloud, skips OIDC discovery', async () => {
     setEnvValues({ isCloud: true, adminUrlSet: createAdminUrlSet('https://cloud.example.com') });
+    const privateKey = createPrivateKey('current', OidcSigningKeyStatus.Current);
+    methods.one.mockResolvedValueOnce({
+      value: [privateKey],
+    } as never);
+
+    const result = await getAdminTenantTokenValidationSet();
+    const expectedJwk = await getPublicJwk(privateKey);
+
+    expect(ky.get).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      keys: [expectedJwk],
+      issuer: ['https://cloud.example.com/oidc'],
+    });
+  });
+
+  it('falls back to remote OIDC discovery and JWKS in Cloud without local keys', async () => {
+    setEnvValues({
+      isCloud: true,
+      adminUrlSet: createAdminUrlSet('https://cloud-fallback.example.com'),
+    });
     const cloudJwk: JWK = { kty: 'EC', kid: 'cloud-key' };
+    methods.one.mockRejectedValueOnce(new Error('no local admin tenant keys'));
     ky.get
       .mockReturnValueOnce({
         json: jest.fn(async () => ({
@@ -113,11 +134,11 @@ describe('getAdminTenantTokenValidationSet', () => {
 
     const result = await getAdminTenantTokenValidationSet();
 
-    expect(methods.one).not.toHaveBeenCalled();
+    expect(methods.one).toHaveBeenCalled();
     expect(ky.get).toHaveBeenCalledTimes(2);
     expect(result).toEqual({
       keys: [cloudJwk],
-      issuer: ['https://cloud.example.com/oidc'],
+      issuer: ['https://cloud-fallback.example.com/oidc'],
     });
   });
 

@@ -48,7 +48,7 @@ const createProvisionLibrary = ({
   user?: User;
   hasActiveUsersResult?: boolean;
 } = {}) => {
-  const hasActiveUsers = jest.fn().mockResolvedValue(hasActiveUsersResult);
+  const hasActiveUsersQuery = jest.fn().mockResolvedValue(hasActiveUsersResult);
   const findUserById = jest.fn(async (): Promise<User> => user);
   const updateUserById = jest.fn(
     async (userId: string, payload: Partial<CreateUser>): Promise<User> => ({
@@ -78,19 +78,19 @@ const createProvisionLibrary = ({
     {
       users: {
         findUserById,
-        hasActiveUsers,
+        hasActiveUsers: hasActiveUsersQuery,
         updateUserById,
       },
       signInExperiences: {
         updateDefaultSignInExperience,
       },
       organizations: {
-        // @ts-expect-error -- only `findEntities` is needed by these tests.
+        // @ts-expect-error -- only `findEntities` and the relation inserts are needed by these tests.
         invitations: { findEntities },
         relations: {
-          // @ts-expect-error -- only the insert method is needed by these tests.
+          // @ts-expect-error -- only the relation inserts are needed by these tests.
           users: { insert: insertOrganizationUser },
-          // @ts-expect-error -- only the insert method is needed by these tests.
+          // @ts-expect-error -- only the relation inserts are needed by these tests.
           usersRoles: { insert: insertOrganizationUserRole },
         },
       },
@@ -131,7 +131,7 @@ const createProvisionLibrary = ({
     provisionLibrary: new ProvisionLibrary(tenant, ctx),
     ctx,
     findUserById,
-    hasActiveUsers,
+    hasActiveUsers: hasActiveUsersQuery,
     updateUserById,
     checkIdentifierCollision,
     insertUser,
@@ -327,6 +327,45 @@ describe('ProvisionLibrary', () => {
         user: expect.objectContaining({
           id: 'uid',
         }) as User,
+      });
+    });
+
+    it('adds the first admin-tenant user to the default tenant organization', async () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isCloud: boolean }).isCloud = true;
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isIntegrationTest: boolean }).isIntegrationTest = false;
+      // eslint-disable-next-line @silverhand/fp/no-mutation
+      (EnvSet.values as { isDevFeaturesEnabled: boolean }).isDevFeaturesEnabled = true;
+
+      const {
+        provisionLibrary,
+        insertOrganizationUser,
+        insertOrganizationUserRole,
+        updateDefaultSignInExperience,
+      } = createProvisionLibrary({ hasActiveUsersResult: false });
+
+      await provisionLibrary.createUser({ username: 'jane' });
+
+      // The console lands on the default tenant and asks for that organization's token, which is
+      // only issued to its members.
+      expect(insertOrganizationUser).toHaveBeenCalledWith({
+        organizationId: 't-admin',
+        userId: 'uid',
+      });
+      expect(insertOrganizationUser).toHaveBeenCalledWith({
+        organizationId: 't-default',
+        userId: 'uid',
+      });
+      expect(insertOrganizationUserRole).toHaveBeenCalledWith({
+        organizationId: 't-default',
+        userId: 'uid',
+        organizationRoleId: 'admin',
+      });
+      // The admin tenant's sign-in experience starts in register mode; the console has to be able
+      // to sign the admin in.
+      expect(updateDefaultSignInExperience).toHaveBeenCalledWith({
+        signInMode: 'SignInAndRegister',
       });
     });
 

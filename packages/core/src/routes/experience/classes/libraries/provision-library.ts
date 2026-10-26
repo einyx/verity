@@ -564,19 +564,36 @@ export class ProvisionLibrary {
    *
    * - Add the user to the admin tenant's organization with the admin role. The admin console's token is
    *   issued for that organization, and it only carries scopes for members with an organization role.
+   * - Add the user to the default tenant's organization with the admin role. The console lands on the
+   *   default tenant and requests that organization's token, which is only issued to its members.
+   * - Leave register mode, so the console can sign the admin in.
    */
   private async provisionForFirstAdminTenantUser({ id }: User) {
     const {
-      queries: { organizations },
+      queries: { organizations, signInExperiences },
     } = this.tenantContext;
 
-    const organizationId = getTenantOrganizationId(adminTenantId);
-    await organizations.relations.users.insert({ organizationId, userId: id });
-    await organizations.relations.usersRoles.insert({
-      organizationId,
-      userId: id,
-      organizationRoleId: getTenantRole(TenantRole.Admin).id,
-    });
+    /**
+     * The admin tenant's sign-in experience starts in register mode, for the first admin to be
+     * created. Once the admin exists, the console has to be able to sign in. In OSS the first admin
+     * user path leaves register mode on its own.
+     */
+    if (EnvSet.values.isCloud) {
+      await signInExperiences.updateDefaultSignInExperience({
+        signInMode: SignInMode.SignInAndRegister,
+      });
+    }
+
+    for (const tenantId of [adminTenantId, defaultTenantId]) {
+      const organizationId = getTenantOrganizationId(tenantId);
+
+      await organizations.relations.users.insert({ organizationId, userId: id });
+      await organizations.relations.usersRoles.insert({
+        organizationId,
+        userId: id,
+        organizationRoleId: getTenantRole(TenantRole.Admin).id,
+      });
+    }
   }
 
   private readonly getInitialUserRoles = (

@@ -1,7 +1,7 @@
 import type { Context, Middleware, Next } from 'koa';
 import proxy from 'koa-proxies';
 
-import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
+import { EnvSet, getTenantEndpoint, getTenantLocalhost } from '#src/env-set/index.js';
 import { isBillingConfigured } from '#src/routes/billing.js';
 
 import { handleCheckoutCreate, handleCheckoutStatus } from './cloud-dev-checkout.js';
@@ -52,6 +52,8 @@ export const localCloudRoutes = () => {
   // The default tenant's Management API is served by this instance on its user endpoint.
   // Each tenant is served on its own host when the endpoint is domain-based (`http://*.host`), so the
   // proxy targets the tenant's host. Otherwise every tenant shares the endpoint.
+  // The tenant's local listener is preferred when it has one: the public endpoint uses a certificate
+  // the container does not trust, and the proxy would fail to reach it.
   // Typed with koa's default Middleware: ReturnType<typeof proxy> resolves to koa-proxies' last overload, which does not match the proxy the call returns.
   const tenantProxies = new Map<string, Middleware>();
   const tenantProxyFor = (tenantId: string) => {
@@ -61,10 +63,23 @@ export const localCloudRoutes = () => {
       return existing;
     }
 
+    const target =
+      getTenantLocalhost(tenantId, EnvSet.values) ?? getTenantEndpoint(tenantId, EnvSet.values);
     const created = proxy('/m', {
-      target: getTenantEndpoint(tenantId, EnvSet.values).origin,
+      target: target.origin,
       changeOrigin: true,
       rewrite: (path: string) => path.replace(/^\/m\/[^/]+/, ''),
+      events: {
+        /**
+         * The request carries the forwarded host of the endpoint it came in on, which is the admin
+         * endpoint for the console. The target would then resolve the admin tenant instead of the
+         * tenant being proxied, so the forwarded host is pointed at the target.
+         */
+        proxyReq: (proxyReq) => {
+          proxyReq.setHeader('x-forwarded-host', target.host);
+          proxyReq.setHeader('x-forwarded-proto', target.protocol.replace(':', ''));
+        },
+      },
     });
     tenantProxies.set(tenantId, created);
 

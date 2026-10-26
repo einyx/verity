@@ -199,14 +199,26 @@ async function handleSubmitRegister(
 
   // The admin console's token is issued for the admin tenant's organization, which only carries scopes
   // for members with an organization role. Part of the landing page CMS feature.
+  // The console also lands on the default tenant and requests that organization's token, which is only
+  // issued to the organization's members.
   if (isFirstAdminTenantUser) {
-    const adminOrganizationId = getTenantOrganizationId(adminTenantId);
-    await organizations.relations.users.insert({ organizationId: adminOrganizationId, userId: id });
-    await organizations.relations.usersRoles.insert({
-      organizationId: adminOrganizationId,
-      organizationRoleId: getTenantRole(TenantRole.Admin).id,
-      userId: id,
-    });
+    // The admin tenant's sign-in experience starts in register mode, for the first admin to be
+    // created. Once the admin exists, the console has to be able to sign in. In OSS the first admin
+    // user path leaves register mode on its own.
+    if (isCloud) {
+      await updateDefaultSignInExperience({ signInMode: SignInMode.SignInAndRegister });
+    }
+
+    for (const tenantId of [adminTenantId, defaultTenantId]) {
+      const organizationId = getTenantOrganizationId(tenantId);
+
+      await organizations.relations.users.insert({ organizationId, userId: id });
+      await organizations.relations.usersRoles.insert({
+        organizationId,
+        organizationRoleId: getTenantRole(TenantRole.Admin).id,
+        userId: id,
+      });
+    }
   }
 
   await assignInteractionResults(ctx, provider, { login: { accountId: id } });

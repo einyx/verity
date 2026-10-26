@@ -44,7 +44,7 @@ export const getBareEndpoint = (endpoint: URL): URL => {
   return bare;
 };
 
-const getTenantLocalhost = (
+export const getTenantLocalhost = (
   id: string,
   { urlSet, adminUrlSet, isDomainBasedMultiTenancy, isPathBasedMultiTenancy }: GlobalValues
 ): Optional<URL> => {

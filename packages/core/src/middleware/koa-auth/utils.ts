@@ -2,7 +2,7 @@ import { type IncomingHttpHeaders } from 'node:http';
 
 import { adminTenantId } from '@logto/schemas';
 import { TtlCache } from '@logto/shared';
-import { appendPath, isKeyInObject } from '@silverhand/essentials';
+import { appendPath, isKeyInObject, trySafe } from '@silverhand/essentials';
 import { type JWK } from 'jose';
 import ky from 'ky';
 
@@ -98,7 +98,7 @@ export const getAdminTenantTokenValidationSet = async (): Promise<{
   keys: JWK[];
   issuer: string[];
 }> => {
-  const { isMultiTenancy, adminUrlSet } = EnvSet.values;
+  const { isMultiTenancy, adminUrlSet, isCloud } = EnvSet.values;
 
   if (!isMultiTenancy && adminUrlSet.deduplicated().length === 0) {
     return { keys: [], issuer: [] };
@@ -106,7 +106,19 @@ export const getAdminTenantTokenValidationSet = async (): Promise<{
 
   const issuer = getAdminTenantIssuer();
 
-  if (EnvSet.values.isCloud) {
+  if (isCloud) {
+    /**
+     * A cloud-mode instance keeps the admin tenant in the same database, so its signing keys can be
+     * read from there. Fetching them over the network fails when the endpoint uses a self-signed
+     * certificate, and every Management API call on a user tenant depends on them. An instance
+     * whose admin tenant lives elsewhere has no local keys and falls back to the fetch.
+     */
+    const local = await trySafe(async () => getOssAdminTenantTokenValidationSet(issuer));
+
+    if (local?.keys.length) {
+      return local;
+    }
+
     return getCloudAdminTenantTokenValidationSet(issuer);
   }
 

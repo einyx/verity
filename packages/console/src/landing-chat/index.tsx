@@ -60,6 +60,14 @@ const {
   quick_foundation_ai: quickFoundationAi,
   quick_dashboards: quickDashboards,
   quick_use_case: quickUseCase,
+  industry_aviation: industryAviation,
+  industry_banking: industryBanking,
+  industry_healthcare: industryHealthcare,
+  industry_smart_city: industrySmartCity,
+  quick_industry_aviation: quickIndustryAviation,
+  quick_industry_banking: quickIndustryBanking,
+  quick_industry_healthcare: quickIndustryHealthcare,
+  quick_industry_smart_city: quickIndustrySmartCity,
 } = copy;
 
 // Matches the server's per-message limit in landing-page-chat-guard.ts.
@@ -73,6 +81,15 @@ const quickReplies = [
 ] as const;
 
 type IdeaIcon = (typeof quickReplies)[number]['icon'];
+
+// Industry pills. A tap fills the composer with the question for that sector, so the visitor can
+// adjust it before sending.
+const industryReplies = [
+  { label: industryAviation, prompt: quickIndustryAviation },
+  { label: industryBanking, prompt: quickIndustryBanking },
+  { label: industryHealthcare, prompt: quickIndustryHealthcare },
+  { label: industrySmartCity, prompt: quickIndustrySmartCity },
+] as const;
 
 // Line icons drawn at 20px with the current text color, so they follow the row's color.
 const iconPaths: Record<IdeaIcon, string> = {
@@ -429,14 +446,9 @@ function DemoChat() {
           <ThreadPrimitive.Empty>
             <div className="demo-chat-welcome">
               <p className="demo-chat-welcome-title">
-                <svg className="demo-chat-mark" aria-hidden="true" viewBox="0 0 24 24" fill="none">
-                  {/* The meshX logo mark: two crossing strokes in the brand red. */}
-                  <path
-                    d="M5 5l14 14M19 5L5 19"
-                    stroke="currentColor"
-                    strokeWidth="3.2"
-                    strokeLinecap="round"
-                  />
+                <svg className="demo-chat-mark" aria-hidden="true" viewBox="0 0 82 116" fill="#FE330A">
+                  {/* The meshX logo mark, taken from meshx-logo.svg. */}
+                  <path d="M82 37V19L41 45 0 18v19l27 17 14 9 14-9zM82 89v18L41 81 0 108V89l27-17 14-9 14 9z" />
                 </svg>
                 {welcomeTitle}
               </p>
@@ -490,6 +502,17 @@ function DemoChat() {
         <ThreadPrimitive.Empty>
           <div className="demo-chat-ideas">
             <p className="demo-chat-chips-label">Ideas for you</p>
+            <div className="demo-chat-industries">
+              {industryReplies.map(({ label, prompt }) => (
+                <ThreadPrimitive.Suggestion
+                  key={prompt}
+                  className="demo-chat-industry"
+                  prompt={prompt}
+                >
+                  <span className="demo-chat-industry-label">{label}</span>
+                </ThreadPrimitive.Suggestion>
+              ))}
+            </div>
             <div className="demo-chat-chips">
               {quickReplies.map(({ prompt, tag, icon }) => (
                 <ThreadPrimitive.Suggestion

@@ -884,3 +884,39 @@
     opacity: 1;
   }
 }
+
+/* Industry pills: pick a sector and its question lands in the composer, ready to send. */
+.demo-chat-industries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+.demo-chat-industry {
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.demo-chat-industry:hover {
+  border-color: var(--chat-accent);
+  color: var(--chat-accent);
+}
+
+.demo-chat-industry:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+/* The close button carries the meshX mark instead of a text multiplication sign. */
+.demo-chat-close {
+  display: grid;
+  place-items: center;
+}

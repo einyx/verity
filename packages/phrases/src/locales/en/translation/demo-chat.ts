@@ -10,6 +10,18 @@ const demo_chat = {
   quick_foundation_ai: 'Foundation AI',
   quick_dashboards: 'Dashboards.AI',
   quick_use_case: 'A specific use case',
+  industry_aviation: 'Aviation',
+  industry_banking: 'Banking',
+  industry_healthcare: 'Healthcare',
+  industry_smart_city: 'Smart city',
+  quick_industry_aviation:
+    'We work in aviation — how does meshX keep flight and ground data governed and ready for our AI agents?',
+  quick_industry_banking:
+    'We work in banking — how does meshX keep regulated data auditable and ready for AI?',
+  quick_industry_healthcare:
+    'We work in healthcare — how does meshX protect patient data while making it usable for AI?',
+  quick_industry_smart_city:
+    'We are building a smart city — how does meshX unify data across our city services?',
   model_unavailable:
     "I couldn't come up with an answer just now, but your message is saved. You can also write to hello@meshx.io.",
 };

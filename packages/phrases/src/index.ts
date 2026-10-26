@@ -123,7 +123,7 @@ export default resource;
 /** Landing demo chat copy by locale tag. Exported on its own so the chat bundle stays small. */
 /** English demo chat copy, the fallback for every locale. */
 
-export const demoChatByLocale: Readonly<Record<string, typeof demoChatEn>> = Object.freeze({
+export const demoChatByLocale: Readonly<Record<string, Partial<typeof demoChatEn>>> = Object.freeze({
   ar: demoChatar,
   de: demoChatde,
   en: demoChatEn,

@@ -1,4 +1,4 @@
-import { adminTenantId, experience } from '@logto/schemas';
+import { adminTenantId, defaultTenantId, experience } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
 import { once } from '@silverhand/essentials';
 import type { MiddlewareType } from 'koa';
@@ -36,6 +36,12 @@ import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
 import { mountAdminRoutes } from './admin-routes.js';
 import { mountAdminTenantApps } from './admin-tenant-apps.js';
+import { createSharedHitStore } from './routes/landing-page-chat-counters.js';
+import {
+  createChatState,
+  createProductionChatDeps,
+  landingPageChatRoutes,
+} from './routes/landing-page-chat.js';
 import { mountBaseMiddleware } from './base-middleware.js';
 import {
   getSigningKeyRotationState,
@@ -187,6 +193,14 @@ export default class Tenant implements TenantContext {
 
     // Admin cloud routes: the dev stand-ins and, in production, the billing API.
     mountAdminRoutes(app, id, envSet);
+
+    // The landing page demo chat on the default tenant: the site is served on the bare host and
+    // posts to a relative /api/landing-page/chat. Public: Turnstile-guarded and rate-limited in
+    // the database, and it reads only the shared pool — no tenant data.
+    if (id === defaultTenantId) {
+      const chatState = createChatState(createSharedHitStore(async () => EnvSet.sharedPool));
+      app.use(landingPageChatRoutes(createProductionChatDeps(), chatState).routes());
+    }
 
     // Mount APIs
     app.use(mount('/api', initApis(tenantContext)));

@@ -257,6 +257,9 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
           "'self'",
           ...conditionalArray(!isProduction && ["'unsafe-eval'", "'unsafe-inline'"]),
           ...cdnSources,
+          // Some of our users route the console through Cloudflare with Web Analytics
+          // auto-injection; the beacon must not be blocked by the CSP.
+          'https://static.cloudflareinsights.com/',
           // The landing-page demo chat loads the Cloudflare Turnstile widget.
           'https://challenges.cloudflare.com',
         ],

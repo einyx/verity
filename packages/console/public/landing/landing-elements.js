@@ -23,7 +23,7 @@
   const targetElement = (target) => target.closest('img[data-cms-element], svg[data-cms-element]') || target.closest('a[data-cms-element], button[data-cms-element]') || target.closest('[data-cms-element]');
   const describe = (element) => {
     const label = labelFor(element);
-    const image = element.matches('img, svg') ? element : undefined;
+    const image = element.matches('img, svg, [data-cms-image]') ? element : undefined;
     const sectionId = element.closest('[data-section-id]')?.dataset.sectionId;
     return {
       id: element.dataset.cmsElement,
@@ -44,12 +44,17 @@
   const bind = () => {
     for (const region of document.querySelectorAll('header, main, footer')) {
       let index = 0;
-      for (const element of region.querySelectorAll('a[href], button, img, svg[role="img"], main > section svg[viewBox], [data-cms], [data-cms-copy]')) {
+      for (const element of region.querySelectorAll('a[href], button, img, svg[role="img"], main > section svg[viewBox], [data-cms], [data-cms-copy], [data-cms-image]')) {
         if (element.closest('.cms-context-menu, [data-cms-replacement]') || element.dataset.cmsElement) continue;
+        // A composite image (for example the hero diagram figure) is one selectable and movable
+        // unit: mark the root only, never the svg or img pieces inside it.
+        const composite = element.closest('[data-cms-image]');
+        if (composite && composite !== element) continue;
         if (element.matches('svg') && (element.closest('a, button') && element.getAttribute('role') !== 'img')) continue;
         if (element.matches('svg') && Number((element.getAttribute('viewBox') || '').split(/\s+/)[2]) < 100 && element.getAttribute('role') !== 'img') continue;
         const section = element.closest('[data-section-id]');
         const field = (element.dataset.cms || element.dataset.cmsImageSrc || element.dataset.cmsImage)?.replace(/^sections\.\d+\./, '');
+        if (element.matches('[data-cms-image]')) element.dataset.cmsImageSrc = field;
         const prefix = section?.dataset.sectionId || region.tagName.toLowerCase();
         element.dataset.cmsElement = `${prefix}-${field || ++index}`.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 100);
         if (element.matches('a, button') && !labelFor(element)) {
@@ -153,7 +158,7 @@
     finishDrag(false);
     moveHandle?.remove();
     moveHandle = undefined;
-    if (!preview || !selected.matches('img, svg')) return;
+    if (!preview || !selected.matches('img, svg, [data-cms-image]')) return;
     moveHandle = document.createElement('button');
     moveHandle.type = 'button';
     moveHandle.className = 'cms-move-handle cms-image-drag-handle';

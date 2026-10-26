@@ -18,6 +18,8 @@ const assets = [
   'demo-chat-app.js',
   'demo-chat.css',
   'demo-chat.js',
+  'help.css',
+  'help.js',
   'landing-renderer.js',
   'landing-elements.css',
   'landing-elements.js',

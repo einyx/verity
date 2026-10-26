@@ -73,23 +73,32 @@ const {
 // Matches the server's per-message limit in landing-page-chat-guard.ts.
 const maxMessageLength = 1000;
 // One tap answers the first question: the visitor's interest, which the assistant then follows up on.
+// The industry rows name the sector and fill the composer with its question, so the visitor can
+// adjust it before sending.
 const quickReplies = [
-  { prompt: quickPlatformDemo, tag: 'Overview', icon: 'grid' },
-  { prompt: quickFoundationAi, tag: 'Product', icon: 'spark' },
-  { prompt: quickDashboards, tag: 'Product', icon: 'chart' },
-  { prompt: quickUseCase, tag: 'Tailored', icon: 'target' },
+  { label: quickPlatformDemo, prompt: quickPlatformDemo, tag: 'Overview', icon: 'grid', send: true },
+  { label: quickFoundationAi, prompt: quickFoundationAi, tag: 'Product', icon: 'spark', send: true },
+  { label: quickDashboards, prompt: quickDashboards, tag: 'Product', icon: 'chart', send: true },
+  { label: quickUseCase, prompt: quickUseCase, tag: 'Tailored', icon: 'target', send: true },
+  {
+    label: industryAviation,
+    prompt: quickIndustryAviation,
+    tag: 'Industry',
+    icon: 'plane',
+    send: false,
+  },
+  { label: industryBanking, prompt: quickIndustryBanking, tag: 'Industry', icon: 'bank', send: false },
+  {
+    label: industryHealthcare,
+    prompt: quickIndustryHealthcare,
+    tag: 'Industry',
+    icon: 'health',
+    send: false,
+  },
+  { label: industrySmartCity, prompt: quickIndustrySmartCity, tag: 'Industry', icon: 'city', send: false },
 ] as const;
 
 type IdeaIcon = (typeof quickReplies)[number]['icon'];
-
-// Industry pills. A tap fills the composer with the question for that sector, so the visitor can
-// adjust it before sending.
-const industryReplies = [
-  { label: industryAviation, prompt: quickIndustryAviation },
-  { label: industryBanking, prompt: quickIndustryBanking },
-  { label: industryHealthcare, prompt: quickIndustryHealthcare },
-  { label: industrySmartCity, prompt: quickIndustrySmartCity },
-] as const;
 
 // Line icons drawn at 20px with the current text color, so they follow the row's color.
 const iconPaths: Record<IdeaIcon, string> = {
@@ -97,6 +106,10 @@ const iconPaths: Record<IdeaIcon, string> = {
   spark: 'M10 2v4M10 14v4M2 10h4M14 10h4M4.5 4.5l2.5 2.5M13 13l2.5 2.5M4.5 15.5 7 13M13 7l2.5-2.5',
   chart: 'M3 17h14M5 14V9M9 14V5M13 14v-3M17 14V7',
   target: 'M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  plane: 'M2 9.5 18 3l-6.5 14-2.5-6z',
+  bank: 'M2 8l8-5 8 5M4 9v6M8 9v6M12 9v6M16 9v6M3 17h14',
+  health: 'M8 3h4v5h5v4h-5v5H8v-5H3V8h5z',
+  city: 'M4 17V8l4-3v12M8 17V3l6 3v11M14 17V9l3-2v10M2 17h16',
 };
 
 function IdeaIconMark({ icon }: { readonly icon: IdeaIcon }) {
@@ -446,8 +459,14 @@ function DemoChat() {
           <ThreadPrimitive.Empty>
             <div className="demo-chat-welcome">
               <p className="demo-chat-welcome-title">
-                <svg className="demo-chat-mark" aria-hidden="true" viewBox="0 0 82 116" fill="#FE330A">
-                  {/* The meshX logo mark, taken from meshx-logo.svg. */}
+                <svg
+                  className="demo-chat-mark"
+                  aria-hidden="true"
+                  viewBox="-1 17 84 92"
+                  fill="#FE330A"
+                >
+                  {/* The meshX logo mark, taken from meshx-logo.svg. The view box holds the whole
+                      mark with a unit of room around it, so nothing is cut off. */}
                   <path d="M82 37V19L41 45 0 18v19l27 17 14 9 14-9zM82 89v18L41 81 0 108V89l27-17 14-9 14 9z" />
                 </svg>
                 {welcomeTitle}
@@ -502,27 +521,16 @@ function DemoChat() {
         <ThreadPrimitive.Empty>
           <div className="demo-chat-ideas">
             <p className="demo-chat-chips-label">Ideas for you</p>
-            <div className="demo-chat-industries">
-              {industryReplies.map(({ label, prompt }) => (
-                <ThreadPrimitive.Suggestion
-                  key={prompt}
-                  className="demo-chat-industry"
-                  prompt={prompt}
-                >
-                  <span className="demo-chat-industry-label">{label}</span>
-                </ThreadPrimitive.Suggestion>
-              ))}
-            </div>
             <div className="demo-chat-chips">
-              {quickReplies.map(({ prompt, tag, icon }) => (
+              {quickReplies.map(({ label, prompt, tag, icon, send }) => (
                 <ThreadPrimitive.Suggestion
                   key={prompt}
-                  send
+                  send={send}
                   className="demo-chat-chip"
                   prompt={prompt}
                 >
                   <IdeaIconMark icon={icon} />
-                  <span className="demo-chat-idea-label">{prompt}</span>
+                  <span className="demo-chat-idea-label">{label}</span>
                   <span className="demo-chat-idea-tag">{tag}</span>
                 </ThreadPrimitive.Suggestion>
               ))}

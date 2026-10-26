@@ -9,7 +9,7 @@
     return;
   }
 
-  const appSrc = '/console/landing/demo-chat-app.js?v=d209891f69';
+  const appSrc = '/console/landing/demo-chat-app.js?v=dd43a0f5df';
   let enabled = false;
   let appRequested = false;
 

@@ -1,5 +1,6 @@
 import classNames from 'classnames';
-import { startTransition, useState } from 'react';
+import { adminTenantId } from '@logto/schemas';
+import { useContext, useEffect, startTransition, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSWRConfig } from 'swr';
 
@@ -10,6 +11,7 @@ import { TenantSettingsTabs } from '@/consts';
 import { isCloud } from '@/consts/env';
 import Button from '@/ds-components/Button';
 import Spacer from '@/ds-components/Spacer';
+import { TenantsContext } from '@/contexts/TenantsProvider';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 
@@ -23,6 +25,10 @@ function TenantMembers() {
   const {
     access: { canInviteMember, canRemoveMember },
   } = useCurrentTenantScopes();
+  const { currentTenantId } = useContext(TenantsContext);
+  // Cloud mode provisions admin-tenant operators directly: the self-host invitation
+  // routes answer 404 there, so the invitations tab is only for workspace tenants.
+  const isAdminTenant = currentTenantId === adminTenantId;
 
   const membersPath = `/tenant-settings/${TenantSettingsTabs.Members}`;
   const invitationsPath = `${membersPath}/invitations`;
@@ -32,9 +38,16 @@ function TenantMembers() {
   const { invitationsKey } = useTenantMembersApi();
   const { mutate } = useSWRConfig();
 
+  useEffect(() => {
+    // If someone lands on the invitations route of the admin tenant, send them back to members.
+    if (isAdminTenant && isInvitationTab) {
+      navigate(membersPath);
+    }
+  }, [isAdminTenant, isInvitationTab, navigate, membersPath]);
+
   return (
     <div className={styles.container}>
-      {(canInviteMember || (!isCloud && canRemoveMember)) && (
+      {(canInviteMember || (!isCloud && canRemoveMember)) && !isAdminTenant && (
         <div className={styles.tabButtons}>
           <Button
             className={classNames(styles.button, !isInvitationTab && styles.active)}

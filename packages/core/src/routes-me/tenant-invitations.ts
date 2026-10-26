@@ -1,4 +1,5 @@
 import {
+  adminTenantId,
   OrganizationInvitationStatus,
   TenantRole,
   getTenantRole,
@@ -20,11 +21,7 @@ import type { RouterInitArgs } from '#src/routes/types.js';
 import assertThat from '#src/utils/assert-that.js';
 
 import { withTenantMembership } from './tenant-membership.js';
-import {
-  assertNotCloud,
-  createTenantMemberAuthorization,
-  tenantOrganizationId,
-} from './tenant-organization.js';
+import { createTenantMemberAuthorization, tenantOrganizationId } from './tenant-organization.js';
 import type { AuthedMeRouter } from './types.js';
 
 /** How long an invitation, and the sign-in link it carries, stays valid. */
@@ -63,6 +60,15 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
   } = tenant;
   const { invitations } = organizations;
   const { assertAdmin } = createTenantMemberAuthorization(tenant);
+
+  // Cloud mode manages workspace-tenant invitations in the control plane. The admin tenant's own
+  // operators are provisioned on the instance, so its console invitation flow works everywhere.
+  const assertInvitationFlowAllowed = () => {
+    assertThat(
+      tenant.id === adminTenantId || !EnvSet.values.isCloud,
+      new RequestError({ code: 'request.feature_not_supported', status: 501 })
+    );
+  };
 
   /** Find an invitation to the tenant, and to nothing else, by its ID. */
   const findTenantInvitation = async (
@@ -177,7 +183,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations',
     koaGuard({ response: tenantInvitationGuard.array(), status: [200, 403, 501] }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
       await assertAdmin(ctx.auth.id);
 
       const entities = await invitations.findEntities({ organizationId: tenantOrganizationId });
@@ -215,7 +221,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [201, 403, 422, 429, 501],
     }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
       await assertAdmin(ctx.auth.id);
 
       const { invitee } = ctx.guard.body;
@@ -266,7 +272,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations/:invitationId/message',
     koaGuard({ params: invitationIdGuard, status: [204, 403, 404, 422, 429, 501] }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
       await assertAdmin(ctx.auth.id);
 
       const invitation = await findTenantInvitation(ctx.guard.params.invitationId);
@@ -297,7 +303,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [200, 403, 404, 422, 501],
     }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
 
       const { invitationId } = ctx.guard.params;
 
@@ -324,7 +330,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations/:invitationId',
     koaGuard({ params: invitationIdGuard, status: [204, 403, 404, 501] }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
 
       const { invitationId } = ctx.guard.params;
 
@@ -356,7 +362,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [200, 403, 404, 501],
     }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
 
       ctx.body = await findOwnInvitation(ctx.guard.params.invitationId, ctx.auth.id);
 
@@ -377,7 +383,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [204, 403, 404, 422, 501],
     }),
     async (ctx, next) => {
-      assertNotCloud();
+      assertInvitationFlowAllowed();
 
       const { invitationId } = ctx.guard.params;
       const { id: userId } = ctx.auth;

@@ -459,10 +459,16 @@ describe('me tenant invitation routes', () => {
     });
   });
 
-  it('should return 501 on Cloud', async () => {
+  it('keeps the invitee-side listing self-host-only on Cloud', async () => {
     Reflect.set(EnvSet.values, 'isCloud', true);
 
-    await expect(request.get('/tenant/invitations')).resolves.toHaveProperty('status', 501);
     await expect(request.get('/invitations/mine')).resolves.toHaveProperty('status', 501);
+  });
+
+  it('allows admin-tenant invitations on Cloud (operators are provisioned on the instance)', async () => {
+    Reflect.set(EnvSet.values, 'isCloud', true);
+
+    const response = await request.get('/tenant/invitations');
+    expect(response.status).not.toBe(501);
   });
 });

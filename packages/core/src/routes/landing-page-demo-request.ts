@@ -14,7 +14,7 @@ type FetchLike = (
 type DemoRequestBody = {
   contact: {
     firstName: string;
-    lastName: string;
+    lastName?: string;
     role?: string;
     industry?: string;
     interested?: string;
@@ -31,7 +31,7 @@ export const toDemoRequestBody = (lead: DemoLead): DemoRequestBody => {
   return {
     contact: {
       firstName: lead.firstName,
-      lastName: lead.lastName,
+      ...(lead.lastName ? { lastName: lead.lastName } : {}),
       ...(lead.role ? { role: lead.role } : {}),
       ...(lead.industry ? { industry: lead.industry } : {}),
       ...(interested ? { interested } : {}),

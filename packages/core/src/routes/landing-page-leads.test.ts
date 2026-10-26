@@ -315,13 +315,6 @@ describe('landing leads routes', () => {
       );
     });
 
-    it('hides stats with 404 before querying when dev features are off', async () => {
-      env.isDevFeaturesEnabled = false;
-      const response = await get('/api/landing-leads/stats');
-      expect(response.status).toBe(404);
-      expect(state.statsQueries).toEqual([]);
-    });
-
     it('refuses missing scope with 403 before querying', async () => {
       auth.scopes = ['read:something-else'];
       const response = await get('/api/landing-leads/stats');
@@ -341,12 +334,6 @@ describe('landing leads routes', () => {
       const response = await get('/api/landing-leads/stats');
       expect(response.status).toBe(200);
     });
-  });
-
-  it('hides leads endpoints while dev features are off', async () => {
-    env.isDevFeaturesEnabled = false;
-    const response = await get('/api/landing-leads');
-    expect(response.status).toBe(404);
   });
 
   it('refuses a token without the landing page scope', async () => {

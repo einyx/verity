@@ -187,11 +187,6 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
   // The same authorization as the landing page editor: a Cloud API token for this instance with the
   // landing page scope, issued to a user rather than a machine client.
   const authenticateAdmin = async (ctx: Context) => {
-    assertThat(
-      EnvSet.values.isDevFeaturesEnabled,
-      new RequestError({ code: 'entity.not_found', status: 404 })
-    );
-
     const audience = getCloudApiIndicator(EnvSet.values.cloudUrlSet.endpoint.origin);
     const { sub, clientId, scopes } = await verifyBearerTokenFromRequest(
       envSet,

@@ -1,5 +1,5 @@
 import { demoChatByLocale, demoChatEn } from '@logto/phrases';
-import { adminTenantId } from '@logto/schemas';
+import { adminTenantId, defaultLandingPageContent } from '@logto/schemas';
 import { sql } from '@silverhand/slonik';
 import Router from 'koa-router';
 import { z } from 'zod/v3';
@@ -174,7 +174,8 @@ const preflight = async (
   deps: LandingPageChatDeps,
   state: ChatState
 ): Promise<ChatResult | undefined> => {
-  if (!isDemoChatEnabled(await deps.readPublished())) {
+  // With nothing published yet, the shipped default copy decides — and it ships with the chat on.
+  if (!isDemoChatEnabled((await deps.readPublished()) ?? defaultLandingPageContent)) {
     return error(404, 'landing_page.chat_disabled', 'Not found.');
   }
 

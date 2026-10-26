@@ -34,3 +34,8 @@
     .help-desc { color: #6f6c66; }
     .help-btn { height: 2.25rem; padding: 0 1.1rem; border-radius: 999px; background: #1f1e1c; color: #ffffff; }
     .help-btn:hover { background: #34322e; }
+
+    /* The meshX mark spins once when the pointer lands on it, so the close feels deliberate. */
+    .help-close:hover svg, .help-close:focus-visible svg { animation: help-mark-spin 360ms ease; }
+    @keyframes help-mark-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .help-close:hover svg, .help-close:focus-visible svg { animation: none; } }

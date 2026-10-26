@@ -931,3 +931,26 @@
 .demo-chat-log:has(.demo-chat-welcome) {
   justify-content: flex-start;
 }
+
+/* The meshX mark spins once when the pointer lands on it, so the close feels deliberate. */
+.demo-chat-close:hover svg,
+.demo-chat-close:focus-visible svg {
+  animation: demo-chat-mark-spin 360ms ease;
+}
+
+@keyframes demo-chat-mark-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-chat-close:hover svg,
+  .demo-chat-close:focus-visible svg {
+    animation: none;
+  }
+}

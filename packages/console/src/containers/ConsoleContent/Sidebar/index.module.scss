@@ -23,11 +23,12 @@
 }
 
 .toggleRowCollapsed {
-  // Collapsed: back in the flow, left-aligned with the icons (they start at 32px).
+  // Collapsed: centered over the icon column. The icons start at the rail's left inset
+  // (_.unit(6)), so the 24px toggle needs the same inset to line up with them.
   position: static;
   justify-content: flex-start;
   margin-bottom: _.unit(4);
-  padding-left: _.unit(2);
+  padding-left: _.unit(6);
 }
 
 .toggle {

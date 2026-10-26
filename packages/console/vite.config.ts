@@ -65,44 +65,15 @@ const buildConfig = (mode: string): UserConfig => ({
     rollupOptions: {
       output: {
         // Tip: You can use `pnpx vite-bundle-visualizer` to analyze the bundle size
-        manualChunks: (id) => {
-          // Keep every node_modules package in one chunk. Splitting react from the other deps
-          // makes the chunk graph cyclic (a deps chunk imports a deps chunk that imports react),
-          // and a cycle evaluates in whichever order the build happens to emit - the console
-          // then blanks with "The superclass is not a constructor" (found on the Oct 2026 demo
-          // deploy). Re-split only after verifying the emitted chunk graph is acyclic.
-          if (/\/node_modules\/(cose-base|layout-base|cytoscape|cytoscape-[^/]*)\//.test(id)) {
-            return 'cytoscape';
-          }
-
-          if (id.includes('/@logto/')) {
-            return '@logto';
-          }
-
-          if (id.includes('/node_modules/')) {
-            // Large lazy libraries keep their own chunks for caching; none of them import
-            // react, so these edges stay one-directional and cannot cycle.
-            for (const largePackage of [
-              'libphonenumber-js',
-              'mermaid',
-              'elkjs',
-              'katex',
-              'refractor',
-              'lodash',
-              'lodash-es',
-            ]) {
-              if (id.includes(`/node_modules/${largePackage}/`)) {
-                return largePackage;
-              }
-            }
-
-            return 'vendors';
-          }
-
-          const match = /\/lib\/locales\/([^/]+)/.exec(id);
-          if (match?.[1]) {
-            return `phrases-${match[1]}`;
-          }
+        // No manualChunks here on purpose. Hand-splitting node_modules made the chunk graph
+        // cyclic, and a cycle evaluates in whichever order the build emits — the console then
+        // blanks ("Class extends value undefined", "The superclass is not a constructor",
+        // "Cannot set properties of undefined"), three times found on the Oct 2026 demo deploys
+        // and patched package-by-package before that. Rollup's default placement is acyclic by
+        // construction. Dynamic imports (locales, refractor, mermaid, ...) still get their own
+        // chunks automatically. Revisit only with the emitted chunk graph verified acyclic.
+        manualChunks: () => {
+          // Intentionally no grouping - see the rationale above.
         },
       },
     },

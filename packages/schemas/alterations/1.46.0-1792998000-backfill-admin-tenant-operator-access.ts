@@ -30,7 +30,7 @@ const alteration: AlterationScript = {
       values (
         ${adminTenantId}, 'admin-org-all', 'all', 'Full access to the admin tenant.'
       )
-      on conflict (tenant_id, id) do nothing;
+      on conflict (tenant_id, name) do nothing;
     `);
     await pool.query(sql`
       insert into organization_role_scope_relations (

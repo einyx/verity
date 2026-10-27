@@ -97,7 +97,7 @@ function UserDetails() {
     }
   };
 
-  const onSendOnboardingEmail = async (roleIds: string[]) => {
+  const onSendOnboardingEmail = async (roleName: string) => {
     if (!data || isSendingOnboardingEmail) {
       return;
     }
@@ -105,7 +105,7 @@ function UserDetails() {
     setIsSendingOnboardingEmail(true);
 
     try {
-      await api.post(`api/users/${data.id}/onboarding-email`, { json: { roleIds } });
+      await api.post(`api/users/${data.id}/onboarding-email`, { json: { roleName } });
       toast.success(t('user_details.onboarding_email_sent', { email: data.primaryEmail }));
       setIsOnboardingEmailModalOpen(false);
     } catch (error: unknown) {
@@ -172,8 +172,8 @@ function UserDetails() {
             onClose={() => {
               setIsOnboardingEmailModalOpen(false);
             }}
-            onConfirm={(roleIds) => {
-              void onSendOnboardingEmail(roleIds);
+            onConfirm={(roleName) => {
+              void onSendOnboardingEmail(roleName);
             }}
           />
           <DeleteConfirmModal

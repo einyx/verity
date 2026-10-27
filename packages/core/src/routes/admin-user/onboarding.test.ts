@@ -94,28 +94,28 @@ describe('adminUserOnboardingRoutes', () => {
     expect(mail?.attachments).toHaveLength(1);
   });
 
-  it('grants the roles the caller picked', async () => {
+  it('grants the Console access role, whatever the caller picked', async () => {
     const response = await userRequest
       .post('/users/foo/onboarding-email')
-      .send({ roleIds: ['admin-role'] });
+      .send({ roleName: 'viewer' });
 
     expect(response.status).toEqual(204);
-    expect(findRoleById).toHaveBeenCalledWith('admin-role');
-    // The picked role, and the Console access role that comes with every invitation.
     expect(insertUsersRoles).toHaveBeenCalledWith([
-      expect.objectContaining({ userId: mockUser.id, roleId: 'admin-role' }),
       expect.objectContaining({ userId: mockUser.id, roleId: 'console-role' }),
     ]);
   });
 
-  it('grants the Console access role, or the Console answers that it cannot read the tenant', async () => {
-    const response = await userRequest.post('/users/foo/onboarding-email');
+  it('gives the person the role the caller picked in the tenant organizations', async () => {
+    const response = await userRequest
+      .post('/users/foo/onboarding-email')
+      .send({ roleName: 'viewer' });
 
     expect(response.status).toEqual(204);
-    // The management API only opens for the admin role, whatever the caller picked.
-    expect(insertUsersRoles).toHaveBeenCalledWith([
-      expect.objectContaining({ userId: mockUser.id, roleId: 'console-role' }),
-    ]);
+    expect(insertOrganizationUserRole).toHaveBeenCalledWith({
+      organizationId: 't-default',
+      organizationRoleId: 'viewer',
+      userId: mockUser.id,
+    });
   });
 
   it('gives the person a role in the tenant organizations, or the Console shows nothing', async () => {

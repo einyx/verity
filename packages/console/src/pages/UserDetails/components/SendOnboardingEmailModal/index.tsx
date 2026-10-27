@@ -1,36 +1,35 @@
-import { RoleType, type Role } from '@logto/schemas';
+import { TenantRole, getTenantRole } from '@logto/schemas';
 import classNames from 'classnames';
 import { useState } from 'react';
 import ReactModal from 'react-modal';
-import useSWR from 'swr';
 
 import Button from '@/ds-components/Button';
 import DangerousRaw from '@/ds-components/DangerousRaw';
 import FormField from '@/ds-components/FormField';
 import ModalLayout from '@/ds-components/ModalLayout';
 import Select from '@/ds-components/Select';
-import { type RequestError } from '@/hooks/use-api';
 import modalStyles from '@/scss/modal.module.scss';
-import { buildUrl } from '@/utils/url';
 
 type Props = {
   readonly isOpen: boolean;
   readonly email: string;
   readonly isLoading: boolean;
   readonly onClose: () => void;
-  readonly onConfirm: (roleIds: string[]) => void;
+  readonly onConfirm: (roleName: string) => void;
 };
 
+/** The roles a person can have in a tenant, with what each of them allows. */
+const roleOptions = [TenantRole.Admin, TenantRole.Collaborator, TenantRole.Viewer].map((role) => ({
+  value: role,
+  title: getTenantRole(role).description,
+}));
+
 /**
- * Asks which roles the person gets before the onboarding mail goes out. The mail carries a sign-in
- * link, and the roles are granted once it is out.
+ * Asks which role the person gets before the onboarding mail goes out. The mail carries a sign-in
+ * link, and the role is granted once it is out.
  */
 function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm }: Props) {
-  const [roleIds, setRoleIds] = useState<string[]>([]);
-  const { data } = useSWR<[Role[], number], RequestError>(
-    buildUrl('api/roles', { page: '1', page_size: '20', type: RoleType.User })
-  );
-  const roleOptions = (data?.[0] ?? []).map((role) => ({ value: role.id, title: role.name }));
+  const [roleName, setRoleName] = useState<string>(TenantRole.Admin);
 
   return (
     <ReactModal
@@ -43,7 +42,6 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
       <ModalLayout
         title="user_details.onboarding_email_title"
         subtitle="user_details.onboarding_email_description"
-        onClose={onClose}
         footer={
           <>
             <Button title="general.cancel" onClick={onClose} />
@@ -52,28 +50,28 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
               title="user_details.onboarding_email_send"
               disabled={isLoading}
               onClick={() => {
-                onConfirm(roleIds);
+                onConfirm(roleName);
               }}
             />
           </>
         }
+        onClose={onClose}
       >
         <p>{email}</p>
         <FormField
           title="tenant_members.roles"
           description={
             <DangerousRaw>
-              Everyone who gets this mail can sign in to the console. The role decides what they can
-              do: <strong>user</strong> is a member, <strong>admin</strong> manages the console, and{' '}
-              <strong>default:admin</strong> manages the default tenant.
+              The role decides what the person can do in the tenant. Their access to the Console
+              comes with the mail.
             </DangerousRaw>
           }
         >
           <Select
-            value={roleIds[0]}
+            value={roleName}
             options={roleOptions}
             onChange={(value) => {
-              setRoleIds(value ? [value] : []);
+              setRoleName(value ?? TenantRole.Admin);
             }}
           />
         </FormField>

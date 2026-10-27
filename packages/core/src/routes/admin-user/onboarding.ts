@@ -38,12 +38,12 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
     '/users/:userId/onboarding-email',
     koaGuard({
       params: z.object({ userId: z.string() }),
-      body: z.object({ roleIds: z.string().array().optional() }),
+      body: z.object({ roleName: z.enum(['admin', 'collaborator', 'viewer']).optional() }),
       status: [204, 404, 422, 501],
     }),
     async (ctx, next) => {
       const { userId } = ctx.guard.params;
-      const { roleIds = [] } = ctx.guard.body;
+      const { roleName } = ctx.guard.body;
       const user = await queries.users.findUserById(userId);
       const email = user.primaryEmail;
 
@@ -69,14 +69,11 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
       link.searchParams.set('email', email);
 
       const inviter = await queries.users.findUserById(ctx.auth.id);
-      const roleNames = await Promise.all(
-        roleIds.map(async (roleId) => (await queries.roles.findRoleById(roleId)).name)
-      );
       const content = {
         firstName: user.name ?? 'there',
         inviterName: inviter.name ?? inviter.username ?? 'A meshX administrator',
         link: link.href,
-        roleName: roleNames.join(', ') || 'a member',
+        roleName: roleName ?? 'admin',
         expiresAt: new Date(expiresAt).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -122,9 +119,6 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
       }
 
       // The roles are granted once the mail is out, so a failed send leaves nothing behind.
-      const currentRoles = await queries.usersRoles.findUsersRolesByUserId(userId);
-      const roleIdsToAdd = new Set(roleIds);
-
       // The Console reaches the tenant through the management API, which only the admin role can
       // enter. It is the Console access role, the same one the tenant invitation flow grants.
       const consoleRole = await queries.roles.findRoleByRoleName(defaultManagementApiAdminName);
@@ -136,14 +130,13 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
           details: `The \`${defaultManagementApiAdminName}\` role is missing.`,
         })
       );
-      roleIdsToAdd.add(consoleRole.id);
 
-      const rolesToAdd = [...roleIdsToAdd].filter(
+      const currentRoles = await queries.usersRoles.findUsersRolesByUserId(userId);
+      const rolesToAdd = [consoleRole.id].filter(
         (roleId) => !currentRoles.some(({ roleId: currentRoleId }) => currentRoleId === roleId)
       );
 
       if (rolesToAdd.length > 0) {
-        await Promise.all(rolesToAdd.map(async (roleId) => queries.roles.findRoleById(roleId)));
         await queries.usersRoles.insertUsersRoles(
           rolesToAdd.map((roleId) => ({ id: generateStandardId(), userId, roleId }))
         );
@@ -151,8 +144,15 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
 
       // The Console reads its permissions from the organization of the tenant: a person without a
       // role in it signs in and sees nothing, whatever their tenant roles say. The invited person
-      // joins the same organizations the instance's own operators are in.
-      const organizationRoleId = getTenantRole(TenantRole.Admin).id;
+      // joins the same organizations the instance's own operators are in, with the role the
+      // administrator picked.
+      const organizationRoleId = getTenantRole(
+        roleName === 'collaborator'
+          ? TenantRole.Collaborator
+          : roleName === 'viewer'
+            ? TenantRole.Viewer
+            : TenantRole.Admin
+      ).id;
 
       for (const organizationId of [
         getTenantOrganizationId(adminTenantId),

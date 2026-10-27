@@ -11,7 +11,7 @@ import {
 import { conditionalArray } from '@silverhand/essentials';
 import { useContext, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import 'overlayscrollbars/overlayscrollbars.css';
 import './scss/normalized.scss';
@@ -24,6 +24,7 @@ import 'react-color-palette/css';
 import 'react-day-picker/dist/style.css';
 
 import CloudAppRoutes from '@/cloud/AppRoutes';
+import TenantLanding from '@/cloud/pages/TenantLanding';
 import AppLoading from '@/components/AppLoading';
 import { isCloud } from '@/consts/env';
 import { cloudApi, getManagementApi, meApi } from '@/consts/resources';
@@ -62,9 +63,9 @@ function App() {
       // Cloud has no tenant in the root path: open the default tenant instead of reading the path as one.
       ...(isCloud
         ? [
-            { path: '/', element: <Navigate replace to={`/${defaultTenantId}`} /> },
+            { path: '/', element: <TenantLanding /> },
             // Sign-in can return to `/console` under the base path, which is then matched as `/console/console`.
-            { path: '/console', element: <Navigate replace to={`/${defaultTenantId}`} /> },
+            { path: '/console', element: <TenantLanding /> },
           ]
         : []),
       {

@@ -1,6 +1,5 @@
 import { Prompt, useLogto } from '@logto/react';
 import { ExtraParamsKey } from '@logto/schemas';
-import { conditional } from '@silverhand/essentials';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -36,7 +35,10 @@ function OneTimeTokenLanding() {
       return;
     }
 
-    saveRedirect(conditional(redirectPath && new URL(redirectPath)));
+    // Without a target, the Console root is where the person lands: it opens the tenant they
+    // are a member of. Saving this page would send them back here after the sign-in, and the
+    // one-time token would already be spent.
+    saveRedirect(redirectPath ? new URL(redirectPath) : new URL('/', window.location.origin));
 
     void signIn({
       redirectUri,

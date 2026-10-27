@@ -1,8 +1,8 @@
 import { useLogto } from '@logto/react';
 import { conditional, yes } from '@silverhand/essentials';
 import { useContext, useEffect } from 'react';
-import { Outlet, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { Outlet, useSearchParams } from 'react-router-dom';
 
 import { useCloudApi } from '@/cloud/hooks/use-cloud-api';
 import useManageAccountSelfGuard from '@/cloud/hooks/use-manage-account-self-guard';

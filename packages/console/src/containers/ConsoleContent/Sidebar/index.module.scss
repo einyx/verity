@@ -23,13 +23,14 @@
 }
 
 .toggleRowCollapsed {
-  // Collapsed: centered over the icon column (the icons start at _.unit(6)), and pushed down
+  // Collapsed: centered over the icon column (the icons sit at 32..48px, so the 24px button
+  // starts at 28px) and kept inside the 60px rail, or the sidebar clips it away. Pushed down
   // _.unit(3) so the rail's 24px rounded top corner does not clip the button.
   position: static;
   justify-content: flex-start;
   margin-top: _.unit(3);
   margin-bottom: _.unit(4);
-  padding-left: _.unit(6);
+  padding-left: _.unit(1);
 }
 
 .toggle {

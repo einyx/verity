@@ -26,7 +26,7 @@ export const buildLeadBody = (lead: DemoLead): string =>
     '',
     `Name: ${toSingleLine(`${lead.firstName} ${lead.lastName}`)}`,
     `Email: ${toSingleLine(lead.email)}`,
-    `Company: ${toSingleLine(lead.company)}`,
+    ...(lead.company ? [`Company: ${toSingleLine(lead.company)}`] : []),
     `Role: ${toSingleLine(lead.role)}`,
     `Industry: ${toSingleLine(lead.industry)}`,
     `Interests: ${toSingleLine((lead.interests ?? []).join(', '))}`,

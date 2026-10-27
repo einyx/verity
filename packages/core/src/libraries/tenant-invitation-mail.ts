@@ -1,10 +1,15 @@
 import { generateStandardId, generateStandardSecret } from '@logto/shared';
+import { TemplateType, replaceSendMessageHandlebars } from '@logto/connector-kit';
 
 import type Queries from '#src/tenants/Queries.js';
 
 import { readAcsMailConfig, sendMail, toSingleLine } from './acs-mail.js';
-// The onboarding mail of a tenant invitation. The platform sends it with its own mail service, so
-// every tenant can invite people whether or not it has an email connector of its own.
+
+// The onboarding mail of a tenant invitation.
+//
+// The mail goes out through the tenant's own email connector, the same one that sends the sign-in
+// codes, so it carries the same templates, sender and branding as every other mail. A tenant
+// without a connector falls back to the platform's own mail service.
 
 export type TenantInvitationLink = {
   /** The Console accept link, which signs the invitee in with a fresh one-time token. */
@@ -45,53 +50,39 @@ export const buildInvitationLink = async (options: {
   return { link: link.href, oneTimeTokenId: oneTimeToken.id, hasAccount: Boolean(existingUser) };
 };
 
-/** The plain-text body the platform sends when it sends the invitation itself. */
-export const buildInvitationBody = (options: {
-  organizationName: string;
-  inviterName?: string | null;
-  firstName?: string | null;
-  link: string;
-  expiresAt: number;
-  hasAccount: boolean;
-}): string => {
-  const { organizationName, inviterName, firstName, link, expiresAt, hasAccount } = options;
-  const inviter = toSingleLine(inviterName) || 'Someone';
-  const greeting = toSingleLine(firstName) ? `Hi ${toSingleLine(firstName)},` : 'Hi,';
-  const until = new Date(expiresAt).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-
-  return [
-    greeting,
+/** The template the platform sends when the tenant has no email connector of its own. */
+export const defaultInvitationTemplate = Object.freeze({
+  subject: 'You have been invited to join {{organization.name}}',
+  content: [
+    'Hi {{firstName}},',
     '',
-    `${inviter} invited you to ${toSingleLine(organizationName)}.`,
+    '{{inviter.name}} invited you to join {{organization.name}}.',
     '',
-    `Use this link to get in: ${toSingleLine(link)}`,
-    hasAccount
-      ? 'The link signs you in and accepts the invitation.'
-      : 'The link takes you through creating your account and setting a password, then accepts the invitation.',
-    `The link works until ${until}.`,
+    'Use this link to get in: {{link}}',
+    '',
+    'Set your password in your profile once you are in. The link works until {{expiresAt}}.',
     '',
     '— meshX',
-  ].join('\n');
+  ].join('\n'),
+});
+
+/** The values the invitation template is rendered with. */
+export type InvitationMailPayload = {
+  organization: { id: string; name: string };
+  inviter: { id: string; name: string };
+  firstName: string;
+  link: string;
+  expiresAt: string;
 };
 
 /**
  * Sends the invitation through the platform's own mail service. Returns false when the platform
- * has no mail service configured, so the caller can send the mail another way.
+ * has no mail service configured, so the caller can send the mail through the tenant's connector.
  */
-export const sendInvitationMail = async (options: {
+export const sendInvitationMailWithPlatformService = async (options: {
   to: string;
-  organizationName: string;
-  inviterName?: string | null;
-  inviterEmail?: string | null;
-  firstName?: string | null;
-  link: string;
-  expiresAt: number;
-  hasAccount: boolean;
+  payload: InvitationMailPayload;
+  replyTo?: string | null;
 }): Promise<boolean> => {
   const config = readAcsMailConfig();
 
@@ -99,25 +90,20 @@ export const sendInvitationMail = async (options: {
     return false;
   }
 
-  const { to, organizationName, inviterName, inviterEmail, firstName, link, expiresAt, hasAccount } =
-    options;
+  const { to, payload, replyTo } = options;
 
   await sendMail(
     {
       to,
-      subject: `You have been invited to ${toSingleLine(organizationName)}`,
-      text: buildInvitationBody({
-        organizationName,
-        inviterName,
-        firstName,
-        link,
-        expiresAt,
-        hasAccount,
-      }),
-      ...(inviterEmail ? { replyTo: inviterEmail } : {}),
+      subject: replaceSendMessageHandlebars(defaultInvitationTemplate.subject, payload),
+      text: replaceSendMessageHandlebars(defaultInvitationTemplate.content, payload),
+      ...(replyTo ? { replyTo: toSingleLine(replyTo) } : {}),
     },
     config
   );
 
   return true;
 };
+
+/** The usage type the invitation mail is sent under, so the connector picks its own template. */
+export const invitationTemplateType = TemplateType.OrganizationInvitation;

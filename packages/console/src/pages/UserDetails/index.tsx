@@ -1,4 +1,4 @@
-import { TenantRole, type UserProfileResponse, User } from '@logto/schemas';
+import { type UserProfileResponse, User } from '@logto/schemas';
 import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -97,7 +97,7 @@ function UserDetails() {
     }
   };
 
-  const onSendOnboardingEmail = async (role: TenantRole) => {
+  const onSendOnboardingEmail = async (roleIds: string[]) => {
     if (!data || isSendingOnboardingEmail) {
       return;
     }
@@ -105,7 +105,7 @@ function UserDetails() {
     setIsSendingOnboardingEmail(true);
 
     try {
-      await api.post(`api/users/${data.id}/onboarding-email`, { json: { role } });
+      await api.post(`api/users/${data.id}/onboarding-email`, { json: { roleIds } });
       toast.success(t('user_details.onboarding_email_sent', { email: data.primaryEmail }));
       setIsOnboardingEmailModalOpen(false);
     } catch (error: unknown) {
@@ -172,8 +172,8 @@ function UserDetails() {
             onClose={() => {
               setIsOnboardingEmailModalOpen(false);
             }}
-            onConfirm={(role) => {
-              void onSendOnboardingEmail(role);
+            onConfirm={(roleIds) => {
+              void onSendOnboardingEmail(roleIds);
             }}
           />
           <DeleteConfirmModal

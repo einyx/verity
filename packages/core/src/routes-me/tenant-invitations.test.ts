@@ -145,6 +145,7 @@ const mockedLibraries = {
   organizationInvitations: {
     insert: insertInvitation,
     updateStatus,
+    sendEmail,
     getOrganizationInvitationTemplateContext: jest.fn(async () => ({
       organization: { id: tenantOrganizationId, name: 'Tenant default' },
     })),
@@ -212,7 +213,7 @@ describe('me tenant invitation routes', () => {
         }),
         false
       );
-      expect(withDefaultTenant).toHaveBeenCalledWith(expect.any(Function));
+      // The tenant's own email connector sends the mail, not the default tenant's.
       // Through the invitation library of the default tenant, which applies the send rate guard.
       expect(sendEmail).toHaveBeenCalledTimes(2);
 

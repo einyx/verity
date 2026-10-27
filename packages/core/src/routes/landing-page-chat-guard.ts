@@ -43,7 +43,8 @@ const demoLeadGuard = z
     // A last name is welcome but not required: visitors who give only a first name can still submit.
     lastName: z.string().trim().min(1).max(80).optional(),
     email: z.string().trim().email().max(254),
-    company: z.string().trim().min(1).max(120),
+    // A company is welcome but not required: a visitor who would rather not say still gets a demo.
+    company: z.string().trim().min(1).max(120).optional(),
     role: z.string().trim().max(120).optional(),
     industry: z.string().trim().max(80).optional(),
     interests: z.array(z.string().trim().max(60)).max(10).optional(),

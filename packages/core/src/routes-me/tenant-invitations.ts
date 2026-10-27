@@ -17,7 +17,7 @@ import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import {
   buildInvitationLink as buildTenantInvitationLink,
-  sendInvitationMail,
+  sendInvitationMailWithPlatformService,
 } from '#src/libraries/tenant-invitation-mail.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type OrganizationQueries from '#src/queries/organization/index.js';
@@ -62,10 +62,11 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
   ...[router, tenant]: RouterInitArgs<T>
 ) {
   const {
-    queries: { organizations, users, oneTimeTokens },
+    queries,
     libraries: { organizationInvitations },
     withDefaultTenant,
   } = tenant;
+  const { organizations, users, oneTimeTokens } = queries;
   const { invitations } = organizations;
   const { assertAdmin } = createTenantMemberAuthorization(tenant);
 
@@ -146,19 +147,56 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     const payload = { ...context, link, locale };
 
     try {
-      const sent = await sendInvitationMail({
-        to: invitation.invitee,
-        organizationName: context.organization?.name ?? 'meshX',
-        inviterName: context.inviter?.name,
-        inviterEmail: context.inviter?.primaryEmail,
+      // The tenant's own email connector, the same one that sends the sign-in codes. Without a
+      // connector the platform's own mail service sends the mail instead.
+      const organization = await queries.organizations.findById(tenantOrganizationId);
+      const mailPayload = {
+        organization: {
+          id: organization?.id ?? tenantOrganizationId,
+          name: organization?.name ?? 'meshX',
+          branding: organization?.branding ?? {},
+        },
+        inviter: {
+          id: context.inviter?.id ?? '',
+          name: context.inviter?.name ?? context.inviter?.username ?? 'The meshX team',
+          avatar: context.inviter?.avatar ?? '',
+          primaryEmail: context.inviter?.primaryEmail ?? null,
+          primaryPhone: context.inviter?.primaryPhone ?? null,
+          username: context.inviter?.username ?? '',
+          profile: context.inviter?.profile ?? {},
+        },
+        firstName: 'there',
         link,
-        expiresAt: invitation.expiresAt,
-        hasAccount,
-      });
+        expiresAt: new Date(invitation.expiresAt).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }),
+      };
 
-      if (!sent) {
-        await withDefaultTenant(async ({ libraries }) =>
-          libraries.organizationInvitations.sendEmail(invitation.invitee, payload)
+      try {
+        await organizationInvitations.sendEmail(invitation.invitee, { ...payload, locale });
+      } catch (error: unknown) {
+        // Any other failure is the connector's own problem and is reported as it is.
+        if (!(error instanceof RequestError) || error.code !== 'connector.not_found') {
+          throw error;
+        }
+
+        const sent = await sendInvitationMailWithPlatformService({
+          to: invitation.invitee,
+          payload: mailPayload,
+          replyTo: context.inviter?.primaryEmail,
+        });
+
+        assertThat(
+          sent,
+          new RequestError({
+            code: 'connector.not_found',
+            status: 501,
+            details:
+              'The tenant has no email connector and the platform mail service is not configured.',
+          })
         );
       }
     } catch (error: unknown) {

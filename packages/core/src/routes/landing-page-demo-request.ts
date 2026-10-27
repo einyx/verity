@@ -21,7 +21,7 @@ type DemoRequestBody = {
     decision?: string;
   };
   email: string;
-  company: string;
+  company?: string;
 };
 
 /** Maps the chat's lead to the portal's request body. Empty optional fields are left out. */
@@ -38,7 +38,7 @@ export const toDemoRequestBody = (lead: DemoLead): DemoRequestBody => {
       ...(lead.decision ? { decision: lead.decision } : {}),
     },
     email: lead.email,
-    company: lead.company,
+    ...(lead.company ? { company: lead.company } : {}),
   };
 };
 

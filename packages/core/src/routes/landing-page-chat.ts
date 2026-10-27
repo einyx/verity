@@ -139,7 +139,9 @@ const submitLeadTool = {
     parameters: {
       type: 'object',
       additionalProperties: false,
-      required: ['firstName', 'lastName', 'email', 'company', 'consent'],
+      // A last name and a company are welcome but not required: a visitor who would rather not
+      // share them still gets a demo.
+      required: ['firstName', 'email', 'consent'],
       properties: {
         firstName: { type: 'string', maxLength: 80 },
         lastName: { type: 'string', maxLength: 80 },

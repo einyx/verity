@@ -1,30 +1,34 @@
-import { TenantRole } from '@logto/schemas';
+import { RoleType, type Role } from '@logto/schemas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
+import useSWR from 'swr';
 
 import FormField from '@/ds-components/FormField';
 import ModalLayout from '@/ds-components/ModalLayout';
 import Select from '@/ds-components/Select';
-
-import useTenantRoleOptions from '@/pages/TenantSettings/TenantMembers/use-tenant-role-options';
+import { type RequestError } from '@/hooks/use-api';
+import { buildUrl } from '@/utils/url';
 
 type Props = {
   readonly isOpen: boolean;
   readonly email: string;
   readonly isLoading: boolean;
   readonly onClose: () => void;
-  readonly onConfirm: (role: TenantRole) => void;
+  readonly onConfirm: (roleIds: string[]) => void;
 };
 
 /**
- * Asks which role the person gets in the tenant before the onboarding mail goes out. The role is
- * the one the invitation carries, so it can only be chosen here.
+ * Asks which roles the person gets before the onboarding mail goes out. The mail carries a sign-in
+ * link, and the roles are granted once it is out.
  */
 function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
-  const [role, setRole] = useState<TenantRole>(TenantRole.Collaborator);
-  const roleOptions = useTenantRoleOptions();
+  const [roleIds, setRoleIds] = useState<string[]>([]);
+  const { data } = useSWR<[Role[], number], RequestError>(
+    buildUrl('api/roles', { page: '1', page_size: '20', type: RoleType.User })
+  );
+  const roleOptions = (data?.[0] ?? []).map((role) => ({ value: role.id, title: role.name }));
 
   return (
     <ReactModal isOpen={isOpen} className="modal-container">
@@ -47,7 +51,7 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
               className="button primary"
               disabled={isLoading}
               onClick={() => {
-                onConfirm(role);
+                onConfirm(roleIds);
               }}
             >
               {t('user_details.onboarding_email_send')}
@@ -56,14 +60,12 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
         }
       >
         <p>{email}</p>
-        <FormField title="tenant_members.roles">
+        <FormField title="user_details.roles">
           <Select
-            value={role}
+            value={roleIds[0]}
             options={roleOptions}
             onChange={(value) => {
-              if (value) {
-                setRole(value);
-              }
+              setRoleIds(value ? [value] : []);
             }}
           />
         </FormField>

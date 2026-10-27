@@ -158,7 +158,7 @@ describe('demo chat visitor behaviours', () => {
     expect(result.body.submitted).toBe(false);
   });
 
-  it('8. a lead with no company is not sent', async () => {
+  it('8. a lead with no company is asked for consent, not for the company', async () => {
     const { deps, leads } = scripted([
       {
         content: 'Which company are you with?',
@@ -168,8 +168,9 @@ describe('demo chat visitor behaviours', () => {
 
     const result = await handleChatTurn(turn('no company', sessionFor(8)), deps, createChatState());
 
+    // The company is not asked for again: the consent is the only thing left.
     expect(leads).toHaveLength(0);
-    expect(result.body.reply).toBe('Which company are you with?');
+    expect(result.body.reply).toContain('may we contact you');
   });
 
   it('9. a first name that is only spaces is not sent', async () => {

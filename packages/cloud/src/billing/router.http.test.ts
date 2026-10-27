@@ -12,6 +12,7 @@ const issuer = 'https://auth.example.test/oidc';
 const audience = 'https://billing.example.test';
 const operatorSub = 'operator-user-1';
 const tenantAdminSub = 'tenant-admin-user-1';
+const tenantMemberSub = 'tenant-member-user-1';
 const cloudClientSub = 'cloud-client-1';
 const tenantId = 'tenant0000000000001';
 
@@ -127,6 +128,12 @@ describe('billing router over HTTP', () => {
       cloudClients: { [cloudClientSub]: tenantId },
       skus: [foundationSku],
       invoices: { [tenantId]: [invoice] },
+      members: {
+        [tenantId]: [
+          { issuer, sub: tenantAdminSub, role: 'admin' },
+          { issuer, sub: tenantMemberSub, role: 'member' },
+        ],
+      },
     });
     const router = createBillingRouter(store, auth());
 
@@ -152,11 +159,33 @@ describe('billing router over HTTP', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns 403 for a tenant admin, even for their own tenant', async () => {
+  it('returns the subscription for an admin of that tenant', async () => {
     const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/subscription`, {
       headers: { authorization: `Bearer ${await tokenFor(tenantAdminSub)}` },
     });
 
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ planId: 'pro' });
+  });
+
+  it('returns the subscription for a non-admin member of that tenant', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/subscription`, {
+      headers: { authorization: `Bearer ${await tokenFor(tenantMemberSub)}` },
+    });
+    expect(response.status).toBe(200);
+  });
+
+  it('refuses a member reading another tenant subscription', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/another-tenant/subscription`, {
+      headers: { authorization: `Bearer ${await tokenFor(tenantAdminSub)}` },
+    });
+    expect(response.status).toBe(403);
+  });
+
+  it('refuses a signed-in outsider reading the subscription', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/subscription`, {
+      headers: { authorization: `Bearer ${await tokenFor('outsider')}` },
+    });
     expect(response.status).toBe(403);
   });
 
@@ -192,11 +221,18 @@ describe('billing router over HTTP', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns 403 for invoices to a tenant admin', async () => {
+  it('returns invoices to an admin of that tenant', async () => {
     const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/invoices`, {
       headers: { authorization: `Bearer ${await tokenFor(tenantAdminSub)}` },
     });
 
+    expect(response.status).toBe(200);
+  });
+
+  it('still refuses invoices to a non-admin member', async () => {
+    const response = await fetch(`${baseUrl}/api/tenants/${tenantId}/invoices`, {
+      headers: { authorization: `Bearer ${await tokenFor(tenantMemberSub)}` },
+    });
     expect(response.status).toBe(403);
   });
 

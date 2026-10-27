@@ -7,6 +7,7 @@ import {
   authorizeCloudTenant,
   authorizeOperator,
   authorizeTenantAdmin,
+  authorizeTenantMember,
   type InvitationForAcceptance,
   type OperatorAuthConfig,
 } from './auth.js';
@@ -95,8 +96,12 @@ export const createBillingRouter = (
             return caller.tenantId;
           }
 
-          // Only platform operators may read subscriptions by explicit tenant id.
-          await authorizeOperator(context.request.headers.authorization, auth);
+          await authorizeTenantMember(
+            context.request.headers.authorization,
+            requestedTenantId,
+            auth,
+            store
+          );
           return requestedTenantId;
         })();
         const skus = await store.listSkus({});

@@ -129,6 +129,22 @@ export const authorizeTenantAdmin = async (
   return { issuer: identity.issuer, sub: identity.sub };
 };
 
+/** Console members may read their own plan; this grants no billing mutation permissions. */
+export const authorizeTenantMember = async (
+  authorization: string | undefined,
+  tenantId: string,
+  config: OperatorAuthConfig,
+  store: Pick<BillingStore, 'findMembership'>
+): Promise<OperatorIdentity> => {
+  const identity = await verifyCaller(authorization, config);
+
+  if (!isOperator(identity, config) && !(await store.findMembership(tenantId, identity))) {
+    throw new RequestError('Forbidden', 403);
+  }
+
+  return { issuer: identity.issuer, sub: identity.sub };
+};
+
 /** The stored form of an invitation's one-time token. Only this hash is kept, never the token. */
 export const hashInvitationToken = (token: string) =>
   createHash('sha256').update(token).digest('hex');

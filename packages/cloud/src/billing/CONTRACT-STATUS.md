@@ -5,6 +5,7 @@ Status of the routes the console expects from the Cloud API (`@logto/cloud` cont
 ## Implemented
 
 - `GET /api/tenants/:tenantId/subscription`, `GET /api/tenants/:tenantId/invoices`
+- Subscription reads allow authenticated members of the requested tenant and platform operators. The `/my` alias remains restricted to provisioned tenant cloud clients. Invoice reads still require tenant admin or platform operator access; reading a plan does not grant billing management permissions.
 - `GET /api/skus`, invitation routes
 - `POST /api/checkout-session`, `GET /api/checkout-session/:id`
 - `POST /api/tenants/:tenantId/stripe-customer-portal`

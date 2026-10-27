@@ -69,11 +69,13 @@ describe('OneTimeTokenLanding', () => {
     expect(mockedSaveRedirect).not.toHaveBeenCalled();
   });
 
-  it('starts one-time-token sign-in with consent prompt and keeps existing tokens', async () => {
+  it('clears the session of the browser and signs in as the invited person', async () => {
     const signIn = jest.fn();
+    const clearAllTokens = jest.fn();
     mockedUseLogto.mockReturnValue({
       isLoading: false,
       isAuthenticated: true,
+      clearAllTokens,
       signIn,
     } as unknown as ReturnType<typeof useLogto>);
 
@@ -96,6 +98,9 @@ describe('OneTimeTokenLanding', () => {
       },
     });
     expect(options.redirectUri.href).toBe('http://localhost/callback');
+    // The session in the browser belongs to someone else: the code of the callback is only
+    // exchanged when the client is not signed in yet.
+    expect(clearAllTokens).toHaveBeenCalledTimes(1);
     const [savedRedirect] = mockedSaveRedirect.mock.calls[0] as [URL];
     expect(savedRedirect.href).toBe('https://console.logto.io/accept/invitation-id');
   });

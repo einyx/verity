@@ -16,7 +16,7 @@ enum OneTimeTokenLandingSearchParams {
 /** The one-time token landing page for sign-in with one-time tokens. */
 function OneTimeTokenLanding() {
   const navigate = useNavigate();
-  const { isLoading, signIn } = useLogto();
+  const { clearAllTokens, isLoading, signIn } = useLogto();
   const [searchParams] = useSearchParams();
   const redirectUri = useRedirectUri();
 
@@ -40,20 +40,30 @@ function OneTimeTokenLanding() {
     // one-time token would already be spent.
     saveRedirect(redirectPath ? new URL(redirectPath) : new URL('/', window.location.origin));
 
-    void signIn({
-      redirectUri,
-      /**
-       * Can not clear tokens here since user may already have tokens and let user select which account to keep.
-       * We can hence clear tokens in the <Callback /> page.
-       */
-      clearTokens: false,
-      prompt: Prompt.Consent,
-      extraParams: {
-        [ExtraParamsKey.OneTimeToken]: oneTimeToken,
-        [ExtraParamsKey.LoginHint]: email,
-      },
-    });
-  }, [isLoading, navigate, signIn, redirectUri, oneTimeToken, email, redirectPath]);
+    /**
+     * The token names the person to sign in as, so the session in this browser is not theirs. It
+     * has to go before the sign-in: the Console only exchanges the code of the callback when the
+     * client is not signed in yet, and a signed-in client would leave the callback page waiting
+     * for ever.
+     *
+     * The tokens are cleared first and the sign-in keeps them: clearing them while the sign-in
+     * stores its own session would race, and the session is what the code is exchanged with.
+     */
+    const signInAsTheInvited = async () => {
+      await clearAllTokens();
+      await signIn({
+        redirectUri,
+        clearTokens: false,
+        prompt: Prompt.Consent,
+        extraParams: {
+          [ExtraParamsKey.OneTimeToken]: oneTimeToken,
+          [ExtraParamsKey.LoginHint]: email,
+        },
+      });
+    };
+
+    void signInAsTheInvited();
+  }, [clearAllTokens, isLoading, navigate, signIn, redirectUri, oneTimeToken, email, redirectPath]);
 
   return <AppLoading />;
 }

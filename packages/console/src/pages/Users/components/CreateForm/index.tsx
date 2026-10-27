@@ -8,25 +8,17 @@ import { useTranslation } from 'react-i18next';
 import Modal from 'react-modal';
 import { useLocation } from 'react-router-dom';
 
-import UserAccountInformation from '@/components/UserAccountInformation';
 import Button from '@/ds-components/Button';
 import FormField from '@/ds-components/FormField';
 import ModalLayout from '@/ds-components/ModalLayout';
 import TextInput from '@/ds-components/TextInput';
 import useApi from '@/hooks/use-api';
-import useTenantPathname from '@/hooks/use-tenant-pathname';
 import modalStyles from '@/scss/modal.module.scss';
 import { trySubmitSafe } from '@/utils/form';
-import { generateRandomPassword } from '@/utils/password';
 
 import styles from './index.module.scss';
 
 type FormData = Pick<CreateUser, 'name' | 'username' | 'primaryEmail' | 'primaryPhone'>;
-
-type CreatedUserInfo = {
-  user: User;
-  password: string;
-};
 
 type Props = {
   readonly onClose: () => void;
@@ -36,8 +28,6 @@ type Props = {
 function CreateForm({ onClose, onCreate }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { search } = useLocation();
-  const { navigate } = useTenantPathname();
-  const [createdUserInfo, setCreatedUserInfo] = useState<CreatedUserInfo>();
   const [missingIdentifierError, setMissingIdentifierError] = useState<string>();
 
   const {
@@ -77,13 +67,12 @@ function CreateForm({ onClose, onCreate }: Props) {
         return;
       }
 
-      const password = generateRandomPassword();
-
       const { primaryPhone } = data;
 
+      // The account gets no password: the person sets it when they sign in, which is what the
+      // invitation is for.
       const userData = {
         ...data,
-        password,
         ...conditional(primaryPhone && { primaryPhone: parsePhoneNumber(primaryPhone) }),
       };
 
@@ -93,12 +82,7 @@ function CreateForm({ onClose, onCreate }: Props) {
       );
 
       try {
-        const createdUser = await api.post('api/users', { json: payload }).json<User>();
-
-        setCreatedUserInfo({
-          user: createdUser,
-          password,
-        });
+        await api.post('api/users', { json: payload }).json<User>();
 
         onCreate();
       } catch {
@@ -107,20 +91,7 @@ function CreateForm({ onClose, onCreate }: Props) {
     })
   );
 
-  return createdUserInfo ? (
-    <UserAccountInformation
-      title="user_details.created_title"
-      user={createdUserInfo.user}
-      password={createdUserInfo.password}
-      confirmButtonTitle="users.check_user_detail"
-      onClose={() => {
-        void navigate({ pathname: '/users', search });
-      }}
-      onConfirm={() => {
-        void navigate(`/users/${createdUserInfo.user.id}`, { replace: true });
-      }}
-    />
-  ) : (
+  return (
     <Modal
       shouldCloseOnEsc
       isOpen

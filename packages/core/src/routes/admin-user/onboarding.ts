@@ -2,6 +2,7 @@ import { generateStandardId, generateStandardSecret } from '@logto/shared';
 import {
   TenantRole,
   adminTenantId,
+  defaultManagementApiAdminName,
   defaultTenantId,
   getTenantOrganizationId,
   getTenantRole,
@@ -121,12 +122,27 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
       }
 
       // The roles are granted once the mail is out, so a failed send leaves nothing behind.
-      if (roleIds.length > 0) {
-        const currentRoles = await queries.usersRoles.findUsersRolesByUserId(userId);
-        const rolesToAdd = roleIds.filter(
-          (roleId) => !currentRoles.some(({ roleId: currentRoleId }) => currentRoleId === roleId)
-        );
+      const currentRoles = await queries.usersRoles.findUsersRolesByUserId(userId);
+      const roleIdsToAdd = new Set(roleIds);
 
+      // The Console reaches the tenant through the management API, which only the admin role can
+      // enter. It is the Console access role, the same one the tenant invitation flow grants.
+      const consoleRole = await queries.roles.findRoleByRoleName(defaultManagementApiAdminName);
+      assertThat(
+        consoleRole,
+        new RequestError({
+          code: 'entity.not_found',
+          status: 422,
+          details: `The \`${defaultManagementApiAdminName}\` role is missing.`,
+        })
+      );
+      roleIdsToAdd.add(consoleRole.id);
+
+      const rolesToAdd = [...roleIdsToAdd].filter(
+        (roleId) => !currentRoles.some(({ roleId: currentRoleId }) => currentRoleId === roleId)
+      );
+
+      if (rolesToAdd.length > 0) {
         await Promise.all(rolesToAdd.map(async (roleId) => queries.roles.findRoleById(roleId)));
         await queries.usersRoles.insertUsersRoles(
           rolesToAdd.map((roleId) => ({ id: generateStandardId(), userId, roleId }))

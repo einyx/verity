@@ -16,6 +16,7 @@ const deleteOneTimeTokenById = jest.fn(async () => undefined);
 const findUsersRolesByUserId = jest.fn(async () => []);
 const insertUsersRoles = jest.fn(async () => undefined);
 const findRoleById = jest.fn(async () => ({ id: 'admin-role', name: 'admin' }));
+const findRoleByRoleName = jest.fn(async () => ({ id: 'console-role', name: 'admin' }));
 
 const findUserById = jest.fn(async () => mockUser);
 const insertOrganizationUser = jest.fn(async () => undefined);
@@ -43,6 +44,7 @@ const mockedQueries = {
   },
   roles: {
     findRoleById,
+    findRoleByRoleName,
   },
 } as unknown as Partial2<Queries>;
 
@@ -99,8 +101,20 @@ describe('adminUserOnboardingRoutes', () => {
 
     expect(response.status).toEqual(204);
     expect(findRoleById).toHaveBeenCalledWith('admin-role');
+    // The picked role, and the Console access role that comes with every invitation.
     expect(insertUsersRoles).toHaveBeenCalledWith([
       expect.objectContaining({ userId: mockUser.id, roleId: 'admin-role' }),
+      expect.objectContaining({ userId: mockUser.id, roleId: 'console-role' }),
+    ]);
+  });
+
+  it('grants the Console access role, or the Console answers that it cannot read the tenant', async () => {
+    const response = await userRequest.post('/users/foo/onboarding-email');
+
+    expect(response.status).toEqual(204);
+    // The management API only opens for the admin role, whatever the caller picked.
+    expect(insertUsersRoles).toHaveBeenCalledWith([
+      expect.objectContaining({ userId: mockUser.id, roleId: 'console-role' }),
     ]);
   });
 

@@ -2,6 +2,7 @@ import { useLogto } from '@logto/react';
 import { conditional, yes } from '@silverhand/essentials';
 import { useContext, useEffect } from 'react';
 import { Outlet, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 import { useCloudApi } from '@/cloud/hooks/use-cloud-api';
 import useManageAccountSelfGuard from '@/cloud/hooks/use-manage-account-self-guard';
@@ -55,8 +56,15 @@ export default function ProtectedRoutes() {
           return;
         }
 
-        const data = await api.get('/api/tenants');
-        resetTenants(data);
+        try {
+          const data = await api.get('/api/tenants');
+          resetTenants(data);
+        } catch (error: unknown) {
+          // Without the tenants there is nothing to show, and the loading screen would never end.
+          // Say what went wrong instead of spinning.
+          toast.error(error instanceof Error ? error.message : String(error));
+          resetTenants([]);
+        }
       };
 
       void loadTenants();

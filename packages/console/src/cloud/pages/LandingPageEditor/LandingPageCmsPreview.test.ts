@@ -260,3 +260,46 @@ it('updates an active field path when Puck reorders its section', () => {
 
   expect(headline?.dataset.cms).toBe('sections.1.headline.0');
 });
+
+it('makes the copy that no structured field covers editable in place', () => {
+  const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
+
+  expect(cardTitle?.getAttribute('contenteditable')).toBe('true');
+  expect(cardTitle?.dataset.cmsCopy).toMatch(/^products-\d+$/);
+});
+
+it('wraps the words that sit next to a graphic, so the graphic stays', () => {
+  const lede = document.querySelector<HTMLElement>('#top p.mt-6');
+  const words = lede?.querySelector<HTMLElement>('span[data-cms-copy]');
+
+  expect(words?.textContent).toContain('The intelligence layer');
+  expect(words?.getAttribute('contenteditable')).toBe('true');
+  expect(lede?.querySelector('br')).not.toBeNull();
+});
+
+it('applies a stored copy override to the marked text', () => {
+  const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
+  const id = cardTitle?.dataset.cmsCopy ?? '';
+
+  sendDraftDocument({ copy: { [id]: { en: 'Edited card title' } } });
+
+  expect(cardTitle?.textContent).toBe('Edited card title');
+});
+
+it('sends an edited text back under its own copy path', async () => {
+  const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
+  cardTitle!.textContent = 'Edited card title';
+  cardTitle!.dispatchEvent(new Event('input', { bubbles: true }));
+  // The preview waits a moment before it sends the text, so it does not send every keystroke.
+  await new Promise((resolve) => {
+    setTimeout(resolve, 200);
+  });
+
+  expect(sentMessages().filter(({ type }) => type === 'meshx-cms-edit')).toEqual([
+    {
+      type: 'meshx-cms-edit',
+      path: `copy.${cardTitle?.dataset.cmsCopy}.en`,
+      value: 'Edited card title',
+    },
+  ]);
+});

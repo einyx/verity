@@ -243,6 +243,69 @@
   const isPreview =
     new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
 
+  // The language the page is shown in. A page without one is read as English.
+  const pageLanguage = () => document.documentElement.lang || 'en';
+
+  // A text that is not part of a structured field: words of its own.
+  const isEditableCopyTarget = (element) => {
+    if (element.closest('[data-cms]')) {
+      return false;
+    }
+    // Links and buttons keep the element editor, and the page's own widgets are not page copy.
+    if (
+      element.closest(
+        'a, button, svg, #demo-chat, #help-dialog, #docs-modal, #cms-added-sections, .cms-context-menu'
+      )
+    ) {
+      return false;
+    }
+
+    return [...element.childNodes].some(
+      (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+    );
+  };
+
+  // The structured fields carry their own paths. The rest of the copy on the page is editable too,
+  // under an id of its own, stored per language.
+  // The id is the place of the words in their section, not the words themselves: the page is
+  // translated in place, so an id built from the text would change with the language.
+  const markEditableCopy = (root = document) => {
+    for (const section of root.querySelectorAll('main > section')) {
+      const key = section.id || 'section';
+      let index = 0;
+
+      for (const element of section.querySelectorAll('*')) {
+        // Words already marked keep their place in the count.
+        if (element.dataset.cmsCopy !== undefined) {
+          index += 1;
+          continue;
+        }
+
+        if (!isEditableCopyTarget(element)) {
+          continue;
+        }
+
+        const words = [...element.childNodes].filter(
+          (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+        );
+
+        if (element.children.length === 0) {
+          element.dataset.cmsCopy = `${key}-${++index}`;
+          continue;
+        }
+
+        // The words next to a graphic or a line break are wrapped, so the graphic stays when the
+        // copy is replaced.
+        for (const node of words) {
+          const wrapper = document.createElement('span');
+          wrapper.dataset.cmsCopy = `${key}-${++index}`;
+          element.insertBefore(wrapper, node);
+          wrapper.append(node);
+        }
+      }
+    }
+  };
+
   const fill = (doc) => {
     lastDoc = doc;
 
@@ -250,6 +313,12 @@
       renderDocumentSections(doc);
     } else {
       renderCustomSections(doc.customSections);
+    }
+
+    if (isPreview) {
+      // A section added in the editor brings its own copy, which is editable in place too.
+      markEditableCopy();
+      attachEditableFields();
     }
 
     for (const el of document.querySelectorAll('[data-cms]')) {
@@ -272,7 +341,7 @@
       }
 
       // Overrides are per language. The page's language is set by locale.js, so it is read here.
-      const value = doc.copy?.[el.dataset.cmsCopy]?.[document.documentElement.lang];
+      const value = doc.copy?.[el.dataset.cmsCopy]?.[pageLanguage()];
       if (typeof value === 'string') {
         el.textContent = value;
       }
@@ -478,8 +547,7 @@
       el.dataset.cmsEditAttached = 'true';
     // Extra copy is stored under `copy.<id>` in the draft; the main copy uses its own dotted path.
     // Extra copy is stored per language, so the path is read when the edit is made.
-    const path = () =>
-      el.dataset.cms ?? `copy.${el.dataset.cmsCopy}.${document.documentElement.lang}`;
+    const path = () => el.dataset.cms ?? `copy.${el.dataset.cmsCopy}.${pageLanguage()}`;
     // plaintext-only is not supported by every browser, so plain editing is used and pasting is
     // limited to plain text, which keeps the stored copy free of formatting.
     el.setAttribute('contenteditable', 'true');
@@ -521,6 +589,7 @@
     }
   }
   if (isPreview) {
+    markEditableCopy();
     attachEditableFields();
   }
 

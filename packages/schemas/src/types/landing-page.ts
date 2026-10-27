@@ -263,9 +263,10 @@ export const landingPageDocumentGuard = z
         }
       }),
     // Extra text that is editable in place, keyed by a `data-cms-copy` id on the page, then by language tag
-    // (for example `it` or `pt-br`). A missing id or language keeps the page's own text.
+    // (for example `it` or `pt-br`). A missing id or language keeps the page's own text. An empty value
+    // is a text the editor cleared, so it is kept as it is.
     copy: z
-      .record(z.string().max(80), z.record(z.string().max(10), z.string().min(1).max(1000)))
+      .record(z.string().max(80), z.record(z.string().max(10), z.string().max(1000)))
       .optional(),
     demoChat: demoChatGuard,
   })

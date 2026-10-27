@@ -4,6 +4,7 @@ import adminUserBasicsRoutes from './basics.js';
 import adminUserEnterpriseSsoRoutes from './enterprise-sso.js';
 import adminUserGrantRoutes from './grants.js';
 import adminUserMfaVerificationsRoutes from './mfa-verifications.js';
+import adminUserOnboardingRoutes from './onboarding.js';
 import adminUserOrganizationRoutes from './organization.js';
 import adminUserPersonalAccessTokenRoutes from './personal-access-token.js';
 import adminUserRoleRoutes from './role.js';
@@ -24,4 +25,5 @@ export default function adminUserRoutes<T extends ManagementApiRouter>(...args: 
   adminUserEnterpriseSsoRoutes(...args);
   adminUserSessionRoutes(...args);
   adminUserTrustedDeviceRoutes(...args);
+  adminUserOnboardingRoutes(...args);
 }

@@ -8,9 +8,10 @@ import useSWR from 'swr';
 
 import Delete from '@/assets/icons/delete.svg?react';
 import Forbidden from '@/assets/icons/forbidden.svg?react';
+import Mail from '@/assets/icons/mail.svg?react';
 import Shield from '@/assets/icons/shield.svg?react';
 import DetailsPage from '@/components/DetailsPage';
-import DetailsPageHeader from '@/components/DetailsPage/DetailsPageHeader';
+import DetailsPageHeader, { type MenuItem } from '@/components/DetailsPage/DetailsPageHeader';
 import PageMeta from '@/components/PageMeta';
 import UserAvatar from '@/components/UserAvatar';
 import { UserDetailsTabs } from '@/consts/page-tabs';
@@ -38,6 +39,7 @@ function UserDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggleSuspendFormOpen, setIsToggleSuspendFormOpen] = useState(false);
   const [isUpdatingSuspendState, setIsUpdatingSuspendState] = useState(false);
+  const [isSendingOnboardingEmail, setIsSendingOnboardingEmail] = useState(false);
 
   // Get user info with user's SSO identities in a single API call.
   const { data, error, mutate } = useSWR<UserProfileResponse, RequestError>(
@@ -92,6 +94,58 @@ function UserDetails() {
     }
   };
 
+  const onSendOnboardingEmail = async () => {
+    if (!data || isSendingOnboardingEmail) {
+      return;
+    }
+
+    if (!data.primaryEmail) {
+      toast.error(t('user_details.onboarding_email_no_address'));
+      return;
+    }
+
+    setIsSendingOnboardingEmail(true);
+
+    try {
+      await api.post(`api/users/${data.id}/onboarding-email`);
+      toast.success(t('user_details.onboarding_email_sent', { email: data.primaryEmail }));
+    } catch (error: unknown) {
+      toast.error(t('user_details.onboarding_email_failed'));
+    } finally {
+      setIsSendingOnboardingEmail(false);
+    }
+  };
+
+  const actionMenuItems: MenuItem[] = [
+    {
+      title: isSuspendedUser ? 'user_details.reactivate_user' : 'user_details.suspend_user',
+      icon: isSuspendedUser ? <Shield /> : <Forbidden />,
+      onClick: () => {
+        setIsToggleSuspendFormOpen(true);
+      },
+    },
+    // Without an email address there is nowhere to send the onboarding mail.
+    ...(data?.primaryEmail
+      ? [
+          {
+            title: 'user_details.send_onboarding_email' as const,
+            icon: <Mail />,
+            onClick: () => {
+              void onSendOnboardingEmail();
+            },
+          },
+        ]
+      : []),
+    {
+      title: 'general.delete',
+      type: 'danger',
+      icon: <Delete />,
+      onClick: () => {
+        setIsDeleteFormOpen(true);
+      },
+    },
+  ];
+
   return (
     <DetailsPage
       backLink="/users"
@@ -110,25 +164,7 @@ function UserDetails() {
             subtitle={userSubtitle}
             primaryTag={isSuspendedUser && <SuspendedTag />}
             identifier={{ name: 'User ID', value: data.id }}
-            actionMenuItems={[
-              {
-                title: isSuspendedUser
-                  ? 'user_details.reactivate_user'
-                  : 'user_details.suspend_user',
-                icon: isSuspendedUser ? <Shield /> : <Forbidden />,
-                onClick: () => {
-                  setIsToggleSuspendFormOpen(true);
-                },
-              },
-              {
-                title: 'general.delete',
-                type: 'danger',
-                icon: <Delete />,
-                onClick: () => {
-                  setIsDeleteFormOpen(true);
-                },
-              },
-            ]}
+            actionMenuItems={actionMenuItems}
           />
           <DeleteConfirmModal
             isOpen={isDeleteFormOpen}

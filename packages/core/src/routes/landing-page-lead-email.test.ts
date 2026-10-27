@@ -1,11 +1,7 @@
 /* eslint-disable @silverhand/fp/no-mutating-methods -- The sender tests record the request the fake transport receives. */
-import {
-  buildLeadBody,
-  parseLeadRecipients,
-  parseAcsConnectionString,
-  sendLeadEmail,
-  toSingleLine,
-} from './landing-page-lead-email.js';
+import { parseAcsConnectionString, toSingleLine } from '../libraries/acs-mail.js';
+
+import { buildLeadBody, parseLeadRecipients, sendLeadEmail } from './landing-page-lead-email.js';
 
 const key = Buffer.from('test-access-key').toString('base64');
 const connectionString = `endpoint=https://example.communication.azure.com/;accesskey=${key}`;

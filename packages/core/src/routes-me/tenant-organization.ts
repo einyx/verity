@@ -1,4 +1,5 @@
 import {
+  adminTenantId,
   TenantRole,
   Users,
   defaultTenantId,
@@ -18,6 +19,17 @@ import assertThat from '#src/utils/assert-that.js';
  * deployment. Its members are the people who can sign in to Console.
  */
 export const tenantOrganizationId = getTenantOrganizationId(defaultTenantId);
+
+/**
+ * Cloud mode manages workspace-tenant invitations in the control plane. The admin tenant's own
+ * operators are provisioned on the instance, so its invitation flow works everywhere.
+ */
+export const assertTenantInvitationFlowAllowed = (tenantId: string) => {
+  assertThat(
+    tenantId === adminTenantId || !EnvSet.values.isCloud,
+    new RequestError({ code: 'request.feature_not_supported', status: 501 })
+  );
+};
 
 /** Tenant organizations on Cloud are managed by the Cloud service, not by their members here. */
 export const assertNotCloud = () => {

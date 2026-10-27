@@ -15,13 +15,21 @@ import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
+import {
+  buildInvitationLink as buildTenantInvitationLink,
+  sendInvitationMail,
+} from '#src/libraries/tenant-invitation-mail.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type OrganizationQueries from '#src/queries/organization/index.js';
 import type { RouterInitArgs } from '#src/routes/types.js';
 import assertThat from '#src/utils/assert-that.js';
 
 import { withTenantMembership } from './tenant-membership.js';
-import { createTenantMemberAuthorization, tenantOrganizationId } from './tenant-organization.js';
+import {
+  assertTenantInvitationFlowAllowed,
+  createTenantMemberAuthorization,
+  tenantOrganizationId,
+} from './tenant-organization.js';
 import type { AuthedMeRouter } from './types.js';
 
 /** How long an invitation, and the sign-in link it carries, stays valid. */
@@ -60,15 +68,6 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
   } = tenant;
   const { invitations } = organizations;
   const { assertAdmin } = createTenantMemberAuthorization(tenant);
-
-  // Cloud mode manages workspace-tenant invitations in the control plane. The admin tenant's own
-  // operators are provisioned on the instance, so its console invitation flow works everywhere.
-  const assertInvitationFlowAllowed = () => {
-    assertThat(
-      tenant.id === adminTenantId || !EnvSet.values.isCloud,
-      new RequestError({ code: 'request.feature_not_supported', status: 501 })
-    );
-  };
 
   /** Find an invitation to the tenant, and to nothing else, by its ID. */
   const findTenantInvitation = async (
@@ -110,39 +109,33 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
   };
 
   /** Build the Console accept link, which signs the invitee in with a fresh one-time token. */
-  const buildInvitationLink = async ({ id, invitee, expiresAt }: OrganizationInvitationEntity) => {
-    // Invitees are stored lowercased, while an existing account keeps its email as entered. Issue
-    // the token for the account's own spelling, which the sign-in compares it with verbatim.
-    const existingUser = await users.findUserByEmail(invitee);
-    const email = existingUser?.primaryEmail ?? invitee;
-    const oneTimeToken = await oneTimeTokens.insertOneTimeToken({
-      id: generateStandardId(),
-      email,
-      token: generateStandardSecret(),
+  const buildInvitationLink = async ({ id, invitee, expiresAt }: OrganizationInvitationEntity) =>
+    buildTenantInvitationLink({
+      queries: { oneTimeTokens, users },
+      invitationId: id,
+      invitee,
       expiresAt,
+      consoleEndpoint: EnvSet.values.adminUrlSet.endpoint,
+      consolePath: ossConsolePath,
     });
-    const link = new URL(`${ossConsolePath}/accept/${id}`, EnvSet.values.adminUrlSet.endpoint);
-    link.searchParams.set('one_time_token', oneTimeToken.token);
-    link.searchParams.set('email', email);
-
-    return { link: link.href, oneTimeTokenId: oneTimeToken.id };
-  };
 
   /**
-   * Send the invitation email through the default tenant, since the admin tenant has no email
-   * connector. Fails with `connector.not_found` (501) when the default tenant has none either, and
-   * with `request.message_rate_limited` (429) when the invitee has been emailed too often.
+   * Send the invitation email. The platform sends it with its own mail service, so a tenant
+   * without an email connector can still invite people; without that service the mail goes through
+   * the default tenant's connector instead. Fails with `connector.not_found` (501) when neither
+   * can send it, and with `request.message_rate_limited` (429) when the invitee has been emailed
+   * too often.
    *
-   * The payload is the usual organization invitation template context, so a template written for
-   * organization invitations works here too. Once the email is out, the links sent earlier to the
-   * same invitee stop working.
+   * The payload of the fallback is the usual organization invitation template context, so a
+   * template written for organization invitations works here too. Once the email is out, the links
+   * sent earlier to the same invitee stop working.
    */
   const sendInvitation = async (
     invitation: OrganizationInvitationEntity,
     inviterId: string,
     locale: string
   ) => {
-    const [{ link, oneTimeTokenId }, context] = await Promise.all([
+    const [{ link, oneTimeTokenId, hasAccount }, context] = await Promise.all([
       buildInvitationLink(invitation),
       organizationInvitations.getOrganizationInvitationTemplateContext(
         tenantOrganizationId,
@@ -153,9 +146,21 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     const payload = { ...context, link, locale };
 
     try {
-      await withDefaultTenant(async ({ libraries }) =>
-        libraries.organizationInvitations.sendEmail(invitation.invitee, payload)
-      );
+      const sent = await sendInvitationMail({
+        to: invitation.invitee,
+        organizationName: context.organization?.name ?? 'meshX',
+        inviterName: context.inviter?.name,
+        inviterEmail: context.inviter?.primaryEmail,
+        link,
+        expiresAt: invitation.expiresAt,
+        hasAccount,
+      });
+
+      if (!sent) {
+        await withDefaultTenant(async ({ libraries }) =>
+          libraries.organizationInvitations.sendEmail(invitation.invitee, payload)
+        );
+      }
     } catch (error: unknown) {
       // The link was not delivered, so its sign-in token must not stay usable.
       await oneTimeTokens.deleteOneTimeTokenById(oneTimeTokenId);
@@ -183,7 +188,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations',
     koaGuard({ response: tenantInvitationGuard.array(), status: [200, 403, 501] }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
       await assertAdmin(ctx.auth.id);
 
       const entities = await invitations.findEntities({ organizationId: tenantOrganizationId });
@@ -221,7 +226,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [201, 403, 422, 429, 501],
     }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
       await assertAdmin(ctx.auth.id);
 
       const { invitee } = ctx.guard.body;
@@ -272,7 +277,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations/:invitationId/message',
     koaGuard({ params: invitationIdGuard, status: [204, 403, 404, 422, 429, 501] }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
       await assertAdmin(ctx.auth.id);
 
       const invitation = await findTenantInvitation(ctx.guard.params.invitationId);
@@ -303,7 +308,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [200, 403, 404, 422, 501],
     }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
 
       const { invitationId } = ctx.guard.params;
 
@@ -330,7 +335,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     '/tenant/invitations/:invitationId',
     koaGuard({ params: invitationIdGuard, status: [204, 403, 404, 501] }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
 
       const { invitationId } = ctx.guard.params;
 
@@ -362,7 +367,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [200, 403, 404, 501],
     }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
 
       ctx.body = await findOwnInvitation(ctx.guard.params.invitationId, ctx.auth.id);
 
@@ -383,7 +388,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       status: [204, 403, 404, 422, 501],
     }),
     async (ctx, next) => {
-      assertInvitationFlowAllowed();
+      assertTenantInvitationFlowAllowed(tenant.id);
 
       const { invitationId } = ctx.guard.params;
       const { id: userId } = ctx.auth;

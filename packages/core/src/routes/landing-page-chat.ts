@@ -5,6 +5,7 @@ import Router from 'koa-router';
 import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
+import { parseAcsConnectionString } from '#src/libraries/acs-mail.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 
 import { checkVisitorMessage, productionModerator } from './landing-page-abuse.js';
@@ -47,7 +48,6 @@ import {
 import { createDemoRequest } from './landing-page-demo-request.js';
 import { buildDocumentsQuery, createProductionDocumentsSearch } from './landing-page-docs.js';
 import {
-  parseAcsConnectionString,
   parseLeadRecipients,
   sendLeadEmail,
 } from './landing-page-lead-email.js';

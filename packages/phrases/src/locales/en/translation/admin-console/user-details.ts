@@ -96,6 +96,10 @@ const user_details = {
     'Are you sure you want to reactivate this user? Doing so will permit any sign-in attempts for this user.',
   reactivate_action: 'Reactivate',
   user_reactivated: 'User has been reactivated.',
+  send_onboarding_email: 'Send onboarding email',
+  onboarding_email_sent: 'The onboarding email was sent to {{email}}.',
+  onboarding_email_no_address: 'This user has no email address, so there is nowhere to send it.',
+  onboarding_email_failed: 'The onboarding email could not be sent. Try again in a moment.',
   roles: {
     name_column: 'User role',
     description_column: 'Description',

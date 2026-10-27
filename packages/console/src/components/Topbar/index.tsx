@@ -9,8 +9,6 @@ import ContactIcon from '@/assets/icons/contact-us.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
 import DocumentIcon from '@/assets/icons/document-nav-button.svg?react';
 import Globe from '@/assets/icons/globe.svg?react';
-import meshxWordmarkDark from '@/assets/images/meshx-wordmark-dark.png';
-import meshxWordmark from '@/assets/images/meshx-wordmark.png';
 import { githubReleasesLink } from '@/consts';
 import { isCloud } from '@/consts/env';
 import Dropdown, { DropdownItem } from '@/ds-components/Dropdown';
@@ -58,10 +56,9 @@ function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
           }
         }}
       >
-        {/* The wordmark is black on a light page, and white on a dark one. */}
         <img
           className={styles.wordmark}
-          src={theme === Theme.Dark ? meshxWordmarkDark : meshxWordmark}
+          src={theme === Theme.Dark ? '/console/meshx-logo-dark.svg' : '/console/meshx-logo.svg'}
           alt="meshX"
         />
       </div>

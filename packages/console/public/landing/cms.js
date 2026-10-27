@@ -237,6 +237,12 @@
   // The last document filled, so the preview can refill it after the language changes.
   let lastDoc;
 
+  // The page is editable only in the editor's preview, which is the same page in an iframe with the
+  // preview flag. On the published site the copy is read-only: the visitor gets the published
+  // document and nothing else.
+  const isPreview =
+    new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
+
   const fill = (doc) => {
     lastDoc = doc;
 
@@ -317,13 +323,12 @@
       el.style.translate = `${safeOffset.x}px ${safeOffset.y}px`;
     }
 
-    attachPositionControls();
-    attachEditableFields();
+    if (isPreview) {
+      attachPositionControls();
+      attachEditableFields();
+    }
     window.LandingElements?.fill(doc);
   };
-
-  const isPreview =
-    new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
 
   if (isPreview && !window.LandingElements) {
     let addMenu;
@@ -515,7 +520,9 @@
     });
     }
   }
-  attachEditableFields();
+  if (isPreview) {
+    attachEditableFields();
+  }
 
   document.addEventListener(
     'click',
@@ -668,5 +675,7 @@
     }
   }
 
-  window.parent.postMessage({ type: 'meshx-cms-ready' }, location.origin);
+  if (isPreview) {
+    window.parent.postMessage({ type: 'meshx-cms-ready' }, location.origin);
+  }
 })();

@@ -63,8 +63,9 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
           title="tenant_members.roles"
           description={
             <DangerousRaw>
-              <strong>user</strong> is a member of this console, <strong>admin</strong> manages
-              it, and <strong>default:admin</strong> manages the default tenant.
+              Everyone who gets this mail can sign in to the console. The role decides what they can
+              do: <strong>user</strong> is a member, <strong>admin</strong> manages the console, and{' '}
+              <strong>default:admin</strong> manages the default tenant.
             </DangerousRaw>
           }
         >

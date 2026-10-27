@@ -1,5 +1,12 @@
 import { generateStandardId, generateStandardSecret } from '@logto/shared';
-import { ossConsolePath } from '@logto/schemas';
+import {
+  TenantRole,
+  adminTenantId,
+  defaultTenantId,
+  getTenantOrganizationId,
+  getTenantRole,
+  ossConsolePath,
+} from '@logto/schemas';
 import { addDays } from 'date-fns';
 import { z } from 'zod/v3';
 
@@ -124,6 +131,23 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
         await queries.usersRoles.insertUsersRoles(
           rolesToAdd.map((roleId) => ({ id: generateStandardId(), userId, roleId }))
         );
+      }
+
+      // The Console reads its permissions from the organization of the tenant: a person without a
+      // role in it signs in and sees nothing, whatever their tenant roles say. The invited person
+      // joins the same organizations the instance's own operators are in.
+      const organizationRoleId = getTenantRole(TenantRole.Admin).id;
+
+      for (const organizationId of [
+        getTenantOrganizationId(adminTenantId),
+        getTenantOrganizationId(defaultTenantId),
+      ]) {
+        await queries.organizations.relations.users.insert({ organizationId, userId });
+        await queries.organizations.relations.usersRoles.insert({
+          organizationId,
+          organizationRoleId,
+          userId,
+        });
       }
 
       ctx.status = 204;

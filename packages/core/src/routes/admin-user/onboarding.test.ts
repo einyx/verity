@@ -18,6 +18,8 @@ const insertUsersRoles = jest.fn(async () => undefined);
 const findRoleById = jest.fn(async () => ({ id: 'admin-role', name: 'admin' }));
 
 const findUserById = jest.fn(async () => mockUser);
+const insertOrganizationUser = jest.fn(async () => undefined);
+const insertOrganizationUserRole = jest.fn(async () => undefined);
 
 const mockedQueries = {
   users: {
@@ -30,6 +32,10 @@ const mockedQueries = {
   },
   organizations: {
     findById: jest.fn(async () => ({ id: 't-default', name: 'meshX', branding: {} })),
+    relations: {
+      users: { insert: insertOrganizationUser },
+      usersRoles: { insert: insertOrganizationUserRole },
+    },
   },
   usersRoles: {
     findUsersRolesByUserId,
@@ -96,6 +102,26 @@ describe('adminUserOnboardingRoutes', () => {
     expect(insertUsersRoles).toHaveBeenCalledWith([
       expect.objectContaining({ userId: mockUser.id, roleId: 'admin-role' }),
     ]);
+  });
+
+  it('gives the person a role in the tenant organizations, or the Console shows nothing', async () => {
+    const response = await userRequest.post('/users/foo/onboarding-email');
+
+    expect(response.status).toEqual(204);
+    // The Console reads its permissions from the organization of the tenant.
+    expect(insertOrganizationUser).toHaveBeenCalledWith({
+      organizationId: 't-admin',
+      userId: mockUser.id,
+    });
+    expect(insertOrganizationUser).toHaveBeenCalledWith({
+      organizationId: 't-default',
+      userId: mockUser.id,
+    });
+    expect(insertOrganizationUserRole).toHaveBeenCalledWith({
+      organizationId: 't-default',
+      organizationRoleId: 'admin',
+      userId: mockUser.id,
+    });
   });
 
   it('refuses when the user has no email address', async () => {

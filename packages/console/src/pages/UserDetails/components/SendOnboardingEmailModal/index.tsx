@@ -60,7 +60,7 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
         }
       >
         <p>{email}</p>
-        <FormField title="user_details.roles">
+        <FormField title="tenant_members.roles">
           <Select
             value={roleIds[0]}
             options={roleOptions}

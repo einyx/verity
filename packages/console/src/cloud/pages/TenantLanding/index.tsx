@@ -21,7 +21,8 @@ function TenantLanding() {
 
   useEffect(() => {
     const load = async () => {
-      const claims = await getIdTokenClaims();
+      // A visitor who is not signed in yet has no token, and reading one throws.
+      const claims = await getIdTokenClaims().catch(() => null);
       const roles = claims?.roles;
 
       if (Array.isArray(roles) && roles.includes(defaultManagementApiAdminName)) {

@@ -6,6 +6,8 @@ import {
 } from '@logto/schemas';
 import { createMockUtils, pickDefault } from '@logto/shared/esm';
 
+import { type AcsMail, type AcsMailConfig } from '#src/libraries/acs-mail.js';
+
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import koaErrorHandler from '#src/middleware/koa-error-handler.js';
@@ -16,7 +18,15 @@ import type TenantContext from '#src/tenants/TenantContext.js';
 import type { Partial2 } from '#src/test-utils/tenant.js';
 
 const { jest } = import.meta;
-const { mockEsm } = createMockUtils(jest);
+const { mockEsm, mockEsmWithActual } = createMockUtils(jest);
+
+/** The sign-in link the mail carries, in the HTML body or the plain text. */
+const linkFrom = (mail: unknown): string => {
+  const body = JSON.stringify(mail);
+  const match = body.match(/https?:[^"\\ ]*one_time_token=[^"\\ ]*/);
+
+  return match?.[0] ?? '';
+};
 
 const read = jest.fn(async (): Promise<unknown> => undefined);
 mockEsm('#src/license/LicenseReader.js', () => ({
@@ -82,6 +92,11 @@ const findUserById = jest.fn(async (id: string) => ({
   customData: { keep: true, ossOnboarding: { questionnaire: { project: 'personal' } } },
 }));
 
+const { sendMail } = await mockEsmWithActual('#src/libraries/acs-mail.js', () => ({
+  sendMail: jest.fn(async (_mail: AcsMail, _config: AcsMailConfig) => undefined),
+}));
+
+const key = Buffer.from('test-access-key').toString('base64');
 const sendEmail = jest.fn();
 const withDefaultTenant = jest.fn(async (run: (tenant: TenantContext) => Promise<unknown>) =>
   run({ libraries: { organizationInvitations: { sendEmail } } } as unknown as TenantContext)
@@ -182,6 +197,8 @@ describe('me tenant invitation routes', () => {
   const { isCloud } = EnvSet.values;
 
   beforeEach(() => {
+    process.env.ACS_CONNECTION_STRING = `endpoint=https://example.communication.azure.com/;accesskey=${key}`;
+    process.env.ACS_SENDER_EMAIL = 'noreply@example.azurecomm.net';
     // eslint-disable-next-line @silverhand/fp/no-mutation
     callerRole.current = TenantRole.Admin;
     installLicense(true);
@@ -215,16 +232,16 @@ describe('me tenant invitation routes', () => {
       );
       // The tenant's own email connector sends the mail, not the default tenant's.
       // Through the invitation library of the default tenant, which applies the send rate guard.
-      expect(sendEmail).toHaveBeenCalledTimes(2);
+      expect(sendMail).toHaveBeenCalledTimes(2);
 
-      const [to, payload] = sendEmail.mock.calls[0] as [string, { link: string }];
+      const [mail] = sendMail.mock.calls[0] as [{ to: string; html?: string }, unknown];
       const [firstToken] = insertOneTimeToken.mock.calls[0] as [
         { id: string; token: string; email: string },
       ];
       const { id, token, email } = firstToken;
-      const link = new URL(payload.link);
+      const link = new URL(linkFrom(mail));
 
-      expect(to).toBe('baz@example.com');
+      expect(mail.to).toBe('baz@example.com');
       expect(link.pathname).toBe('/console/accept/new-baz');
       expect(link.searchParams.get('one_time_token')).toBe(token);
       expect(link.searchParams.get('email')).toBe('baz@example.com');
@@ -240,7 +257,7 @@ describe('me tenant invitation routes', () => {
 
       expect(response.status).toBe(422);
       expect(insertInvitation).not.toHaveBeenCalled();
-      expect(sendEmail).not.toHaveBeenCalled();
+      expect(sendMail).not.toHaveBeenCalled();
     });
 
     it('should create nothing when any invitee is already a member', async () => {
@@ -252,7 +269,7 @@ describe('me tenant invitation routes', () => {
 
       expect(response.status).toBe(422);
       expect(insertInvitation).not.toHaveBeenCalled();
-      expect(sendEmail).not.toHaveBeenCalled();
+      expect(sendMail).not.toHaveBeenCalled();
     });
 
     it('should reject a non-member', async () => {
@@ -280,7 +297,7 @@ describe('me tenant invitation routes', () => {
     });
 
     it('should drop the invitation when its email cannot be sent', async () => {
-      sendEmail.mockRejectedValueOnce(
+      sendMail.mockRejectedValueOnce(
         new RequestError({ code: 'request.message_rate_limited', status: 429 })
       );
 
@@ -302,12 +319,12 @@ describe('me tenant invitation routes', () => {
     await request.post('/tenant/invitations').send({ invitee: 'alice@example.com' });
 
     const [issuedToken] = insertOneTimeToken.mock.calls[0] ?? [];
-    const [to, payload] = sendEmail.mock.calls[0] as [string, { link: string }];
+    const [mail] = sendMail.mock.calls[0] as [{ to: string; html?: string }, unknown];
 
     // The sign-in compares the token email with the account's verbatim.
     expect(issuedToken?.email).toBe('Alice@Example.com');
-    expect(new URL(payload.link).searchParams.get('email')).toBe('Alice@Example.com');
-    expect(to).toBe('alice@example.com');
+    expect(new URL(linkFrom(mail)).searchParams.get('email')).toBe('Alice@Example.com');
+    expect(mail.to).toBe('alice@example.com');
   });
 
   describe('GET /tenant/invitations', () => {
@@ -359,7 +376,7 @@ describe('me tenant invitation routes', () => {
 
       expect(response.status).toBe(204);
       expect(insertOneTimeToken).toHaveBeenCalledTimes(1);
-      expect(sendEmail).toHaveBeenCalledWith('foo@example.com', expect.anything());
+      expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'foo@example.com' }), expect.anything());
 
       const [issuedToken] = insertOneTimeToken.mock.calls[0] ?? [];
       expect(revokeActiveOneTimeTokensByEmail).toHaveBeenCalledWith(
@@ -393,7 +410,7 @@ describe('me tenant invitation routes', () => {
         403
       );
       expect(deleteInvitationById).not.toHaveBeenCalled();
-      expect(sendEmail).not.toHaveBeenCalled();
+      expect(sendMail).not.toHaveBeenCalled();
     });
   });
 

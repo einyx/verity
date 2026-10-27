@@ -4,6 +4,7 @@ import { mockUser } from '#src/__mocks__/index.js';
 import { MockTenant, type Partial2 } from '#src/test-utils/tenant.js';
 import { createRequester } from '#src/utils/test-utils.js';
 
+import { type AcsMail, type AcsMailConfig } from '#src/libraries/acs-mail.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 
@@ -15,7 +16,6 @@ const deleteOneTimeTokenById = jest.fn(async () => undefined);
 const findUsersRolesByUserId = jest.fn(async () => []);
 const insertUsersRoles = jest.fn(async () => undefined);
 const findRoleById = jest.fn(async () => ({ id: 'admin-role', name: 'admin' }));
-const sendEmail = jest.fn(async (_to: string, _payload: unknown) => undefined);
 
 const findUserById = jest.fn(async () => mockUser);
 
@@ -40,15 +40,13 @@ const mockedQueries = {
   },
 } as unknown as Partial2<Queries>;
 
-const mockedLibraries = {
-  organizationInvitations: {
-    sendEmail,
-  },
-} as unknown as Partial<Libraries>;
+const mockedLibraries = {} as unknown as Partial<Libraries>;
 
 const { sendMail } = await mockEsmWithActual('#src/libraries/acs-mail.js', () => ({
-  sendMail: jest.fn(async () => undefined),
+  sendMail: jest.fn(async (_mail: AcsMail, _config: AcsMailConfig) => undefined),
 }));
+
+const key = Buffer.from('test-access-key').toString('base64');
 
 const adminUserOnboardingRoutes = await pickDefault(import('./onboarding.js'));
 
@@ -61,20 +59,31 @@ describe('adminUserOnboardingRoutes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.ACS_CONNECTION_STRING = `endpoint=https://example.communication.azure.com/;accesskey=${key}`;
+    process.env.ACS_SENDER_EMAIL = 'noreply@example.azurecomm.net';
+  });
+
+  afterEach(() => {
+    delete process.env.ACS_CONNECTION_STRING;
+    delete process.env.ACS_SENDER_EMAIL;
   });
 
   it('sends the onboarding mail and answers with no content', async () => {
     const response = await userRequest.post('/users/foo/onboarding-email');
 
     expect(response.status).toEqual(204);
-    // The mail goes out through the tenant's own email connector.
-    expect(sendEmail).toHaveBeenCalledTimes(1);
+    // The mail goes out through the platform's mail service, with the meshX branding.
+    expect(sendMail).toHaveBeenCalledTimes(1);
 
-    const [to, payload] = sendEmail.mock.calls[0] ?? [];
-    expect(to).toEqual(mockUser.primaryEmail);
+    const [mail] = sendMail.mock.calls[0] ?? [];
+    expect(mail?.to).toEqual(mockUser.primaryEmail);
+    expect(mail?.subject).toBe('You have been invited to meshX console');
     // The link signs the person in with a one-time token.
-    expect(JSON.stringify(payload)).toContain('/one-time-token');
-    expect(JSON.stringify(payload)).toContain('one_time_token=the-token');
+    expect(mail?.html).toContain('/one-time-token');
+    expect(mail?.html).toContain('one_time_token=the-token');
+    expect(mail?.html).toContain('meshX console');
+    // The logo travels with the mail, so the client shows it without fetching anything.
+    expect(mail?.attachments).toHaveLength(1);
   });
 
   it('grants the roles the caller picked', async () => {
@@ -98,11 +107,11 @@ describe('adminUserOnboardingRoutes', () => {
     const response = await userRequest.post('/users/foo/onboarding-email');
 
     expect(response.status).toEqual(422);
-    expect(sendEmail).not.toHaveBeenCalled();
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
   it('drops the sign-in token when the mail cannot be sent', async () => {
-    sendEmail.mockRejectedValueOnce(new Error('no connector'));
+    sendMail.mockRejectedValueOnce(new Error('ACS is down'));
 
     const response = await userRequest.post('/users/foo/onboarding-email');
 

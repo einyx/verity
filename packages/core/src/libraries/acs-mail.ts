@@ -21,8 +21,21 @@ export type AcsMail = {
   to: string | readonly string[];
   subject: string;
   text: string;
+  /** The HTML body of the mail, for clients that render it. */
+  html?: string;
+  /** Files the mail carries, referenced from the HTML with `cid:<contentId>`. */
+  attachments?: AcsAttachment[];
   /** Where a reply should go. Defaults to the sender. */
   replyTo?: string;
+};
+
+export type AcsAttachment = {
+  contentType: string;
+  /** The file, base64 encoded. */
+  contentInBase64: string;
+  nameInContentDisposition: string;
+  /** The id the HTML refers to, as `cid:<contentId>`. */
+  contentId: string;
 };
 
 /** Reads `endpoint=...;accesskey=...` from an ACS connection string. Returns undefined when malformed. */
@@ -125,7 +138,9 @@ export const sendMail = async (
     content: {
       subject: mail.subject,
       plainText: mail.text,
+      ...(mail.html ? { html: mail.html } : {}),
     },
+    ...(mail.attachments?.length ? { attachments: mail.attachments } : {}),
   });
   const date = now().toUTCString();
   const { authorization, contentHash } = signAcsRequest({

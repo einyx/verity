@@ -15,10 +15,13 @@ import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
+import { readAcsMailConfig, sendMail } from '#src/libraries/acs-mail.js';
 import {
-  buildInvitationLink as buildTenantInvitationLink,
-  sendInvitationMailWithPlatformService,
-} from '#src/libraries/tenant-invitation-mail.js';
+  buildOnboardingEmailHtml,
+  buildOnboardingEmailText,
+  meshxLogoBase64,
+} from '#src/libraries/onboarding-email.js';
+import { buildInvitationLink as buildTenantInvitationLink } from '#src/libraries/tenant-invitation-mail.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type OrganizationQueries from '#src/queries/organization/index.js';
 import type { RouterInitArgs } from '#src/routes/types.js';
@@ -151,22 +154,10 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       // connector the platform's own mail service sends the mail instead.
       const organization = await queries.organizations.findById(tenantOrganizationId);
       const mailPayload = {
-        organization: {
-          id: organization?.id ?? tenantOrganizationId,
-          name: organization?.name ?? 'meshX',
-          branding: organization?.branding ?? {},
-        },
-        inviter: {
-          id: context.inviter?.id ?? '',
-          name: context.inviter?.name ?? context.inviter?.username ?? 'The meshX team',
-          avatar: context.inviter?.avatar ?? '',
-          primaryEmail: context.inviter?.primaryEmail ?? null,
-          primaryPhone: context.inviter?.primaryPhone ?? null,
-          username: context.inviter?.username ?? '',
-          profile: context.inviter?.profile ?? {},
-        },
         firstName: 'there',
+        inviterName: context.inviter?.name ?? context.inviter?.username ?? 'A meshX administrator',
         link,
+        roleName: 'an admin',
         expiresAt: new Date(invitation.expiresAt).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -176,28 +167,39 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
       };
 
       try {
-        await organizationInvitations.sendEmail(invitation.invitee, { ...payload, locale });
-      } catch (error: unknown) {
-        // Any other failure is the connector's own problem and is reported as it is.
-        if (!(error instanceof RequestError) || error.code !== 'connector.not_found') {
-          throw error;
-        }
-
-        const sent = await sendInvitationMailWithPlatformService({
-          to: invitation.invitee,
-          payload: mailPayload,
-          replyTo: context.inviter?.primaryEmail,
-        });
+        const config = readAcsMailConfig();
 
         assertThat(
-          sent,
+          config,
           new RequestError({
             code: 'connector.not_found',
             status: 501,
-            details:
-              'The tenant has no email connector and the platform mail service is not configured.',
+            details: 'The platform mail service is not configured.',
           })
         );
+
+        await sendMail(
+          {
+            to: invitation.invitee,
+            subject: 'You have been invited to meshX console',
+            text: buildOnboardingEmailText(mailPayload),
+            html: buildOnboardingEmailHtml(mailPayload),
+            replyTo: context.inviter?.primaryEmail ?? undefined,
+            attachments: [
+              {
+                contentType: 'image/png',
+                contentInBase64: meshxLogoBase64,
+                nameInContentDisposition: 'meshx-logo',
+                contentId: 'meshx-logo',
+              },
+            ],
+          },
+          config
+        );
+      } catch (error: unknown) {
+        // The link was not delivered, so its sign-in token must not stay usable.
+        await oneTimeTokens.deleteOneTimeTokenById(oneTimeTokenId);
+        throw error;
       }
     } catch (error: unknown) {
       // The link was not delivered, so its sign-in token must not stay usable.

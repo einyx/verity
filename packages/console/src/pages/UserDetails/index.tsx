@@ -1,4 +1,4 @@
-import type { UserProfileResponse, User } from '@logto/schemas';
+import { TenantRole, type UserProfileResponse, User } from '@logto/schemas';
 import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -27,6 +27,8 @@ import { getUserTitle, getUserSubtitle } from '@/utils/user';
 import SuspendedTag from '../Users/components/SuspendedTag';
 
 import styles from './index.module.scss';
+import SendOnboardingEmailModal from './components/SendOnboardingEmailModal';
+
 import { type UserDetailsOutletContext } from './types';
 
 function UserDetails() {
@@ -40,6 +42,7 @@ function UserDetails() {
   const [isToggleSuspendFormOpen, setIsToggleSuspendFormOpen] = useState(false);
   const [isUpdatingSuspendState, setIsUpdatingSuspendState] = useState(false);
   const [isSendingOnboardingEmail, setIsSendingOnboardingEmail] = useState(false);
+  const [isOnboardingEmailModalOpen, setIsOnboardingEmailModalOpen] = useState(false);
 
   // Get user info with user's SSO identities in a single API call.
   const { data, error, mutate } = useSWR<UserProfileResponse, RequestError>(
@@ -94,21 +97,17 @@ function UserDetails() {
     }
   };
 
-  const onSendOnboardingEmail = async () => {
+  const onSendOnboardingEmail = async (role: TenantRole) => {
     if (!data || isSendingOnboardingEmail) {
-      return;
-    }
-
-    if (!data.primaryEmail) {
-      toast.error(t('user_details.onboarding_email_no_address'));
       return;
     }
 
     setIsSendingOnboardingEmail(true);
 
     try {
-      await api.post(`api/users/${data.id}/onboarding-email`);
+      await api.post(`api/users/${data.id}/onboarding-email`, { json: { role } });
       toast.success(t('user_details.onboarding_email_sent', { email: data.primaryEmail }));
+      setIsOnboardingEmailModalOpen(false);
     } catch (error: unknown) {
       toast.error(t('user_details.onboarding_email_failed'));
     } finally {
@@ -131,7 +130,7 @@ function UserDetails() {
             title: 'user_details.send_onboarding_email' as const,
             icon: <Mail />,
             onClick: () => {
-              void onSendOnboardingEmail();
+              setIsOnboardingEmailModalOpen(true);
             },
           },
         ]
@@ -165,6 +164,17 @@ function UserDetails() {
             primaryTag={isSuspendedUser && <SuspendedTag />}
             identifier={{ name: 'User ID', value: data.id }}
             actionMenuItems={actionMenuItems}
+          />
+          <SendOnboardingEmailModal
+            isOpen={isOnboardingEmailModalOpen}
+            email={data.primaryEmail ?? ''}
+            isLoading={isSendingOnboardingEmail}
+            onClose={() => {
+              setIsOnboardingEmailModalOpen(false);
+            }}
+            onConfirm={(role) => {
+              void onSendOnboardingEmail(role);
+            }}
           />
           <DeleteConfirmModal
             isOpen={isDeleteFormOpen}

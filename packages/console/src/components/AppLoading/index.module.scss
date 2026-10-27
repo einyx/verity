@@ -14,9 +14,10 @@
 }
 
 .logo {
-  width: auto;
-  // Same on-screen text size as before the crop change (32px for the 96-unit-tall crop).
-  height: 23px;
+  // The width keeps the wordmark the size it was before the crop changed, and the height follows
+  // the view box, so the X is not cut off at the top.
+  width: 116px;
+  height: auto;
 }
 
 .spinner {

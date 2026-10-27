@@ -90,6 +90,18 @@ describe('adminUserOnboardingRoutes', () => {
     expect(mail?.text).toContain('/console/accept/invitation-id');
   });
 
+  it('grants the role the caller picked', async () => {
+    const response = await userRequest
+      .post('/users/foo/onboarding-email')
+      .send({ role: 'viewer' });
+
+    expect(response.status).toEqual(204);
+    expect(insertInvitation).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationRoleIds: ['viewer'] }),
+      false
+    );
+  });
+
   it('refuses when the user has no email address', async () => {
     findUserById.mockResolvedValueOnce({
       ...mockUser,

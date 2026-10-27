@@ -97,6 +97,10 @@ const user_details = {
   reactivate_action: 'Reactivate',
   user_reactivated: 'User has been reactivated.',
   send_onboarding_email: 'Send onboarding email',
+  onboarding_email_title: 'Send an onboarding email',
+  onboarding_email_description:
+    'The email carries a link that signs the person in and gives them the role you pick. The link works for 7 days.',
+  onboarding_email_send: 'Send',
   onboarding_email_sent: 'The onboarding email was sent to {{email}}.',
   onboarding_email_no_address: 'This user has no email address, so there is nowhere to send it.',
   onboarding_email_failed: 'The onboarding email could not be sent. Try again in a moment.',

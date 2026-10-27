@@ -2,8 +2,9 @@ import Logo from '@/assets/images/logo.svg?react';
 
 import styles from './index.module.scss';
 
-// Crop the logo to the wordmark's own bounds so it stays centered above the spinner.
-const logoViewBox = '110.68 32.18 345.18 68.68';
+// Crop the logo to the wordmark's own bounds so it stays centered above the spinner. The crop has
+// to start above the X, whose ascender is taller than the other letters.
+const logoViewBox = '110.68 12 345.18 88.86';
 
 function AppLoading() {
   return (

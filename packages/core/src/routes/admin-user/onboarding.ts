@@ -28,6 +28,7 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
     '/users/:userId/onboarding-email',
     koaGuard({
       params: z.object({ userId: z.string() }),
+      body: z.object({ role: z.nativeEnum(TenantRole).optional() }),
       status: [204, 404, 422, 501],
     }),
     async (ctx, next) => {
@@ -48,6 +49,8 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
 
       const invitee = email.toLowerCase();
       const expiresAt = addDays(new Date(), onboardingTtlDays).getTime();
+      // The role the person gets in the tenant is chosen when the mail is sent.
+      const role = ctx.guard.body.role ?? TenantRole.Admin;
       const context = await libraries.organizationInvitations.getOrganizationInvitationTemplateContext(
         tenantOrganizationId,
         ctx.auth.id
@@ -59,7 +62,7 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
           invitee,
           organizationId: tenantOrganizationId,
           expiresAt,
-          organizationRoleIds: [getTenantRole(TenantRole.Admin).id],
+          organizationRoleIds: [getTenantRole(role).id],
         },
         false
       );

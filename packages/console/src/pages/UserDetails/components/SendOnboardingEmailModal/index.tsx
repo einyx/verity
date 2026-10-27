@@ -5,6 +5,7 @@ import ReactModal from 'react-modal';
 import useSWR from 'swr';
 
 import Button from '@/ds-components/Button';
+import DangerousRaw from '@/ds-components/DangerousRaw';
 import FormField from '@/ds-components/FormField';
 import ModalLayout from '@/ds-components/ModalLayout';
 import Select from '@/ds-components/Select';
@@ -58,7 +59,15 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
         }
       >
         <p>{email}</p>
-        <FormField title="tenant_members.roles">
+        <FormField
+          title="tenant_members.roles"
+          description={
+            <DangerousRaw>
+              <strong>user</strong> is a member of this console, <strong>admin</strong> manages
+              it, and <strong>default:admin</strong> manages the default tenant.
+            </DangerousRaw>
+          }
+        >
           <Select
             value={roleIds[0]}
             options={roleOptions}

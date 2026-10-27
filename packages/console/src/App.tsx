@@ -24,7 +24,6 @@ import 'react-color-palette/css';
 import 'react-day-picker/dist/style.css';
 
 import CloudAppRoutes from '@/cloud/AppRoutes';
-import TenantLanding from '@/cloud/pages/TenantLanding';
 import AppLoading from '@/components/AppLoading';
 import { isCloud } from '@/consts/env';
 import { cloudApi, getManagementApi, meApi } from '@/consts/resources';
@@ -60,14 +59,9 @@ function App() {
 
   const router = createBrowserRouter(
     [
-      // Cloud has no tenant in the root path: open the default tenant instead of reading the path as one.
-      ...(isCloud
-        ? [
-            { path: '/', element: <TenantLanding /> },
-            // Sign-in can return to `/console` under the base path, which is then matched as `/console/console`.
-            { path: '/console', element: <TenantLanding /> },
-          ]
-        : []),
+      // Cloud has no tenant in the root path: the Console opens the tenant of the signed-in user
+      // instead of reading the path as one. The route lives with the other cloud routes, inside
+      // the providers it needs.
       {
         path: '*',
         element: (

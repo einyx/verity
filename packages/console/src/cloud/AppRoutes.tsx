@@ -2,6 +2,7 @@ import { adminTenantId } from '@logto/schemas';
 import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import TenantLanding from '@/cloud/pages/TenantLanding';
 import DelayedSuspenseFallback from '@/components/DelayedSuspenseFallback';
 import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
 import { EnterpriseSubscriptionTabs } from '@/consts';
@@ -32,6 +33,13 @@ function AppRoutes() {
     <div className={styles.app}>
       <Suspense fallback={<DelayedSuspenseFallback />}>
         <Routes>
+          {/*
+           * The Console root opens the tenant of the signed-in user, so it needs the Logto
+           * context. It lives here, inside the providers, and not in the app's own routes.
+           */}
+          <Route path="/" element={<TenantLanding />} />
+          {/* Sign-in can return to `/console` under the base path, which is then matched as `/console/console`. */}
+          <Route path="console" element={<TenantLanding />} />
           <Route path={GlobalAnonymousRoute.Callback} element={<Callback />} />
           <Route path={GlobalAnonymousRoute.SocialDemoCallback} element={<SocialDemoCallback />} />
           <Route

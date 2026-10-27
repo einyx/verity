@@ -1,8 +1,8 @@
 @use '@/scss/underscore' as _;
 
 .sidebar {
-  // Matches the foundation-frontend sidebar: w-70 (280px), surface-layer-cp fill, border-r.
-  width: 280px;
+  // Matches the foundation-frontend sidebar: w-60 (240px), surface-layer-cp fill, border-r.
+  width: 240px;
   position: relative;
   min-height: 0;
   display: flex;
@@ -90,7 +90,7 @@
 }
 
 .skeleton {
-  width: 280px;
+  width: 240px;
   height: 100%;
   @include _.shimmering-animation;
 }

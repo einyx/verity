@@ -1,4 +1,5 @@
 import { builtInLanguageOptions as consoleBuiltInLanguageOptions } from '@logto/phrases';
+import { Theme } from '@logto/schemas';
 import { isKeyInObject, trySafe } from '@silverhand/essentials';
 import classNames from 'classnames';
 import { useEffect, useRef, useState } from 'react';
@@ -8,6 +9,7 @@ import ContactIcon from '@/assets/icons/contact-us.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
 import DocumentIcon from '@/assets/icons/document-nav-button.svg?react';
 import Globe from '@/assets/icons/globe.svg?react';
+import meshxWordmarkDark from '@/assets/images/meshx-wordmark-dark.png';
 import meshxWordmark from '@/assets/images/meshx-wordmark.png';
 import { githubReleasesLink } from '@/consts';
 import { isCloud } from '@/consts/env';
@@ -16,6 +18,7 @@ import Spacer from '@/ds-components/Spacer';
 import TextLink from '@/ds-components/TextLink';
 import useDocumentationUrl from '@/hooks/use-documentation-url';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
+import useTheme from '@/hooks/use-theme';
 import useUserPreferences from '@/hooks/use-user-preferences';
 import { onKeyDownHandler } from '@/utils/a11y';
 
@@ -38,6 +41,7 @@ type Props = {
 function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { navigate } = useTenantPathname();
+  const theme = useTheme();
 
   return (
     <div className={classNames(styles.topbar, className)}>
@@ -46,15 +50,20 @@ function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
         role="button"
         tabIndex={0}
         onClick={() => {
-          void navigate('/');
+          navigate('/');
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
-            void navigate('/');
+            navigate('/');
           }
         }}
       >
-        <img className={styles.wordmark} src={meshxWordmark} alt="meshX" />
+        {/* The wordmark is black on a light page, and white on a dark one. */}
+        <img
+          className={styles.wordmark}
+          src={theme === Theme.Dark ? meshxWordmarkDark : meshxWordmark}
+          alt="meshX"
+        />
       </div>
       {isCloud && !hideTenantSelector && <TenantSelector />}
       {!isCloud && !hideTitle && (

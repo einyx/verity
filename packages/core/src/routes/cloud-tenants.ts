@@ -2,6 +2,7 @@ import { buildOrganizationUrn } from '@logto/core-kit';
 import {
   adminTenantId,
   CloudScope,
+  defaultManagementApiAdminName,
   getCloudApiIndicator,
   getTenantOrganizationId,
   PredefinedScope,
@@ -193,10 +194,23 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
         limit 1
       `);
 
+    // A person invited into the console holds the Console access role in the admin tenant. They use
+    // that tenant, so it is in their list too: without it the Console opens a tenant they cannot
+    // read, and every page answers that it is forbidden.
+    const canUseTheConsole = await pool.maybeOne<{ userId: string }>(sql`
+        select ur.user_id as "userId"
+        from users_roles ur
+        join roles r on r.id = ur.role_id
+        where ur.user_id = ${userId}
+          and r.tenant_id = ${adminTenantId}
+          and r.name = ${defaultManagementApiAdminName}
+        limit 1
+      `);
+
     const rows = await pool.any<TenantRow>(sql`
         select id, name, tag, region_name as "regionName", created_at as "createdAt"
         from tenants
-        where id <> ${adminTenantId} or ${Boolean(operator)}
+        where id <> ${adminTenantId} or ${Boolean(operator) || Boolean(canUseTheConsole)}
         order by created_at
       `);
     ctx.body = rows.map((row) => toTenantResponse(row));

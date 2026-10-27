@@ -4,9 +4,11 @@ import useSWR from 'swr';
 
 import { cloudApi } from '@/consts';
 import Button from '@/ds-components/Button';
+import CardTitle from '@/ds-components/CardTitle';
 import DangerousRaw from '@/ds-components/DangerousRaw';
 import TextInput from '@/ds-components/TextInput';
 import { useStaticApi } from '@/hooks/use-api';
+import pageLayout from '@/scss/page-layout.module.scss';
 
 import styles from './index.module.scss';
 
@@ -74,60 +76,74 @@ function TenantAccess() {
   const unchanged = data?.domains.join(',') === domains.join(',');
 
   return (
-    <div className={styles.page}>
+    <div className={pageLayout.container}>
       <Helmet>
         <title>Tenant access</title>
       </Helmet>
-      <p className={styles.description}>
-        Users whose email is on this list can create and manage customer tenants. Anyone else is
-        refused. Enter a domain such as meshx.io, without the @.
-      </p>
+      <div className={pageLayout.headline}>
+        <CardTitle
+          title={<DangerousRaw>Tenant access</DangerousRaw>}
+          subtitle={
+            <DangerousRaw>
+              Users whose email is on this list can create and manage customer tenants. Anyone else
+              is refused. Enter a domain such as meshx.io, without the @.
+            </DangerousRaw>
+          }
+        />
+      </div>
+      <div className={styles.page}>
+        {error ? (
+          <p className={styles.error}>
+            Only operators of this admin tenant can change tenant access.
+          </p>
+        ) : (
+          <>
+            <ul className={styles.list}>
+              {domains.map((domain) => (
+                <li key={domain} className={styles.item}>
+                  <span>{domain}</span>
+                  <Button
+                    type="default"
+                    title={<DangerousRaw>Remove</DangerousRaw>}
+                    onClick={() => {
+                      setDomains(domains.filter((item) => item !== domain));
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
 
-      {error ? (
-        <p className={styles.error}>
-          Only operators of this admin tenant can change tenant access.
-        </p>
-      ) : (
-        <>
-          <ul className={styles.list}>
-            {domains.map((domain) => (
-              <li key={domain} className={styles.item}>
-                <span>{domain}</span>
-                <Button
-                  type="default"
-                  title={<DangerousRaw>Remove</DangerousRaw>}
-                  onClick={() => {
-                    setDomains(domains.filter((item) => item !== domain));
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
+            <div className={styles.row}>
+              <TextInput
+                value={draft}
+                placeholder="example.com"
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                }}
+              />
+              <Button
+                type="default"
+                title={<DangerousRaw>Add domain</DangerousRaw>}
+                onClick={add}
+              />
+            </div>
 
-          <div className={styles.row}>
-            <TextInput
-              value={draft}
-              placeholder="example.com"
-              onChange={(event) => {
-                setDraft(event.target.value);
-              }}
-            />
-            <Button type="default" title={<DangerousRaw>Add domain</DangerousRaw>} onClick={add} />
-          </div>
+            {invalid && <p className={styles.error}>Enter a domain such as meshx.io.</p>}
 
-          {invalid && <p className={styles.error}>Enter a domain such as meshx.io.</p>}
-
-          <div className={styles.row}>
-            <Button
-              type="primary"
-              title={<DangerousRaw>Save</DangerousRaw>}
-              disabled={saving || unchanged || domains.length === 0}
-              onClick={save}
-            />
-            {saveFailed && <p className={styles.error}>The list could not be saved. Try again.</p>}
-          </div>
-        </>
-      )}
+            <div className={styles.row}>
+              <Button
+                type="primary"
+                title={<DangerousRaw>Save</DangerousRaw>}
+                disabled={saving || unchanged || domains.length === 0}
+                onClick={save}
+              />
+              {saveFailed && (
+                <p className={styles.error}>The list could not be saved. Try again.</p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -20,11 +20,13 @@ import { useSidebarMenuItems } from './hook';
 import styles from './index.module.scss';
 import { getPath } from './utils';
 
-const defaultWidth = 280;
+const defaultWidth = 240;
 const collapsedWidth = 60;
 const minWidth = 200;
 const maxWidth = 480;
-const storageKey = 'console-sidebar-width';
+// The key carries a version: a width stored before the default was reduced is dropped, so the
+// sidebar starts at the new default instead of the old one.
+const storageKey = 'console-sidebar-width-v2';
 const collapsedStorageKey = 'console-sidebar-collapsed';
 
 const clampWidth = (value: number) => Math.min(maxWidth, Math.max(minWidth, Math.round(value)));

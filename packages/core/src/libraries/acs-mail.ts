@@ -33,7 +33,8 @@ export type AcsAttachment = {
   contentType: string;
   /** The file, base64 encoded. */
   contentInBase64: string;
-  nameInContentDisposition: string;
+  /** The name of the file in the mail, with its extension. */
+  name: string;
   /** The id the HTML refers to, as `cid:<contentId>`. */
   contentId: string;
 };
@@ -164,6 +165,8 @@ export const sendMail = async (
   });
 
   if (!response.ok) {
-    throw new Error(`ACS returned ${response.status}`);
+    // The body says which part of the mail ACS refused, so the failure can be read.
+    const detail = await response.text();
+    throw new Error(`ACS returned ${response.status}: ${detail.slice(0, 500)}`);
   }
 };

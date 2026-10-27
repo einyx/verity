@@ -1,13 +1,15 @@
 import { RoleType, type Role } from '@logto/schemas';
+import classNames from 'classnames';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 import useSWR from 'swr';
 
+import Button from '@/ds-components/Button';
 import FormField from '@/ds-components/FormField';
 import ModalLayout from '@/ds-components/ModalLayout';
 import Select from '@/ds-components/Select';
 import { type RequestError } from '@/hooks/use-api';
+import modalStyles from '@/scss/modal.module.scss';
 import { buildUrl } from '@/utils/url';
 
 type Props = {
@@ -23,7 +25,6 @@ type Props = {
  * link, and the roles are granted once it is out.
  */
 function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm }: Props) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const [roleIds, setRoleIds] = useState<string[]>([]);
   const { data } = useSWR<[Role[], number], RequestError>(
     buildUrl('api/roles', { page: '1', page_size: '20', type: RoleType.User })
@@ -31,32 +32,29 @@ function SendOnboardingEmailModal({ isOpen, email, isLoading, onClose, onConfirm
   const roleOptions = (data?.[0] ?? []).map((role) => ({ value: role.id, title: role.name }));
 
   return (
-    <ReactModal isOpen={isOpen} className="modal-container">
+    <ReactModal
+      shouldCloseOnEsc
+      isOpen={isOpen}
+      className={classNames(modalStyles.content)}
+      overlayClassName={classNames(modalStyles.overlay)}
+      onRequestClose={onClose}
+    >
       <ModalLayout
         title="user_details.onboarding_email_title"
         subtitle="user_details.onboarding_email_description"
         onClose={onClose}
         footer={
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="button plain"
-              disabled={isLoading}
-              onClick={onClose}
-            >
-              {t('general.cancel')}
-            </button>
-            <button
-              type="button"
-              className="button primary"
+          <>
+            <Button title="general.cancel" onClick={onClose} />
+            <Button
+              type="primary"
+              title="user_details.onboarding_email_send"
               disabled={isLoading}
               onClick={() => {
                 onConfirm(roleIds);
               }}
-            >
-              {t('user_details.onboarding_email_send')}
-            </button>
-          </div>
+            />
+          </>
         }
       >
         <p>{email}</p>

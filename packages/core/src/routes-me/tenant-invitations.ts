@@ -189,7 +189,7 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
               {
                 contentType: 'image/png',
                 contentInBase64: meshxLogoBase64,
-                nameInContentDisposition: 'meshx-logo',
+                name: 'meshx-logo.png',
                 contentId: 'meshx-logo',
               },
             ],

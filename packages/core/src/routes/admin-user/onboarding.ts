@@ -100,7 +100,7 @@ export default function adminUserOnboardingRoutes<T extends ManagementApiRouter>
               {
                 contentType: 'image/png',
                 contentInBase64: meshxLogoBase64,
-                nameInContentDisposition: 'meshx-logo',
+                name: 'meshx-logo.png',
                 contentId: 'meshx-logo',
               },
             ],

@@ -289,20 +289,43 @@
           (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
         );
 
-        if (element.children.length === 0) {
-          element.dataset.cmsCopy = `${key}-${++index}`;
+        // A line break splits the words into sentences, so each one is marked on its own. The
+        // wrappers are inline, so the page keeps its shape.
+        if (element.querySelector(':scope > br')) {
+          for (const node of words) {
+            const wrapper = document.createElement('span');
+            wrapper.dataset.cmsCopy = `${key}-${++index}`;
+            element.insertBefore(wrapper, node);
+            wrapper.append(node);
+          }
           continue;
         }
 
-        // The words next to a graphic or a line break are wrapped, so the graphic stays when the
-        // copy is replaced.
-        for (const node of words) {
-          const wrapper = document.createElement('span');
-          wrapper.dataset.cmsCopy = `${key}-${++index}`;
-          element.insertBefore(wrapper, node);
-          wrapper.append(node);
-        }
+        element.dataset.cmsCopy = `${key}-${++index}`;
       }
+    }
+  };
+
+  // The words are replaced, the graphics stay.
+  const setWords = (element, value) => {
+    // The words of an element inside it are part of the value, so they go with it.
+    for (const child of [...element.children]) {
+      if (child.textContent?.trim()) {
+        child.remove();
+      }
+    }
+
+    const words = [...element.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE);
+
+    if (words.length === 0) {
+      element.append(document.createTextNode(value));
+      return;
+    }
+
+    words[0].nodeValue = value;
+
+    for (const node of words.slice(1)) {
+      node.remove();
     }
   };
 
@@ -315,9 +338,12 @@
       renderCustomSections(doc.customSections);
     }
 
+    // The copy that no structured field covers is marked on the published page too, so the words
+    // the editor changed show up there.
+    markEditableCopy();
+
     if (isPreview) {
       // A section added in the editor brings its own copy, which is editable in place too.
-      markEditableCopy();
       attachEditableFields();
     }
 
@@ -343,7 +369,7 @@
       // Overrides are per language. The page's language is set by locale.js, so it is read here.
       const value = doc.copy?.[el.dataset.cmsCopy]?.[pageLanguage()];
       if (typeof value === 'string') {
-        el.textContent = value;
+        setWords(el, value);
       }
     }
 
@@ -588,8 +614,11 @@
     });
     }
   }
+  // The copy that no structured field covers is marked on the published page too, so the words the
+  // editor changed show up there.
+  markEditableCopy();
+
   if (isPreview) {
-    markEditableCopy();
     attachEditableFields();
   }
 

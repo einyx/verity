@@ -268,7 +268,7 @@ it('makes the copy that no structured field covers editable in place', () => {
   expect(cardTitle?.dataset.cmsCopy).toMatch(/^products-\d+$/);
 });
 
-it('wraps the words that sit next to a graphic, so the graphic stays', () => {
+it('splits the words at a line break, so the page keeps its shape', () => {
   const lede = document.querySelector<HTMLElement>('#top p.mt-6');
   const words = lede?.querySelector<HTMLElement>('span[data-cms-copy]');
 
@@ -277,10 +277,35 @@ it('wraps the words that sit next to a graphic, so the graphic stays', () => {
   expect(lede?.querySelector('br')).not.toBeNull();
 });
 
+it('keeps the graphic next to the words when the copy is replaced', () => {
+  const badge = document.querySelector<HTMLElement>('#industries [data-slot="badge"]');
+  const id = badge?.dataset.cmsCopy ?? '';
+
+  sendDraftDocument({ copy: { [id]: { en: 'Soon' } } });
+
+  expect(badge?.textContent).toBe('Soon');
+  // The dot of the badge is a graphic, not a word.
+  expect(badge?.querySelector('span[aria-hidden="true"]')).not.toBeNull();
+});
+
 it('applies a stored copy override to the marked text', () => {
   const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
   const id = cardTitle?.dataset.cmsCopy ?? '';
 
+  sendDraftDocument({ copy: { [id]: { en: 'Edited card title' } } });
+
+  expect(cardTitle?.textContent).toBe('Edited card title');
+});
+
+it('applies the stored copy on the published page too', () => {
+  const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
+  const id = cardTitle?.dataset.cmsCopy ?? '';
+
+  // The published page is the same page without the preview flag. It reads the published document
+  // for itself, and that request is not what this test is about.
+  window.history.replaceState({}, '', '/');
+  window.fetch = jest.fn(async () => new Response('{}')) as unknown as typeof fetch;
+  window.eval(cmsSource);
   sendDraftDocument({ copy: { [id]: { en: 'Edited card title' } } });
 
   expect(cardTitle?.textContent).toBe('Edited card title');

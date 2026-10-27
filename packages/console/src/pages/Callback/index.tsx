@@ -45,6 +45,33 @@ function Callback() {
 
   const { error } = useHandleSignInCallback(onSignedIn);
 
+  // The SDK only exchanges the code when the client is not signed in yet. A browser that still
+  // holds somebody else's session would leave the code unexchanged, so that session goes and the
+  // page starts over: the code belongs to the person the sign-in named.
+  useEffect(() => {
+    if (!hasCode) {
+      return;
+    }
+
+    const startOver = async () => {
+      await clearAllTokens();
+      window.location.reload();
+    };
+
+    const check = async () => {
+      try {
+        await getIdTokenClaims();
+      } catch {
+        // No session: the code is exchanged by the SDK.
+        return;
+      }
+
+      await startOver();
+    };
+
+    void check();
+  }, [clearAllTokens, getIdTokenClaims, hasCode]);
+
   // The SDK stores the tokens before it tells the page, and it can stop right there: the token is
   // then the only proof that the sign-in happened, and the page would wait for ever. The token is
   // the proof, so the page goes on its way with or without the SDK.
@@ -54,7 +81,7 @@ function Callback() {
     }
 
     const check = async (attempt: number): Promise<void> => {
-      const claims = await getIdTokenClaims();
+      const claims = await getIdTokenClaims().catch(() => null);
 
       if (claims) {
         if (!left.current) {

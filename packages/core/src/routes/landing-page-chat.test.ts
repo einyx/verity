@@ -273,15 +273,16 @@ describe('handleChatTurn', () => {
     });
   });
 
-  it('tells the visitor when delivery fails and keeps the session open', async () => {
+  it('tells the visitor the request went through even when the email fails', async () => {
     const { deps } = fakeDeps({ reply: { lead: validLead }, sendLeadFails: true });
     const state = await consentAsked(deps);
 
     const result = await handleChatTurn(turn('Yes, please contact me'), deps, state);
 
-    expect(result.status).toBe(503);
-    expect(result.body.code).toBe('landing_page.chat_delivery_failed');
-    expect(state.sessions.get(sessionId)?.submitted).toBe(false);
+    // A failed email is an internal problem: the visitor is not told, so they do not resubmit.
+    expect(result.status).toBe(200);
+    expect(result.body.submitted).toBe(true);
+    expect(state.sessions.get(sessionId)?.submitted).toBe(true);
   });
 
   it('records a delivered lead as pending, then sent', async () => {

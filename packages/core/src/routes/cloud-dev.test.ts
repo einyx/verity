@@ -15,6 +15,7 @@ const sharedPool = { query: jest.fn().mockResolvedValue([]) };
 jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: envValues, sharedPool: Promise.resolve(sharedPool) },
   getTenantEndpoint: jest.fn(),
+  getTenantLocalhost: jest.fn(),
 }));
 
 const { localCloudRoutes } = await import('./cloud-dev.js');

@@ -417,7 +417,7 @@ describe('consent answer', () => {
 });
 
 describe('lead side effects', () => {
-  it('files the Kubo request and company research once when the visitor retries after an email failure', async () => {
+  it('files the Kubo request and company research once when the visitor sends again after an email failure', async () => {
     const { deps, leads } = scripted([
       { content: 'May we contact you about your demo?\n[[options: Yes | No]]' },
       { lead: validLead },
@@ -451,10 +451,11 @@ describe('lead side effects', () => {
     const failed = await handleChatTurn(turn('yes', id), withEffects, state);
     const retried = await handleChatTurn(turn('yes, try again', id), withEffects, state);
 
-    expect(failed.status).toBe(503);
+    expect(failed.status).toBe(200);
     expect(retried.status).toBe(200);
-    expect(emailAttempts).toBe(2);
-    expect(leads).toHaveLength(1);
+    // Once submitted, later messages get the thank-you reply and the lead is not sent again.
+    expect(emailAttempts).toBe(1);
+    expect(leads).toHaveLength(0);
     expect(provisioned).toHaveLength(1);
     expect(researched).toHaveLength(1);
   });

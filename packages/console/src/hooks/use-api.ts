@@ -7,7 +7,6 @@ import {
 import { type LogtoErrorCode } from '@logto/phrases';
 import { useLogto } from '@logto/react';
 import {
-  adminTenantId,
   getTenantOrganizationId,
   type RequestErrorBody,
   getManagementApiResourceIndicator,
@@ -207,12 +206,8 @@ const useApi = (props: Omit<StaticApiProps, 'prefixUrl' | 'resourceIndicator'> =
       useCloudProxy
         ? {
             prefixUrl: appendPath(new URL(window.location.origin), 'm', currentTenantId),
-            // The admin tenant is reached with its own Management API token. Its organization token has the
-            // organization as audience, which its API does not accept. Other tenants keep the organization token.
-            resourceIndicator:
-              currentTenantId === adminTenantId
-                ? getManagementApiResourceIndicator(currentTenantId)
-                : buildOrganizationUrn(getTenantOrganizationId(currentTenantId)),
+            // Cloud APIs accept the tenant organization token and check membership server-side.
+            resourceIndicator: buildOrganizationUrn(getTenantOrganizationId(currentTenantId)),
           }
         : {
             prefixUrl: tenantEndpoint,

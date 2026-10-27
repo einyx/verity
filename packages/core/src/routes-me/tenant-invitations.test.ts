@@ -1,15 +1,16 @@
+/* eslint-disable max-lines -- Tenant invitation route fixtures and regression cases stay together. */
 import {
   OrganizationInvitationStatus,
   TenantRole,
+  adminTenantId,
   defaultTenantId,
   getTenantOrganizationId,
 } from '@logto/schemas';
 import { createMockUtils, pickDefault } from '@logto/shared/esm';
 
-import { type AcsMail, type AcsMailConfig } from '#src/libraries/acs-mail.js';
-
 import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
+import { type AcsMail, type AcsMailConfig } from '#src/libraries/acs-mail.js';
 import koaErrorHandler from '#src/middleware/koa-error-handler.js';
 import koaI18next from '#src/middleware/koa-i18next.js';
 import type Libraries from '#src/tenants/Libraries.js';
@@ -23,7 +24,7 @@ const { mockEsm, mockEsmWithActual } = createMockUtils(jest);
 /** The sign-in link the mail carries, in the HTML body or the plain text. */
 const linkFrom = (mail: unknown): string => {
   const body = JSON.stringify(mail);
-  const match = body.match(/https?:[^"\\ ]*one_time_token=[^"\\ ]*/);
+  const match = /https?:[^ "\\]*one_time_token=[^ "\\]*/.exec(body);
 
   return match?.[0] ?? '';
 };
@@ -93,7 +94,8 @@ const findUserById = jest.fn(async (id: string) => ({
 }));
 
 const { sendMail } = await mockEsmWithActual('#src/libraries/acs-mail.js', () => ({
-  sendMail: jest.fn(async (_mail: AcsMail, _config: AcsMailConfig) => undefined),
+  // eslint-disable-next-line unicorn/no-useless-undefined -- Jest requires the resolved value argument for a void promise.
+  sendMail: jest.fn<Promise<void>, [AcsMail, AcsMailConfig]>().mockResolvedValue(undefined),
 }));
 
 const key = Buffer.from('test-access-key').toString('base64');
@@ -376,7 +378,10 @@ describe('me tenant invitation routes', () => {
 
       expect(response.status).toBe(204);
       expect(insertOneTimeToken).toHaveBeenCalledTimes(1);
-      expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'foo@example.com' }), expect.anything());
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'foo@example.com' }),
+        expect.anything()
+      );
 
       const [issuedToken] = insertOneTimeToken.mock.calls[0] ?? [];
       expect(revokeActiveOneTimeTokensByEmail).toHaveBeenCalledWith(
@@ -485,8 +490,18 @@ describe('me tenant invitation routes', () => {
 
   it('allows admin-tenant invitations on Cloud (operators are provisioned on the instance)', async () => {
     Reflect.set(EnvSet.values, 'isCloud', true);
+    // The mock tenant has its own id, so run this request as the admin tenant the guard allows.
+    const previousId = tenantContext.id;
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Switch the mock tenant for this request.
+    tenantContext.id = adminTenantId;
 
-    const response = await request.get('/tenant/invitations');
-    expect(response.status).not.toBe(501);
+    try {
+      const response = await request.get('/tenant/invitations');
+      expect(response.status).not.toBe(501);
+    } finally {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Restore the mock tenant.
+      tenantContext.id = previousId;
+    }
   });
 });
+/* eslint-enable max-lines */

@@ -13,11 +13,19 @@ const { jest } = import.meta;
 const updatedAt = new Date('2026-10-25T10:00:00.000Z');
 const staleUpdatedAt = '2026-10-25T09:00:00.000Z';
 
+const pageRow = (publishedVersion: number): PageRowFixture => ({
+  draft: defaultLandingPageContent,
+  published: defaultLandingPageContent,
+  publishedVersion,
+  updatedAt: updatedAt.getTime(),
+});
+
+// Shaped like the row the driver returns: the timestamp comes back as epoch milliseconds.
 type PageRowFixture = {
   draft: unknown;
   published: unknown;
-  publishedVersion: number | undefined;
-  updatedAt: Date;
+  publishedVersion: number;
+  updatedAt: number;
 };
 const maybeOne = jest.fn<Promise<PageRowFixture>, Parameters<() => Promise<PageRowFixture>>>();
 const query = jest.fn();
@@ -79,11 +87,14 @@ const authedRequest = () => ({
 });
 
 beforeEach(() => {
-  maybeOne.mockClear();
-  query.mockClear();
-  one.mockClear();
-  connectionQuery.mockClear();
+  // Reset rather than clear, so queued one-off values from an earlier test cannot leak into the next.
+  maybeOne.mockReset();
+  query.mockReset();
+  one.mockReset();
+  connectionQuery.mockReset();
   transaction.mockClear();
+  maybeOne.mockResolvedValue(pageRow(1));
+  one.mockResolvedValue({ latest: 1 });
 });
 
 describe('landing page publish concurrency', () => {
@@ -107,6 +118,8 @@ describe('landing page publish concurrency', () => {
   });
 
   it('publishes when the editor saw the current draft', async () => {
+    // The route reads the page before the transaction and again after it.
+    maybeOne.mockResolvedValueOnce(pageRow(1)).mockResolvedValueOnce(pageRow(2));
     const response = await authedRequest()
       .post('/api/landing-page/publish')
       .send({ expectedUpdatedAt: updatedAt.toISOString() })
@@ -117,6 +130,7 @@ describe('landing page publish concurrency', () => {
   });
 
   it('publishes without a precondition, so older clients keep working', async () => {
+    maybeOne.mockResolvedValueOnce(pageRow(1)).mockResolvedValueOnce(pageRow(2));
     const response = await authedRequest().post('/api/landing-page/publish').expect(200);
 
     expect(response.body.publishedVersion).toBe(2);

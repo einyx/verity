@@ -1,8 +1,12 @@
+import { useLogto } from '@logto/react';
 import { renderHook } from '@testing-library/react';
+import ky, { type NormalizedOptions } from 'ky';
+import { useContext, useMemo, type ReactNode } from 'react';
 
-import { resetMockEnv, type EnvTestUtils } from '@/test-utils/env';
+import { TenantsContext } from '@/contexts/TenantsProvider';
+import { mockEnv, resetMockEnv, type EnvTestUtils } from '@/test-utils/env';
 
-import { useGlobalRequestErrorHandler } from './use-api';
+import useApi, { useGlobalRequestErrorHandler } from './use-api';
 
 const mockSignOut = jest.fn();
 const mockToastError = jest.fn();
@@ -45,4 +49,39 @@ describe('useGlobalRequestErrorHandler', () => {
       expect.stringContaining('Insufficient permissions.')
     );
   });
+});
+
+function AdminTenantWrapper({ children }: { readonly children: ReactNode }) {
+  const tenants = useContext(TenantsContext);
+  const value = useMemo(() => ({ ...tenants, currentTenantId: 'admin' }), [tenants]);
+  return <TenantsContext.Provider value={value}>{children}</TenantsContext.Provider>;
+}
+
+it('uses the tenant organization token for the admin tenant API', async () => {
+  mockEnv({ isCloud: true });
+  const getOrganizationToken = jest.fn().mockResolvedValue('tenant-token');
+  const getAccessToken = jest.fn().mockResolvedValue('management-token');
+  jest.mocked(useLogto).mockReturnValue({
+    isAuthenticated: true,
+    getOrganizationToken,
+    getAccessToken,
+  } as unknown as ReturnType<typeof useLogto>);
+  const create = jest.spyOn(ky, 'create');
+
+  renderHook(() => useApi(), {
+    wrapper: AdminTenantWrapper,
+  });
+
+  const beforeRequest = create.mock.calls.at(-1)?.[0]?.hooks?.beforeRequest?.[0];
+  const setHeader = jest.fn();
+  await beforeRequest?.(
+    { headers: { set: setHeader } } as unknown as Request,
+    {} as NormalizedOptions,
+    { retryCount: 0 }
+  );
+  expect(getOrganizationToken).toHaveBeenCalledWith('t-admin');
+  expect(getAccessToken).not.toHaveBeenCalled();
+  expect(setHeader).toHaveBeenCalledWith('Authorization', 'Bearer tenant-token');
+  create.mockRestore();
+  resetMockEnv();
 });

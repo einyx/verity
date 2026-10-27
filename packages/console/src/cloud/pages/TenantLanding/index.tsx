@@ -8,6 +8,8 @@ import {
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import AppLoading from '@/components/AppLoading';
+
 /**
  * Opens the tenant the signed-in user belongs to, so they land somewhere they can use.
  *
@@ -16,13 +18,16 @@ import { Navigate } from 'react-router-dom';
  * and the default tenant is the last fallback.
  */
 function TenantLanding() {
-  const { getIdTokenClaims } = useLogto();
+  const { getIdTokenClaims, isAuthenticated, isLoading } = useLogto();
   const [tenantId, setTenantId] = useState<string>();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     const load = async () => {
-      // A visitor who is not signed in yet has no token, and reading one throws.
-      const claims = await getIdTokenClaims().catch(() => null);
+      const claims = await getIdTokenClaims();
       const roles = claims?.roles;
 
       if (Array.isArray(roles) && roles.includes(defaultManagementApiAdminName)) {
@@ -46,9 +51,17 @@ function TenantLanding() {
     };
 
     void load();
-  }, [getIdTokenClaims]);
+  }, [getIdTokenClaims, isAuthenticated]);
 
-  return <Navigate replace to={`/${tenantId ?? defaultTenantId}`} />;
+  if (tenantId) {
+    return <Navigate replace to={`/${tenantId}`} />;
+  }
+
+  if (isLoading || isAuthenticated) {
+    return <AppLoading />;
+  }
+
+  return <Navigate replace to={`/${defaultTenantId}`} />;
 }
 
 export default TenantLanding;

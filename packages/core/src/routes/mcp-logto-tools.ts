@@ -1,6 +1,7 @@
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { kuboPortalUrl } from './kubo-portal-url.js';
+import { toolResultFor } from './mcp-logto-response.js';
 
 // Tools for managing this Logto tenant over MCP. Each tool is one Management API call, made with
 // the caller's own bearer token, so the Management API's checks decide what each caller can do.
@@ -112,6 +113,20 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
     path: '/users/{id}',
     properties: { id: idProperty },
     required: ['id'],
+  },
+  {
+    name: 'get_audit_logs',
+    description:
+      'List the audit logs of this tenant, newest first: sign-ins, token exchanges, profile changes, and admin actions, each with its payload.',
+    path: '/logs',
+    properties: pagingProperties,
+  },
+  {
+    name: 'list_connectors',
+    description:
+      'List the connectors configured in this tenant: social sign-in, enterprise SSO, and email or SMS providers, without their secrets.',
+    path: '/connectors',
+    properties: pagingProperties,
   },
   {
     // Only the sign-in fields the admin can see in the console. Captcha, sentinel and custom
@@ -298,23 +313,10 @@ export const sendLogtoRequest = async (
     });
     const body = await response.text();
 
-    if (response.ok && tool.project) {
-      // A projection that cannot read the body returns a tool error, not the raw response.
-      try {
-        const projected = tool.project(JSON.parse(body));
-
-        return { content: [{ type: 'text', text: JSON.stringify(projected) }], isError: false };
-      } catch {
-        return {
-          content: [{ type: 'text', text: 'The response could not be read.' }],
-          isError: true,
-        };
-      }
-    }
-
-    return { content: [{ type: 'text', text: body }], isError: !response.ok };
+    return toolResultFor(tool, response, body);
   } catch {
-    return {
+    // Annotated so the literal is checked against the MCP result type, not returned raw.
+    const unreachable: CallToolResult = {
       content: [
         {
           type: 'text',
@@ -323,5 +325,7 @@ export const sendLogtoRequest = async (
       ],
       isError: true,
     };
+
+    return unreachable;
   }
 };

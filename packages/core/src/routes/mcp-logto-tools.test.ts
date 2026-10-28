@@ -91,6 +91,41 @@ describe('callLogtoTool', () => {
     expect(result).toEqual({ content: [{ type: 'text', text: '{"id":"app-1"}' }], isError: false });
   });
 
+  it('attaches the Management API total count to a list response', async () => {
+    const fetchImpl = jest.fn(
+      async () => new Response('[{"id":"u1"}]', { status: 200, headers: { 'x-total-count': '9' } })
+    );
+
+    const result = await callLogtoTool(
+      tool('list_users'),
+      {},
+      'caller-token',
+      apiBase,
+      fetchImpl as unknown as typeof fetch
+    );
+
+    // The model cannot count a single page, so the API's total travels with the page.
+    const text = (result.content as Array<{ type: string; text: string }>)[0]?.text ?? '{}';
+    const body = JSON.parse(text) as { items?: Array<{ id: string }>; totalCount?: number };
+
+    expect(body.items).toEqual([{ id: 'u1' }]);
+    expect(body.totalCount).toBe(9);
+  });
+
+  it('keeps the raw body when there is no total-count header', async () => {
+    const fetchImpl = jest.fn(async () => new Response('{"id":"app-1"}', { status: 200 }));
+
+    const result = await callLogtoTool(
+      tool('get_application'),
+      { id: 'app-1' },
+      'caller-token',
+      apiBase,
+      fetchImpl as unknown as typeof fetch
+    );
+
+    expect(result).toEqual({ content: [{ type: 'text', text: '{"id":"app-1"}' }], isError: false });
+  });
+
   it('reports a refused call as an error result with the Management API body', async () => {
     const fetchImpl = jest.fn(async () => new Response('{"message":"forbidden"}', { status: 403 }));
 
@@ -121,6 +156,15 @@ describe('callLogtoTool', () => {
 
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
+  });
+});
+
+describe('deep read coverage', () => {
+  it('offers audit logs and connectors as read tools', () => {
+    const names = enabledLogtoMcpTools(false).map(({ name }) => name);
+
+    expect(names).toContain('get_audit_logs');
+    expect(names).toContain('list_connectors');
   });
 });
 

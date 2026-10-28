@@ -39,8 +39,8 @@ describe('buildSystemPrompt', () => {
     }
 
     // The capability answer must also say what the assistant cannot do yet.
-    expect(prompt).toContain('changing settings');
-    expect(prompt).toContain('configuring MFA');
+    expect(prompt).toContain('changing tenant settings');
+    expect(prompt).toContain('deleting anything');
   });
 
   it('says it cannot read the tenant when no tools are offered', () => {

@@ -63,7 +63,15 @@ export const stackOptions: StackOption[] = [
     exclude: faiExcluded,
     available: true,
   },
-  { id: 'v1', title: 'V1', description: 'Not available yet.', exclude: [], available: false },
+  {
+    id: 'v1',
+    title: 'V1',
+    description:
+      'The v1.ai demo: Vite client and Node server on Postgres. Needs the v1-demo-secrets Secret in the tenant namespace before it deploys.',
+    template: 'v1',
+    exclude: [],
+    available: true,
+  },
 ];
 
 // Every component a stack can contain. A stack's card lists the ones its `exclude` does not remove.
@@ -105,5 +113,5 @@ export const templateHighlights: Record<
   foundation: { tags: ['Full platform', 'High availability', 'Trino catalog'], recommended: true },
   dai: { tags: ['AI dashboards', 'Smaller setup'] },
   fai: { tags: ['foundation-ai only', 'Smaller setup'] },
-  v1: { tags: [] },
+  v1: { tags: ['v1.ai demo', 'Standalone', 'Postgres'] },
 };

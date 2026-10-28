@@ -14,6 +14,9 @@ export default function useAdminConsoleTour() {
   const { currentTenantId } = useContext(TenantsContext);
   const { user, isLoaded, customData, updateCustomData } = useCurrentUser();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console.admin_console_tour' });
+  // The tour assembles keys dynamically (`${key}.title` across three sections), which the
+  // generated phrases key union cannot express; every lookup here returns display text.
+  const translate: (key: string) => string = t;
   const dismissedUser = useRef('');
   const userId = user?.id;
   const isDone = customData?.consoleTourDone === true;
@@ -39,8 +42,8 @@ export default function useAdminConsoleTour() {
             {
               element,
               popover: {
-                title: t(`${key}.title`),
-                description: t(`${key}.description`),
+                title: translate(`${key}.title`),
+                description: translate(`${key}.description`),
                 side: 'right' as const,
               },
             },
@@ -57,13 +60,18 @@ export default function useAdminConsoleTour() {
       animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
       disableActiveInteraction: true,
       showProgress: true,
-      nextBtnText: t('next'),
-      prevBtnText: t('previous'),
-      doneBtnText: t('done'),
-      closeBtnLabel: t('close'),
+      nextBtnText: translate('next'),
+      prevBtnText: translate('previous'),
+      doneBtnText: translate('done'),
+      closeBtnLabel: translate('close'),
       popoverClass: styles.popover,
       steps: [
-        { popover: { title: t('welcome.title'), description: t('welcome.description') } },
+        {
+          popover: {
+            title: translate('welcome.title'),
+            description: translate('welcome.description'),
+          },
+        },
         ...highlights,
       ],
       onDestroyed: () => {
@@ -82,5 +90,5 @@ export default function useAdminConsoleTour() {
       lifetime.abort();
       tour.destroy();
     };
-  }, [currentTenantId, isLoaded, userId, isDone, t, updateCustomData]);
+  }, [currentTenantId, isLoaded, userId, isDone, t, translate, updateCustomData]);
 }

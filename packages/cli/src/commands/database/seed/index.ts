@@ -43,13 +43,11 @@ export const seedByPool = async (
       );
     }
 
-    const tableInfo = await oraPromise(createTables(connection, encryptBaseRole), {
+    // The generated base-role password is intentionally not printed; anyone who needs it
+    // should rotate the role's credentials through their own secret management.
+    await oraPromise(createTables(connection, encryptBaseRole), {
       text: 'Create tables',
     });
-
-    if (tableInfo.password.length > 0) {
-      consoleLog.info('base role password:', tableInfo.password);
-    }
 
     await seedTables(connection, latestTimestamp, cloud, { disablePwnedPasswordCheck });
 

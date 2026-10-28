@@ -128,3 +128,7 @@ authState.json
 # console auto generated files
 /packages/console/src/consts/jwt-customizer-type-definition.ts
 packages/connectors/connector-whatsapp/test-send.mjs
+
+# local security tooling artifacts
+.cyberstrike/
+session-*.md

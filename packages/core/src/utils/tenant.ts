@@ -80,7 +80,7 @@ export const getConsoleRedirectUrl = (url: URL): URL | undefined => {
 };
 
 const matchDomainBasedTenantId = (pattern: URL, url: URL) => {
-  const toMatch = pattern.hostname.replace('*', '([^.]*)');
+  const toMatch = pattern.hostname.replaceAll('*', '([^.]*)');
   const matchedId = new RegExp(toMatch).exec(url.hostname)?.[1];
 
   if (!matchedId || matchedId === '*') {

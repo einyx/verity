@@ -31,7 +31,7 @@ const stampAsset = async (asset) => {
     .update(await readFile(path.join(source, asset)))
     .digest('hex')
     .slice(0, 10);
-  const pattern = new RegExp(`(/console/landing/${asset.replace(/\./g, '\\.')})(\\?v=[^"']*)?(["'])`, 'g');
+  const pattern = new RegExp(`(/console/landing/${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(\\?v=[^"']*)?(["'])`, 'g');
   let found = 0;
 
   for (const file of referencing) {

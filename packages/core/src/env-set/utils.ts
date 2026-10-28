@@ -30,7 +30,7 @@ export const getTenantEndpoint = (
 
   const tenantUrl = new URL(urlSet.endpoint);
   // eslint-disable-next-line @silverhand/fp/no-mutation
-  tenantUrl.hostname = tenantUrl.hostname.replace('*', id);
+  tenantUrl.hostname = tenantUrl.hostname.replaceAll('*', () => id);
 
   return tenantUrl;
 };

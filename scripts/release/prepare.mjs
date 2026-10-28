@@ -35,7 +35,7 @@ const repo = git('remote', 'get-url', 'origin')
   .replace(/\.git$/, '');
 
 const changelog = read('packages/core/CHANGELOG.md');
-const escapedVersion = version.replaceAll('.', '\\.');
+const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const changelogSection =
   new RegExp(`## ${escapedVersion}\\n([\\s\\S]*?)(?=\\n## |$)`).exec(changelog)?.[1]?.trim() ?? '';
 

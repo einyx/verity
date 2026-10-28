@@ -163,9 +163,9 @@ export const htmlToText = (html: string): string =>
     .replaceAll(/<!--[\S\s]*?-->/g, ' ')
     .replaceAll(/<[^>]+>/g, ' ')
     .replaceAll('&nbsp;', ' ')
-    .replaceAll('&amp;', '&')
     .replaceAll(/&#39;|&apos;/g, "'")
     .replaceAll('&quot;', '"')
+    .replaceAll('&amp;', '&')
     .replaceAll(/\s+/g, ' ')
     .trim()
     .slice(0, maxTextChars);

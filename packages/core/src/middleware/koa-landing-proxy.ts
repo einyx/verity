@@ -39,7 +39,15 @@ export default function koaLandingProxy(upstream: string): MiddlewareType {
       return next();
     }
 
-    const response = await fetch(new URL(ctx.originalUrl, origin), {
+    const resolved = new URL(ctx.originalUrl, origin);
+
+    // A user-controlled original URL can be absolute (`https://…`, `//host/…`); never fetch
+    // anything outside the configured upstream origin.
+    if (resolved.origin !== origin.origin) {
+      return next();
+    }
+
+    const response = await fetch(resolved, {
       method: ctx.method,
       redirect: 'manual',
     });

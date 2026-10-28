@@ -1217,6 +1217,18 @@
   }
 }
 
+.previewDevices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  button[aria-pressed='true'] {
+    background: #292524;
+    color: #fff;
+    border-color: #292524;
+  }
+}
+
 .previewActionsButton {
   position: absolute;
   top: 10px;
@@ -1237,15 +1249,18 @@
 
 .liveCanvasBody {
   display: flex;
-  container-type: inline-size;
   align-items: flex-start;
   min-width: 0;
+  overflow-x: auto;
   padding: 16px;
   background: #eef0f3;
 
   iframe {
-    flex: 1;
+    flex: none;
     min-width: 0;
+    max-width: none;
+    box-sizing: content-box;
+    margin-inline: auto;
     height: 68vh;
     min-height: 480px;
     border-radius: 4px;
@@ -1314,9 +1329,6 @@
 
   .liveCanvasBody {
     flex-direction: column;
-    /* The preview is a real page, which is wider than a phone. The frame keeps a phone's width and
-       the canvas scrolls sideways, so the page is shown whole rather than squeezed into a sliver. */
-    overflow-x: auto;
   }
 
   .elementProperties {
@@ -1324,12 +1336,6 @@
     flex-basis: auto;
     width: 100%;
     box-sizing: border-box;
-  }
-
-  .liveCanvasBody iframe {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
   }
 
   .liveCanvas {
@@ -1451,17 +1457,5 @@
     &[data-panel='properties'] > .editorSections {
       display: none;
     }
-  }
-}
-
-/* Preserve a real phone viewport instead of clipping the site's typography when editor chrome
-   leaves less than 390px. Only the embedded page scales; editing controls remain full size. */
-@container (max-width: 389px) {
-  .liveCanvasBody iframe {
-    flex: none;
-    width: 390px;
-    max-width: none;
-    // Leave typed CSS division to the browser, rather than evaluating it in Sass.
-    zoom: unquote('calc(100cqw / 390px)');
   }
 }

@@ -14,6 +14,7 @@ export { setAtPath } from './LandingElementModel';
  * the editor, so the page is edited where it is shown.
  */
 function LandingPreviewFrame({
+  width,
   draft,
   locale,
   activeSection,
@@ -25,6 +26,7 @@ function LandingPreviewFrame({
   onElementEdit,
   onSectionAction,
 }: {
+  readonly width: number;
   readonly draft: unknown;
   /** The language the preview shows, and the one that edits are saved under. */
   readonly locale: string;
@@ -143,6 +145,7 @@ function LandingPreviewFrame({
       <iframe
         ref={frameRef}
         className={styles.pageFrame}
+        style={{ width }}
         src={`${window.location.origin}/console/landing-preview?cmsPreview=1`}
         title="Landing page preview"
         onLoad={(event) => {

@@ -142,6 +142,7 @@
   "dependencies": {
     "@assistant-ui/react": "0.15.30",
     "@assistant-ui/react-markdown": "0.14.23",
-    "@puckeditor/core": "^0.23.0"
+    "@puckeditor/core": "^0.23.0",
+    "driver.js": "^1.10.2"
   }
 }

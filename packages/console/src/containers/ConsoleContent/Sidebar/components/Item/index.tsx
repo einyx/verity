@@ -79,6 +79,7 @@ function Item({
 
   return (
     <Link
+      data-tour={titleKey}
       to={getTo(`/${path ?? getPath(titleKey)}`)}
       className={classNames(styles.row, isActive && styles.active)}
     >

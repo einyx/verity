@@ -1,4 +1,5 @@
 import actions from './actions.js';
+import admin_console_tour from './admin-console-tour.js';
 import api_resource_details from './api-resource-details.js';
 import api_resources from './api-resources.js';
 import application_details from './application-details.js';
@@ -58,6 +59,7 @@ import welcome from './welcome.js';
 
 const admin_console = {
   title: 'Admin Console',
+  admin_console_tour,
   admin_user: 'Admin',
   system_app: 'System',
   menu,

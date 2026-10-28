@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
+import useAdminConsoleTour from '@/hooks/use-admin-console-tour';
 import { isNarrowViewport } from '@/hooks/use-narrow-viewport';
 import useMatchTenantPath from '@/hooks/use-tenant-pathname';
 
@@ -69,6 +70,7 @@ export function Skeleton() {
 }
 
 function Sidebar() {
+  useAdminConsoleTour();
   const { t } = useTranslation(undefined, {
     keyPrefix: 'admin_console.tab_sections',
   });

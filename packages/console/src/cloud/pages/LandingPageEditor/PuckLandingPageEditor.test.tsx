@@ -82,6 +82,27 @@ it('opens preview actions from the editor toolbar instead of covering the websit
   );
 });
 
+it('switches the actual preview viewport without reloading it or changing the draft', () => {
+  const onChange = jest.fn();
+  renderEditor(onChange);
+  const frame = screen.getByTitle<HTMLIFrameElement>('Landing page preview');
+  onChange.mockClear();
+  expect(frame.style.width).toBe('1280px');
+
+  for (const [device, width] of [
+    ['Mobile', '390px'],
+    ['Tablet', '768px'],
+    ['Desktop', '1280px'],
+  ]) {
+    const button = screen.getByText(device!, { selector: 'button' });
+    fireEvent.click(button);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(frame.style.width).toBe(width);
+    expect(screen.getByTitle('Landing page preview')).toBe(frame);
+  }
+  expect(onChange).not.toHaveBeenCalled();
+});
+
 it('records an image drag as one undoable draft change and keeps the preview open', async () => {
   const onChange = jest.fn();
   renderEditor(onChange);

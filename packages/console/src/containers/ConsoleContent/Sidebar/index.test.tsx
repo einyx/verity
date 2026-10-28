@@ -7,6 +7,7 @@ import { type EnvTestUtils, mockEnv, resetMockEnv } from '@/test-utils/env';
 import Sidebar from './index';
 
 jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
+jest.mock('@/hooks/use-admin-console-tour', () => ({ __esModule: true, default: jest.fn() }));
 
 jest.mock('@/contexts/TenantsProvider', () => ({
   __esModule: true,

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Keep preview sizing with the existing canvas draft and history controls. */
 import { Puck, type Config, usePuck } from '@puckeditor/core';
 import {
   createContext,
@@ -31,6 +32,7 @@ import {
   type LandingSectionBlockProps,
   type LandingSectionType,
 } from './LandingSectionBlocks';
+import PreviewDeviceSwitch from './PreviewDeviceSwitch';
 import styles from './index.module.scss';
 
 type PageProps = { readonly document: unknown };
@@ -51,6 +53,7 @@ export const PreviewContext = createContext<PreviewContextValue | undefined>(und
 const singletonTypes = new Set(['hero', 'closingCta']);
 
 export function PageCanvas() {
+  const [previewWidth, setPreviewWidth] = useState(1280);
   const [selection, setSelection] = useState<LandingElementSelection>();
   const [panel, setPanel] = useState<'preview' | 'sections' | 'properties'>('preview');
   const [showLibrary, setShowLibrary] = useState(false);
@@ -256,10 +259,13 @@ export function PageCanvas() {
           <button type="button" disabled={!history.hasFuture} onClick={history.forward}>
             Redo
           </button>
+          <PreviewDeviceSwitch width={previewWidth} onChange={setPreviewWidth} />
+          <span>{previewWidth}px</span>
           <span>Click to edit · Right-click for actions</span>
         </div>
         <div className={styles.liveCanvasBody}>
           <LandingPreviewFrame
+            width={previewWidth}
             draft={currentDocument}
             locale={preview.locale}
             activeSection={navigation.activeSection}
@@ -325,3 +331,4 @@ const puckData = (document: unknown, rootProps: { title?: string } | undefined) 
   const data = landingPagePuckData(document);
   return { content: data.content, root: { props: { ...rootProps, ...data.root.props } } };
 };
+/* eslint-enable max-lines */

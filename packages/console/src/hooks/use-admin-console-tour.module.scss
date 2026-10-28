@@ -1,0 +1,59 @@
+/* stylelint-disable selector-class-pattern -- Driver.js owns these global class names. */
+.popover {
+  background: var(--ds-surface, #fff);
+  color: var(--ds-label-primary, #202124);
+  border: 1px solid var(--ds-border, #ddd);
+  border-radius: 12px;
+  padding: 20px;
+  font-family: inherit;
+
+  :global(.driver-popover-title) {
+    font-size: 18px;
+  }
+
+  :global(.driver-popover-description) {
+    line-height: 1.6;
+  }
+
+  :global(.driver-popover-footer button) {
+    min-height: 32px;
+    background: var(--ds-surface, #fff);
+    color: inherit;
+    border-color: var(--ds-border, #ddd);
+    text-shadow: none;
+  }
+
+  :global(.driver-popover-footer button:focus-visible),
+  :global(.driver-popover-close-btn:focus-visible) {
+    outline: 2px solid var(--color-primary, #ff301a);
+    outline-offset: 2px;
+  }
+
+  :global(.driver-popover-footer .driver-popover-next-btn) {
+    background: var(--ds-label-primary, #1e1f21);
+    color: var(--ds-surface, #fff);
+    border-color: transparent;
+  }
+
+  :global(.driver-popover-close-btn) {
+    min-width: 32px;
+    min-height: 32px;
+    color: inherit;
+  }
+
+  :global(.driver-popover-arrow-side-left) {
+    border-left-color: var(--ds-surface, #fff);
+  }
+
+  :global(.driver-popover-arrow-side-right) {
+    border-right-color: var(--ds-surface, #fff);
+  }
+
+  :global(.driver-popover-arrow-side-top) {
+    border-top-color: var(--ds-surface, #fff);
+  }
+
+  :global(.driver-popover-arrow-side-bottom) {
+    border-bottom-color: var(--ds-surface, #fff);
+  }
+}

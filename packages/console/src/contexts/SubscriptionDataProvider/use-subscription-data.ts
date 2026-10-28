@@ -92,14 +92,14 @@ const useSubscriptionData: () => SubscriptionContext & { isLoading: boolean } = 
   const currentSubscriptionQuota = useMemo(
     () =>
       isCloud
-        ? normalizeSubscriptionQuota(subscriptionUsageData?.quota)
+        ? normalizeSubscriptionQuota(cloudSubscription?.quota ?? subscriptionUsageData?.quota)
         : buildSelfHostedSubscriptionQuota(licenseQuota),
-    [licenseQuota, subscriptionUsageData?.quota]
+    [cloudSubscription?.quota, licenseQuota, subscriptionUsageData?.quota]
   );
 
   const currentSubscriptionBasicQuota = useMemo(
-    () => normalizeSubscriptionQuota(subscriptionUsageData?.basicQuota),
-    [subscriptionUsageData?.basicQuota]
+    () => normalizeSubscriptionQuota(cloudSubscription?.quota ?? subscriptionUsageData?.basicQuota),
+    [cloudSubscription?.quota, subscriptionUsageData?.basicQuota]
   );
 
   const currentSubscriptionUsage = useMemo(

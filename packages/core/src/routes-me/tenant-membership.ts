@@ -45,6 +45,20 @@ const createConsoleAccessLibrary = (pool: CommonQueryMethods) => {
     }
   };
 
+  /**
+   * Grants the landing-page-editor role, which carries only the landing-page CMS scope. Invited
+   * admins of the admin tenant may edit the landing page; other tenants and other roles never do.
+   */
+  const grantLandingPageEditor = async (userId: string) => {
+    const role = await roles.findRoleByRoleName('landing-page-editor');
+
+    if (!role || (await usersRoles.hasUserRole(userId, [role.id]))) {
+      return;
+    }
+
+    await usersRoles.insertUsersRoles([{ id: generateStandardId(), userId, roleId: role.id }]);
+  };
+
   const revoke = async (userId: string) => {
     const { id: roleId } = await findConsoleRole();
 
@@ -53,7 +67,7 @@ const createConsoleAccessLibrary = (pool: CommonQueryMethods) => {
     }
   };
 
-  return { grant, revoke };
+  return { grant, grantLandingPageEditor, revoke };
 };
 
 /** Everything a membership change reads and writes, bound to its transaction. */

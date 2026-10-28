@@ -24,7 +24,10 @@ export type TenantEmailLog = TenantEmailLogsResponse['logs'][number];
 
 export type GetArrayElementType<T> = T extends Array<infer U> ? U : never;
 
-export type Subscription = GuardedResponse<GetRoutes['/api/tenants/:tenantId/subscription']>;
+export type Subscription = GuardedResponse<GetRoutes['/api/tenants/:tenantId/subscription']> & {
+  /** The instance billing API includes its effective entitlement snapshot. */
+  quota?: SubscriptionUsageResponse['quota'];
+};
 
 /**
  * A billing Customer linked to the current user. `name` and `email` are `null` when the Stripe

@@ -85,6 +85,7 @@ const insertOneTimeToken = jest.fn(
 const deleteOneTimeTokenById = jest.fn();
 const revokeActiveOneTimeTokensByEmail = jest.fn();
 const grantConsoleAccess = jest.fn();
+const grantLandingPageEditor = jest.fn();
 const updateUserById = jest.fn();
 const findUserById = jest.fn(async (id: string) => ({
   id,
@@ -146,7 +147,7 @@ const withTenantMembership = jest.fn(
       organizations,
       users,
       oneTimeTokens: { revokeActiveOneTimeTokensByEmail },
-      consoleAccess: { grant: grantConsoleAccess, revoke: jest.fn() },
+      consoleAccess: { grant: grantConsoleAccess, grantLandingPageEditor, revoke: jest.fn() },
 
       ...createTenantMemberAuthorization({ queries: { organizations } } as never),
     });
@@ -420,6 +421,21 @@ describe('me tenant invitation routes', () => {
   });
 
   describe('invitee routes', () => {
+    it('grants landing editing when a new admin-tenant invitation is accepted', async () => {
+      const previousId = tenantContext.id;
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Exercise the control-plane invitation flow.
+      tenantContext.id = adminTenantId;
+      try {
+        const accepted = await request
+          .patch('/invitations/mine/status')
+          .send({ status: OrganizationInvitationStatus.Accepted });
+        expect(accepted.status).toBe(204);
+        expect(grantLandingPageEditor).toHaveBeenCalledWith(callerId);
+      } finally {
+        // eslint-disable-next-line @silverhand/fp/no-mutation -- Restore the shared fixture.
+        tenantContext.id = previousId;
+      }
+    });
     it('should show and accept an invitation addressed to the caller, and grant Console access', async () => {
       // eslint-disable-next-line @silverhand/fp/no-mutation
       callerRole.current = undefined;
@@ -440,6 +456,7 @@ describe('me tenant invitation routes', () => {
         membershipConnection
       );
       expect(grantConsoleAccess).toHaveBeenCalledWith(callerId);
+      expect(grantLandingPageEditor).not.toHaveBeenCalled();
       expect(revokeActiveOneTimeTokensByEmail).toHaveBeenCalledWith('CALLER@example.com');
       expect(updateUserById).toHaveBeenCalledWith(callerId, {
         customData: {

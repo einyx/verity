@@ -1,26 +1,32 @@
 import { createMockUtils, pickDefault } from '@logto/shared/esm';
 
 import { mockUser } from '#src/__mocks__/index.js';
-import { MockTenant, type Partial2 } from '#src/test-utils/tenant.js';
-import { createRequester } from '#src/utils/test-utils.js';
-
 import { type AcsMail, type AcsMailConfig } from '#src/libraries/acs-mail.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
+import { MockTenant, type Partial2 } from '#src/test-utils/tenant.js';
+import { createRequester } from '#src/utils/test-utils.js';
 
 const { jest } = import.meta;
 const { mockEsmWithActual } = createMockUtils(jest);
 
 const insertOneTimeToken = jest.fn(async () => ({ id: 'token-id', token: 'the-token' }));
-const deleteOneTimeTokenById = jest.fn(async () => undefined);
+
+const deleteOneTimeTokenById = jest.fn<Promise<void>, [never]>().mockResolvedValue();
 const findUsersRolesByUserId = jest.fn(async () => []);
-const insertUsersRoles = jest.fn(async () => undefined);
+
+const insertUsersRoles = jest.fn<Promise<void>, [never]>().mockResolvedValue();
 const findRoleById = jest.fn(async () => ({ id: 'admin-role', name: 'admin' }));
-const findRoleByRoleName = jest.fn(async () => ({ id: 'console-role', name: 'admin' }));
+const findRoleByRoleName = jest.fn(async (name: string) => ({
+  id: name === 'landing-page-editor' ? 'landing-editor-role' : 'console-role',
+  name,
+}));
 
 const findUserById = jest.fn(async () => mockUser);
-const insertOrganizationUser = jest.fn(async () => undefined);
-const insertOrganizationUserRole = jest.fn(async () => undefined);
+
+const insertOrganizationUser = jest.fn<Promise<void>, [never]>().mockResolvedValue();
+
+const insertOrganizationUserRole = jest.fn<Promise<void>, [never]>().mockResolvedValue();
 
 const mockedQueries = {
   users: {
@@ -51,7 +57,7 @@ const mockedQueries = {
 const mockedLibraries = {} as unknown as Partial<Libraries>;
 
 const { sendMail } = await mockEsmWithActual('#src/libraries/acs-mail.js', () => ({
-  sendMail: jest.fn(async (_mail: AcsMail, _config: AcsMailConfig) => undefined),
+  sendMail: jest.fn<Promise<void>, [AcsMail, AcsMailConfig]>().mockResolvedValue(),
 }));
 
 const key = Buffer.from('test-access-key').toString('base64');
@@ -67,12 +73,16 @@ describe('adminUserOnboardingRoutes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Onboarding invitations originate in the admin tenant.
+    tenantContext.id = 'admin';
     process.env.ACS_CONNECTION_STRING = `endpoint=https://example.communication.azure.com/;accesskey=${key}`;
     process.env.ACS_SENDER_EMAIL = 'noreply@example.azurecomm.net';
   });
 
   afterEach(() => {
+    // eslint-disable-next-line @silverhand/fp/no-delete -- Restoring the test environment.
     delete process.env.ACS_CONNECTION_STRING;
+    // eslint-disable-next-line @silverhand/fp/no-delete -- Restoring the test environment.
     delete process.env.ACS_SENDER_EMAIL;
   });
 
@@ -149,6 +159,41 @@ describe('adminUserOnboardingRoutes', () => {
     expect(response.status).toEqual(422);
     expect(sendMail).not.toHaveBeenCalled();
   });
+
+  it.each(['admin', undefined])(
+    'grants landing editing for admin-tenant admin invitations (%s)',
+    async (roleName) => {
+      const response = await userRequest.post('/users/foo/onboarding-email').send({ roleName });
+
+      expect(response.status).toBe(204);
+      expect(insertUsersRoles).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ userId: mockUser.id, roleId: 'landing-editor-role' }),
+        ])
+      );
+    }
+  );
+
+  it('does not grant landing editing to admins invited into another tenant', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Exercise a tenant other than the control plane.
+    tenantContext.id = 'default';
+    const response = await userRequest
+      .post('/users/foo/onboarding-email')
+      .send({ roleName: 'admin' });
+
+    expect(response.status).toBe(204);
+    expect(findRoleByRoleName).not.toHaveBeenCalledWith('landing-page-editor');
+  });
+
+  it.each(['viewer', 'collaborator'])(
+    'does not grant landing editing to an invited %s',
+    async (roleName) => {
+      const response = await userRequest.post('/users/foo/onboarding-email').send({ roleName });
+
+      expect(response.status).toBe(204);
+      expect(findRoleByRoleName).not.toHaveBeenCalledWith('landing-page-editor');
+    }
+  );
 
   it('drops the sign-in token when the mail cannot be sent', async () => {
     sendMail.mockRejectedValueOnce(new Error('ACS is down'));

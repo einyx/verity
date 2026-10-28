@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Invitation routes, mail, and membership acceptance belong together. */
 import {
   adminTenantId,
   OrganizationInvitationStatus,
@@ -9,7 +10,7 @@ import {
   ossUserOnboardingDataKey,
   type OrganizationInvitationEntity,
 } from '@logto/schemas';
-import { generateStandardId, generateStandardSecret, getUserDisplayName } from '@logto/shared';
+import { getUserDisplayName } from '@logto/shared';
 import { addDays } from 'date-fns';
 import { z } from 'zod/v3';
 
@@ -447,6 +448,10 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
         // The links of this invitation have served their purpose.
         await membership.oneTimeTokens.revokeActiveOneTimeTokensByEmail(invitee);
         await membership.consoleAccess.grant(userId);
+        // Invited admins of the admin tenant may also edit the landing page; no other tenant gets it.
+        if (tenant.id === adminTenantId) {
+          await membership.consoleAccess.grantLandingPageEditor(userId);
+        }
 
         const { customData } = await membership.users.findUserById(userId);
         const onboarding = ossUserOnboardingDataGuard.safeParse(
@@ -469,3 +474,4 @@ export default function tenantInvitationRoutes<T extends AuthedMeRouter>(
     }
   );
 }
+/* eslint-enable max-lines */

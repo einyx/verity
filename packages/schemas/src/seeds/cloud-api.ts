@@ -130,3 +130,16 @@ export const createAdminTenantAdminRole = (): Readonly<Role> => ({
   type: RoleType.User,
   isDefault: false,
 });
+
+/**
+ * The role invited admin-tenant admins get for landing-page editing. It carries only the
+ * landing-page CMS scope, so it grants nothing else on the instance.
+ */
+export const createLandingPageEditorRole = (): Readonly<Role> => ({
+  tenantId: adminTenantId,
+  id: generateStandardId(),
+  name: 'landing-page-editor',
+  description: 'Edit and publish the meshX landing page only',
+  type: RoleType.User,
+  isDefault: false,
+});

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { productionEnterprisePlan } from './production-subscription.js';
 import { seedTenant } from './new-tenant.js';
 import { seedOidcConfigs } from './oidc-config.js';
 import { seedPreConfiguredManagementApiAccessRole } from './roles.js';
@@ -16,6 +17,12 @@ const connection = queryConnection as never;
 describe('seedTenant', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('seeds new production tenants as Enterprise with passkey sign-in', () => {
+    expect(productionEnterprisePlan.planId).toBe('enterprise');
+    expect(productionEnterprisePlan.isEnterprisePlan).toBe(true);
+    expect(productionEnterprisePlan.quota.passkeySignInEnabled).toBe(true);
   });
 
   it('creates the tenant row before seeding any of its data', async () => {

@@ -15,6 +15,7 @@ import {
   createDefaultAdminConsoleApplication,
   createCloudApi,
   createAdminTenantAdminRole,
+  createLandingPageEditorRole,
   createTenantApplicationRole,
   CloudScope,
   Roles,
@@ -212,6 +213,17 @@ export const seedTables = async (
     adminTenantId,
     adminRole.id,
     ...adminAdminData.scopes.map(({ id }) => id),
+    ...cloudAdditionalScopes
+      .filter(({ name }) => name === CloudScope.ManageLandingPage)
+      .map(({ id }) => id)
+  );
+
+  const landingEditorRole = createLandingPageEditorRole();
+  await connection.query(insertInto(landingEditorRole, Roles.table));
+  await assignScopesToRole(
+    connection,
+    adminTenantId,
+    landingEditorRole.id,
     ...cloudAdditionalScopes
       .filter(({ name }) => name === CloudScope.ManageLandingPage)
       .map(({ id }) => id)

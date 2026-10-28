@@ -5,7 +5,7 @@ import { type CoreConnectorPayload, type CoreSsoClient } from './core-binding.js
 const createdConnectorGuard = z.object({ id: z.string() });
 
 export type CoreSsoClientOptions = {
-  /** The admin tenant's Management API base, e.g. `https://console.meshx.foundation/api`. */
+  /** The admin tenant's Management API base, e.g. `https://console.example.com/api`. */
   baseUrl: string;
   /** Returns a Management API access token for the cloud service. */
   getAccessToken: () => Promise<string>;

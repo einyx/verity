@@ -5,7 +5,7 @@ export type ClientCredentialsOptions = {
   tokenEndpoint: string;
   clientId: string;
   clientSecret: string;
-  /** The Management API resource indicator, e.g. `https://console.meshx.foundation/api`. */
+  /** The Management API resource indicator, e.g. `https://console.example.com/api`. */
   resource: string;
   fetch?: typeof fetch;
 };

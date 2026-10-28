@@ -59,7 +59,7 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
   // Logto Cloud uses cloud service to serve the admin console; while Logto OSS uses a fixed path under the admin URL set.
   const adminOrigins = isCloud ? cloudUrlSet.origins : adminUrlSet.origins;
   const coreOrigins = urlSet.origins;
-  // The default tenant sits on the bare host (e.g. auth.meshx.foundation), which the wildcard origins do not cover.
+  // The default tenant sits on the bare host, which the wildcard origins do not cover.
   const defaultTenantOrigin = getTenantEndpoint(defaultTenantId, EnvSet.values).origin;
   const developmentOrigins = isProduction
     ? []

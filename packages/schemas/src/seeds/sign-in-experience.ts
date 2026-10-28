@@ -16,8 +16,9 @@ export const defaultPrimaryColor = '#6139F6';
 /** The MeshX brand accent, used as the admin tenant's default primary colour. */
 const meshxPrimaryColor = '#FE330A';
 /** MeshX wordmarks served by the console build (`packages/console/public`). */
-const meshxLogoUrl = 'https://console.meshx.foundation/console/meshx-logo.svg';
-const meshxDarkLogoUrl = 'https://console.meshx.foundation/console/meshx-logo-dark.svg';
+const consoleOrigin = process.env.CONSOLE_ORIGIN ?? 'https://console.example.com';
+const meshxLogoUrl = `${consoleOrigin}/console/meshx-logo.svg`;
+const meshxDarkLogoUrl = `${consoleOrigin}/console/meshx-logo-dark.svg`;
 
 export const createDefaultSignInExperience = (
   forTenantId: string,

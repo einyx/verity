@@ -109,7 +109,7 @@ describe('core SSO client', () => {
       async () => new Response(JSON.stringify({ id: 'core-9' }), { status: 201 })
     );
     const client = createCoreSsoClient({
-      baseUrl: 'https://console.meshx.foundation/api/',
+      baseUrl: 'https://console.example.com/api/',
       getAccessToken: async () => 'token',
       fetch: fetchMock as unknown as typeof fetch,
     });
@@ -123,7 +123,7 @@ describe('core SSO client', () => {
 
     expect(created).toEqual({ id: 'core-9' });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe('https://console.meshx.foundation/api/sso-connectors');
+    expect(url).toBe('https://console.example.com/api/sso-connectors');
     expect(init.headers).toMatchObject({ authorization: 'Bearer token' });
   });
 

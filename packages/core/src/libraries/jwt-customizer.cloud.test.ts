@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { adminTenantId, CustomJwtErrorCode, LogtoJwtTokenKeyType } from '@logto/schemas';
 import { assert } from '@silverhand/essentials';
 import { ResponseError } from '@withtyped/client';
@@ -80,6 +82,36 @@ describe('JwtCustomizerLibrary.runScriptRemotely', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
+  it('runs only the deployment-approved script locally for its exact tenant', async () => {
+    jest.spyOn(EnvSet.values, 'trustedJwtCustomizerTenantId', 'get').mockReturnValue('test-tenant');
+    jest
+      .spyOn(EnvSet.values, 'trustedJwtCustomizerSha256', 'get')
+      .mockReturnValue(createHash('sha256').update(payload.script).digest('hex'));
+    const local = jest
+      .spyOn(JwtCustomizerLibrary, 'runScriptLocally')
+      .mockResolvedValue({ foo: 'local' });
+    await expect(library.runScriptRemotely(payload)).resolves.toEqual({ foo: 'local' });
+    expect(local).toHaveBeenCalledWith(payload, 'test-tenant');
+    expect(getWorkerAccessToken).not.toHaveBeenCalled();
+  });
+
+  it.each(['wrong-tenant', 'wrong-script'])('never executes a %s locally', async (mismatch) => {
+    jest
+      .spyOn(EnvSet.values, 'trustedJwtCustomizerTenantId', 'get')
+      .mockReturnValue(mismatch === 'wrong-tenant' ? 'another-tenant' : 'test-tenant');
+    jest
+      .spyOn(EnvSet.values, 'trustedJwtCustomizerSha256', 'get')
+      .mockReturnValue(
+        mismatch === 'wrong-script'
+          ? '0'.repeat(64)
+          : createHash('sha256').update(payload.script).digest('hex')
+      );
+    const local = jest.spyOn(JwtCustomizerLibrary, 'runScriptLocally');
+    mockScriptRun().reply(200, { ok: true, value: { foo: 'remote' } });
+    await expect(library.runScriptRemotely(payload)).resolves.toEqual({ foo: 'remote' });
+    expect(local).not.toHaveBeenCalled();
+  });
+
   it('marks a dry run as a test', async () => {
     const scriptRunner = mockScriptRun(
       (body: Record<string, unknown>) => body.isTest === true
@@ -154,6 +186,18 @@ describe('JwtCustomizerLibrary.runScriptRemotely quota', () => {
     getSubscriptionData.mockResolvedValueOnce({ quota: { customJwtEnabled: false } });
 
     await expect(library.runScriptRemotely(payload)).resolves.toBeUndefined();
+    expect(getWorkerAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('does not bypass the plan quota for a deployment-approved script', async () => {
+    jest.spyOn(EnvSet.values, 'trustedJwtCustomizerTenantId', 'get').mockReturnValue('test-tenant');
+    jest
+      .spyOn(EnvSet.values, 'trustedJwtCustomizerSha256', 'get')
+      .mockReturnValue(createHash('sha256').update(payload.script).digest('hex'));
+    const local = jest.spyOn(JwtCustomizerLibrary, 'runScriptLocally');
+    getSubscriptionData.mockResolvedValueOnce({ quota: { customJwtEnabled: false } });
+    await expect(library.runScriptRemotely(payload)).resolves.toBeUndefined();
+    expect(local).not.toHaveBeenCalled();
     expect(getWorkerAccessToken).not.toHaveBeenCalled();
   });
 

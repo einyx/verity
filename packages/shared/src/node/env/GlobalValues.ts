@@ -374,6 +374,15 @@ export default class GlobalValues {
     return getEnv('SCRIPT_RUNNER_ENDPOINT');
   }
 
+  /** Deployment-owned allowlist; tenant-controlled scripts must still use the remote sandbox. */
+  public get trustedJwtCustomizerTenantId() {
+    return getEnv('TRUSTED_JWT_CUSTOMIZER_TENANT_ID');
+  }
+
+  public get trustedJwtCustomizerSha256() {
+    return getEnv('TRUSTED_JWT_CUSTOMIZER_SHA256');
+  }
+
   /**
    * The key encryption key (KEK) for the secret vault.
    * It is used to encrypt and decrypt secret DEKs (data encryption keys) in the secret vault.

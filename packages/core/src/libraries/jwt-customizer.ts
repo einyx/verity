@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import {
   adminTenantId,
   type CustomJwtErrorBody,
@@ -232,6 +234,16 @@ export class JwtCustomizerLibrary {
      */
     if (!(await this.isCustomJwtEnabledByQuota())) {
       return;
+    }
+
+    const { trustedJwtCustomizerTenantId, trustedJwtCustomizerSha256 } = EnvSet.values;
+    if (
+      trustedJwtCustomizerTenantId === this.tenantId &&
+      trustedJwtCustomizerSha256 &&
+      createHash('sha256').update(payload.script).digest('hex') === trustedJwtCustomizerSha256
+    ) {
+      // Local workers are not a sandbox: only exact deployment-reviewed code may enter them.
+      return JwtCustomizerLibrary.runScriptLocally(payload, this.tenantId);
     }
 
     /**

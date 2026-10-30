@@ -26,6 +26,34 @@
         "description": "Saves the ordered sections and the optional live-editor elements without publishing. elements is a record keyed by a stable authored element ID (letters, digits, underscores and hyphens, 1-100 characters; prototype-related keys are rejected). Each value accepts only optional text (max 1000), href (same-site path, section anchor or HTTPS URL, max 2048), src (HTTPS image URL, max 2048), alt (max 300), fit (cover or contain) and integer x/y offsets (-400 through 400). Documents without elements stay valid. The full request schema is generated from landingPageDocumentGuard.",
         "tags": ["Dev feature"]
       }
+    },
+    "/api/landing-page/ai-edit": {
+      "post": {
+        "summary": "Suggest a landing page draft edit",
+        "description": "Returns a validated AI-suggested document for the editor preview. It never saves or publishes the draft.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["instruction", "draft"],
+                "properties": {
+                  "instruction": { "type": "string", "minLength": 1, "maxLength": 2000 },
+                  "draft": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "A suggested draft; it has not been saved." },
+          "401": { "description": "No bearer token was sent." },
+          "403": { "description": "The caller lacks the landing-page scope." },
+          "503": { "description": "AI editing is unavailable or returned invalid output." }
+        },
+        "tags": ["Dev feature"]
+      }
     }
   }
 }

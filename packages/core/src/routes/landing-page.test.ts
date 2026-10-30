@@ -62,6 +62,13 @@ describe('landing page routes', () => {
     expect(response.status).toBe(401);
   });
 
+  it('refuses AI draft edits without landing-page authentication', async () => {
+    const response = await request(createApp())
+      .post('/api/landing-page/ai-edit')
+      .send({ instruction: 'Rewrite the hero', draft: defaultLandingPageContent });
+    expect(response.status).toBe(401);
+  });
+
   it('rejects a malformed draft before checking the token', async () => {
     const response = await request(createApp())
       .put('/api/landing-page/draft')

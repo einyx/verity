@@ -82,6 +82,33 @@
   margin-left: auto;
 }
 
+.aiEdit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-layer-1);
+}
+
+.aiEdit input {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-layer-1);
+  color: var(--color-text);
+}
+
+.aiEdit [role='status'] {
+  flex-basis: 100%;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
 /* The console shell caps its direct children to a centred width; the editor uses the full pane.
    The shell also sets a desktop minimum width, which would keep the page wider than a phone and
    stop the console from collapsing its own sidebar, so the editor drops it. */

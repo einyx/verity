@@ -33,6 +33,7 @@ const landingPage = {
   saveDraft: jest.fn().mockResolvedValue({ updatedAt: savedAt }),
   publish: jest.fn().mockResolvedValue(undefined),
   rollback: jest.fn().mockResolvedValue(undefined),
+  generateEdit: jest.fn().mockResolvedValue({ ...document, sections: [] }),
   listVersions: jest.fn().mockResolvedValue([]),
   sendChat: jest.fn().mockResolvedValue({ reply: 'Hello', submitted: false }),
   refresh: jest.fn().mockResolvedValue(undefined),
@@ -42,6 +43,24 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useManageLandingPageGuard).mockReturnValue(async () => true);
   jest.mocked(useLandingPage).mockReturnValue(landingPage);
+});
+
+it('previews an AI suggestion without saving or publishing until the admin chooses', async () => {
+  render(<LandingPageEditor />);
+  const input = await screen.findByRole('textbox', { name: 'Ask AI to edit this draft' });
+  fireEvent.change(input, { target: { value: 'Make the hero lede shorter' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Suggest edit' }));
+
+  await waitFor(() => {
+    expect(landingPage.generateEdit).toHaveBeenCalledWith('Make the hero lede shorter', document);
+  });
+  expect(landingPage.saveDraft).not.toHaveBeenCalled();
+  expect(landingPage.publish).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  await waitFor(() => {
+    expect(landingPage.saveDraft).toHaveBeenCalledWith({ ...document, sections: [] });
+  });
 });
 
 it('renders the Puck page canvas and keeps Demo chat settings above it', async () => {

@@ -71,6 +71,25 @@ it('switches between compact-screen panels without unmounting the preview', () =
   expect(screen.getByTitle('Landing page preview')).toBe(frame);
 });
 
+it('collapses the section properties column and restores it without remounting the preview', () => {
+  renderEditor(jest.fn());
+  const frame = screen.getByTitle('Landing page preview');
+  const workspace = screen.getByLabelText('Editor panels').parentElement;
+
+  fireEvent.click(screen.getByText('Collapse properties', { selector: 'button' }));
+  expect(workspace?.getAttribute('data-properties-collapsed')).toBe('true');
+  expect(
+    screen.getByText('Show properties', { selector: 'button' }).getAttribute('aria-expanded')
+  ).toBe('false');
+
+  fireEvent.click(screen.getByText('Show properties', { selector: 'button' }));
+  expect(workspace?.getAttribute('data-properties-collapsed')).toBe('false');
+  expect(
+    screen.getByText('Collapse properties', { selector: 'button' }).getAttribute('aria-expanded')
+  ).toBe('true');
+  expect(screen.getByTitle('Landing page preview')).toBe(frame);
+});
+
 it('opens preview actions from the editor toolbar instead of covering the website header', () => {
   renderEditor(jest.fn());
   const frame = screen.getByTitle<HTMLIFrameElement>('Landing page preview');

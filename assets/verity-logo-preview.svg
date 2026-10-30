@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" role="img" aria-labelledby="title description">
+  <title id="title">Verity — identity platform logo concept</title>
+  <desc id="description">A forest-green geometric V with an extended verification-check arm, paired with a lowercase wordmark. Light, dark, and small icon applications.</desc>
+  <defs>
+    <symbol id="mark" viewBox="0 0 128 128">
+      <path fill="currentColor" d="M12 29h23l27 47L99 12h25L62 119z"/>
+    </symbol>
+  </defs>
+  <rect width="1440" height="1000" fill="#EEEFE9"/>
+  <g font-family="Inter, Helvetica Neue, Arial, sans-serif">
+    <text x="72" y="66" fill="#52625A" font-size="14" letter-spacing="3">VERITY / IDENTITY SYSTEM</text>
+    <text x="1368" y="66" fill="#52625A" font-size="14" text-anchor="end" letter-spacing="2">CONCEPT 01</text>
+    <path d="M72 94h1296" stroke="#CBD2C9"/>
+    <use href="#mark" x="416" y="242" width="146" height="146" color="#175C48"/>
+    <text x="592" y="357" fill="#172B25" font-size="110" font-weight="600" letter-spacing="-5">verity</text>
+    <text x="720" y="466" fill="#52625A" font-size="18" text-anchor="middle" letter-spacing="1">Identity, with certainty.</text>
+    <rect x="72" y="584" width="844" height="310" rx="3" fill="#142B24"/>
+    <text x="108" y="627" fill="#A6BDB0" font-size="11" letter-spacing="2">REVERSED LOCKUP</text>
+    <use href="#mark" x="283" y="681" width="97" height="97" color="#BAE2CC"/>
+    <text x="401" y="758" fill="#F1F4ED" font-size="74" font-weight="600" letter-spacing="-3">verity</text>
+    <rect x="940" y="584" width="428" height="310" rx="3" fill="#E1E6DC"/>
+    <text x="976" y="627" fill="#52625A" font-size="11" letter-spacing="2">ICON / SMALL SCALE</text>
+    <rect x="1023" y="686" width="94" height="94" rx="22" fill="#175C48"/>
+    <use href="#mark" x="1040" y="703" width="60" height="60" color="#F1F4ED"/>
+    <use href="#mark" x="1160" y="715" width="36" height="36" color="#175C48"/>
+    <use href="#mark" x="1240" y="721" width="24" height="24" color="#175C48"/>
+    <text x="72" y="948" fill="#52625A" font-size="13">A V for Verity. A check for certainty.</text>
+    <text x="1368" y="948" fill="#52625A" font-size="13" text-anchor="end">OAUTH / OIDC / SSO</text>
+  </g>
+</svg>

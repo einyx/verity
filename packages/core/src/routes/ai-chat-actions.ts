@@ -6,7 +6,8 @@ import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 
 import { EnvSet } from '#src/env-set/index.js';
 
-import { enabledLogtoMcpTools, type LogtoMcpTool } from './mcp-logto-tools.js';
+import { pendingActionTools } from './ai-chat-landing-page.js';
+import { type LogtoMcpTool } from './mcp-logto-tools.js';
 
 // Ask AI writes go through a pending action. The server stores the exact request body when the
 // write is proposed and only sends it after the user confirms that action's id. Confirming never
@@ -93,15 +94,19 @@ export const proposePendingAction = async ({
   now: Date;
   newId?: () => string;
 }): Promise<ProposeResult> => {
-  const found = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+  const found = pendingActionTools(EnvSet.values.isDevFeaturesEnabled).find(
     ({ name }) => name === tool
   );
 
-  if (!found || found.method !== 'POST') {
+  if (!found || (found.method !== 'POST' && found.name !== 'save_landing_page_draft')) {
     return { ok: false, code: 'unknown_tool' };
   }
 
-  const body = found.body?.(args);
+  const body = (() => {
+    try {
+      return found.body?.(args);
+    } catch {}
+  })();
 
   if (!body) {
     return { ok: false, code: 'invalid_arguments' };
@@ -122,6 +127,51 @@ export const proposePendingAction = async ({
   await store.insert(action);
 
   return { ok: true, action };
+};
+
+export type ProposedActionView = Pick<PendingAction, 'id' | 'tool' | 'body'> & {
+  expiresAt: string;
+};
+
+export const proposeAndRecordAction = async ({
+  store,
+  tool,
+  args,
+  userId,
+  tenantId,
+  now,
+  actions,
+  note,
+}: {
+  store: PendingActionStore;
+  tool: string;
+  args: Record<string, unknown>;
+  userId: string;
+  tenantId: string;
+  now: Date;
+  actions: Map<string, ProposedActionView>;
+  note: string;
+}): Promise<string> => {
+  const proposal = await proposePendingAction({ store, tool, args, userId, tenantId, now });
+
+  if (!proposal.ok) {
+    return JSON.stringify({ error: proposal.code });
+  }
+
+  const { action } = proposal;
+  actions.set(action.id, {
+    id: action.id,
+    tool: action.tool,
+    body: action.body,
+    expiresAt: action.expiresAt.toISOString(),
+  });
+
+  return JSON.stringify({
+    status: 'awaiting_user_confirmation',
+    id: action.id,
+    tool: action.tool,
+    note,
+  });
 };
 
 export type ConfirmResult =
@@ -169,7 +219,7 @@ export const confirmPendingAction = async ({
     return { ok: false, code: 'not_pending' };
   }
 
-  const tool = enabledLogtoMcpTools(EnvSet.values.isDevFeaturesEnabled).find(
+  const tool = pendingActionTools(EnvSet.values.isDevFeaturesEnabled).find(
     ({ name }) => name === claimed.tool
   );
 

@@ -6,6 +6,8 @@ import {
   pendingActionTtlMs,
   type PendingAction,
   type PendingActionStore,
+  type ProposedActionView,
+  proposeAndRecordAction,
   proposePendingAction,
 } from './ai-chat-actions.js';
 import { type LogtoMcpTool } from './mcp-logto-tools.js';
@@ -144,6 +146,33 @@ describe('proposePendingAction', () => {
       ok: false,
       code: 'unknown_tool',
     });
+  });
+});
+
+describe('proposeAndRecordAction', () => {
+  it('records a pending action for the console without exposing its body in the model response', async () => {
+    const { store, rows } = createFakeStore();
+    const actions = new Map<string, ProposedActionView>();
+    const response = JSON.parse(
+      await proposeAndRecordAction({
+        store,
+        tool: 'create_organization',
+        args: { name: 'Acme', description: 'Team' },
+        userId: owner,
+        tenantId,
+        now,
+        actions,
+        note: 'Awaiting confirmation.',
+      })
+    ) as { id: string; status: string; note: string };
+
+    expect(response).toMatchObject({
+      status: 'awaiting_user_confirmation',
+      note: 'Awaiting confirmation.',
+    });
+    expect(response).not.toHaveProperty('body');
+    expect(actions.get(response.id)).toMatchObject({ body: { name: 'Acme', description: 'Team' } });
+    expect(rows.get(response.id)?.state).toBe('pending');
   });
 });
 

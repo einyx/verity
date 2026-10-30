@@ -14,6 +14,7 @@ const envValues = { isDevFeaturesEnabled: true, isProduction: false, isUnitTest:
 const confirmPendingAction = jest.fn();
 const cancelPendingAction = jest.fn();
 const proposePendingAction = jest.fn();
+const proposeAndRecordAction = jest.fn();
 
 jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: envValues },
@@ -23,6 +24,7 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
 jest.unstable_mockModule('./ai-chat-actions.js', () => ({
   confirmPendingAction,
   proposePendingAction,
+  proposeAndRecordAction,
   createPendingActionStore: () => ({ cancel: cancelPendingAction }),
 }));
 

@@ -6,7 +6,6 @@ export const githubReleasesLink = 'https://github.com/einyx/logto/releases';
 export const contactEmail = 'hello@meshx.io';
 export const contactEmailLink = `mailto:${contactEmail}`;
 export const officialWebsiteLink = 'https://logto.io';
-export const trustAndSecurityLink = `${officialWebsiteLink}/trust-and-security`;
 export const pricingLink = `${officialWebsiteLink}/pricing`;
 export const selfHostedPlansLink = 'https://cloud.meshx.app';
 export const logtoCloudConsoleLink = 'https://cloud.meshx.app';

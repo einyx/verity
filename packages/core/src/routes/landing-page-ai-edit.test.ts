@@ -1,6 +1,15 @@
 import { defaultLandingPageContent, landingPageDocumentGuard } from '@logto/schemas';
 
-import { parseLandingPageAiEdit, parseLandingPageAiEditResponse } from './landing-page-ai-edit.js';
+import {
+  landingPageAiEditSystemPrompt,
+  parseLandingPageAiEdit,
+  parseLandingPageAiEditResponse,
+} from './landing-page-ai-edit.js';
+
+it('directs AI to duplicate an existing section structure when adding one', () => {
+  expect(landingPageAiEditSystemPrompt).toContain('duplicate the closest existing section');
+  expect(landingPageAiEditSystemPrompt).toContain('Security & Governance section');
+});
 
 describe('parseLandingPageAiEdit', () => {
   it('accepts only a valid landing page document from the model', () => {

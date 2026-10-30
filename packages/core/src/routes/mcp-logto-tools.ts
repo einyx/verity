@@ -24,7 +24,7 @@ export type LogtoMcpTool = {
   /** The Management API path. `{name}` segments are filled from the tool arguments. */
   path: string;
   /** Defaults to GET. Write tools use POST and send the body built by `body`. */
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PUT';
   properties: Record<string, ToolProperty>;
   required?: string[];
   /** Builds the JSON body of a POST tool from its arguments. Only the fields it names are sent. */

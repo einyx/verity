@@ -45,6 +45,8 @@ type KuboStackDetail = {
   requestedMemoryBytes?: number;
   bundle?: string;
   gitManaged?: boolean;
+  url?: string;
+  componentValues?: Record<string, { config?: Record<string, unknown> }>;
   exclude?: string[] | undefined;
   operators?: Record<string, boolean> | undefined;
   featureFlags?: Record<string, string> | undefined;
@@ -71,6 +73,34 @@ const toMap = (rows: KeyValueRow[]) =>
   Object.fromEntries(
     rows.filter((row) => row.key.trim()).map((row) => [row.key.trim(), row.value])
   );
+
+const safeWebURL = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : undefined;
+  } catch {
+    // Ignore malformed environment URLs.
+    return undefined;
+  }
+};
+
+const environmentLinks = (data: KuboStackDetail) => {
+  const configured = [
+    { label: 'Builder', value: data.componentValues?.['v1-api']?.config?.V1_PUBLIC_URL },
+    { label: 'Renderer', value: data.componentValues?.['v1-apps']?.config?.V1_APPS_URL },
+  ].flatMap(({ label, value }) => {
+    const url = safeWebURL(value);
+    return url ? [{ label, url }] : [];
+  });
+  if (configured.length > 0) {
+    return configured;
+  }
+  const url = safeWebURL(data.url);
+  return url ? [{ label: 'Environment', url }] : [];
+};
 
 // One card per setting. Each card saves only its own field.
 function Section({
@@ -274,7 +304,7 @@ function Stack() {
     setDeleteError(undefined);
     try {
       await api.delete(`api/kubo/stacks/${namespace}/${name}?purge=${String(purgeNamespace)}`);
-      void navigate('/infrastructure', { replace: true });
+      navigate('/infrastructure', { replace: true });
     } catch (error_: unknown) {
       setDeleteError(error_ instanceof Error ? error_.message : 'Delete failed');
     } finally {
@@ -309,6 +339,7 @@ function Stack() {
     view,
     editor,
   });
+  const links = data ? environmentLinks(data) : [];
 
   return (
     <div className={styles.container}>
@@ -322,6 +353,23 @@ function Stack() {
             {data.paused ? ' · paused' : ''}
             {data.gitManaged ? ' · Git managed' : ''}
           </p>
+        )}
+        {links.length > 0 && (
+          <div className={styles.environmentLinks}>
+            {links.map(({ label, url }) => (
+              <a
+                key={label}
+                className={styles.environmentLink}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>{label}</span>
+                <span className={styles.environmentURL}>{url}</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </div>
         )}
       </div>
 
@@ -359,9 +407,7 @@ function Stack() {
               title="tabs.run_bootstrap"
               type="outline"
               isLoading={bootstrapping}
-              onClick={() => {
-                void runBootstrap();
-              }}
+              onClick={runBootstrap}
             />
             <Button
               title={<DangerousRaw>Delete stack</DangerousRaw>}

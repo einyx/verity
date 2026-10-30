@@ -118,12 +118,21 @@ const stack = {
   phase: 'Ready',
   ready: 1,
   total: 1,
+  url: 'https://team-a.meshx.foundation',
+  componentValues: {
+    'v1-api': { config: { V1_PUBLIC_URL: 'https://v1.meshx.foundation/v1' } },
+    'v1-apps': { config: { V1_APPS_URL: 'https://v1-apps.meshx.foundation/apps' } },
+  },
   components: [],
 };
 
-const renderStack = () => {
+type MockStack = Omit<typeof stack, 'componentValues'> & {
+  componentValues?: Record<string, { config?: Record<string, unknown> }>;
+};
+
+const renderStack = (data: MockStack = stack) => {
   jest.mocked(useSWR).mockReturnValue({
-    data: stack,
+    data,
     error: undefined,
     isLoading: false,
     mutate: jest.fn(),
@@ -199,5 +208,33 @@ describe('Kubo stack deletion', () => {
       'Deleting namespace "team-a" removes everything in it, not just this stack. Continue?'
     );
     expect(deleteRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('Kubo stack environment links', () => {
+  it('shows the configured builder and renderer URLs near the stack title', () => {
+    renderStack();
+
+    expect(screen.getByRole('link', { name: /Builder.*v1\.meshx\.foundation\/v1/ })).toHaveProperty(
+      'href',
+      'https://v1.meshx.foundation/v1'
+    );
+    expect(
+      screen.getByRole('link', { name: /Renderer.*v1-apps\.meshx\.foundation\/apps/ })
+    ).toHaveProperty('href', 'https://v1-apps.meshx.foundation/apps');
+  });
+
+  it('falls back to the stack URL when no app-specific URLs are configured', () => {
+    renderStack({ ...stack, componentValues: {} });
+
+    expect(
+      screen.getByRole('link', { name: /Environment.*team-a\.meshx\.foundation/ })
+    ).toHaveProperty('href', 'https://team-a.meshx.foundation/');
+  });
+
+  it('does not render non-web URLs as links', () => {
+    renderStack({ ...stack, componentValues: {}, url: 'ftp://team-a.meshx.foundation' });
+
+    expect(screen.queryByRole('link')).toBeNull();
   });
 });

@@ -119,6 +119,18 @@ export const useLandingPage = () => {
     [getToken, mutate]
   );
 
+  const generateEdit = useCallback(
+    async (instruction: string, draft: unknown) => {
+      const result = z
+        .object({ draft: landingPageDocumentGuard })
+        .parse(
+          await request(getToken, '/ai-edit', { method: 'POST', body: { instruction, draft } })
+        );
+      return result.draft;
+    },
+    [getToken]
+  );
+
   const listVersions = useCallback(
     async () => landingPageVersionsGuard.parse(await request(getToken, '/versions')),
     [getToken]
@@ -142,11 +154,23 @@ export const useLandingPage = () => {
       saveDraft,
       publish,
       rollback,
+      generateEdit,
       listVersions,
       sendChat,
       // Re-reads the editor view, e.g. after a publish conflict shows the newer draft.
       refresh: async () => mutate(),
     }),
-    [data, error, isLoading, saveDraft, publish, rollback, listVersions, sendChat, mutate]
+    [
+      data,
+      error,
+      isLoading,
+      saveDraft,
+      publish,
+      rollback,
+      generateEdit,
+      listVersions,
+      sendChat,
+      mutate,
+    ]
   );
 };

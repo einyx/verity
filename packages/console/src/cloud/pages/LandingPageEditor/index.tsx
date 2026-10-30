@@ -21,7 +21,8 @@ type Pending = { kind: 'publish' } | { kind: 'rollback'; version: number } | und
 const publishConflictGuard = z.object({ status: z.literal(409) });
 
 function LandingPageEditorContent() {
-  const { data, error, saveDraft, publish, rollback, listVersions, refresh } = useLandingPage();
+  const { data, error, saveDraft, publish, rollback, generateEdit, listVersions, refresh } =
+    useLandingPage();
   const [draft, setDraft] = useState<unknown>();
   const [versions, setVersions] = useState<LandingPageVersion[]>([]);
   const [versionsError, setVersionsError] = useState(false);
@@ -29,6 +30,9 @@ function LandingPageEditorContent() {
   const [pending, setPending] = useState<Pending>();
   const [busy, setBusy] = useState(false);
   const [previewLocale, setPreviewLocale] = useState('en');
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string>();
 
   useEffect(() => {
     if (data && draft === undefined) {
@@ -228,6 +232,46 @@ function LandingPageEditorContent() {
           </button>
         </div>
       </div>
+      <form
+        className={styles.aiEdit}
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (!aiInstruction.trim() || aiBusy) {
+            return;
+          }
+          setAiBusy(true);
+          setAiError(undefined);
+          try {
+            setDraft(await generateEdit(aiInstruction.trim(), currentDraft));
+          } catch (error_: unknown) {
+            setAiError(error_ instanceof Error ? error_.message : 'AI edit failed. Try again.');
+          } finally {
+            setAiBusy(false);
+          }
+        }}
+      >
+        <label htmlFor="landing-page-ai-edit">Ask AI to edit this draft</label>
+        <input
+          id="landing-page-ai-edit"
+          value={aiInstruction}
+          maxLength={2000}
+          placeholder="Describe the change you want…"
+          onChange={(event) => {
+            setAiInstruction(event.target.value);
+          }}
+        />
+        <button
+          type="submit"
+          className={styles.secondaryButton}
+          disabled={aiBusy || !aiInstruction.trim()}
+        >
+          {aiBusy ? 'Working…' : 'Suggest edit'}
+        </button>
+        {aiError && <span role="alert">{aiError}</span>}
+        <span role="status">
+          Suggestions update the preview only. Save draft to keep them; publishing is separate.
+        </span>
+      </form>
       <PuckLandingPageEditor
         document={currentDraft}
         locale={previewLocale}

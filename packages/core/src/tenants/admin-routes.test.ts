@@ -34,6 +34,7 @@ mockEsm('#src/env-set/index.js', () => ({
   },
 }));
 mockEsm('@silverhand/slonik', () => ({ createPool: async () => ({}) }));
+mockEsm('#src/routes/cloud-console-host.js', () => ({ createCloudConsoleHost: () => ({}) }));
 // The private package is the external boundary. Its fixture echoes the raw request stream.
 mockEsm('#src/cloud-plugin/index.js', () => ({
   isCloudPluginInstalled,
@@ -128,5 +129,23 @@ it('does not mount private middleware on a non-admin tenant', async () => {
   const response = await request(appFor('another-tenant').callback()).get(
     '/api/tenants/tenant-1/subscription/periodic-usage'
   );
+  expect(response.status).toBe(404);
+});
+
+it.each([
+  '/api/me/regions',
+  '/api/me/logto-enterprises',
+  '/api/me/self-hosted-licenses',
+  '/api/me/stripe-customers',
+  '/api/invitations',
+])('routes the installed Console bootstrap endpoint %s to the private handler', async (path) => {
+  isCloudPluginInstalled.mockReturnValue(true);
+  const response = await request(appFor().callback()).get(path);
+  expect(response.status).toBe(200);
+});
+
+it('leaves unrelated account endpoints to the normal API router', async () => {
+  isCloudPluginInstalled.mockReturnValue(true);
+  const response = await request(appFor().callback()).get('/api/me/unrelated');
   expect(response.status).toBe(404);
 });

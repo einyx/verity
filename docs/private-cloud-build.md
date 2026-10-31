@@ -33,6 +33,12 @@ the package, private billing and periodic-usage middleware are not mounted.
 Production never falls back to simulated billing. An installed but broken plugin
 is an error, not an OSS fallback.
 
+The host requires the plugin's Console adapter contract version 1. Account and
+tenant bootstrap reads authenticate cloud tokens and use host-owned active-user,
+organization-scope, invitation and measured-usage data. Billing quota comes from
+the effective subscription rather than development defaults. Unsupported account
+registries have explicit empty inventories and do not grant entitlements.
+
 ## Local development
 
 From the public workspace root, with `packages/cloud` absent:

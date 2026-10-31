@@ -57,6 +57,7 @@ it('loads and caches the installed plugin exports', async () => {
   const evaluate = loaderFor(
     'valid',
     `
+    export const cloudConsoleApiVersion = 1;
     export const createBillingComposer = () => ({});
     export const createBillingHandler = () => () => {};
     export const createPgBillingStore = () => ({});
@@ -77,6 +78,24 @@ it('rejects incompatible exports instead of disabling billing', async () => {
   expect(evaluate('return loader.isInstalled();')).toBe(true);
   expect(
     evaluate('try { await loader.load(); } catch (error) { return error.message; }')
+  ).toContain('Incompatible cloud plugin');
+});
+
+it('rejects a billing-only plugin instead of silently losing the Console bootstrap API', () => {
+  const evaluate = loaderFor(
+    'legacy-console',
+    `
+    export const createBillingComposer = () => ({});
+    export const createBillingHandler = () => () => {};
+    export const createPgBillingStore = () => ({});
+    export const migrateBillingSchema = async () => {};
+    export const stripeWebhookPath = '/api/webhooks/stripe';
+  `
+  );
+  expect(
+    evaluate(
+      'try { await loader.load(); return "unexpected-success"; } catch (error) { return error.message; }'
+    )
   ).toContain('Incompatible cloud plugin');
 });
 

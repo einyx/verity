@@ -24,6 +24,62 @@ const postDraft = (sections: unknown[]) => {
   );
 };
 
+it('keeps a focused added-section text field connected when its draft update is echoed back', () => {
+  const section = { id: 'typing-section', type: 'text', heading: 'Editable heading', body: 'Body' };
+  postDraft([section]);
+  const field = document.querySelector<HTMLElement>('[data-cms="sections.0.heading"]');
+  expect(field).not.toBeNull();
+  field?.focus();
+  expect(document.activeElement).toBe(field);
+  if (field) {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Simulate typing into the focused contenteditable preview element.
+    field.textContent = 'Editable heading with more typing';
+  }
+  postDraft([{ ...section, heading: 'Editable heading with more typing' }]);
+  expect(field?.isConnected).toBe(true);
+  expect(document.activeElement).toBe(field);
+  expect(field?.textContent).toBe('Editable heading with more typing');
+});
+
+it('does not move the typing selection into a detached section-rendering buffer', () => {
+  const section = { id: 'caret-section', type: 'text', heading: 'Typing here', body: 'Body' };
+  postDraft([section]);
+  const field = document.querySelector<HTMLElement>('[data-cms="sections.0.heading"]')!;
+  field.focus();
+  // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- jsdom does not implement this browser contenteditable property.
+  Object.defineProperty(field, 'isContentEditable', { configurable: true, value: true });
+  const range = document.createRange();
+  range.setStart(field.firstChild!, 4);
+  range.collapse(true);
+  const selection = window.getSelection()!;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  postDraft([section]);
+  expect(selection.anchorNode).toBe(field.firstChild);
+  expect(selection.anchorOffset).toBe(4);
+});
+
+it('retains focus and caret when an added section and another built-in section precede the hero', () => {
+  const sections = [
+    { id: 'before-hero', type: 'text', heading: 'Typing before hero', body: 'Body' },
+    { id: 'problem', type: 'fomo' },
+    { id: 'hero', type: 'hero' },
+  ];
+  postDraft(sections);
+  const field = document.querySelector<HTMLElement>('[data-cms="sections.0.heading"]')!;
+  field.focus();
+  const range = document.createRange();
+  range.setStart(field.firstChild!, 6);
+  range.collapse(true);
+  const selection = window.getSelection()!;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  postDraft(sections);
+  expect(document.activeElement).toBe(field);
+  expect(selection.anchorNode).toBe(field.firstChild);
+  expect(selection.anchorOffset).toBe(6);
+});
+
 it('keeps editor actions outside the site header and accepts only its parent toolbar', () => {
   expect(document.querySelector('.cms-element-actions')).toBeNull();
   window.dispatchEvent(

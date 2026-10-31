@@ -19,8 +19,32 @@ export type CloudBillingStore = {
 
 type BillingHandler = (request: IncomingMessage, response: ServerResponse) => Promise<void>;
 
+/** Host facts supplied to the optional cloud package; no simulated quotas or permissions. */
+export type CloudConsoleHost = {
+  hasUser: (userId: string) => Promise<boolean>;
+  memberScopes: (
+    actorId: string,
+    tenantId: string,
+    memberId: string
+  ) => Promise<Array<{ name: string }> | undefined>;
+  usage: (tenantId: string) => Promise<{
+    usage: Record<string, number | boolean>;
+    resources: Record<string, number>;
+    roles: Record<string, number>;
+  }>;
+  invitations: (userId: string) => Promise<
+    Array<{
+      id: string;
+      organizationId: string;
+      tenantName: string;
+      tenantTag: string;
+    }>
+  >;
+};
+
 /** The existing cloud exports consumed by this host, without a private build dependency. */
 type CloudPlugin = {
+  cloudConsoleApiVersion: 1;
   createPgBillingStore: (pool: CommonQueryMethods) => CloudBillingStore;
   migrateBillingSchema: (pool: CommonQueryMethods) => Promise<unknown>;
   createBillingComposer: (options: {
@@ -38,6 +62,7 @@ type CloudPlugin = {
     };
     stripeSecretKey: string;
     stripeWebhookSecret: string;
+    console?: CloudConsoleHost;
   }) => unknown;
   createBillingHandler: (composer: unknown) => BillingHandler;
   stripeWebhookPath: string;
@@ -46,6 +71,7 @@ type CloudPlugin = {
 const isCloudPlugin = (value: unknown): value is CloudPlugin =>
   typeof value === 'object' &&
   value !== null &&
+  Reflect.get(value, 'cloudConsoleApiVersion') === 1 &&
   [
     'createPgBillingStore',
     'migrateBillingSchema',
@@ -77,7 +103,9 @@ export const createCloudPluginLoader = (baseUrl: string) => {
     const loading = (async () => {
       const plugin: unknown = await import(specifier);
       if (!isCloudPlugin(plugin)) {
-        throw new Error('Incompatible cloud plugin: expected billing route/store exports');
+        throw new Error(
+          'Incompatible cloud plugin: expected Console API v1 and billing route/store exports'
+        );
       }
       return plugin;
     })();

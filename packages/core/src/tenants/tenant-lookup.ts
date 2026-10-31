@@ -2,6 +2,11 @@
  * The subset of a tenant the usage meter reads. It is declared here so the route does not import the
  * tenant modules, which import the tenant app that mounts the route.
  */
+import { type CommonQueryMethods } from '@silverhand/slonik';
+
+import { type ConnectorLibrary } from '#src/libraries/connector.js';
+import type TenantUsageQuery from '#src/queries/tenant-usage/index.js';
+
 type UsageTenant = {
   subscription: {
     getTenantTokenUsage: (range: { from: Date; to: Date }) => Promise<{
@@ -14,7 +19,10 @@ type UsageTenant = {
     dailyActiveUsers: {
       countActiveUsersByTimeInterval: (from: number, to: number) => Promise<{ count: number }>;
     };
+    pool: CommonQueryMethods;
+    tenantUsage: Pick<TenantUsageQuery, 'getSelfComputedUsageByKey'>;
   };
+  connectors: Pick<ConnectorLibrary, 'getLogtoConnectors'>;
 };
 
 const lookups = new Map<'tenant', (tenantId: string) => Promise<UsageTenant>>();

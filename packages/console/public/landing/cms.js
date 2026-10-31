@@ -192,10 +192,23 @@
     if (window.LandingRenderer) {
       window.LandingRenderer.render(rendered, dynamicSections, dynamicIndexes);
     }
+    const active = document.activeElement;
+    const editingSection = active instanceof HTMLElement
+      ? active.closest('.cms-rendered-section[data-section-id]')
+      : null;
+    const editingIndex = doc.sections.findIndex((section) => section?.id === editingSection?.dataset.sectionId);
+    const editingPath = editingSection?.querySelector('[data-cms]')?.dataset.cms;
+    // A draft echo must not replace the node that currently owns the typing caret. Rebuild if the
+    // section moved instead, so its field paths cannot keep pointing at the old document index.
+    const preserveEditingSection = editingSection?.parentElement === main &&
+      editingIndex >= 0 && editingPath?.startsWith(`sections.${editingIndex}.`);
     const dynamicById = new Map(
       [...rendered.querySelectorAll('[data-section-id]')].map((section) => [
         section.dataset.sectionId,
-        section,
+        preserveEditingSection && editingSection.dataset.sectionId === section.dataset.sectionId &&
+          editingSection.dataset.sectionType === section.dataset.sectionType
+          ? editingSection
+          : section,
       ])
     );
     for (const section of dynamicById.values()) section.id = `cms-section-${section.dataset.sectionId}`;
@@ -224,12 +237,15 @@
     }
 
     const oldRendered = main.querySelectorAll(':scope > .cms-rendered-section');
-    oldRendered.forEach((section) => section.remove());
-    const firstStatic = [...staticByType.values()].find((section) => section.parentElement === main);
-    let cursor = firstStatic || main.firstChild;
+    oldRendered.forEach((section) => {
+      if (!ordered.includes(section)) section.remove();
+    });
+    const managedSections = new Set([...staticByType.values(), ...oldRendered]);
+    // Start at the actual document order, not the canonical hero: any section may precede it.
+    let cursor = [...main.children].find((section) => managedSections.has(section)) || main.firstChild;
     for (const section of ordered) {
       // Leave already-ordered DOM connected so draft updates do not steal the typing caret.
-      if (section !== cursor) main.insertBefore(section, cursor);
+      if (section !== cursor && section.nextSibling !== cursor) main.insertBefore(section, cursor);
       cursor = section.nextSibling;
     }
   };

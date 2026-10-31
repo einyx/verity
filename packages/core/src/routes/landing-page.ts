@@ -7,7 +7,7 @@ import {
   type LandingPageDocument,
   PredefinedScope,
 } from '@logto/schemas';
-import { generateStandardId } from '@logto/shared';
+import { ConsoleLog, generateStandardId } from '@logto/shared';
 import type { Nullable } from '@silverhand/essentials';
 import { sql } from '@silverhand/slonik';
 import { got, HTTPError } from 'got';
@@ -56,6 +56,7 @@ type VersionRow = {
 };
 
 const rollbackBody = z.object({ version: z.number().int().positive() });
+const landingPageAiConsole = new ConsoleLog('landing-page-ai');
 
 export const landingPageRoutes = (envSet: EnvSet) => {
   const router = new Router();
@@ -211,6 +212,9 @@ export const landingPageRoutes = (envSet: EnvSet) => {
         )
         .catch((error: unknown) => {
           if (error instanceof HTTPError) {
+            landingPageAiConsole.warn('Landing-page AI upstream request failed', {
+              status: error.response.statusCode,
+            });
             return null;
           }
           throw error;
@@ -218,6 +222,9 @@ export const landingPageRoutes = (envSet: EnvSet) => {
       const draft = response ? parseLandingPageAiEditResponse(response.body) : undefined;
 
       if (!draft) {
+        if (response) {
+          landingPageAiConsole.warn('Landing-page AI response did not match the document schema');
+        }
         ctx.status = 503;
         ctx.body = { message: 'The AI could not suggest an edit. Please try again.' };
         return next();

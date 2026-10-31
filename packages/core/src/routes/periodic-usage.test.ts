@@ -24,7 +24,9 @@ const getTenantForUsage = jest.fn(async () => ({
 }));
 
 mockEsm('@silverhand/slonik', () => ({ createPool }));
-mockEsm('@meshx/cloud/routes', () => ({ createPgBillingStore }));
+mockEsm('#src/cloud-plugin/index.js', () => ({
+  loadCloudPlugin: async () => ({ createPgBillingStore }),
+}));
 mockEsm('#src/middleware/koa-auth/index.js', () => ({ verifyBearerTokenFromRequest }));
 mockEsm('#src/tenants/tenant-lookup.js', () => ({ getTenantForUsage }));
 mockEsm('#src/env-set/index.js', () => ({

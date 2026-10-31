@@ -12,10 +12,8 @@ NODE_ENV=production pnpm i
 
 echo Prune files
 
-if [[ "${IS_CLOUD}" != @(1|true|y|yes|yep|yeah) ]]; then
-  # Remove cloud in OSS distributions
-  rm -rf packages/cloud
-fi
+# Cloud is included at build time, not selected by a runtime IS_CLOUD flag.
+# Keep an installed plugin and its workspace link resolvable in packaged builds.
 
 # Remove files that are not needed for production
 # Some node packages use `src` as their dist folder, so ignore them from the rm list in the end

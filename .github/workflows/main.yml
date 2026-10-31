@@ -139,7 +139,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: | # Test cloud build
+          build-args: | # Public CI must not require private repository credentials.
+            include_cloud=0
             additional_connector_args=--cloud
 
   main-alteration:

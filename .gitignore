@@ -20,6 +20,10 @@ node_modules
 /packages/**/lib
 /packages/**/dist
 
+# Optional implementation checked out from private einyx/cloud
+/packages/cloud/
+/packages/.cloud-checkout-*/
+
 # logs
 logs
 *.log*

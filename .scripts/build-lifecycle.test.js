@@ -42,15 +42,11 @@ test("both console Vite builds use an explicit portable Node heap limit", () => 
 });
 
 test("workspace libraries expose their artifacts in clean CI lifecycle builds", () => {
-  for (const name of ["cloud", "mcp-portal", "translate", "tunnel"]) {
+  for (const name of ["mcp-portal", "translate", "tunnel"]) {
     const { scripts } = packageJson(name);
     assert.equal(scripts.prepack, "pnpm build", `${name}: prepack`);
     assert.equal(scripts["build:test"], "pnpm build", `${name}: build:test`);
   }
-  assert.equal(
-    packageJson("cloud").scripts["test:ci"],
-    "pnpm run test --silent --coverage",
-  );
 });
 
 test("recursive CI work stays bounded instead of launching every package at once", () => {

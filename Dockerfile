@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 ###### [STAGE] Build ######
-FROM node:24-alpine AS builder
+FROM node:24-alpine AS source
 WORKDIR /etc/logto
 ENV CI=true
 
@@ -11,13 +11,20 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ### Install toolchain ###
 RUN npm add --location=global pnpm@^10.0.0
 # https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#node-gyp-alpine
-RUN apk add --no-cache python3 make g++ rsync
+RUN apk add --no-cache python3 make g++ rsync git
 
 COPY . .
 
+# Include the private cloud implementation by default. Tokens are mounted only for checkout.
+ARG include_cloud=1
+RUN --mount=type=secret,id=cloud_github_token \
+  node .scripts/prepare-cloud-plugin.mjs "${include_cloud}"
+
+FROM source AS builder
+
 ### Install dependencies and build ###
 # Reuse the pnpm store between BuildKit runs to reduce duplicate downloads/writes.
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm i
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm i --no-frozen-lockfile
 
 ### Set if dev features enabled ###
 ARG dev_features_enabled
@@ -42,7 +49,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
   rm -rf node_modules packages/**/node_modules && NODE_ENV=production pnpm i
 
 ### Clean up ###
-RUN rm -rf .scripts pnpm-*.yaml packages/cloud
+RUN rm -rf .scripts pnpm-*.yaml
 
 ###### [STAGE] Seal ######
 FROM node:24-alpine AS app

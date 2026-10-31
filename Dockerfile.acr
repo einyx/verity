@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 ###### [STAGE] Build ######
-FROM node:24-alpine AS builder
+FROM node:24-alpine AS source
 ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV NODE_OPTIONS=--max-old-space-size=8192
@@ -14,15 +14,23 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ### Install toolchain ###
 RUN npm add --location=global pnpm@^11.0.0
 # https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md#node-gyp-alpine
-RUN apk add --no-cache python3 make g++ rsync
+RUN apk add --no-cache python3 make g++ rsync git
 
 # Copy the workspace in one layer to avoid exhausting the ACR builder's layer depth.
 # This includes connector templates required by the install-time preset sync.
 # Source changes also invalidate the dependency-install cache.
 COPY . .
 
+# Default-on private package; no credential is persisted in the build or final image.
+ARG include_cloud=1
+RUN --mount=type=secret,id=cloud_github_token \
+  node .scripts/prepare-cloud-plugin.mjs "${include_cloud}"
+
+FROM source AS builder
+
 ### Install dependencies ###
-RUN pnpm i --frozen-lockfile
+# Inclusion changes only the build-local workspace manifests/importers.
+RUN pnpm i --no-frozen-lockfile
 
 ### Set if dev features enabled ###
 ARG dev_features_enabled

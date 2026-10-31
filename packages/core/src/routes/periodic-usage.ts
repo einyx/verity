@@ -1,9 +1,9 @@
 import { getCloudApiIndicator } from '@logto/schemas';
-import { createPgBillingStore } from '@meshx/cloud/routes';
 import { createPool } from '@silverhand/slonik';
 import { endOfDay, startOfMonth, subDays } from 'date-fns';
 import type { Context, Next } from 'koa';
 
+import { type CloudBillingStore, loadCloudPlugin } from '#src/cloud-plugin/index.js';
 import { EnvSet } from '#src/env-set/index.js';
 import { verifyBearerTokenFromRequest } from '#src/middleware/koa-auth/index.js';
 import { getTenantForUsage } from '#src/tenants/tenant-lookup.js';
@@ -18,7 +18,7 @@ const periodicUsagePath = /^\/api\/tenants\/([^/]+)\/subscription\/periodic-usag
 export const periodicUsageRoute = (envSet: EnvSet) => {
   // Created on first use, so the billing database is only needed when this route is called.
   // eslint-disable-next-line @silverhand/fp/no-let -- Retain one lazily initialized promise per middleware instance.
-  let billingStore: Promise<ReturnType<typeof createPgBillingStore>> | undefined;
+  let billingStore: Promise<CloudBillingStore> | undefined;
 
   return async (ctx: Context, next: Next) => {
     const match = periodicUsagePath.exec(ctx.path);
@@ -35,8 +35,10 @@ export const periodicUsageRoute = (envSet: EnvSet) => {
       getCloudApiIndicator(EnvSet.values.cloudUrlSet.endpoint.origin)
     );
     // eslint-disable-next-line @silverhand/fp/no-mutation -- Cache the first authenticated request's initialization, including concurrent callers.
-    billingStore ??= (async () =>
-      createPgBillingStore(await createPool(process.env.BILLING_DATABASE_URL ?? '')))();
+    billingStore ??= (async () => {
+      const { createPgBillingStore } = await loadCloudPlugin();
+      return createPgBillingStore(await createPool(process.env.BILLING_DATABASE_URL ?? ''));
+    })();
     const store = await billingStore;
     const role = await store.findMembership(tenantId, { issuer: `${adminOrigin}/oidc`, sub });
 

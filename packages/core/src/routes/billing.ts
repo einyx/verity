@@ -1,16 +1,10 @@
 import { getCloudApiIndicator } from '@logto/schemas';
-import {
-  createBillingComposer,
-  createBillingHandler,
-  createPgBillingStore,
-  migrateBillingSchema,
-  stripeWebhookPath,
-} from '@meshx/cloud/routes';
 import { createPool } from '@silverhand/slonik';
 import { createRemoteJWKSet } from 'jose';
 import type { Context, Next } from 'koa';
 import { z } from 'zod/v3';
 
+import { isCloudPluginInstalled, loadCloudPlugin } from '#src/cloud-plugin/index.js';
 import { EnvSet } from '#src/env-set/index.js';
 
 const billingEnvironment = z.object({
@@ -26,7 +20,8 @@ const billingEnvironment = z.object({
  * Whether every billing setting is present. Local development serves the billing API only when it is,
  * so an instance without billing keeps the local stand-ins.
  */
-export const isBillingConfigured = () => billingEnvironment.safeParse(process.env).success;
+export const isBillingConfigured = () =>
+  isCloudPluginInstalled() && billingEnvironment.safeParse(process.env).success;
 
 /** Paths the billing composition answers. Everything else goes on to the normal routes. */
 const billingPaths = [
@@ -34,7 +29,7 @@ const billingPaths = [
   /^\/api\/skus$/,
   /^\/api\/invitations/,
   /^\/api\/checkout-session/,
-  new RegExp(`^${stripeWebhookPath}$`),
+  /^\/api\/webhooks\/stripe$/,
 ];
 
 /**
@@ -43,6 +38,12 @@ const billingPaths = [
  * environment. A missing setting fails the billing paths with a server error, not the whole app.
  */
 const buildBillingHandler = async () => {
+  const {
+    createBillingComposer,
+    createBillingHandler,
+    createPgBillingStore,
+    migrateBillingSchema,
+  } = await loadCloudPlugin();
   const environment = billingEnvironment.parse(process.env);
   const adminOrigin = EnvSet.values.adminUrlSet.endpoint.origin;
   const issuer = `${adminOrigin}/oidc`;

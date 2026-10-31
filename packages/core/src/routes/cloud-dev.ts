@@ -27,8 +27,13 @@ const billingOwnedPaths = [
 /** Whether the local cloud stand-ins apply to this instance. */
 export const isLocalCloud = () => EnvSet.values.isCloud;
 
+const usesSimulatedBilling = () => !EnvSet.values.isProduction && !isBillingConfigured();
+
 /** Serves a local data route for a GET request. Returns whether one matched. */
 const serveDataRoute = (ctx: Context) => {
+  if (EnvSet.values.isProduction) {
+    return false;
+  }
   if (isBillingConfigured() && billingOwnedPaths.some((pattern) => pattern.test(ctx.path))) {
     return false;
   }
@@ -75,9 +80,9 @@ export const localCloudRoutes = () => {
          * endpoint for the console. The target would then resolve the admin tenant instead of the
          * tenant being proxied, so the forwarded host is pointed at the target.
          */
-        proxyReq: (proxyReq) => {
-          proxyReq.setHeader('x-forwarded-host', target.host);
-          proxyReq.setHeader('x-forwarded-proto', target.protocol.replace(':', ''));
+        proxyReq: (proxyRequest) => {
+          proxyRequest.setHeader('x-forwarded-host', target.host);
+          proxyRequest.setHeader('x-forwarded-proto', target.protocol.replace(':', ''));
         },
       },
     });
@@ -105,7 +110,7 @@ export const localCloudRoutes = () => {
     // stand-in moves the tenant without a payment.
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-    if (!isBillingConfigured()) {
+    if (usesSimulatedBilling()) {
       if (ctx.method === 'POST' && ctx.path === '/api/checkout-session') {
         return handleCheckoutCreate(ctx, stripeKey);
       }

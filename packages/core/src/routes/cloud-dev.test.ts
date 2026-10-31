@@ -54,6 +54,7 @@ const originalFetch = global.fetch;
 const originalStripeKey = process.env.STRIPE_SECRET_KEY;
 
 afterEach(() => {
+  envValues.isProduction = false;
   global.fetch = originalFetch;
 
   if (originalStripeKey === undefined) {
@@ -78,6 +79,14 @@ const pollStatus = (session: unknown) => {
 
   return request(server).get('/api/checkout-session/cs_test_1');
 };
+
+it('does not simulate billing in production when the private plugin is absent', async () => {
+  envValues.isProduction = true;
+  const catalog = await request(server).get('/api/skus');
+  const response = await checkout({ successCallbackUrl: `${origin}/cb` });
+  expect(catalog.status).toBe(404);
+  expect(response.status).toBe(404);
+});
 
 describe('local cloud checkout', () => {
   beforeEach(() => {

@@ -7,6 +7,7 @@ create table mcp_portal_upstreams (
   portal_id text not null,
   name text not null,
   url text not null,
+  credential_ciphertext text,
   created_at timestamptz not null default now(),
   enabled boolean not null default true,
   disabled_tools text[] not null default '{}',

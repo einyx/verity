@@ -130,6 +130,28 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
       `grant select on tenants to ${identifier(roleA)}, ${identifier(roleB)}`,
     );
 
+    // Fresh installs skip historical alterations, so the seed must support the real stores too.
+    await client.query(await readSql("mcp_portal_settings"));
+    await client.query(
+      (await readSql("_after_each")).replaceAll("${name}", "mcp_portal_settings"),
+    );
+    await client.query(`grant select, insert, update, delete on mcp_portal_settings
+      to ${identifier(roleA)}, ${identifier(roleB)}`);
+    const { PostgresPortalSettingsStore } = await import(
+      "../packages/mcp-portal/lib/postgres-settings.js"
+    );
+    const { PostgresUpstreamStore } = await import(
+      "../packages/mcp-portal/lib/postgres-registry.js"
+    );
+    const query = (token) => client.query(token.sql, token.values);
+    const pool = {
+      query,
+      maybeOne: async (token) => (await query(token)).rows[0] ?? null,
+      any: async (token) => (await query(token)).rows,
+    };
+    const settings = new PostgresPortalSettingsStore(pool);
+    const upstreams = new PostgresUpstreamStore(pool);
+
     const insertPortal = (id, tenantId) =>
       client.query(
         `
@@ -153,8 +175,24 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
         { tenant_id: "tenant-a" },
       ]);
     }
+    assert.deepEqual(await settings.get(), {});
+    assert.deepEqual(await settings.setBaseDomain("a.example.test"), {
+      baseDomain: "a.example.test",
+    });
+    assert.deepEqual(await settings.setBaseDomain("updated.example.test"), {
+      baseDomain: "updated.example.test",
+    });
+    assert.equal(await upstreams.findCredential(portalId, "upstream"), undefined);
+    assert.equal(await upstreams.setCredential(portalId, "upstream", "ciphertext"), true);
+    assert.equal(await upstreams.findCredential(portalId, "upstream"), "ciphertext");
 
     await client.query(`set local role ${identifier(roleB)}`);
+    assert.deepEqual(await settings.get(), {});
+    assert.deepEqual(await settings.setBaseDomain("b.example.test"), {
+      baseDomain: "b.example.test",
+    });
+    assert.equal(await upstreams.findCredential(portalId, "upstream"), undefined);
+    assert.equal(await upstreams.setCredential(portalId, "upstream", "other"), false);
     for (const table of tables) {
       assert.equal((await client.query(`select * from ${table}`)).rowCount, 0);
       assert.equal(
@@ -186,6 +224,8 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
     }
 
     await client.query(`set local role ${identifier(roleA)}`);
+    assert.deepEqual(await settings.get(), { baseDomain: "updated.example.test" });
+    assert.equal(await upstreams.findCredential(portalId, "upstream"), "ciphertext");
     for (const table of tables) {
       assert.deepEqual(
         (await client.query(`select name, tenant_id from ${table}`)).rows,

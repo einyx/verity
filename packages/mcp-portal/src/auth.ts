@@ -73,15 +73,13 @@ export const createVerifier = (options: {
   };
 };
 
-export const extractBearerToken = (authorization: string | undefined): string => {
-  const value = authorization ?? '';
-
-  if (!/^bearer/i.test(value)) {
+export const extractBearerToken = (authorization = ''): string => {
+  if (!/^bearer/i.test(authorization)) {
     throw new AuthError('Missing bearer token');
   }
 
   // Slice instead of a `\s+(.+)` regex: linear time, no backtracking on long whitespace runs.
-  const token = value.slice(6).trim();
+  const token = authorization.slice(6).trim();
 
   if (!token) {
     throw new AuthError('Missing bearer token');

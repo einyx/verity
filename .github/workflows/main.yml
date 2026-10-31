@@ -160,7 +160,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.version.outputs.tag }}
+          ref: ${{ steps.version.outputs.ref || steps.version.outputs.tag }}
           path: ./alteration
       # ** End **
 

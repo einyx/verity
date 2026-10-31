@@ -123,25 +123,27 @@ export default resource;
 /** Landing demo chat copy by locale tag. Exported on its own so the chat bundle stays small. */
 /** English demo chat copy, the fallback for every locale. */
 
-export const demoChatByLocale: Readonly<Record<string, Partial<typeof demoChatEn>>> = Object.freeze({
-  ar: demoChatar,
-  de: demoChatde,
-  en: demoChatEn,
-  es: demoChates,
-  'fa-ir': demoChatfaIr,
-  fr: demoChatfr,
-  it: demoChatit,
-  ja: demoChatja,
-  ko: demoChatko,
-  'pl-pl': demoChatplPl,
-  'pt-br': demoChatptBr,
-  'pt-pt': demoChatptPt,
-  ru: demoChatru,
-  th: demoChatth,
-  'tr-tr': demoChattrTr,
-  'zh-cn': demoChatzhCn,
-  'zh-hk': demoChatzhHk,
-  'zh-tw': demoChatzhTw,
-});
+export const demoChatByLocale: Readonly<Record<string, Partial<typeof demoChatEn>>> = Object.freeze(
+  {
+    ar: demoChatar,
+    de: demoChatde,
+    en: demoChatEn,
+    es: demoChates,
+    'fa-ir': demoChatfaIr,
+    fr: demoChatfr,
+    it: demoChatit,
+    ja: demoChatja,
+    ko: demoChatko,
+    'pl-pl': demoChatplPl,
+    'pt-br': demoChatptBr,
+    'pt-pt': demoChatptPt,
+    ru: demoChatru,
+    th: demoChatth,
+    'tr-tr': demoChattrTr,
+    'zh-cn': demoChatzhCn,
+    'zh-hk': demoChatzhHk,
+    'zh-tw': demoChatzhTw,
+  }
+);
 
 export { default as demoChatEn } from './locales/en/translation/demo-chat.js';

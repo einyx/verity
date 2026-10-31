@@ -27,6 +27,13 @@ const fixture = (context, version = "1.2.3") => {
   return {
     cwd,
     git,
+    pin: (tag, commit) => {
+      mkdirSync(path.join(cwd, ".scripts"), { recursive: true });
+      writeFileSync(
+        path.join(cwd, ".scripts/alteration-baseline.json"),
+        JSON.stringify({ tag, commit }),
+      );
+    },
     run: () =>
       spawnSync(process.execPath, [script], {
         cwd,
@@ -74,4 +81,34 @@ test("selects the nearest reachable release, not an unrelated newer tag", (conte
   git("tag", "v99.0.0");
   git("checkout", "--quiet", release);
   assert.match(run().stdout, /^tag=@logto\/core@2.0.0\n/);
+});
+
+test("uses an explicitly pinned release after history sanitization", (context) => {
+  const { git, pin, run } = fixture(context);
+  git("tag", "v1.2.3");
+  const commit = git("rev-parse", "HEAD");
+  git("checkout", "--quiet", "--orphan", "sanitized");
+  git("commit", "--quiet", "-m", "Sanitized snapshot");
+  pin("v1.2.3", commit);
+  const result = run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, `tag=v1.2.3\nversion=1.2.3\nref=${commit}\n`);
+});
+
+test("rejects a pinned release whose tag no longer matches its commit", (context) => {
+  const { git, pin, run } = fixture(context);
+  git("tag", "v1.2.3");
+  git("checkout", "--quiet", "--orphan", "sanitized");
+  git("commit", "--quiet", "-m", "Sanitized snapshot");
+  pin("v1.2.3", git("rev-parse", "HEAD"));
+  const result = run();
+  assert.notEqual(result.status, 0);
+  assert.equal(result.stdout, "");
+});
+
+test("does not let a pin override a reachable release", (context) => {
+  const { git, pin, run } = fixture(context);
+  git("tag", "v1.2.3");
+  pin("v99.0.0", "0".repeat(40));
+  assert.equal(run().stdout, "tag=v1.2.3\nversion=1.2.3\n");
 });

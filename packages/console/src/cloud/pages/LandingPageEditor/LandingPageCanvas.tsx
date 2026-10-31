@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { isRecord } from './ContentEditor';
+import FittedPreview from './FittedPreview';
 import {
   readAtPath,
   setAtPath,
@@ -282,34 +283,36 @@ export function PageCanvas() {
           </button>
         </div>
         <div className={styles.liveCanvasBody}>
-          <LandingPreviewFrame
-            width={previewWidth}
-            draft={currentDocument}
-            locale={preview.locale}
-            activeSection={navigation.activeSection}
-            onEdit={(path, value) => {
-              // Accept only existing copy fields, never arbitrary message-supplied object paths.
-              if (
-                typeof readAtPath(currentDocument, path) === 'string' ||
-                /^copy\.[\w-]+\.[a-z-]+$/.test(path)
-              ) {
-                updateDocument(setAtPath(currentDocument, path, value));
-              }
-            }}
-            onSelectLink={preview.onSelectLink}
-            onMove={(id, offsetX, offsetY) => {
-              const target =
-                selection?.id === id
-                  ? selection
-                  : { id, kind: 'image' as const, fields: {}, values: {} };
-              const next = updateElementField(currentDocument, target, 'x', offsetX);
-              updateDocument(updateElementField(next, target, 'y', offsetY));
-            }}
-            onAddSection={addSection}
-            onSelectElement={selectElement}
-            onElementEdit={editElement}
-            onSectionAction={sectionAction}
-          />
+          <FittedPreview width={previewWidth}>
+            <LandingPreviewFrame
+              width={previewWidth}
+              draft={currentDocument}
+              locale={preview.locale}
+              activeSection={navigation.activeSection}
+              onEdit={(path, value) => {
+                // Accept only existing copy fields, never arbitrary message-supplied object paths.
+                if (
+                  typeof readAtPath(currentDocument, path) === 'string' ||
+                  /^copy\.[\w-]+\.[a-z-]+$/.test(path)
+                ) {
+                  updateDocument(setAtPath(currentDocument, path, value));
+                }
+              }}
+              onSelectLink={preview.onSelectLink}
+              onMove={(id, offsetX, offsetY) => {
+                const target =
+                  selection?.id === id
+                    ? selection
+                    : { id, kind: 'image' as const, fields: {}, values: {} };
+                const next = updateElementField(currentDocument, target, 'x', offsetX);
+                updateDocument(updateElementField(next, target, 'y', offsetY));
+              }}
+              onAddSection={addSection}
+              onSelectElement={selectElement}
+              onElementEdit={editElement}
+              onSectionAction={sectionAction}
+            />
+          </FittedPreview>
         </div>
       </section>
       <aside

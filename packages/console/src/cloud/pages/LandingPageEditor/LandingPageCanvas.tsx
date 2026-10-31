@@ -56,6 +56,7 @@ export function PageCanvas() {
   const [previewWidth, setPreviewWidth] = useState(1280);
   const [selection, setSelection] = useState<LandingElementSelection>();
   const [panel, setPanel] = useState<'preview' | 'sections' | 'properties'>('preview');
+  const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const preview = useContext(PreviewContext);
   const navigation = useContext(EditorNavigationContext);
@@ -106,6 +107,7 @@ export function PageCanvas() {
 
   const selectElement = (next: LandingElementSelection) => {
     setSelection(next);
+    setPropertiesCollapsed(false);
     setPanel(next.kind === 'image' ? 'preview' : 'properties');
     if (next.sectionId) {
       const index = currentDocument.sections.findIndex((section) => section.id === next.sectionId);
@@ -215,11 +217,16 @@ export function PageCanvas() {
 
   const showSectionProperties = () => {
     setSelection(undefined);
+    setPropertiesCollapsed(false);
     setPanel('properties');
   };
 
   return (
-    <div className={styles.editorWorkspace} data-panel={panel}>
+    <div
+      className={styles.editorWorkspace}
+      data-panel={panel}
+      data-properties-collapsed={propertiesCollapsed}
+    >
       <div className={styles.editorPanelTabs} aria-label="Editor panels">
         {(['sections', 'preview', 'properties'] as const).map((name) => (
           <button
@@ -262,6 +269,17 @@ export function PageCanvas() {
           <PreviewDeviceSwitch width={previewWidth} onChange={setPreviewWidth} />
           <span>{previewWidth}px</span>
           <span>Click to edit · Right-click for actions</span>
+          <button
+            type="button"
+            aria-controls="landing-editor-properties"
+            aria-expanded={!propertiesCollapsed}
+            onClick={() => {
+              setPropertiesCollapsed((collapsed) => !collapsed);
+              setPanel(propertiesCollapsed ? 'properties' : 'preview');
+            }}
+          >
+            {propertiesCollapsed ? 'Show properties' : 'Collapse properties'}
+          </button>
         </div>
         <div className={styles.liveCanvasBody}>
           <LandingPreviewFrame
@@ -294,7 +312,11 @@ export function PageCanvas() {
           />
         </div>
       </section>
-      <aside className={styles.editorInspector} aria-label="Properties">
+      <aside
+        id="landing-editor-properties"
+        className={styles.editorInspector}
+        aria-label="Properties"
+      >
         {selection ? (
           <LandingElementProperties
             key={selection.id}

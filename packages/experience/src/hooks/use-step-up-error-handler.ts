@@ -36,13 +36,13 @@ const useStepUpErrorHandler = (): ErrorHandlers => {
 
   return useMemo(() => {
     const showInvalidSession = () => {
-      void navigate(unknownSessionRoute, { replace: true });
+      navigate(unknownSessionRoute, { replace: true });
     };
 
     return {
       ...Object.fromEntries(invalidSessionErrorCodes.map((code) => [code, showInvalidSession])),
       'session.step_up.acr_not_satisfied': () => {
-        void navigate(stepUpRoutes.landing, { replace: true });
+        navigate(stepUpRoutes.landing, { replace: true });
       },
     };
   }, [navigate]);

@@ -1,5 +1,5 @@
-import classNames from 'classnames';
 import { adminTenantId } from '@logto/schemas';
+import classNames from 'classnames';
 import { useContext, useEffect, startTransition, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSWRConfig } from 'swr';
@@ -9,9 +9,9 @@ import MembersIcon from '@/assets/icons/members.svg?react';
 import PlusIcon from '@/assets/icons/plus.svg?react';
 import { TenantSettingsTabs } from '@/consts';
 import { isCloud } from '@/consts/env';
+import { TenantsContext } from '@/contexts/TenantsProvider';
 import Button from '@/ds-components/Button';
 import Spacer from '@/ds-components/Spacer';
-import { TenantsContext } from '@/contexts/TenantsProvider';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 
@@ -54,7 +54,7 @@ function TenantMembers() {
             icon={<MembersIcon />}
             title="tenant_members.members"
             onClick={() => {
-              void navigate(membersPath);
+              navigate(membersPath);
             }}
           />
           <Button
@@ -62,7 +62,7 @@ function TenantMembers() {
             icon={<InvitationIcon />}
             title="tenant_members.invitations"
             onClick={() => {
-              void navigate(invitationsPath);
+              navigate(invitationsPath);
             }}
           />
           <Spacer />
@@ -99,7 +99,7 @@ function TenantMembers() {
 
             // Defer navigation to avoid modal closing render being interrupted
             startTransition(() => {
-              void navigate(invitationsPath);
+              navigate(invitationsPath);
             });
           }}
         />

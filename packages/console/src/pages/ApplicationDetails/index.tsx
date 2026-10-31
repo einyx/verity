@@ -67,7 +67,7 @@ function ApplicationDetails() {
         app={data}
         secrets={secretRows}
         onClose={() => {
-          void navigate(`/applications/${id}`);
+          navigate(`/applications/${id}`);
         }}
       />
     );

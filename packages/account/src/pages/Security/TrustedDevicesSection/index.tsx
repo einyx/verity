@@ -82,7 +82,7 @@ const TrustedDevicesSection = () => {
   const handleManage = useCallback(() => {
     setPendingReturn(getPendingReturn() ?? window.location.href);
     sessionStorage.setPendingVerifiedAction('load-trusted-devices');
-    void navigate(verifiedActionRoute);
+    navigate(verifiedActionRoute);
   }, [navigate]);
 
   const handleConfirmRemove = useCallback(async () => {

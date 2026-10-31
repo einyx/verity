@@ -8,5 +8,3 @@ create table mcp_portal_settings (
   base_domain text,
   primary key (tenant_id, id)
 );
-
-create index mcp_portal_settings__tenant_id on mcp_portal_settings (tenant_id);

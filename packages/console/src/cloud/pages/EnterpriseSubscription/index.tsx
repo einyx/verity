@@ -52,7 +52,7 @@ function EnterpriseSubscription() {
                 <TabNavItem
                   isActive={pathname === subscriptionPathname}
                   onClick={() => {
-                    void navigate(subscriptionPathname);
+                    navigate(subscriptionPathname);
                   }}
                 >
                   <DynamicT forKey="enterprise_subscription.tab.subscription" />
@@ -60,7 +60,7 @@ function EnterpriseSubscription() {
                 <TabNavItem
                   isActive={pathname === billingHistoryPathname}
                   onClick={() => {
-                    void navigate(billingHistoryPathname);
+                    navigate(billingHistoryPathname);
                   }}
                 >
                   <DynamicT forKey="enterprise_subscription.tab.billing_history" />

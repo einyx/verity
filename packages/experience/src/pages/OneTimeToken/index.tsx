@@ -56,7 +56,7 @@ const OneTimeToken = () => {
         agreeToTermsPolicy !== AgreeToTermsPolicy.Automatic &&
         !(await termsValidation())
       ) {
-        void navigate(
+        navigate(
           { pathname: `/${experience.routes.oneTimeToken}/error` },
           { replace: true, state: { errorMessage: 'terms_acceptance_required_description' } }
         );
@@ -124,7 +124,7 @@ const OneTimeToken = () => {
       const errorMessage = params.get('errorMessage');
 
       if (errorMessage) {
-        void navigate(
+        navigate(
           { pathname: `/${experience.routes.oneTimeToken}/error` },
           { replace: true, state: { errorMessage } }
         );
@@ -132,7 +132,7 @@ const OneTimeToken = () => {
       }
 
       if (!oneTimeToken || !loginHint) {
-        void navigate(`/${experience.routes.oneTimeToken}/error`, { replace: true });
+        navigate(`/${experience.routes.oneTimeToken}/error`, { replace: true });
         return;
       }
 
@@ -143,7 +143,7 @@ const OneTimeToken = () => {
         hasTermsAgreed.current = isAgreed;
 
         if (!isAgreed) {
-          void navigate(
+          navigate(
             { pathname: `/${experience.routes.oneTimeToken}/error` },
             {
               replace: true,
@@ -173,7 +173,7 @@ const OneTimeToken = () => {
         setIsLoading(false);
         await handleError(error, {
           global: (error: RequestErrorBody) => {
-            void navigate(
+            navigate(
               { pathname: `/${experience.routes.oneTimeToken}/error` },
               { replace: true, state: { errorMessage: error.message } }
             );

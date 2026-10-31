@@ -91,7 +91,7 @@ function MauTokenExceededModal() {
               type="primary"
               title="upsell.upgrade_plan"
               onClick={() => {
-                void navigate(subscriptionPage);
+                navigate(subscriptionPage);
                 handleCloseModal();
               }}
             />

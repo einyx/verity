@@ -75,7 +75,7 @@ function Guide({ type, onClose }: Props) {
       await mutate(provider);
 
       toast.success(t('general.saved'));
-      void navigate(`/security/${SecurityTabs.Captcha}/details`);
+      navigate(`/security/${SecurityTabs.Captcha}/details`);
     })
   );
 

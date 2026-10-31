@@ -48,7 +48,7 @@ const usePasswordSignIn = () => {
       setForgotPasswordIdentifierInputValue(identifierInputValue);
     }
 
-    void navigate({ pathname: '/forgot-password' }, { replace: true });
+    navigate({ pathname: '/forgot-password' }, { replace: true });
   }, [identifierInputValue, navigate, setForgotPasswordIdentifierInputValue]);
 
   const errorHandlers: ErrorHandlers = useMemo(

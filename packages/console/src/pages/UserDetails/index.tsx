@@ -1,4 +1,4 @@
-import { type UserProfileResponse, User } from '@logto/schemas';
+import { type UserProfileResponse, type User } from '@logto/schemas';
 import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -26,9 +26,8 @@ import { getUserTitle, getUserSubtitle } from '@/utils/user';
 
 import SuspendedTag from '../Users/components/SuspendedTag';
 
-import styles from './index.module.scss';
 import SendOnboardingEmailModal from './components/SendOnboardingEmailModal';
-
+import styles from './index.module.scss';
 import { type UserDetailsOutletContext } from './types';
 
 function UserDetails() {
@@ -70,7 +69,7 @@ function UserDetails() {
     try {
       await api.delete(`api/users/${data.id}`);
       toast.success(t('user_details.deleted', { name: data.name }));
-      void navigate('/users');
+      navigate('/users');
     } finally {
       setIsDeleting(false);
     }
@@ -108,7 +107,7 @@ function UserDetails() {
       await api.post(`api/users/${data.id}/onboarding-email`, { json: { roleName } });
       toast.success(t('user_details.onboarding_email_sent', { email: data.primaryEmail }));
       setIsOnboardingEmailModalOpen(false);
-    } catch (error: unknown) {
+    } catch {
       toast.error(t('user_details.onboarding_email_failed'));
     } finally {
       setIsSendingOnboardingEmail(false);

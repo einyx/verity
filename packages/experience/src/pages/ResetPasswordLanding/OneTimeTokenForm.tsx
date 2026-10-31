@@ -90,7 +90,7 @@ const OneTimeTokenForm = ({ className, token, loginHint = '', onError }: Props) 
 
       const { identifier } = payload;
       setForgotPasswordIdentifierInputValue(identifier);
-      void navigate(`/${UserFlow.ForgotPassword}/reset`, { replace: true });
+      navigate(`/${UserFlow.ForgotPassword}/reset`, { replace: true });
     },
     [
       asyncIdentifyForgotPasswordWithOneTimeToken,

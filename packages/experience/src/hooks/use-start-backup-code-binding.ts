@@ -33,7 +33,7 @@ const useStartBackupCodeBinding = () => {
       const { verificationId, codes } = result;
       setVerificationId(VerificationType.BackupCode, verificationId);
 
-      void navigate(
+      navigate(
         { pathname: `/${UserMfaFlow.MfaBinding}/${MfaFactor.BackupCode}` },
         { replace, state: { codes } satisfies BackupCodeBindingState }
       );

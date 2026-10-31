@@ -86,7 +86,7 @@ const SwitchAccount = () => {
           title="action.continue_as"
           i18nProps={{ name: loginHint }}
           onClick={() => {
-            void navigate(
+            navigate(
               { pathname: `/${experience.routes.oneTimeToken}`, search: `?${params.toString()}` },
               { replace: true }
             );

@@ -61,7 +61,7 @@ const SocialCallback = () => {
     setStartedConnectorId(undefined);
     setVerificationId(undefined);
     setToast(t('account_center.verification.verification_required'));
-    void navigate(
+    navigate(
       storedSocialFlow?.mode === 'change'
         ? getSocialChangeRoute(connectorId)
         : getSocialAddRoute(connectorId),

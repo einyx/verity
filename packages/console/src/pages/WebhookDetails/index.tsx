@@ -68,7 +68,7 @@ function WebhookDetails() {
     try {
       await api.delete(`api/hooks/${data.id}`);
       toast.success(t('webhook_details.deleted', { name: data.name }));
-      void navigate('/webhooks');
+      navigate('/webhooks');
     } finally {
       setIsDeleting(false);
     }

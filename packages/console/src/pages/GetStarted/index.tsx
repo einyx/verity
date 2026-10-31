@@ -142,7 +142,7 @@ function GetStarted() {
   const onAppCreationCompleted = useCallback(
     (newApp?: Application) => {
       if (newApp && selectedGuide) {
-        void navigate(`/applications/${newApp.id}/guide/${selectedGuide.id}`, { replace: true });
+        navigate(`/applications/${newApp.id}/guide/${selectedGuide.id}`, { replace: true });
         return;
       }
       setShowCreateAppForm(false);
@@ -159,7 +159,7 @@ function GetStarted() {
   const onCloseCreateApiForm = useCallback(
     (newResource?: Resource) => {
       if (newResource && selectedGuide) {
-        void navigate(`/api-resources/${newResource.id}/guide/${selectedGuide.id}`, {
+        navigate(`/api-resources/${newResource.id}/guide/${selectedGuide.id}`, {
           replace: true,
         });
         return;

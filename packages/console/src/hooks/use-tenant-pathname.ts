@@ -120,11 +120,11 @@ function useTenantPathname(): TenantPathname {
       navigate: (to: To | number, options?: NavigateOptions) => {
         // Navigate to the given index in the history stack
         if (typeof to === 'number') {
-          void navigate(to);
+          navigate(to);
           return;
         }
 
-        void navigate(getTo(to), options);
+        navigate(getTo(to), options);
       },
       getPathname,
       getTo,

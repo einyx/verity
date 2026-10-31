@@ -31,7 +31,7 @@ function ActionCard({ actionType, name, description, config, onDelete }: Props) 
   const isClickable = isConfigured || !isReadOnly;
 
   const goToDetail = () => {
-    void navigate(
+    navigate(
       getActionPagePath(actionType, isConfigured ? ActionPageMode.Edit : ActionPageMode.Create)
     );
   };

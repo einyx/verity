@@ -39,7 +39,7 @@ function CreateRoleModal({ onClose }: Props) {
         isRemindSkip
         role={createdRole}
         onClose={() => {
-          void navigate(`/roles/${createdRole.id}`, { replace: true });
+          navigate(`/roles/${createdRole.id}`, { replace: true });
         }}
       />
     );

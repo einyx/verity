@@ -51,7 +51,7 @@ const EmailPhoneSection = () => {
   const navigateTo = useCallback(
     (route: string) => {
       setPendingReturn(getPendingReturn() ?? window.location.href);
-      void navigate(route);
+      navigate(route);
     },
     [navigate]
   );

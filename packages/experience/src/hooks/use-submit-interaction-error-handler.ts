@@ -71,7 +71,7 @@ const useSubmitInteractionErrorHandler = (
        * the continuation is refresh-safe and carries nothing in `location.state`.
        */
       'session.step_up.require_verification': () => {
-        void navigate(stepUpRoutes.landing, { replace: true });
+        navigate(stepUpRoutes.landing, { replace: true });
       },
     }),
     [

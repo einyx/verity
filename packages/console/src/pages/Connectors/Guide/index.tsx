@@ -138,7 +138,7 @@ function Guide({ connector, onClose }: Props) {
 
         onClose();
         toast.success(t('general.saved'));
-        void navigate(
+        navigate(
           `/connectors/${isSocialConnector ? ConnectorsTabs.Social : ConnectorsTabs.Passwordless}/${
             createdConnector.id
           }`

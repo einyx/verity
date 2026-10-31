@@ -71,7 +71,7 @@ function MainContent<T extends LogtoJwtTokenKeyType>({
         // Need to trigger a global mutate to update the cache
         // Keep asynchrony to avoid page idling
         void globalMutate(getApiPath());
-        void navigate(-1);
+        navigate(-1);
       }
     })
   );
@@ -96,7 +96,7 @@ function MainContent<T extends LogtoJwtTokenKeyType>({
           // If the form is in create mode, navigate back to the previous page
           action === Action.Create
             ? () => {
-                void navigate(-1);
+                navigate(-1);
               }
             : reset
         }

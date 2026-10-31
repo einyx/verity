@@ -67,7 +67,7 @@ const useRegisterWithUsername = () => {
       // If password is required and no secondary identifiers are present, (current behavior without multi-sign-up identifiers support)
       // navigate to password screen directly
       if (passwordRequiredForSignUp && secondaryIdentifiers.length === 0) {
-        void navigate('password');
+        navigate('password');
         return;
       }
 

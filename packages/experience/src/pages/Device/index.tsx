@@ -119,12 +119,12 @@ const Device = () => {
       );
 
       if (response.redirected) {
-        void navigate(toNavigateUrl(response.url), { replace: true });
+        navigate(toNavigateUrl(response.url), { replace: true });
         return;
       }
 
       if (response.ok) {
-        void navigate(deviceSuccessPath, { replace: true });
+        navigate(deviceSuccessPath, { replace: true });
         return;
       }
 

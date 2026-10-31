@@ -43,7 +43,7 @@ const SetPassword = ({ interactionEvent }: Props) => {
     () => ({
       'user.password_exists_in_profile': async (error) => {
         await show({ type: 'alert', ModalContent: error.message, cancelText: 'action.got_it' });
-        void navigate(-1);
+        navigate(-1);
       },
       ...submitInteractionErrorHandler,
       ...passwordRejectionErrorHandler,

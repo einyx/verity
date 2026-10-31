@@ -26,7 +26,7 @@ const useOnSubmit = (signInMethods: SignIn['methods']) => {
     });
 
   const navigateToPasswordPage = useCallback(() => {
-    void navigate({
+    navigate({
       pathname: `/${UserFlow.SignIn}/password`,
     });
   }, [navigate]);

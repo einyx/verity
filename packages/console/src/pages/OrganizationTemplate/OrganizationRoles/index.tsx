@@ -102,7 +102,7 @@ function OrganizationRoles() {
           },
         ]}
         rowClickHandler={({ id }) => {
-          void navigate(id);
+          navigate(id);
         }}
         filter={
           <div className={styles.filter}>
@@ -186,7 +186,7 @@ function OrganizationRoles() {
           organizationRoleId={createdRole.id}
           onClose={() => {
             setCreatedRole(undefined);
-            void navigate(createdRole.id);
+            navigate(createdRole.id);
             void mutate();
           }}
         />

@@ -46,7 +46,7 @@ const SecondaryPageLayout = ({
         onBack={
           onBack ??
           (() => {
-            void navigate(-1);
+            navigate(-1);
           })
         }
       />

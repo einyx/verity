@@ -119,7 +119,7 @@ const StepUp = () => {
       if (establishableMethod) {
         // eslint-disable-next-line @silverhand/fp/no-mutation -- guard against repeated navigation to the continue page
         hasForwardedRef.current = true;
-        void navigate(`/${UserFlow.Continue}/${establishableMethod}`, {
+        navigate(`/${UserFlow.Continue}/${establishableMethod}`, {
           replace: true,
           state: { interactionEvent: InteractionEvent.SignIn, isStepUp: isPureStepUp },
         });
@@ -129,7 +129,7 @@ const StepUp = () => {
       if (enrollableFactors.length > 0) {
         // eslint-disable-next-line @silverhand/fp/no-mutation -- dispatch enrollment only once per arrival
         hasForwardedRef.current = true;
-        void navigate(`/${UserMfaFlow.MfaBinding}`, { replace: true });
+        navigate(`/${UserMfaFlow.MfaBinding}`, { replace: true });
         return;
       }
 

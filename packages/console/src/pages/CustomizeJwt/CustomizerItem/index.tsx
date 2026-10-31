@@ -41,7 +41,7 @@ function CustomizerItem({ tokenType, onDelete }: Props) {
           size="small"
           title="general.edit"
           onClick={() => {
-            void navigate(editLink);
+            navigate(editLink);
           }}
         />
         {!isReadOnly && (

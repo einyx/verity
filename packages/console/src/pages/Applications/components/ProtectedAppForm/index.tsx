@@ -86,7 +86,7 @@ function ProtectedAppForm({
         .json<Application>();
       toast.success(t('applications.application_created'));
       onCreateSuccess?.(createdApp);
-      void navigate(`/applications/${createdApp.id}`);
+      navigate(`/applications/${createdApp.id}`);
     } catch (error: unknown) {
       if (error instanceof HTTPError) {
         const { code, message } = await error.response.json<RequestErrorBody>();

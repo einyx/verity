@@ -26,11 +26,11 @@ const VerificationPageLayout = (props: Props) => {
       isNavBarHidden={!hasAlternativeStepUpMethod(authenticationContext.availableMethods)}
       onBack={() => {
         if (navigationType === NavigationType.Push) {
-          void navigate(-1);
+          navigate(-1);
           return;
         }
 
-        void navigate(stepUpRoutes.landing, { replace: true });
+        navigate(stepUpRoutes.landing, { replace: true });
       }}
     />
   );

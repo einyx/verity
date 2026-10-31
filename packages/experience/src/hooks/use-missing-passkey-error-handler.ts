@@ -11,10 +11,7 @@ const useMissingPasskeyErrorHandler = (interactionEvent: ContinueFlowInteraction
   return useMemo<ErrorHandlers>(
     () => ({
       'user.passkey_preferred': async () => {
-        void navigate(
-          { pathname: '/create-passkey' },
-          { replace: true, state: { interactionEvent } }
-        );
+        navigate({ pathname: '/create-passkey' }, { replace: true, state: { interactionEvent } });
       },
     }),
     [interactionEvent, navigate]

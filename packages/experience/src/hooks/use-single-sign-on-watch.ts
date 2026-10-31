@@ -86,7 +86,7 @@ const useSingleSignOnWatch = (identifierInput?: IdentifierInputValue) => {
       return;
     }
 
-    void navigate(`/${experience.routes.sso}/connectors`);
+    navigate(`/${experience.routes.sso}/connectors`);
   }, [
     agreeToTermsPolicy,
     navigate,

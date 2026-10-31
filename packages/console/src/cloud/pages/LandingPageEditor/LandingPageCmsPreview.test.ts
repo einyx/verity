@@ -304,6 +304,7 @@ it('applies the stored copy on the published page too', () => {
   // The published page is the same page without the preview flag. It reads the published document
   // for itself, and that request is not what this test is about.
   window.history.replaceState({}, '', '/');
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- Replace the browser fetch global only for this published-page fixture.
   window.fetch = jest.fn(async () => new Response('{}')) as unknown as typeof fetch;
   window.eval(cmsSource);
   sendDraftDocument({ copy: { [id]: { en: 'Edited card title' } } });
@@ -313,6 +314,7 @@ it('applies the stored copy on the published page too', () => {
 
 it('sends an edited text back under its own copy path', async () => {
   const cardTitle = document.querySelector<HTMLElement>('#products [data-slot="card-title"]');
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- Simulate the user's contenteditable DOM edit before dispatching input.
   cardTitle!.textContent = 'Edited card title';
   cardTitle!.dispatchEvent(new Event('input', { bubbles: true }));
   // The preview waits a moment before it sends the text, so it does not send every keystroke.

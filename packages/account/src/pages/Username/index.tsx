@@ -126,7 +126,7 @@ const Username = () => {
     }
 
     await refreshUserInfo();
-    void navigate(usernameSuccessRoute, { replace: true });
+    navigate(usernameSuccessRoute, { replace: true });
   };
 
   return (

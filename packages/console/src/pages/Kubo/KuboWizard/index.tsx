@@ -123,7 +123,7 @@ function KuboWizard() {
           },
         })
         .json();
-      void navigate('/infrastructure');
+      navigate('/infrastructure');
     } catch (error: unknown) {
       setSubmitError(await readError(error));
     } finally {

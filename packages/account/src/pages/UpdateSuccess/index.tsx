@@ -98,7 +98,7 @@ const UpdateSuccess = ({ identifierType }: Props) => {
       const internalRoute = getAccountCenterInternalRoute(url);
 
       if (internalRoute) {
-        void navigate(internalRoute, { replace: true });
+        navigate(internalRoute, { replace: true });
         return;
       }
 

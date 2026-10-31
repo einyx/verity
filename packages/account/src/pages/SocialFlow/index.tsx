@@ -321,7 +321,7 @@ const SocialFlow = ({ mode }: Props) => {
         action={{
           titleKey: 'action.back',
           onClick: () => {
-            void navigate(securityRoute, { replace: true });
+            navigate(securityRoute, { replace: true });
           },
         }}
       />

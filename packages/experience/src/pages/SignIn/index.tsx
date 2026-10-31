@@ -47,7 +47,7 @@ const SignInFooters = () => {
     if (agreeToTermsPolicy === AgreeToTermsPolicy.Manual && !(await termsValidation())) {
       return;
     }
-    void navigate('/single-sign-on/email');
+    navigate('/single-sign-on/email');
   }, [agreeToTermsPolicy, navigate, termsValidation]);
 
   /* Hide footers when showing Single Sign On form */

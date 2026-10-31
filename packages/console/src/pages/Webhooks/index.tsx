@@ -77,7 +77,7 @@ function Webhooks() {
             size="large"
             title="webhooks.create"
             onClick={() => {
-              void navigate({ pathname: createWebhookPathname, search });
+              navigate({ pathname: createWebhookPathname, search });
             }}
           />
         )}
@@ -140,7 +140,7 @@ function Webhooks() {
           },
         ]}
         rowClickHandler={({ id }) => {
-          void navigate(buildDetailsPathname(id));
+          navigate(buildDetailsPathname(id));
         }}
         placeholder={
           <TablePlaceholder
@@ -156,7 +156,7 @@ function Webhooks() {
                   size="large"
                   icon={<Plus />}
                   onClick={() => {
-                    void navigate({ pathname: createWebhookPathname, search });
+                    navigate({ pathname: createWebhookPathname, search });
                   }}
                 />
               )
@@ -179,11 +179,11 @@ function Webhooks() {
             if (createdHook) {
               void mutate();
               toast.success(t('webhooks.webhook_created', { name: createdHook.name }));
-              void navigate(buildDetailsPathname(createdHook.id), { replace: true });
+              navigate(buildDetailsPathname(createdHook.id), { replace: true });
               return;
             }
 
-            void navigate({ pathname: webhooksPathname, search });
+            navigate({ pathname: webhooksPathname, search });
           }}
         />
       )}

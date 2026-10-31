@@ -97,7 +97,7 @@ function ConsoleSso() {
                 },
               ]}
               rowClickHandler={({ id }) => {
-                void navigate(getConsoleSsoDetailsPath(id));
+                navigate(getConsoleSsoDetailsPath(id));
               }}
               placeholder={
                 <TablePlaceholder
@@ -122,7 +122,7 @@ function ConsoleSso() {
             onClose={(id) => {
               setCreationUserId(undefined);
               if (id) {
-                void navigate(getConsoleSsoDetailsPath(id));
+                navigate(getConsoleSsoDetailsPath(id));
               }
             }}
           />

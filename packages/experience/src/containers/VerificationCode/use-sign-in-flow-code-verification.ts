@@ -67,7 +67,7 @@ const useSignInFlowCodeVerification = (
     });
 
     if (!confirmed) {
-      void navigate(-1);
+      navigate(-1);
       return;
     }
 
@@ -84,7 +84,7 @@ const useSignInFlowCodeVerification = (
      * code and hit a confusing `verification_code.not_found` error.
      */
     if (!(await termsValidation())) {
-      void navigate(-1);
+      navigate(-1);
       return;
     }
 

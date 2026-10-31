@@ -2,4 +2,4 @@
 "@logto/schemas": patch
 ---
 
-fix fresh database initialization by applying tenant isolation to MCP portal tables
+fix fresh database initialization for tenant-scoped MCP portals and confirmed AI actions

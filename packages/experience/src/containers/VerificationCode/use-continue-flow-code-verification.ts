@@ -85,7 +85,7 @@ const useContinueFlowCodeVerification = (
         identifier,
         verificationId,
         onCanceled: () => {
-          void navigate(-1);
+          navigate(-1);
         },
       });
       return;

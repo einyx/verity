@@ -69,7 +69,7 @@ function InvitationList({ invitations }: Props) {
           className={styles.createTenantButton}
           title="invitation.create_new_tenant"
           onClick={() => {
-            void navigate(GlobalRoute.Onboarding);
+            navigate(GlobalRoute.Onboarding);
           }}
         />
       </div>

@@ -48,7 +48,7 @@ function CreateButton({ size, className }: CreateButtonProps) {
       size={size}
       icon={<Plus />}
       onClick={() => {
-        void navigate(`${collectUserProfilePathname}/create`);
+        navigate(`${collectUserProfilePathname}/create`);
       }}
     />
   );
@@ -180,10 +180,10 @@ function CollectUserProfile({ isActive }: Props) {
           onClose={(field?: CustomProfileField) => {
             if (field) {
               void mutate();
-              void navigate(`${collectUserProfilePathname}/fields/${field.name}`);
+              navigate(`${collectUserProfilePathname}/fields/${field.name}`);
               return;
             }
-            void navigate(collectUserProfilePathname);
+            navigate(collectUserProfilePathname);
           }}
         />
       )}

@@ -39,7 +39,7 @@ function CreateCaptchaForm({ onClose, isOpen: isFormOpen }: Props) {
             type="primary"
             disabled={!provider}
             onClick={() => {
-              void navigate(`/security/captcha/guide/${provider}`);
+              navigate(`/security/captcha/guide/${provider}`);
             }}
           />
         }

@@ -43,7 +43,7 @@ const useStartWebAuthnProcessing = ({ errorHandlers }: Options = {}) => {
           ...flowState,
         };
 
-        void navigate({ pathname: `/${flow}/${MfaFactor.WebAuthn}` }, { replace, state });
+        navigate({ pathname: `/${flow}/${MfaFactor.WebAuthn}` }, { replace, state });
       }
     },
     [

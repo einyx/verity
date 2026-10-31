@@ -94,7 +94,7 @@ function UserSessions({ userId }: Props) {
                       type="text"
                       size="small"
                       onClick={() => {
-                        void navigate(`/users/${userId}/sessions/${sessionId}`);
+                        navigate(`/users/${userId}/sessions/${sessionId}`);
                       }}
                     />
                   </div>

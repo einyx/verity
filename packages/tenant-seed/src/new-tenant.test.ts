@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { productionEnterprisePlan } from './production-subscription.js';
 import { seedTenant } from './new-tenant.js';
 import { seedOidcConfigs } from './oidc-config.js';
+import { productionEnterprisePlan } from './production-subscription.js';
 import { seedPreConfiguredManagementApiAccessRole } from './roles.js';
 import { createTenant, seedAdminData } from './tenant.js';
 

@@ -13,7 +13,7 @@ const readSql = (name) =>
   );
 const identifier = (value) => `"${value.replaceAll('"', '""')}"`;
 
-test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle", async () => {
+test("fresh portal and AI action seeds enforce tenant isolation through the seed lifecycle", async () => {
   assert.ok(
     process.env.DB_URL,
     "Set DB_URL explicitly to a disposable PostgreSQL database",
@@ -137,6 +137,12 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
     );
     await client.query(`grant select, insert, update, delete on mcp_portal_settings
       to ${identifier(roleA)}, ${identifier(roleB)}`);
+    await client.query(await readSql("ai_pending_actions"));
+    await client.query(
+      (await readSql("_after_each")).replaceAll("${name}", "ai_pending_actions"),
+    );
+    await client.query(`grant select, insert, update, delete on ai_pending_actions
+      to ${identifier(roleA)}, ${identifier(roleB)}`);
     const { PostgresPortalSettingsStore } = await import(
       "../packages/mcp-portal/lib/postgres-settings.js"
     );
@@ -185,8 +191,27 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
     assert.equal(await upstreams.findCredential(portalId, "upstream"), undefined);
     assert.equal(await upstreams.setCredential(portalId, "upstream", "ciphertext"), true);
     assert.equal(await upstreams.findCredential(portalId, "upstream"), "ciphertext");
+    assert.deepEqual(
+      (await client.query(`insert into ai_pending_actions
+        (id, user_id, tool, arguments, arguments_hash, expires_at)
+        values ('action-a', 'user-a', 'test', '{}', 'fixture-hash', now() + interval '1 hour')
+        returning tenant_id, state`)).rows,
+      [{ tenant_id: "tenant-a", state: "pending" }],
+    );
+    await client.query("savepoint invalid_action_state");
+    await assert.rejects(
+      client.query("update ai_pending_actions set state = 'unconfirmed-execution'"),
+      { code: "23514" },
+    );
+    await client.query("rollback to savepoint invalid_action_state");
+    await client.query("release savepoint invalid_action_state");
 
     await client.query(`set local role ${identifier(roleB)}`);
+    assert.equal((await client.query("select * from ai_pending_actions")).rowCount, 0);
+    assert.equal(
+      (await client.query("update ai_pending_actions set state = 'confirmed'")).rowCount,
+      0,
+    );
     assert.deepEqual(await settings.get(), {});
     assert.deepEqual(await settings.setBaseDomain("b.example.test"), {
       baseDomain: "b.example.test",
@@ -224,6 +249,10 @@ test("fresh MCP portal seeds enforce tenant isolation through the seed lifecycle
     }
 
     await client.query(`set local role ${identifier(roleA)}`);
+    assert.deepEqual(
+      (await client.query("select state from ai_pending_actions where id = 'action-a'")).rows,
+      [{ state: "pending" }],
+    );
     assert.deepEqual(await settings.get(), { baseDomain: "updated.example.test" });
     assert.equal(await upstreams.findCredential(portalId, "upstream"), "ciphertext");
     for (const table of tables) {

@@ -43,7 +43,7 @@ const MfaFactorList = ({ flow, flowState }: Props) => {
         return;
       }
 
-      void navigate(`/${flow}/${factor}`, { state: flowState });
+      navigate(`/${flow}/${factor}`, { state: flowState });
     },
     [flow, flowState, navigate, sendMfaVerificationCode, startTotpBinding, startWebAuthnProcessing]
   );

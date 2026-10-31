@@ -174,12 +174,9 @@ const TotpBinding = ({ isReplace }: Props) => {
       // Clear code input to prevent duplicate submission
       setCodeInput([]);
 
-      void navigate(
-        isReplace ? authenticatorAppReplaceSuccessRoute : authenticatorAppSuccessRoute,
-        {
-          replace: true,
-        }
-      );
+      navigate(isReplace ? authenticatorAppReplaceSuccessRoute : authenticatorAppSuccessRoute, {
+        replace: true,
+      });
     },
     [
       codeInput,

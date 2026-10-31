@@ -44,7 +44,7 @@ function OrganizationTemplate() {
   const { navigate } = useTenantPathname();
 
   const handleUpgradePlan = useCallback(() => {
-    void navigate(subscriptionPage);
+    navigate(subscriptionPage);
   }, [navigate]);
 
   return (

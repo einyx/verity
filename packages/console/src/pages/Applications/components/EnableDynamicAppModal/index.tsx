@@ -44,7 +44,7 @@ function EnableDynamicAppModal({ onClose }: Props) {
 
     toast.success(t('applications.dynamic_app.enabled'));
     onClose();
-    void navigate(`/applications/${dynamicAppId}`, { replace: true });
+    navigate(`/applications/${dynamicAppId}`, { replace: true });
   };
 
   return (

@@ -76,8 +76,20 @@ const maxMessageLength = 1000;
 // The industry rows name the sector and fill the composer with its question, so the visitor can
 // adjust it before sending.
 const quickReplies = [
-  { label: quickPlatformDemo, prompt: quickPlatformDemo, tag: 'Overview', icon: 'grid', send: true },
-  { label: quickFoundationAi, prompt: quickFoundationAi, tag: 'Product', icon: 'spark', send: true },
+  {
+    label: quickPlatformDemo,
+    prompt: quickPlatformDemo,
+    tag: 'Overview',
+    icon: 'grid',
+    send: true,
+  },
+  {
+    label: quickFoundationAi,
+    prompt: quickFoundationAi,
+    tag: 'Product',
+    icon: 'spark',
+    send: true,
+  },
   { label: quickDashboards, prompt: quickDashboards, tag: 'Product', icon: 'chart', send: true },
   { label: quickUseCase, prompt: quickUseCase, tag: 'Tailored', icon: 'target', send: true },
   {
@@ -87,7 +99,13 @@ const quickReplies = [
     icon: 'plane',
     send: false,
   },
-  { label: industryBanking, prompt: quickIndustryBanking, tag: 'Industry', icon: 'bank', send: false },
+  {
+    label: industryBanking,
+    prompt: quickIndustryBanking,
+    tag: 'Industry',
+    icon: 'bank',
+    send: false,
+  },
   {
     label: industryHealthcare,
     prompt: quickIndustryHealthcare,
@@ -95,7 +113,13 @@ const quickReplies = [
     icon: 'health',
     send: false,
   },
-  { label: industrySmartCity, prompt: quickIndustrySmartCity, tag: 'Industry', icon: 'city', send: false },
+  {
+    label: industrySmartCity,
+    prompt: quickIndustrySmartCity,
+    tag: 'Industry',
+    icon: 'city',
+    send: false,
+  },
 ] as const;
 
 type IdeaIcon = (typeof quickReplies)[number]['icon'];

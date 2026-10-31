@@ -61,7 +61,7 @@ function CaptchaDetails() {
       toast.success(t('security.captcha_details.captcha_deleted'));
       await mutate(undefined);
 
-      void navigate('/security', {
+      navigate('/security', {
         replace: true,
       });
     } finally {

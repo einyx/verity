@@ -55,7 +55,7 @@ const VerificationCodeMfaBinding = ({
         setVerificationId(codeVerificationTypeMap[identifierType], result.verificationId);
         setIdentifierInputValue(identifier);
 
-        void navigate('/continue/verification-code', {
+        navigate('/continue/verification-code', {
           state: {
             flow: UserMfaFlow.MfaBinding,
             mfaFlowState,

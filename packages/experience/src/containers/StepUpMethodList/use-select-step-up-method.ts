@@ -65,7 +65,7 @@ const useSelectStepUpMethod = ({ methods, authenticationContext, replace }: Opti
 
       if (result) {
         setVerificationId(codeVerificationTypeMap[type], result.verificationId);
-        void navigate(getStepUpVerificationCodeRoute(type), { replace });
+        navigate(getStepUpVerificationCodeRoute(type), { replace });
       }
     },
     [
@@ -82,7 +82,7 @@ const useSelectStepUpMethod = ({ methods, authenticationContext, replace }: Opti
     async (method: StepUpMethod) => {
       switch (method) {
         case VerificationType.Password: {
-          void navigate(stepUpRoutes.password, { replace });
+          navigate(stepUpRoutes.password, { replace });
           return;
         }
         case VerificationType.EmailVerificationCode: {
@@ -106,14 +106,14 @@ const useSelectStepUpMethod = ({ methods, authenticationContext, replace }: Opti
           return;
         }
         case VerificationType.TOTP: {
-          void navigate(`/${UserMfaFlow.MfaVerification}/${MfaFactor.TOTP}`, {
+          navigate(`/${UserMfaFlow.MfaVerification}/${MfaFactor.TOTP}`, {
             replace,
             state: mfaFlowState,
           });
           return;
         }
         case VerificationType.BackupCode: {
-          void navigate(`/${UserMfaFlow.MfaVerification}/${MfaFactor.BackupCode}`, {
+          navigate(`/${UserMfaFlow.MfaVerification}/${MfaFactor.BackupCode}`, {
             replace,
             state: mfaFlowState,
           });

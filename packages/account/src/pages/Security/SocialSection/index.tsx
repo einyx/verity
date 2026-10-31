@@ -103,7 +103,7 @@ const SocialSection = () => {
   const navigateTo = useCallback(
     (route: string) => {
       setPendingReturn(getPendingReturn() ?? window.location.href);
-      void navigate(route);
+      navigate(route);
     },
     [navigate]
   );
@@ -242,7 +242,7 @@ const SocialSection = () => {
                           className={styles.actionButton}
                           onClick={() => {
                             setPendingReturn(getPendingReturn() ?? currentPageUrl);
-                            void navigate(getSocialChangeRoute(connector.id));
+                            navigate(getSocialChangeRoute(connector.id));
                           }}
                         >
                           {t('account_center.security.change')}
@@ -263,7 +263,7 @@ const SocialSection = () => {
                         className={styles.actionButton}
                         onClick={() => {
                           setPendingReturn(getPendingReturn() ?? currentPageUrl);
-                          void navigate(getSocialAddRoute(connector.id));
+                          navigate(getSocialAddRoute(connector.id));
                         }}
                       >
                         {t('account_center.security.add')}

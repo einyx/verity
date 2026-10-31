@@ -84,7 +84,7 @@ const useStartIdentifierPasskeySignInProcessing = ({ hideErrorToast }: Props) =>
 
         const state: IdentifierPasskeyState = { options };
 
-        void navigate({ pathname: `/${UserFlow.SignIn}/passkey` }, { state });
+        navigate({ pathname: `/${UserFlow.SignIn}/passkey` }, { state });
         return true;
       }
       return false;

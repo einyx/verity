@@ -43,7 +43,7 @@ const useRequiredProfileErrorHandler = ({
 
         switch (missingProfile) {
           case MissingProfile.password: {
-            void navigate(
+            navigate(
               {
                 pathname: `/${UserFlow.Continue}/${missingProfile}`,
               },
@@ -55,7 +55,7 @@ const useRequiredProfileErrorHandler = ({
           case MissingProfile.email:
           case MissingProfile.phone:
           case MissingProfile.emailOrPhone: {
-            void navigate(
+            navigate(
               {
                 pathname: `/${UserFlow.Continue}/${missingProfile}`,
                 search: linkSocialQueryString,
@@ -65,7 +65,7 @@ const useRequiredProfileErrorHandler = ({
             break;
           }
           case MissingProfile.extraProfile: {
-            void navigate(
+            navigate(
               {
                 pathname: `/${UserFlow.Continue}/extra-profile`,
               },

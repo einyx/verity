@@ -29,7 +29,7 @@ import { assignScopesToRole, createRole as createRoleApi, deleteRole } from '#sr
 import { createScope as createScopeApi } from '#src/api/scope.js';
 import { logtoUrl } from '#src/constants.js';
 import { OrganizationApiTest } from '#src/helpers/organization.js';
-import { devFeatureDisabledTest, devFeatureTest, randomString } from '#src/utils.js';
+import { randomString } from '#src/utils.js';
 
 type TokenResponse = {
   access_token: string;
@@ -301,7 +301,7 @@ describe('client credentials grant', () => {
     });
   });
 
-  devFeatureTest.describe('custom jwt error handling (dev features enabled)', () => {
+  describe('custom jwt error handling', () => {
     it('should return invalid_request when script throws and blocking is enabled', async () => {
       const resource = await createResource();
 
@@ -332,17 +332,14 @@ describe('client credentials grant', () => {
         error: 'access_denied',
       });
     });
-  });
-
-  devFeatureDisabledTest.describe('custom jwt error handling (dev features disabled)', () => {
-    it('should keep fail-open when script throws and blocking is enabled', async () => {
+    it('should keep fail-open when script throws and blocking is disabled', async () => {
       const resource = await createResource();
 
       await upsertJwtCustomizer('client-credentials', {
         script: `const getCustomJwtClaims = async () => {
   throw new Error('boom');
 };`,
-        blockIssuanceOnError: true,
+        blockIssuanceOnError: false,
       });
 
       const { access_token: accessToken } = await post({ resource: resource.indicator });

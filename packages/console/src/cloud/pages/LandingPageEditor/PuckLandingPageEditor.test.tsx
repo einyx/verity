@@ -90,15 +90,11 @@ it('collapses the section properties column and restores it without remounting t
   expect(screen.getByTitle('Landing page preview')).toBe(frame);
 });
 
-it('opens preview actions from the editor toolbar instead of covering the website header', () => {
+it('keeps preview actions in the context menu without a separate Actions button', () => {
   renderEditor(jest.fn());
-  const frame = screen.getByTitle<HTMLIFrameElement>('Landing page preview');
-  const postMessage = jest.spyOn(frame.contentWindow!, 'postMessage');
-  fireEvent.click(screen.getByText('Actions', { selector: 'button' }));
-  expect(postMessage).toHaveBeenCalledWith(
-    { type: 'meshx-cms-open-actions' },
-    window.location.origin
-  );
+  expect(screen.queryByText('Actions', { selector: 'button' })).toBeNull();
+  expect(screen.getByText('Click to edit · Right-click for actions')).toBeTruthy();
+  expect(screen.getByTitle('Landing page preview')).toBeTruthy();
 });
 
 it('switches the actual preview viewport without reloading it or changing the draft', () => {

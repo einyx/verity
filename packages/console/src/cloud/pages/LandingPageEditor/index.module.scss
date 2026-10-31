@@ -299,9 +299,10 @@
 .primaryButton {
   height: 32px;
   padding: 0 14px;
-  border: 1px solid var(--color-primary);
+  border: 1px solid #bd2a14;
   border-radius: 8px;
-  background: var(--color-primary);
+  // White labels need a darker brand red than the console's decorative accent.
+  background: #bd2a14;
   color: #fff;
   font: inherit;
   font-size: 14px;
@@ -313,9 +314,14 @@
     cursor: not-allowed;
   }
 
+  &:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+  }
+
   &:hover:not(:disabled) {
-    background: var(--color-primary-pressed);
-    border-color: var(--color-primary-pressed);
+    background: #982311;
+    border-color: #982311;
   }
 }
 
@@ -358,7 +364,7 @@
 
 .liveBadge {
   background: var(--color-success-container, #e6f6ec);
-  color: var(--color-success, #1f7a3f);
+  color: var(--color-text);
 }
 
 .draftBadge {
@@ -1096,14 +1102,19 @@
   gap: 2px;
 
   button {
-    width: 26px;
-    height: 26px;
+    width: var(--section-action-size, 26px);
+    height: var(--section-action-size, 26px);
     padding: 0;
     border: 1px solid transparent;
     border-radius: 6px;
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-brand);
+      outline-offset: 2px;
+    }
 
     &:disabled {
       opacity: 35%;
@@ -1116,6 +1127,86 @@
       color: var(--color-text);
     }
   }
+}
+
+.unifiedSections {
+  min-width: 0;
+  padding: 0 8px 16px;
+
+  > .puckPluginHint {
+    padding: 0 8px 12px;
+  }
+}
+
+.sectionOrderList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.puckSectionEntry.unifiedSectionRow {
+  gap: 4px;
+  padding: 8px 4px;
+  cursor: default;
+
+  &[data-dragging='true'] {
+    opacity: 50%;
+  }
+
+  &[data-drop-target='before'] {
+    border-color: var(--color-brand);
+    box-shadow: 0 -2px 0 var(--color-brand);
+  }
+
+  &[data-drop-target='after'] {
+    border-color: var(--color-brand);
+    box-shadow: 0 2px 0 var(--color-brand);
+  }
+}
+
+.sectionDragHandle {
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:disabled {
+    opacity: 35%;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+.unifiedSectionActions {
+  --section-action-size: 32px;
+  flex: 0 0 96px;
+  gap: 0;
+}
+
+.sectionReorderStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .puckSectionEntry {
@@ -1171,6 +1262,12 @@
   color: var(--color-text-secondary);
   font-size: 11px;
   line-height: 1.35;
+
+  .unifiedSectionRow & {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .puckSectionNumber {
@@ -1214,21 +1311,21 @@
   align-items: center;
   gap: 12px;
   min-height: 56px;
-  padding: 10px 108px 10px 16px;
+  padding: 10px 16px;
   box-sizing: border-box;
-  border-bottom: 1px solid #e5e5e5;
-  background: #fff;
-  color: #57534e;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-layer-1);
+  color: var(--color-text);
   font-size: 13px;
 
   /* stylelint-disable-next-line no-descending-specificity -- Live toolbar buttons do not share the outline-action container. */
   button {
     min-height: 36px;
     padding: 6px 12px;
-    border: 1px solid #d6d3d1;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
-    background: #fff;
-    color: #292524;
+    background: var(--color-layer-1);
+    color: var(--color-text);
     cursor: pointer;
 
     /* stylelint-disable-next-line no-descending-specificity -- This state is scoped to live toolbar buttons, not outline actions. */
@@ -1238,7 +1335,7 @@
     }
     /* stylelint-disable-next-line no-descending-specificity -- This focus state belongs to a separate toolbar component. */
     &:focus-visible {
-      outline: 2px solid #d92d20;
+      outline: 2px solid var(--color-focused-variant);
       outline-offset: 2px;
     }
   }
@@ -1250,27 +1347,9 @@
   gap: 4px;
 
   button[aria-pressed='true'] {
-    background: #292524;
-    color: #fff;
-    border-color: #292524;
-  }
-}
-
-.previewActionsButton {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  min-height: 36px;
-  padding: 6px 12px;
-  border: 1px solid #d6d3d1;
-  border-radius: 6px;
-  background: #fff;
-  color: #292524;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid #315da8;
-    outline-offset: 2px;
+    background: var(--color-text);
+    color: var(--color-layer-1);
+    border-color: var(--color-text);
   }
 }
 
@@ -1278,9 +1357,9 @@
   display: flex;
   align-items: flex-start;
   min-width: 0;
-  overflow-x: auto;
+  overflow: hidden;
   padding: 16px;
-  background: #eef0f3;
+  background: var(--color-layer-2);
 
   iframe {
     flex: none;
@@ -1294,14 +1373,46 @@
   }
 }
 
+.fittedPreview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.previewZoom {
+  align-self: flex-start;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fittedPreviewViewport {
+  height: calc(max(68vh, 480px) * var(--preview-scale));
+  max-width: 100%;
+  overflow: hidden;
+
+  iframe {
+    // Scale the displayed footprint, not the website's logical viewport dimensions.
+    height: max(68vh, 480px);
+    min-height: 0;
+    margin: 0;
+    border: none;
+    transform: scale(var(--preview-scale));
+    transform-origin: top left;
+  }
+}
 
 .elementProperties {
   position: sticky;
   top: 0;
   min-width: 0;
   padding: 16px;
-  background: #fff;
-  color: #292524;
+  background: var(--color-layer-1);
+  color: var(--color-text);
 
   header {
     display: flex;
@@ -1316,7 +1427,7 @@
 
   p {
     margin-top: 16px;
-    color: #78716c;
+    color: var(--color-text-secondary);
     font-size: 12px;
   }
   /* stylelint-disable-next-line no-descending-specificity -- Properties controls and outline-action buttons have separate containers. */
@@ -1337,14 +1448,14 @@
     width: 100%;
     box-sizing: border-box;
     padding: 8px;
-    border: 1px solid #d6d3d1;
+    border: 1px solid var(--color-border);
     border-radius: 5px;
-    background: #fff;
-    color: #292524;
+    background: var(--color-layer-1);
+    color: var(--color-text);
   }
 
   [role='alert'] {
-    color: #b91c1c;
+    color: var(--color-error);
   }
 }
 
@@ -1371,16 +1482,20 @@
   }
 }
 
-/* Puck owns draft/history state, not a second editor shell. Keep the chrome light and readable
-   even when the surrounding console is dark; the real website remains isolated in its iframe. */
+/* Puck owns draft/history state, not a second editor shell. The editing controls inherit the console
+   theme; the real website keeps its own appearance inside the iframe. */
 .editorWorkspace {
-  --color-text: #24262b;
-  --color-text-secondary: #626873;
-  --color-layer-1: #fff;
-  --color-layer-2: #f1f3f6;
-  --color-border: #dce0e6;
-  --color-brand: #315da8;
-  --color-primary: #315da8;
+  --puck-color-surface: var(--color-layer-1);
+  --puck-color-surface-muted: var(--color-layer-2);
+  --puck-color-surface-subtle: var(--color-layer-2);
+  --puck-color-text: var(--color-text);
+  --puck-color-text-secondary: var(--color-text-secondary);
+  --puck-color-text-muted: var(--color-text-secondary);
+  --puck-color-text-subtle: var(--color-text-secondary);
+  --puck-color-border: var(--color-border);
+  --puck-color-border-muted: var(--color-border);
+  --puck-color-border-hover: var(--color-text-secondary);
+  --puck-color-focus-ring: var(--color-focused-variant);
   display: grid;
   width: 100%;
   grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(280px, 320px);
@@ -1388,9 +1503,8 @@
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-layer-1);
   color: var(--color-text);
-  color-scheme: light;
   overflow: hidden;
 }
 
@@ -1438,7 +1552,7 @@
     padding: 6px 8px;
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    background: #fff;
+    background: var(--color-layer-1);
     color: var(--color-text);
     cursor: pointer;
   }
@@ -1462,8 +1576,8 @@
     cursor: pointer;
 
     &[aria-pressed='true'] {
-      background: #e9eff9;
-      color: #254f94;
+      background: var(--color-layer-2);
+      color: var(--color-text);
     }
   }
 }

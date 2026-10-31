@@ -123,41 +123,24 @@ function LandingPreviewFrame({
     sendLocale,
   ]);
 
+  // The preview is our own same-origin site and needs scripts plus same-origin requests to report edits.
   return (
-    <>
-      <button
-        type="button"
-        className={styles.previewActionsButton}
-        aria-haspopup="menu"
-        onClick={() => {
-          frameRef.current?.contentWindow?.postMessage(
-            { type: 'meshx-cms-open-actions' },
-            window.location.origin
-          );
-        }}
-      >
-        Actions
-      </button>
-      {/* The landing page is our own static site on this origin. It must run its scripts and make
-          same-origin requests to load its copy and report edits, so a sandbox that combines both flags
-          would stop it working. */}
-      {/* eslint-disable-next-line react/iframe-missing-sandbox -- see the comment above. */}
-      <iframe
-        ref={frameRef}
-        className={styles.pageFrame}
-        style={{ width }}
-        src={`${window.location.origin}/console/landing-preview?cmsPreview=1`}
-        title="Landing page preview"
-        onLoad={(event) => {
-          sendDraft();
-          sendActiveSection();
-          event.currentTarget.contentWindow?.postMessage(
-            { type: 'meshx-cms-editor-viewport', height: Math.round(window.innerHeight * 0.72) },
-            window.location.origin
-          );
-        }}
-      />
-    </>
+    // eslint-disable-next-line react/iframe-missing-sandbox -- The trusted same-origin preview must run its scripts and report edits.
+    <iframe
+      ref={frameRef}
+      className={styles.pageFrame}
+      style={{ width }}
+      src={`${window.location.origin}/console/landing-preview?cmsPreview=1`}
+      title="Landing page preview"
+      onLoad={(event) => {
+        sendDraft();
+        sendActiveSection();
+        event.currentTarget.contentWindow?.postMessage(
+          { type: 'meshx-cms-editor-viewport', height: Math.round(window.innerHeight * 0.72) },
+          window.location.origin
+        );
+      }}
+    />
   );
 }
 

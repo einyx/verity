@@ -2,12 +2,12 @@
 workspaceConcurrency: 2
 packages:
   - packages/*
-  - '!packages/shell'
+  - "!packages/shell"
   - packages/toolkit/*
   - packages/connectors/*
   - "!packages/connectors/templates"
 allowBuilds:
-  '@swc/core': true
+  "@swc/core": true
   core-js: true
   esbuild: true
   puppeteer: true
@@ -16,13 +16,16 @@ allowBuilds:
   # Native resolver pulled in by a dependency of the lint/build tooling; its install script must run for the image's non-frozen `pnpm i`.
   unrs-resolver: true
 minimumReleaseAgeExclude:
-  - '@assistant-ui/core@0.3.30'
-  - '@assistant-ui/react@0.15.30'
-  - '@assistant-ui/store@0.3.22'
-  - '@assistant-ui/tap@0.9.24'
+  - "@assistant-ui/core@0.3.30"
+  - "@assistant-ui/react@0.15.30"
+  - "@assistant-ui/store@0.3.22"
+  - "@assistant-ui/tap@0.9.24"
   - assistant-stream@0.3.53
 overrides:
   "@babel/core@<=7.29.0": "^7.29.6"
+  # The Node SDK's default JWT verifier needs jose 6 for experimental ML-DSA signing keys.
+  # Keep this scoped to the SDK instead of replacing unrelated jose 5 consumers.
+  "@logto/client>jose": "^6.2.3"
   "@logto/console>@monaco-editor/react": "4.6.0"
   "@logto/console>react-color-palette": "7.2.1"
   "@logto/console>react-dropzone": "14.2.3"

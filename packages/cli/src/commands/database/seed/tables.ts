@@ -58,6 +58,7 @@ import {
   seedLegacyManagementApiUserRole,
   seedManagementApiProxyApplications,
 } from './tenant.js';
+import { seedTestApplications } from './test-applications.js';
 
 const getExplicitOrder = (query: string) => {
   const matched = /\/\*\s*init_order\s*=\s*([\d.]+)\s*\*\//.exec(query)?.[1];
@@ -330,6 +331,9 @@ export const seedTest = async (connection: DatabaseTransactionConnection, forLeg
     );
     return;
   }
+
+  // Register real clients only in the test seed, so OIDC tests do not depend on dev-only previews.
+  await seedTestApplications(connection);
 
   const addOrganizationMembership = async (userId: string, tenantId: string) =>
     connection.query(

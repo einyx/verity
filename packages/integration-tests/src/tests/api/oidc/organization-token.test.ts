@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 
 import { UserScope, buildOrganizationUrn } from '@logto/core-kit';
-import { LogtoRequestError } from '@logto/js';
+import { LogtoRequestError } from '@logto/node';
 import { MfaFactor } from '@logto/schemas';
 
 import { createUserMfaVerification, deleteUser } from '#src/api/admin-user.js';

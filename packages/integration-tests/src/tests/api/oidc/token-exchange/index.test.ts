@@ -29,8 +29,6 @@ import { createUserByAdmin } from '#src/helpers/index.js';
 import { OrganizationApiTest } from '#src/helpers/organization.js';
 import { enableAllPasswordSignInMethods } from '#src/helpers/sign-in-experience.js';
 import {
-  devFeatureDisabledTest,
-  devFeatureTest,
   getAccessTokenPayload,
   randomString,
   generateName,
@@ -501,77 +499,71 @@ describe('Token Exchange', () => {
       await deleteJwtCustomizer('access-token');
     });
 
-    devFeatureTest.it(
-      'should return server_error when access-token script throws and blocking is enabled',
-      async () => {
-        const { subjectToken } = await createSubjectToken(testUserId, { foo: 'bar' });
+    it('should return invalid_request when access-token script throws and blocking is enabled', async () => {
+      const { subjectToken } = await createSubjectToken(testUserId, { foo: 'bar' });
 
-        await upsertJwtCustomizer('access-token', {
-          script: `const getCustomJwtClaims = async () => {
+      await upsertJwtCustomizer('access-token', {
+        script: `const getCustomJwtClaims = async () => {
   throw new Error('boom');
 };`,
-          blockIssuanceOnError: true,
-        });
+        blockIssuanceOnError: true,
+      });
 
-        const error = await oidcApi
-          .post('token', {
-            headers: {
-              ...formUrlEncodedHeaders,
-              Authorization: authorizationHeader,
-            },
-            body: new URLSearchParams({
-              grant_type: GrantType.TokenExchange,
-              subject_token: subjectToken,
-              subject_token_type: impersonationTokenType,
-              resource: testApiResourceInfo.indicator,
-            }),
-          })
-          .catch((error: unknown) => error);
-        expect(error).toBeInstanceOf(HTTPError);
-        expect((error as HTTPError).response.status).toBe(400);
-        expect(
-          oidcInvalidRequestErrorGuard.safeParse(await (error as HTTPError).response.json()).success
-        ).toBe(true);
+      const error = await oidcApi
+        .post('token', {
+          headers: {
+            ...formUrlEncodedHeaders,
+            Authorization: authorizationHeader,
+          },
+          body: new URLSearchParams({
+            grant_type: GrantType.TokenExchange,
+            subject_token: subjectToken,
+            subject_token_type: impersonationTokenType,
+            resource: testApiResourceInfo.indicator,
+          }),
+        })
+        .catch((error: unknown) => error);
+      expect(error).toBeInstanceOf(HTTPError);
+      expect((error as HTTPError).response.status).toBe(400);
+      expect(
+        oidcInvalidRequestErrorGuard.safeParse(await (error as HTTPError).response.json()).success
+      ).toBe(true);
 
-        await deleteJwtCustomizer('access-token');
-      }
-    );
+      await deleteJwtCustomizer('access-token');
+    });
 
-    devFeatureDisabledTest.it(
-      'should keep fail-open when access-token script throws and blocking is enabled',
-      async () => {
-        const { subjectToken } = await createSubjectToken(testUserId, { foo: 'bar' });
+    it('should keep fail-open when access-token script throws and blocking is disabled', async () => {
+      const { subjectToken } = await createSubjectToken(testUserId, { foo: 'bar' });
 
-        await upsertJwtCustomizer('access-token', {
-          script: `const getCustomJwtClaims = async () => {
+      await upsertJwtCustomizer('access-token', {
+        script: `const getCustomJwtClaims = async () => {
   throw new Error('boom');
 };`,
-          blockIssuanceOnError: true,
-        });
+        blockIssuanceOnError: false,
+      });
 
-        const { access_token } = await oidcApi
-          .post('token', {
-            headers: {
-              ...formUrlEncodedHeaders,
-              Authorization: authorizationHeader,
-            },
-            body: new URLSearchParams({
-              grant_type: GrantType.TokenExchange,
-              subject_token: subjectToken,
-              subject_token_type: impersonationTokenType,
-              resource: testApiResourceInfo.indicator,
-            }),
-          })
-          .json<{
-            access_token: string;
-          }>();
-        expect(getAccessTokenPayload(access_token).sub).toBe(testUserId);
+      const { access_token } = await oidcApi
+        .post('token', {
+          headers: {
+            ...formUrlEncodedHeaders,
+            Authorization: authorizationHeader,
+          },
+          body: new URLSearchParams({
+            grant_type: GrantType.TokenExchange,
+            subject_token: subjectToken,
+            subject_token_type: impersonationTokenType,
+            resource: testApiResourceInfo.indicator,
+          }),
+        })
+        .json<{
+          access_token: string;
+        }>();
+      expect(getAccessTokenPayload(access_token).sub).toBe(testUserId);
 
-        await deleteJwtCustomizer('access-token');
-      }
-    );
+      await deleteJwtCustomizer('access-token');
+    });
 
-    devFeatureTest.it('should keep access_denied when script calls denyAccess', async () => {
+    it('should keep access_denied when script calls denyAccess', async () => {
       const { subjectToken } = await createSubjectToken(testUserId, { foo: 'bar' });
 
       await upsertJwtCustomizer('access-token', {

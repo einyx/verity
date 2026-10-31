@@ -35,6 +35,8 @@ import { discoveryUrl } from '#src/constants.js';
 import { expectRejects } from '#src/helpers/index.js';
 import { waitFor } from '#src/utils.js';
 
+import { describePostQuantumSigning } from './oidc/post-quantum-signing.js';
+
 const defaultAdminConsoleConfig: AdminConsoleData = {
   signInExperienceCustomized: false,
   organizationCreated: false,
@@ -230,6 +232,8 @@ describe('logto config', () => {
     /** Removing the last RSA key must also drop its algorithms from the declaration. */
     await expectDeclaredSigningAlgs(['ES384']);
   });
+
+  describePostQuantumSigning();
 
   it('should support staged private-key rotation with a grace period', async () => {
     const existingPrivateKeys = await getOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);

@@ -32,6 +32,10 @@ describe('OIDC discovery', () => {
 
     expect(normalizeEndpoint(discovery)).toMatchInlineSnapshot(`
       {
+        "acr_values_supported": [
+          "urn:logto:acr:1fa",
+          "urn:logto:acr:mfa",
+        ],
         "authorization_endpoint": "<logto-url>/oidc/auth",
         "authorization_response_iss_parameter_supported": true,
         "backchannel_logout_session_supported": true,
@@ -42,6 +46,9 @@ describe('OIDC discovery', () => {
         "claims_parameter_supported": false,
         "claims_supported": [
           "sub",
+          "acr",
+          "amr",
+          "auth_time",
           "name",
           "family_name",
           "given_name",
@@ -71,7 +78,6 @@ describe('OIDC discovery', () => {
           "organization_data",
           "organization_roles",
           "sid",
-          "auth_time",
           "iss",
         ],
         "code_challenge_methods_supported": [
@@ -148,8 +154,8 @@ describe('OIDC discovery', () => {
   });
 
   /**
-   * The step-up authentication context (`acr_values_supported`, `acr`, `amr`) is advertised only
-   * while it is behind the dev feature flag; the disabled snapshot must stay byte-for-byte unchanged.
+   * Step-up authentication is released, so its context (`acr_values_supported`, `acr`, `amr`,
+   * `auth_time`) must be advertised in both feature modes.
    */
   devFeatureTest.it(
     'exposes the reviewed provider metadata with the step-up authentication context',

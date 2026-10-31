@@ -9,6 +9,8 @@ import Stack from '.';
 
 const navigate = jest.fn();
 const deleteRequest = jest.fn();
+const patchResponse = jest.fn();
+const patchRequest = jest.fn(() => ({ json: patchResponse }));
 
 jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
 jest.mock('swr', () => ({ __esModule: true, default: jest.fn() }));
@@ -92,7 +94,7 @@ jest.mock('react-router-dom', () => ({
 }));
 jest.mock('@/hooks/use-api', () => ({
   __esModule: true,
-  default: () => ({ delete: deleteRequest, patch: jest.fn(), post: jest.fn() }),
+  default: () => ({ delete: deleteRequest, patch: patchRequest, post: jest.fn() }),
 }));
 jest.mock('@/ds-components/Button', () => ({
   __esModule: true,
@@ -126,8 +128,11 @@ const stack = {
   components: [],
 };
 
-type MockStack = Omit<typeof stack, 'componentValues'> & {
+type MockStack = Omit<typeof stack, 'componentValues' | 'components'> & {
   componentValues?: Record<string, { config?: Record<string, unknown> }>;
+  failing?: string[];
+  components: Array<{ name: string; phase: string; message?: string }>;
+  operators?: Record<string, boolean>;
 };
 
 const renderStack = (data: MockStack = stack) => {
@@ -146,6 +151,14 @@ const renderStack = (data: MockStack = stack) => {
 
 const openDeleteModal = () => {
   fireEvent.click(screen.getByRole('button', { name: 'Delete stack' }));
+};
+
+const editBundle = () => {
+  fireEvent.click(screen.getByText('Deployment settings'));
+  fireEvent.click(screen.getAllByRole('button', { name: 'general.edit' })[0]!);
+  fireEvent.change(screen.getByPlaceholderText('oci://… (empty clears the bundle)'), {
+    target: { value: 'oci://registry.example.com/bundle:2' },
+  });
 };
 
 describe('Kubo stack deletion', () => {
@@ -236,5 +249,117 @@ describe('Kubo stack environment links', () => {
     renderStack({ ...stack, componentValues: {}, url: 'ftp://team-a.meshx.foundation' });
 
     expect(screen.queryByRole('link')).toBeNull();
+  });
+});
+
+describe('Kubo stack overview', () => {
+  it('shows health and components before the collapsed configuration groups', () => {
+    renderStack({
+      ...stack,
+      phase: 'Progressing',
+      ready: 1,
+      total: 3,
+      failing: ['database'],
+      components: [
+        { name: 'api', phase: 'Ready' },
+        { name: 'database', phase: 'Failed', message: 'Waiting for storage' },
+        { name: 'worker', phase: 'Progressing', message: 'Starting containers' },
+      ],
+    });
+
+    const health = screen.getByRole('region', { name: 'Stack health' });
+    const components = screen.getByRole('region', { name: 'Components' });
+    const deployment = screen.getByText('Deployment settings').closest('details');
+    expect(health.textContent).toContain('Waiting for storage');
+    expect(health.textContent).toContain('Starting containers');
+    expect(health.textContent).not.toContain('api');
+    expect(health.compareDocumentPosition(components)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(deployment).not.toBeNull();
+    expect(deployment?.open).toBe(false);
+    expect(components.compareDocumentPosition(deployment!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByText('Version and feature overrides').closest('details')?.open).toBe(false);
+  });
+
+  it('does not invent a diagnosis when component status is unavailable', () => {
+    renderStack({ ...stack, phase: 'Progressing', ready: 0, total: 2 });
+    expect(screen.getByRole('region', { name: 'Stack health' }).textContent).toContain(
+      'Component status is not available yet.'
+    );
+    expect(screen.queryByText('All components are ready.')).toBeNull();
+  });
+
+  it('confirms readiness when the aggregate and component statuses agree', () => {
+    renderStack({ ...stack, components: [{ name: 'api', phase: 'Ready' }] });
+    expect(screen.getByRole('region', { name: 'Stack health' }).textContent).toContain(
+      'All components are ready.'
+    );
+  });
+
+  it('does not label an empty stack healthy', () => {
+    renderStack({ ...stack, ready: 0, total: 0 });
+    expect(screen.queryByText('All components are ready.')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Stack health' }).textContent).toContain(
+      'Component status is not available yet.'
+    );
+  });
+
+  it('retains a failing component even when the aggregate says all are ready', () => {
+    renderStack({
+      ...stack,
+      components: [{ name: 'api', phase: 'Failed', message: 'Health check failed' }],
+    });
+    expect(screen.queryByText('All components are ready.')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Stack health' }).textContent).toContain(
+      'Health check failed'
+    );
+  });
+
+  it('separates deletion from operational actions and gives operators readable states', () => {
+    renderStack({ ...stack, operators: { vault: true, postgres: false } });
+    const danger = screen.getByRole('region', { name: 'Danger zone' });
+    expect(danger.contains(screen.getByRole('button', { name: 'Delete stack' }))).toBe(true);
+    expect(danger.contains(screen.getByRole('button', { name: 'tabs.run_bootstrap' }))).toBe(false);
+    expect(screen.getByText('vault').parentElement?.textContent).toContain('Enabled');
+    expect(screen.getByText('postgres').parentElement?.textContent).toContain('Disabled');
+  });
+});
+
+describe('Kubo grouped configuration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    patchResponse.mockResolvedValue({});
+  });
+
+  it('saves only the edited field and closes its editor after saving', async () => {
+    renderStack();
+    editBundle();
+    fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
+    await waitFor(() => {
+      expect(patchRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation', {
+        json: { bundle: 'oci://registry.example.com/bundle:2' },
+      });
+      expect(screen.queryByPlaceholderText('oci://… (empty clears the bundle)')).toBeNull();
+    });
+  });
+
+  it('keeps the draft and shows a save failure without changing other settings', async () => {
+    patchResponse.mockRejectedValue(new Error('Save blocked'));
+    renderStack();
+    editBundle();
+    fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toBe('Save blocked');
+    expect(screen.getByPlaceholderText('oci://… (empty clears the bundle)')).toHaveProperty(
+      'value',
+      'oci://registry.example.com/bundle:2'
+    );
+  });
+
+  it('cancels without making a request', () => {
+    renderStack();
+    editBundle();
+    fireEvent.click(screen.getByRole('button', { name: 'general.cancel' }));
+    expect(patchRequest).not.toHaveBeenCalled();
+    expect(screen.queryByPlaceholderText('oci://… (empty clears the bundle)')).toBeNull();
   });
 });

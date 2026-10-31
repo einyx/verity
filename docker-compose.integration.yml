@@ -2,6 +2,9 @@
 services:
   postgres:
     image: postgres:17-alpine
+    # Host-side integration tests need DB access; choose a free loopback-only port per run.
+    ports:
+      - "127.0.0.1::5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: p0stgr3s
@@ -55,7 +58,6 @@ services:
     environment:
       DB_URL: postgres://postgres:p0stgr3s@postgres:5432/postgres
       REDIS_URL: redis://redis:6379
-$10000000000000000000000000000000000000000000000000000000000000000
       STATUS_API_KEY: test-status-api-key
       TRUST_PROXY_HEADER: "1"
       # The public half of the fixture ES256 key pair the self-hosted license tests sign with, so

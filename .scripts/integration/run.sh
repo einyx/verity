@@ -11,6 +11,8 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/docker-compose.integration.yml"
 SERVICE_NAME="logto"
 RUN_ID="$(date +%s)-$$"
+# Keep test teardown away from unrelated Compose projects unless a project was explicitly selected.
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-verity-integration-${RUN_ID}}"
 LOG_DIR="${REPO_ROOT}/logs"
 LOG_PREFIX="${LOG_DIR}/integration-log-${RUN_ID}"
 MOCK_MESSAGE_DIR="${REPO_ROOT}/.integration-test-tmp"
@@ -83,6 +85,14 @@ else
 fi
 
 docker compose -f "$COMPOSE_FILE" up "${COMPOSE_UP_ARGS[@]}"
+
+POSTGRES_ADDRESS="$(docker compose -f "$COMPOSE_FILE" port postgres 5432)"
+if [[ ! "$POSTGRES_ADDRESS" =~ ^127\.0\.0\.1:[0-9]+$ ]]; then
+  echo "[run] expected one loopback PostgreSQL address, received: ${POSTGRES_ADDRESS}" >&2
+  exit 1
+fi
+# Always use this run's disposable database, never an inherited DB_URL from the operator's shell.
+export DB_URL="postgres://postgres:p0stgr3s@${POSTGRES_ADDRESS}/postgres"
 
 # Build and run the integration tests
 cd "${REPO_ROOT}/packages/integration-tests"

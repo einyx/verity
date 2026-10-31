@@ -1,6 +1,6 @@
 /* eslint-disable @silverhand/fp/no-mutating-methods, id-length, react/boolean-prop-naming, react/no-array-index-key, no-restricted-syntax, complexity, no-alert, max-params, max-lines, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-unnecessary-condition -- The existing Kubo stack editor predates these lint limits; keep this deletion change scoped until the editor is split up. */
 import { type AdminConsoleKey } from '@logto/phrases';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useParams } from 'react-router-dom';
 import useSWR from 'swr';
@@ -19,7 +19,7 @@ import TextInput from '@/ds-components/TextInput';
 import useApi, { type RequestError } from '@/hooks/use-api';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 
-import styles from '../index.module.scss';
+import styles from './index.module.scss';
 
 type KuboCondition = { type: string; status: string; reason?: string; message?: string };
 
@@ -102,7 +102,7 @@ const environmentLinks = (data: KuboStackDetail) => {
   return url ? [{ label: 'Environment', url }] : [];
 };
 
-// One card per setting. Each card saves only its own field.
+// Grouped setting rows still save only their own field.
 function Section({
   title,
   editing,
@@ -124,21 +124,37 @@ function Section({
   readonly view: React.ReactNode;
   readonly editor: React.ReactNode;
 }) {
+  const id = useId();
   return (
-    <Card className={styles.section}>
+    <section className={styles.setting} aria-labelledby={`${id}-title`}>
       <div className={styles.sectionHeader}>
-        <CardTitle title={title} />
-        {!editing && <Button title="general.edit" type="outline" size="small" onClick={onEdit} />}
+        <div id={`${id}-title`}>
+          <CardTitle title={title} size="small" />
+        </div>
+        {!editing && (
+          <Button
+            id={`${id}-edit`}
+            aria-labelledby={`${id}-edit ${id}-title`}
+            title="general.edit"
+            type="outline"
+            size="small"
+            onClick={onEdit}
+          />
+        )}
       </div>
-      {editing ? editor : view}
-      {error && <p className={styles.error}>{error}</p>}
+      <div className={styles.settingBody}>{editing ? editor : view}</div>
+      {error && (
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
+      )}
       {editing && (
         <div className={styles.actions}>
           <Button title="general.cancel" type="outline" onClick={onCancel} />
           <Button title="general.save" type="primary" isLoading={saving} onClick={onSave} />
         </div>
       )}
-    </Card>
+    </section>
   );
 }
 
@@ -199,6 +215,9 @@ function KeyValueEditor({
 }
 
 function KeyValueTable({ rows }: { readonly rows: KeyValueRow[] }) {
+  if (rows.length === 0) {
+    return <p className={styles.muted}>None set</p>;
+  }
   return (
     <Table
       rowGroups={[{ key: 'values', data: rows }]}
@@ -209,6 +228,21 @@ function KeyValueTable({ rows }: { readonly rows: KeyValueRow[] }) {
       ]}
       placeholder="None set"
     />
+  );
+}
+
+function TableViewport({
+  label,
+  children,
+}: {
+  readonly label: string;
+  readonly children: React.ReactNode;
+}) {
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Named overflow regions need keyboard focus so arrow keys can scroll the table.
+    <div className={styles.tableViewport} role="region" aria-label={label} tabIndex={0}>
+      {children}
+    </div>
   );
 }
 
@@ -340,13 +374,33 @@ function Stack() {
     editor,
   });
   const links = data ? environmentLinks(data) : [];
+  const pendingComponents = (data?.components ?? []).filter(
+    (component) =>
+      component.phase.toLowerCase() !== 'ready' || (data?.failing ?? []).includes(component.name)
+  );
+  const isReady =
+    data &&
+    data.total > 0 &&
+    data.ready === data.total &&
+    !data.failing?.length &&
+    pendingComponents.length === 0;
 
   return (
     <div className={styles.container}>
       <Helmet title={`MeshX · ${name}`} />
       <div className={styles.header}>
         <div className={styles.eyebrow}>Infrastructure / Workspaces / {namespace}</div>
-        <h2 className={styles.title}>{name}</h2>
+        <div className={styles.titleRow}>
+          <h2 className={styles.title}>{name}</h2>
+          {data && (
+            <Button
+              title="tabs.run_bootstrap"
+              type="primary"
+              isLoading={bootstrapping}
+              onClick={runBootstrap}
+            />
+          )}
+        </div>
         {data && (
           <p className={styles.description}>
             {data.phase} · {data.mode}
@@ -402,23 +456,12 @@ function Stack() {
             </Card>
           </div>
 
-          <div className={styles.actions}>
-            <Button
-              title="tabs.run_bootstrap"
-              type="outline"
-              isLoading={bootstrapping}
-              onClick={runBootstrap}
-            />
-            <Button
-              title={<DangerousRaw>Delete stack</DangerousRaw>}
-              type="outlineDanger"
-              onClick={() => {
-                setIsDeleteOpen(true);
-              }}
-            />
-          </div>
           {bootstrapJob && <p className={styles.muted}>Bootstrap job started: {bootstrapJob}</p>}
-          {bootstrapError && <p className={styles.error}>{bootstrapError}</p>}
+          {bootstrapError && (
+            <p role="alert" className={styles.error}>
+              {bootstrapError}
+            </p>
+          )}
 
           {isDeleteOpen && (
             <DeleteConfirmModal
@@ -444,198 +487,264 @@ function Stack() {
             </DeleteConfirmModal>
           )}
 
-          <Section
-            {...sectionProps(
-              'bundle',
-              'infrastructure.bundle',
-              <p>{data.bundle || 'Not set'}</p>,
-              <TextInput
-                value={(draft as string) ?? ''}
-                placeholder="oci://… (empty clears the bundle)"
-                onChange={(event) => {
-                  setDraft((event.target as HTMLInputElement).value.trim());
-                }}
-              />,
-              data.bundle ?? '',
-              () => (draft as string) || ''
-            )}
-          />
-
-          <Section
-            {...sectionProps(
-              'mode',
-              'infrastructure.mode',
-              <p>{data.mode}</p>,
-              <Select
-                value={(draft as string) ?? data.mode}
-                options={modes.map((mode) => ({ value: mode, title: mode }))}
-                onChange={(value) => {
-                  setDraft(value);
-                }}
-              />,
-              data.mode,
-              () => (draft as string) ?? data.mode
-            )}
-          />
-
-          <Section
-            {...sectionProps(
-              'exclude',
-              'infrastructure.excluded_components',
-              <p>{(data.exclude ?? []).join(', ') || 'None'}</p>,
-              <TextInput
-                value={(draft as string) ?? ''}
-                placeholder="comma, separated, names"
-                onChange={(event) => {
-                  setDraft((event.target as HTMLInputElement).value);
-                }}
-              />,
-              (data.exclude ?? []).join(', '),
-              () =>
-                ((draft as string) ?? '')
-                  .split(',')
-                  .map((item) => item.trim())
-                  .filter(Boolean)
-            )}
-          />
-
-          <Section
-            {...sectionProps(
-              'operators',
-              'infrastructure.operators',
-              <p>
-                {Object.entries(data.operators ?? {})
-                  .map(([key, on]) => `${key}: ${on ? 'on' : 'off'}`)
-                  .join(' · ') || 'None'}
-              </p>,
-              <div className={styles.checkList}>
-                {Object.entries((draft as Record<string, boolean>) ?? {}).map(([key, on]) => (
-                  <Checkbox
-                    key={key}
-                    label={key}
-                    checked={on}
-                    onChange={(checked) => {
-                      setDraft({ ...(draft as Record<string, boolean>), [key]: checked });
-                    }}
-                  />
+          <section className={styles.health} aria-label="Stack health">
+            <div className={styles.healthHeading}>
+              <h3>Stack health</h3>
+              <Tag status={data.failing?.length ? 'error' : isReady ? 'success' : 'alert'}>
+                {data.phase}
+              </Tag>
+            </div>
+            <p className={styles.muted}>
+              {isReady
+                ? 'All components are ready.'
+                : `${data.ready} of ${data.total} components ready. ${
+                    data.failing?.length ? 'Some components need attention.' : ''
+                  }`}
+            </p>
+            {pendingComponents.length > 0 ? (
+              <ul className={styles.healthList}>
+                {pendingComponents.map((component) => (
+                  <li key={component.name}>
+                    <strong>{component.name}</strong>
+                    <span className={styles.componentPhase}>{component.phase}</span>
+                    {component.message && <p>{component.message}</p>}
+                  </li>
                 ))}
-              </div>,
-              { ...data.operators },
-              () => (draft as Record<string, boolean>) ?? {}
+              </ul>
+            ) : isReady ? null : (
+              <p className={styles.muted}>Component status is not available yet.</p>
             )}
-          />
+          </section>
 
-          <Section
-            {...sectionProps(
-              'featureFlags',
-              'infrastructure.feature_flags',
-              <KeyValueTable rows={toRows(data.featureFlags)} />,
-              <KeyValueEditor
-                rows={(draft as KeyValueRow[]) ?? []}
-                onChange={(rows) => {
-                  setDraft(rows);
-                }}
-              />,
-              toRows(data.featureFlags),
-              () => toMap((draft as KeyValueRow[]) ?? [])
-            )}
-          />
-
-          <Section
-            {...sectionProps(
-              'imageTags',
-              'infrastructure.image_tags',
-              <KeyValueTable rows={toRows(data.imageTags)} />,
-              <KeyValueEditor
-                rows={(draft as KeyValueRow[]) ?? []}
-                onChange={(rows) => {
-                  setDraft(rows);
-                }}
-              />,
-              toRows(data.imageTags),
-              () => toMap((draft as KeyValueRow[]) ?? [])
-            )}
-          />
-
-          <Section
-            {...sectionProps(
-              'chartVersions',
-              'infrastructure.helm_chart_versions',
-              <KeyValueTable rows={toRows(data.chartVersions)} />,
-              <KeyValueEditor
-                rows={(draft as KeyValueRow[]) ?? []}
-                onChange={(rows) => {
-                  setDraft(rows);
-                }}
-              />,
-              toRows(data.chartVersions),
-              () => toMap((draft as KeyValueRow[]) ?? [])
-            )}
-          />
+          <section aria-label="Components" className={styles.components}>
+            <Card className={styles.section}>
+              <CardTitle title="infrastructure.components" size="medium" />
+              <TableViewport label="Component details">
+                <Table
+                  rowGroups={[{ key: 'components', data: data.components ?? [] }]}
+                  rowIndexKey="name"
+                  columns={[
+                    {
+                      title: 'Component',
+                      dataIndex: 'name',
+                      render: (row: KuboComponent) => row.name,
+                    },
+                    {
+                      title: 'Phase',
+                      dataIndex: 'phase',
+                      render: (row: KuboComponent) =>
+                        (data.failing ?? []).includes(row.name) ? (
+                          <Tag status="error">{row.phase}</Tag>
+                        ) : (
+                          row.phase
+                        ),
+                    },
+                    {
+                      title: 'Revision',
+                      dataIndex: 'revision',
+                      render: (row: KuboComponent) => row.revision ?? '—',
+                    },
+                    {
+                      title: 'Depends on',
+                      dataIndex: 'dependsOn',
+                      render: (row: KuboComponent) => (row.dependsOn ?? []).join(', ') || '—',
+                    },
+                    {
+                      title: 'Message',
+                      dataIndex: 'message',
+                      render: (row: KuboComponent) => row.message ?? '—',
+                    },
+                  ]}
+                />
+              </TableViewport>
+            </Card>
+          </section>
 
           {(data.conditions?.length ?? 0) > 0 && (
-            <Card className={styles.section}>
-              <CardTitle title="infrastructure.conditions" />
-              <Table
-                rowGroups={[{ key: 'conditions', data: data.conditions ?? [] }]}
-                rowIndexKey="type"
-                columns={[
-                  { title: 'Type', dataIndex: 'type', render: (row: KuboCondition) => row.type },
-                  {
-                    title: 'Status',
-                    dataIndex: 'status',
-                    render: (row: KuboCondition) => row.status,
-                  },
-                  {
-                    title: 'Reason',
-                    dataIndex: 'reason',
-                    render: (row: KuboCondition) => row.reason ?? '—',
-                  },
-                  {
-                    title: 'Message',
-                    dataIndex: 'message',
-                    render: (row: KuboCondition) => row.message ?? '—',
-                  },
-                ]}
-              />
-            </Card>
+            <details className={styles.configurationGroup}>
+              <summary>Controller conditions</summary>
+              <TableViewport label="Controller condition details">
+                <Table
+                  rowGroups={[{ key: 'conditions', data: data.conditions ?? [] }]}
+                  rowIndexKey="type"
+                  columns={[
+                    { title: 'Type', dataIndex: 'type', render: (row: KuboCondition) => row.type },
+                    {
+                      title: 'Status',
+                      dataIndex: 'status',
+                      render: (row: KuboCondition) => row.status,
+                    },
+                    {
+                      title: 'Reason',
+                      dataIndex: 'reason',
+                      render: (row: KuboCondition) => row.reason ?? '—',
+                    },
+                    {
+                      title: 'Message',
+                      dataIndex: 'message',
+                      render: (row: KuboCondition) => row.message ?? '—',
+                    },
+                  ]}
+                />
+              </TableViewport>
+            </details>
           )}
 
-          <Card className={styles.section}>
-            <CardTitle title="infrastructure.components" />
-            <Table
-              rowGroups={[{ key: 'components', data: data.components ?? [] }]}
-              rowIndexKey="name"
-              columns={[
-                { title: 'Component', dataIndex: 'name', render: (row: KuboComponent) => row.name },
-                {
-                  title: 'Phase',
-                  dataIndex: 'phase',
-                  render: (row: KuboComponent) =>
-                    (data.failing ?? []).includes(row.name) ? (
-                      <Tag status="error">{row.phase}</Tag>
-                    ) : (
-                      row.phase
-                    ),
-                },
-                {
-                  title: 'Revision',
-                  dataIndex: 'revision',
-                  render: (row: KuboComponent) => row.revision ?? '—',
-                },
-                {
-                  title: 'Depends on',
-                  dataIndex: 'dependsOn',
-                  render: (row: KuboComponent) => (row.dependsOn ?? []).join(', ') || '—',
-                },
-                {
-                  title: 'Message',
-                  dataIndex: 'message',
-                  render: (row: KuboComponent) => row.message ?? '—',
-                },
-              ]}
+          <details className={styles.configurationGroup}>
+            <summary>Deployment settings</summary>
+            <Section
+              {...sectionProps(
+                'bundle',
+                'infrastructure.bundle',
+                <p>{data.bundle || 'Not set'}</p>,
+                <TextInput
+                  value={(draft as string) ?? ''}
+                  placeholder="oci://… (empty clears the bundle)"
+                  onChange={(event) => {
+                    setDraft((event.target as HTMLInputElement).value.trim());
+                  }}
+                />,
+                data.bundle ?? '',
+                () => (draft as string) || ''
+              )}
             />
-          </Card>
+
+            <Section
+              {...sectionProps(
+                'mode',
+                'infrastructure.mode',
+                <p>{data.mode}</p>,
+                <Select
+                  value={(draft as string) ?? data.mode}
+                  options={modes.map((mode) => ({ value: mode, title: mode }))}
+                  onChange={(value) => {
+                    setDraft(value);
+                  }}
+                />,
+                data.mode,
+                () => (draft as string) ?? data.mode
+              )}
+            />
+
+            <Section
+              {...sectionProps(
+                'exclude',
+                'infrastructure.excluded_components',
+                <p>{(data.exclude ?? []).join(', ') || 'None'}</p>,
+                <TextInput
+                  value={(draft as string) ?? ''}
+                  placeholder="comma, separated, names"
+                  onChange={(event) => {
+                    setDraft((event.target as HTMLInputElement).value);
+                  }}
+                />,
+                (data.exclude ?? []).join(', '),
+                () =>
+                  ((draft as string) ?? '')
+                    .split(',')
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+              )}
+            />
+
+            <Section
+              {...sectionProps(
+                'operators',
+                'infrastructure.operators',
+                <ul className={styles.operatorList}>
+                  {Object.entries(data.operators ?? {}).map(([key, on]) => (
+                    <li key={key}>
+                      <span>{key}</span>
+                      <span className={styles.muted}>{on ? 'Enabled' : 'Disabled'}</span>
+                    </li>
+                  ))}
+                  {Object.keys(data.operators ?? {}).length === 0 && (
+                    <li className={styles.muted}>None</li>
+                  )}
+                </ul>,
+                <div className={styles.checkList}>
+                  {Object.entries((draft as Record<string, boolean>) ?? {}).map(([key, on]) => (
+                    <Checkbox
+                      key={key}
+                      label={key}
+                      checked={on}
+                      onChange={(checked) => {
+                        setDraft({ ...(draft as Record<string, boolean>), [key]: checked });
+                      }}
+                    />
+                  ))}
+                </div>,
+                { ...data.operators },
+                () => (draft as Record<string, boolean>) ?? {}
+              )}
+            />
+          </details>
+          <details className={styles.configurationGroup}>
+            <summary>Version and feature overrides</summary>
+            <Section
+              {...sectionProps(
+                'featureFlags',
+                'infrastructure.feature_flags',
+                <KeyValueTable rows={toRows(data.featureFlags)} />,
+                <KeyValueEditor
+                  rows={(draft as KeyValueRow[]) ?? []}
+                  onChange={(rows) => {
+                    setDraft(rows);
+                  }}
+                />,
+                toRows(data.featureFlags),
+                () => toMap((draft as KeyValueRow[]) ?? [])
+              )}
+            />
+
+            <Section
+              {...sectionProps(
+                'imageTags',
+                'infrastructure.image_tags',
+                <KeyValueTable rows={toRows(data.imageTags)} />,
+                <KeyValueEditor
+                  rows={(draft as KeyValueRow[]) ?? []}
+                  onChange={(rows) => {
+                    setDraft(rows);
+                  }}
+                />,
+                toRows(data.imageTags),
+                () => toMap((draft as KeyValueRow[]) ?? [])
+              )}
+            />
+
+            <Section
+              {...sectionProps(
+                'chartVersions',
+                'infrastructure.helm_chart_versions',
+                <KeyValueTable rows={toRows(data.chartVersions)} />,
+                <KeyValueEditor
+                  rows={(draft as KeyValueRow[]) ?? []}
+                  onChange={(rows) => {
+                    setDraft(rows);
+                  }}
+                />,
+                toRows(data.chartVersions),
+                () => toMap((draft as KeyValueRow[]) ?? [])
+              )}
+            />
+          </details>
+
+          <section className={styles.dangerZone} aria-label="Danger zone">
+            <div>
+              <h3>Delete stack</h3>
+              <p className={styles.muted}>
+                Uninstall this stack’s releases. This action requires confirmation.
+              </p>
+            </div>
+            <Button
+              title={<DangerousRaw>Delete stack</DangerousRaw>}
+              type="outlineDanger"
+              onClick={() => {
+                setIsDeleteOpen(true);
+              }}
+            />
+          </section>
         </>
       )}
     </div>

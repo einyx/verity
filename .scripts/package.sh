@@ -46,5 +46,12 @@ if [[ "${SKIP_TAR:-}" == @(1|true|y|yes|yep|yeah) ]]; then
 fi
 
 echo Tar the package
+checkout_name=$(basename "$PWD")
 cd ..
-tar -czf /tmp/logto.tar.gz logto
+# Integration consumers expect a logto/ archive root, regardless of the repository checkout name.
+# Rewrite member and hard-link names only; preserve pnpm's relative symbolic-link targets.
+if tar --version | grep -q 'GNU tar'; then
+  tar -czf /tmp/logto.tar.gz --transform='flags=rh;s|^[^/]*|logto|' "$checkout_name"
+else
+  tar -czf /tmp/logto.tar.gz -s '|^[^/]*|logto|S' "$checkout_name"
+fi

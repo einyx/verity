@@ -3,6 +3,7 @@ import { Theme } from '@logto/schemas';
 import classNames from 'classnames';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useHref } from 'react-router-dom';
 
 import ExternalLinkIcon from '@/assets/icons/external-link.svg?react';
 import File from '@/assets/icons/file.svg?react';
@@ -41,6 +42,7 @@ function UserInfo() {
   const anchorRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const postSignOutRedirectUri = useRedirectUri('signOut');
+  const consoleSsoHref = useHref(GlobalRoute.ConsoleSso);
 
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -103,7 +105,7 @@ function UserInfo() {
             className={classNames(styles.dropdownItem, isLoading && styles.loading)}
             icon={<SingleSignOn className={styles.icon} />}
             onClick={() => {
-              window.open(GlobalRoute.ConsoleSso, '_blank', 'noopener,noreferrer');
+              window.open(consoleSsoHref, '_blank', 'noopener,noreferrer');
             }}
           >
             {t('menu.single_sign_on')}

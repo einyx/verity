@@ -211,7 +211,10 @@ jobs:
 
       - name: Compare databases
         working-directory: ./fresh
-        run: node .scripts/compare-database.js fresh alteration
+        run: node .scripts/compare-database.js fresh alteration up "$BASELINE_TAG" "$(git rev-parse "${BASELINE_REF}^{commit}")"
+        env:
+          BASELINE_TAG: ${{ steps.version.outputs.tag }}
+          BASELINE_REF: ${{ steps.version.outputs.ref || steps.version.outputs.tag }}
       # ** End **
 
       # ** Setup old databases and compare (test `down`) **
@@ -233,7 +236,10 @@ jobs:
 
       - name: Compare manifests
         working-directory: ./fresh
-        run: node .scripts/compare-database.js fresh old
+        run: node .scripts/compare-database.js fresh old down "$BASELINE_TAG" "$(git rev-parse "${BASELINE_REF}^{commit}")"
+        env:
+          BASELINE_TAG: ${{ steps.version.outputs.tag }}
+          BASELINE_REF: ${{ steps.version.outputs.ref || steps.version.outputs.tag }}
       # ** End **
 
       - name: Check alteration sequence

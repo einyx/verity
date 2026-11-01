@@ -11,10 +11,9 @@ type NormalizeActionsQuotaOptions = {
   /**
    * The value to use when the Cloud response omits `actionsEnabled`.
    *
-   * Omit it for responses where Cloud declares the key as required (e.g. the subscription
-   * quota and usage), so that a missing key surfaces as an error instead of silently
-   * disabling the feature. Pass it only for responses where the key is legitimately
-   * optional, such as the SKU quota.
+   * Omit it for entitlement-bearing subscription quotas so that a missing key surfaces
+   * as an error instead of silently disabling the feature. Pass it for optional SKU
+   * quotas and usage payloads, which may omit the flag and do not grant entitlements.
    */
   fallback?: boolean;
 };

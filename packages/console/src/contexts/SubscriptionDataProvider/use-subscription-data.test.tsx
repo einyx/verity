@@ -34,7 +34,12 @@ const renderSubscription = (tenantId: string) => {
   return renderHook(useSubscriptionData, { wrapper: Wrapper });
 };
 
-const mockResponses = (quota?: typeof defaultSubscriptionQuota) => {
+const mockResponses = (
+  quota?: typeof defaultSubscriptionQuota,
+  usage: Omit<typeof defaultSubscriptionUsage, 'actionsEnabled'> & {
+    actionsEnabled?: boolean;
+  } = defaultSubscriptionUsage
+) => {
   mockGet.mockImplementation(async (path: string) => {
     if (path.endsWith('/subscription')) {
       return { status: 'active', planId: 'enterprise', isEnterprisePlan: true, quota };
@@ -42,7 +47,7 @@ const mockResponses = (quota?: typeof defaultSubscriptionQuota) => {
     if (path.endsWith('/subscription-usage')) {
       return {
         quota: { ...defaultSubscriptionQuota, passkeySignInEnabled: false },
-        usage: defaultSubscriptionUsage,
+        usage,
       };
     }
     return [];
@@ -80,3 +85,21 @@ it('does not grant passkeys just because the subscription is labelled Enterprise
   });
   expect(result.current.currentSubscriptionQuota.passkeySignInEnabled).toBe(false);
 });
+
+it.each([true, false])(
+  'renders usage without the Actions flag while preserving the %s entitlement',
+  async (actionsEnabled) => {
+    const { actionsEnabled: _, ...usage } = defaultSubscriptionUsage;
+    mockResponses({ ...defaultSubscriptionQuota, actionsEnabled }, { ...usage, hooksLimit: 2 });
+    const { result } = renderSubscription('default');
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.currentSubscriptionUsage.actionsEnabled).toBe(false);
+    expect(result.current.currentSubscriptionUsage.hooksLimit).toBe(2);
+    expect(result.current.currentSubscriptionQuota.actionsEnabled).toBe(actionsEnabled);
+    expect(result.current.currentSubscriptionBasicQuota.actionsEnabled).toBe(actionsEnabled);
+  }
+);

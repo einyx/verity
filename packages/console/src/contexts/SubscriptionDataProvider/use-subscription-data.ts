@@ -33,7 +33,9 @@ const normalizeSubscriptionUsage = (
   usage?: SubscriptionUsageResponse['usage']
 ): SubscriptionCountBasedUsage => ({
   ...defaultSubscriptionUsage,
-  ...(usage ? normalizeActionsQuota(usage) : {}),
+  // Some Cloud usage responses omit this flag. Entitlements come from quota, not usage;
+  // a missing usage flag must not crash the console shell during render.
+  ...(usage ? normalizeActionsQuota(usage, { fallback: false }) : {}),
 });
 
 const useSubscriptionData: () => SubscriptionContext & { isLoading: boolean } = () => {

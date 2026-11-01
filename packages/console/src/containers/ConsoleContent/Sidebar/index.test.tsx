@@ -1,10 +1,13 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { createContext, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { type EnvTestUtils, mockEnv, resetMockEnv } from '@/test-utils/env';
 
 import Sidebar from './index';
+
+jest.mock('@/components/Topbar/TenantSelector', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/components/Topbar/AiChat', () => ({ __esModule: true, default: () => null }));
 
 jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
 jest.mock('@/hooks/use-admin-console-tour', () => ({ __esModule: true, default: jest.fn() }));
@@ -48,7 +51,48 @@ const getSidebarHrefs = (container: HTMLElement) =>
 
 describe('Console sidebar links', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     mockEnv({ isCloud: true, isDevFeaturesEnabled: true });
+  });
+
+  it('searches only permitted links and clearing restores the previous disclosures', () => {
+    renderSidebar();
+    const group = screen.getByRole('button', { name: 'admin_console.tab_sections.authentication' });
+    fireEvent.click(group);
+    const search = screen.getByRole('searchbox', { name: 'Search navigation' });
+    fireEvent.change(search, { target: { value: 'landing_page' } });
+    // Search reveals matching groups; don't offer a disclosure that cannot collapse them.
+    expect(screen.queryByRole('button', { name: 'admin_console.tab_sections.tenant' })).toBeNull();
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toContain(
+      '/admin/landing-page'
+    );
+    expect(screen.queryByRole('link', { name: 'admin_console.tabs.applications' })).toBeNull();
+    fireEvent.change(search, { target: { value: 'stacks' } });
+    expect(screen.getByRole('status').textContent).toContain('No pages found');
+    fireEvent.click(screen.getByRole('button', { name: 'Clear navigation search' }));
+    expect(group.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('link', { name: 'admin_console.tabs.applications' })).toBeTruthy();
+  });
+
+  it('expands and focuses search with Shift+CmdK without stealing CmdK', () => {
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    fireEvent.keyDown(window, { key: 'K', metaKey: true, shiftKey: true });
+    expect(document.activeElement).toBe(screen.getByRole('searchbox'));
+  });
+
+  it('preserves keyboard resizing and collapsed width across remounts', () => {
+    const view = renderSidebar();
+    fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowRight' });
+    expect(screen.getByRole('separator').getAttribute('aria-valuenow')).toBe('272');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    view.unmount();
+    renderSidebar();
+    expect(screen.queryByRole('separator')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand sidebar' }));
+    expect(screen.getByRole('separator').getAttribute('aria-valuenow')).toBe('272');
   });
 
   afterEach(() => {
@@ -64,6 +108,24 @@ describe('Console sidebar links', () => {
     expect(hrefs).toContain('/admin/landing-page');
     // No link may repeat the page that is currently open.
     expect(hrefs.filter((href) => href.startsWith(currentPath))).toEqual([]);
+  });
+
+  it('reveals the current group and marks a nested route as the current destination', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/applications/new']}>
+        <Sidebar />
+      </MemoryRouter>
+    );
+    expect(
+      screen
+        .getByRole('button', { name: 'admin_console.tab_sections.authentication' })
+        .getAttribute('aria-expanded')
+    ).toBe('true');
+    expect(
+      screen
+        .getByRole('link', { name: 'admin_console.tabs.applications' })
+        .getAttribute('aria-current')
+    ).toBe('page');
   });
 
   it('shows the released landing-page editor for the Cloud admin tenant with dev features disabled', () => {

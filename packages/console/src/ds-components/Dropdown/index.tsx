@@ -31,6 +31,8 @@ type Props = {
   readonly titleClassName?: string;
   readonly horizontalAlign?: HorizontalAlignment;
   readonly hasOverflowContent?: boolean;
+  /** Opt in for standalone menu triggers; multi-select popovers retain their existing focus. */
+  readonly isFocusManaged?: boolean;
   /** Set to `true` to directly render the dropdown without the overlay. */
   readonly noOverlay?: true;
 };
@@ -53,6 +55,7 @@ function Dropdown({
   titleClassName,
   horizontalAlign = 'end',
   hasOverflowContent,
+  isFocusManaged = false,
   noOverlay,
 }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -85,7 +88,7 @@ function Dropdown({
           ...position,
         },
       }}
-      shouldFocusAfterRender={false}
+      shouldFocusAfterRender={isFocusManaged}
       className={classNames(styles.content, positionState.verticalAlign === 'top' && styles.onTop)}
       overlayClassName={styles.overlay}
       overlayElement={noOverlay && ((_, contentElement) => contentElement)}

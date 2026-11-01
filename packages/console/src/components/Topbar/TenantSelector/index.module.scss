@@ -76,7 +76,11 @@ $dropdown-item-height: 40px;
   min-width: 320px;
 
   .scrollableContent {
-    max-height: calc(100vh - ($topbar-height - $topbar-tenant-card-margin + $dropdown-top-margin) - $dropdown-bottom-margin - ($dropdown-item-height + $dropdown-item-margin * 2)); // Secure 24px bottom safe margin.
+    max-height:
+      calc(
+        100vh - ($topbar-height - $topbar-tenant-card-margin + $dropdown-top-margin) -
+        $dropdown-bottom-margin - ($dropdown-item-height + $dropdown-item-margin * 2)
+      ); // Secure 24px bottom safe margin.
   }
 }
 
@@ -125,4 +129,73 @@ $dropdown-item-height: 40px;
     height: 20px;
     color: var(--color-neutral-50);
   }
+}
+
+.currentTenantCard.compact {
+  width: 100%;
+  max-width: none;
+  min-height: 56px;
+  margin: 0;
+  padding: 7px 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--shell-ink);
+
+  &::before {
+    display: none;
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .viewOnlyTag {
+    display: block;
+  }
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  color: var(--shell-content);
+  background: var(--shell-ink);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.currentTenantCard.collapsed {
+  padding: 0;
+  justify-content: center;
+
+  > :not(.avatar):not(.redDot) {
+    display: none;
+  }
+
+  .redDot {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+  }
+}
+
+.ossScope {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--shell-ink);
+}
+
+:global(html.isNarrow) .currentTenantCard.compact {
+  max-width: none;
+  margin: 0;
 }

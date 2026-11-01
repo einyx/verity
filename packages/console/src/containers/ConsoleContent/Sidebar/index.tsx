@@ -1,3 +1,4 @@
+import { Theme } from '@logto/schemas';
 import classNames from 'classnames';
 import {
   useCallback,
@@ -7,26 +8,28 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
+import AiChat from '@/components/Topbar/AiChat';
+import TenantSelector from '@/components/Topbar/TenantSelector';
+import { isCloud } from '@/consts/env';
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
 import useAdminConsoleTour from '@/hooks/use-admin-console-tour';
 import { isNarrowViewport } from '@/hooks/use-narrow-viewport';
-import useMatchTenantPath from '@/hooks/use-tenant-pathname';
+import useTenantPathname from '@/hooks/use-tenant-pathname';
+import useTheme from '@/hooks/use-theme';
 
 import OssCloudCard from './OssCloudCard';
 import Item from './components/Item';
 import Section from './components/Section';
-import { useSidebarMenuItems } from './hook';
 import styles from './index.module.scss';
-import { getPath } from './utils';
+import useShellNavigation from './use-shell-navigation';
 
-const defaultWidth = 240;
+const defaultWidth = 264;
 const collapsedWidth = 60;
 const minWidth = 200;
 const maxWidth = 480;
-// The key carries a version: a width stored before the default was reduced is dropped, so the
-// sidebar starts at the new default instead of the old one.
+// Keep existing saved widths; only a fresh rail adopts the HIG default.
 const storageKey = 'console-sidebar-width-v2';
 const collapsedStorageKey = 'console-sidebar-collapsed';
 
@@ -71,11 +74,23 @@ export function Skeleton() {
 
 function Sidebar() {
   useAdminConsoleTour();
-  const { t } = useTranslation(undefined, {
-    keyPrefix: 'admin_console.tab_sections',
-  });
-  const { sections } = useSidebarMenuItems();
-  const { match } = useMatchTenantPath();
+  const theme = useTheme();
+  const { getTo } = useTenantPathname();
+  const { sections, active } = useShellNavigation();
+  const [query, setQuery] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [shouldFocusSearch, setShouldFocusSearch] = useState(false);
+  const [disclosures, setDisclosures] = useState<Record<string, boolean>>({});
+  const activeSection = active?.section.title;
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const filteredSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(({ label }) =>
+        label.toLocaleLowerCase().includes(normalizedQuery)
+      ),
+    }))
+    .filter(({ items }) => items.length > 0);
   const [width, setWidth] = useState(readStoredWidth);
   const widthRef = useRef(width);
   // On a small device the sidebar starts collapsed: the expanded one covers the content.
@@ -91,6 +106,34 @@ function Sidebar() {
       return !previous;
     });
   }, []);
+
+  useEffect(() => {
+    if (activeSection) {
+      setDisclosures((current) => ({ ...current, [activeSection]: true }));
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    const handleShortcut = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsCollapsed(false);
+        storeCollapsed(false);
+        setShouldFocusSearch(true);
+      }
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => {
+      window.removeEventListener('keydown', handleShortcut);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isCollapsed && shouldFocusSearch) {
+      searchRef.current?.focus();
+      setShouldFocusSearch(false);
+    }
+  }, [isCollapsed, shouldFocusSearch]);
 
   useEffect(() => {
     // eslint-disable-next-line @silverhand/fp/no-mutation -- the ref mirrors the latest width so the pointer handler reads it without re-binding
@@ -133,11 +176,14 @@ function Sidebar() {
   }, []);
 
   return (
-    <div
+    <aside
+      aria-label="Console navigation"
       className={classNames(styles.sidebar, !isCollapsed && styles.sidebarExpanded)}
-      style={{ width: displayWidth, transition: isDragging ? 'none' : 'width 200ms ease-out' }}
+      style={{ width: displayWidth, transition: isDragging ? 'none' : undefined }}
     >
-      {/* Like foundation-frontend's sidebar: the nav still scrolls, but no scrollbar is drawn. */}
+      <div className={classNames(styles.scope, isCollapsed && styles.scopeCollapsed)}>
+        <TenantSelector isCompact isCollapsed={isCollapsed} />
+      </div>
       <OverlayScrollbar className={styles.menu} options={{ scrollbars: { visibility: 'hidden' } }}>
         <div className={classNames(styles.menuContent, isCollapsed && styles.menuContentCollapsed)}>
           <div className={classNames(styles.toggleRow, isCollapsed && styles.toggleRowCollapsed)}>
@@ -151,35 +197,95 @@ function Sidebar() {
               {isCollapsed ? '›' : '‹'}
             </button>
           </div>
-          {sections.map(({ title, items }) => (
-            <Section key={title} title={t(title)} collapsed={isCollapsed}>
-              {items.map(
-                ({ title, Icon, isHidden, modal, externalLink, path }) =>
-                  !isHidden && (
-                    <Item
-                      key={title}
-                      titleKey={title}
-                      icon={<Icon />}
-                      isActive={match('/' + (path ?? getPath(title)), true)}
-                      modal={modal}
-                      externalLink={externalLink}
-                      path={path}
-                      collapsed={isCollapsed}
-                    />
-                  )
-              )}
-            </Section>
-          ))}
+          <div className={styles.search} hidden={isCollapsed}>
+            <input
+              ref={searchRef}
+              type="search"
+              aria-label="Search navigation"
+              placeholder="Find a page"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setQuery('');
+                }
+              }}
+            />
+            {query ? (
+              <button
+                type="button"
+                aria-label="Clear navigation search"
+                onClick={() => {
+                  setQuery('');
+                  searchRef.current?.focus();
+                }}
+              >
+                ×
+              </button>
+            ) : (
+              <kbd>{/Mac|iPhone|iPad/u.test(navigator.platform) ? '⇧ ⌘ K' : 'Ctrl ⇧ K'}</kbd>
+            )}
+          </div>
+          {isCloud && <AiChat isSidebar className={styles.assistant} isCompact={isCollapsed} />}
+          <nav aria-label="Product sections">
+            {filteredSections.map(({ title, label, items }) => (
+              <Section
+                key={title}
+                title={label}
+                collapsed={isCollapsed}
+                isStatic={Boolean(normalizedQuery)}
+                isRevealed={
+                  Boolean(normalizedQuery) ||
+                  (disclosures[title] ?? (title === 'overview' || title === activeSection))
+                }
+                onToggle={() => {
+                  setDisclosures((current) => ({
+                    ...current,
+                    [title]: !(current[title] ?? (title === 'overview' || title === activeSection)),
+                  }));
+                }}
+              >
+                {items.map(
+                  ({ title, Icon, isHidden, modal, externalLink, path }) =>
+                    !isHidden && (
+                      <Item
+                        key={title}
+                        titleKey={title}
+                        icon={<Icon />}
+                        isActive={active?.item.title === title}
+                        modal={modal}
+                        externalLink={externalLink}
+                        path={path}
+                        collapsed={isCollapsed}
+                      />
+                    )
+                )}
+              </Section>
+            ))}
+          </nav>
+          {filteredSections.length === 0 && !isCollapsed && (
+            <div role="status" className={styles.empty}>
+              No pages found. Clear search to see navigation.
+            </div>
+          )}
           {!isCollapsed && <OssCloudCard />}
         </div>
       </OverlayScrollbar>
+      <Link className={styles.brand} to={getTo('/')} aria-label="MeshX home">
+        <img
+          src={theme === Theme.Dark ? '/console/meshx-logo-dark.svg' : '/console/meshx-logo.svg'}
+          alt="meshX"
+        />
+      </Link>
       {!isCollapsed && (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a focusable separator is the ARIA window-splitter pattern and needs pointer and keyboard handling
         <div
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize sidebar"
-          aria-valuemin={collapsedWidth}
+          aria-valuemin={minWidth}
           aria-valuemax={maxWidth}
           aria-valuenow={displayWidth}
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the separator must be focusable so keyboard users can resize, per the ARIA window-splitter pattern
@@ -189,7 +295,7 @@ function Sidebar() {
           onKeyDown={handleKeyDown}
         />
       )}
-    </div>
+    </aside>
   );
 }
 

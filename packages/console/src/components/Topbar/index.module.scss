@@ -96,6 +96,29 @@
   margin-inline-start: _.unit(0.5);
 }
 
+.workspace {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  min-height: 76px;
+  padding: 12px 30px;
+  gap: 12px;
+  background: var(--shell-content);
+  border-bottom: 1px solid var(--shell-divider);
+  color: var(--shell-ink);
+
+  // The shell variant intentionally overrides the shared utility button, not its hover state.
+  /* stylelint-disable-next-line no-descending-specificity */
+  .button {
+    min-height: 36px;
+    color: var(--shell-secondary);
+  }
+
+  :focus-visible {
+    outline: 2px solid #ff301a;
+    outline-offset: 2px;
+  }
+}
+
 /* On a phone the topbar has to fit the device width. The wordmark and the prompt-style Ask AI bar
    take more room than the whole bar has, so they shrink to their icons and the tenant card gives up
    room as well. Without this the bar is wider than the screen and the page scrolls sideways. */
@@ -113,5 +136,29 @@
      topbar it sits in. */
   .topbar .button {
     padding: 0 _.unit(1);
+  }
+
+  .workspace {
+    flex-wrap: wrap;
+    padding: 12px;
+    gap: 4px;
+
+    > nav {
+      flex-basis: 100%;
+      padding-bottom: 8px;
+    }
+
+    .button {
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+    }
+
+    > [role='button'] {
+      display: grid;
+      place-items: center;
+      min-width: 44px;
+      min-height: 44px;
+    }
   }
 }

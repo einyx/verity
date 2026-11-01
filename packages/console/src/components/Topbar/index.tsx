@@ -2,7 +2,7 @@ import { builtInLanguageOptions as consoleBuiltInLanguageOptions } from '@logto/
 import { Theme } from '@logto/schemas';
 import { isKeyInObject, trySafe } from '@silverhand/essentials';
 import classNames from 'classnames';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ContactIcon from '@/assets/icons/contact-us.svg?react';
@@ -30,54 +30,65 @@ import { currentVersion, isGreaterThanCurrentVersion } from './utils';
 
 type Props = {
   readonly className?: string;
+  readonly isWorkspace?: boolean;
+  readonly children?: ReactNode;
   /* eslint-disable react/boolean-prop-naming */
   readonly hideTenantSelector?: boolean;
   readonly hideTitle?: boolean;
   /* eslint-enable react/boolean-prop-naming */
 };
 
-function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
+function Topbar({
+  className,
+  hideTenantSelector,
+  hideTitle,
+  isWorkspace = false,
+  children,
+}: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { navigate } = useTenantPathname();
   const theme = useTheme();
 
   return (
-    <div className={classNames(styles.topbar, className)}>
-      <div
-        className={styles.brand}
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          navigate('/');
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
+    <header className={classNames(styles.topbar, isWorkspace && styles.workspace, className)}>
+      {!isWorkspace && (
+        <div
+          className={styles.brand}
+          role="button"
+          tabIndex={0}
+          onClick={() => {
             navigate('/');
-          }
-        }}
-      >
-        <img
-          className={styles.wordmark}
-          src={theme === Theme.Dark ? '/console/meshx-logo-dark.svg' : '/console/meshx-logo.svg'}
-          alt="meshX"
-        />
-      </div>
-      {isCloud && !hideTenantSelector && <TenantSelector />}
-      {!isCloud && !hideTitle && (
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              navigate('/');
+            }
+          }}
+        >
+          <img
+            className={styles.wordmark}
+            src={theme === Theme.Dark ? '/console/meshx-logo-dark.svg' : '/console/meshx-logo.svg'}
+            alt="meshX"
+          />
+        </div>
+      )}
+      {isCloud && !hideTenantSelector && !isWorkspace && <TenantSelector />}
+      {!isCloud && !hideTitle && !isWorkspace && (
         <>
           <div className={styles.line} />
           <div className={styles.text}>{t('title')}</div>
         </>
       )}
+      {children}
       <Spacer />
-      {isCloud && <AiChat />}
+      {isCloud && !isWorkspace && <AiChat />}
       {isCloud && <EnterpriseSubscriptions className={styles.button} />}
       <LanguageButton />
       <DocumentButton />
       <HelpButton />
       {!isCloud && <VersionButton />}
       <UserInfo />
-    </div>
+    </header>
   );
 }
 

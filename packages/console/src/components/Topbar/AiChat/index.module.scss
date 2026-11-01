@@ -588,6 +588,40 @@
   }
 }
 
+.askAiButton.sidebarTrigger {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 7px 10px;
+  justify-content: flex-start;
+  border: none;
+  border-radius: 7px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--shell-ink);
+  font-size: 13px;
+
+  &:hover {
+    background: var(--shell-hover);
+    box-shadow: none;
+  }
+
+  .askAiLabel {
+    flex: 1;
+  }
+}
+
+:global(html.isNarrow) .askAiButton.sidebarTrigger {
+  width: 100%;
+  min-height: 44px;
+  padding: 7px 10px;
+  justify-content: flex-start;
+
+  .askAiLabel {
+    display: block;
+  }
+}
+
 .input {
   width: 100%;
   min-width: 0;

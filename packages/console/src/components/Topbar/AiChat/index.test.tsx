@@ -46,6 +46,26 @@ beforeEach(() => {
   mockSend.mockClear();
   mockReady.mockClear();
 });
+
+it('reserves Shift+CmdK for navigation while plain CmdK opens AI', () => {
+  render(<AiChat />);
+  fireEvent.keyDown(window, { key: 'K', metaKey: true, shiftKey: true });
+  expect(screen.queryByRole('dialog')).toBeNull();
+  fireEvent.keyDown(window, { key: 'k', metaKey: true });
+  expect(screen.getByRole('dialog')).toBeTruthy();
+});
+
+it('retains an unsent draft and its one runtime when its sidebar trigger collapses', async () => {
+  const view = render(<AiChat isSidebar />);
+  fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+  fireEvent.change(await screen.findByRole('textbox'), { target: { value: 'Unsent shell draft' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Close Ask AI' }));
+  view.rerender(<AiChat isSidebar isCompact />);
+  fireEvent.click(screen.getByRole('button', { name: 'admin_console.inkeep_ai_bot.ask_ai_label' }));
+  expect(await screen.findByRole('textbox')).toHaveProperty('value', 'Unsent shell draft');
+  expect(mockReady).toHaveBeenCalledTimes(1);
+  expect(mockSend).not.toHaveBeenCalled();
+});
 afterEach(() => {
   jest.restoreAllMocks();
 });

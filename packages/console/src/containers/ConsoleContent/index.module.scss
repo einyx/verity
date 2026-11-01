@@ -1,13 +1,60 @@
 @use '@/scss/underscore' as _;
 
 .content {
+  --shell-rail: #f6f5f2;
+  --shell-content: #fff;
+  --shell-ink: #292724;
+  --shell-secondary: #625f59;
+  --shell-divider: #dddad3;
+  --shell-selected: #e3e0d9;
+  --shell-hover: #eeece7;
   flex-grow: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
+  color: var(--shell-ink);
+  background: var(--shell-content);
+}
+
+.content.dark {
+  --shell-rail: #232321;
+  --shell-content: #2b2a28;
+  --shell-ink: #f3f1eb;
+  --shell-secondary: #b7b2a8;
+  --shell-divider: #4e4a43;
+  --shell-selected: #49453e;
+  --shell-hover: #393631;
+}
+
+.workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+
+  span {
+    color: var(--shell-secondary);
+    font-size: 11px;
+  }
+
+  strong {
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
 }
 
 .overlayScrollbarWrapper {
   flex-grow: 1;
+  min-height: 0;
 }
 
 .main {
@@ -29,16 +76,16 @@
   // On a small device the content has to be able to shrink. The desktop minimum width would expand
   // the layout viewport past the device width, and every media query would then be evaluated against
   // that expanded width instead of the device's.
-  :global(html.isNarrow) .main > :not(svg):not(:global(.fullWidthPage)) {
+  :global(html.isNarrow) & > :not(svg):not(:global(.fullWidthPage)) {
     min-width: 0;
   }
 
-  :global(html.isNarrow) .main [class='appInsightsWrapper'] > :not(svg) {
+  :global(html.isNarrow) & [class='appInsightsWrapper'] > :not(svg) {
     min-width: 0;
   }
 
   // The right-hand padding is room the content needs more than the frame does.
-  :global(html.isNarrow) .main {
+  :global(html.isNarrow) & {
     padding-inline: _.unit(2);
   }
 }

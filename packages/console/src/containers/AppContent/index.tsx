@@ -1,4 +1,4 @@
-import { conditional, joinPath } from '@silverhand/essentials';
+import { joinPath } from '@silverhand/essentials';
 import { useContext, useRef } from 'react';
 import { Navigate, Outlet, useParams } from 'react-router-dom';
 
@@ -13,7 +13,6 @@ import {
   hasReachedSubscriptionQuotaLimit,
 } from '@/contexts/SubscriptionDataProvider/utils';
 import { TenantsContext } from '@/contexts/TenantsProvider';
-import useScroll from '@/hooks/use-scroll';
 import useUserPreferences from '@/hooks/use-user-preferences';
 import { shouldEnforcePaywallInUI } from '@/utils/paywall';
 
@@ -33,7 +32,6 @@ export default function AppContent() {
   const { isLoading: isLoadingSubscriptionData, ...subscriptionData } = useSubscriptionData();
 
   const scrollableContent = useRef<HTMLDivElement>(null);
-  const { scrollTop } = useScroll(scrollableContent.current);
 
   const isLoading = isLoadingPreference || isLoadingSubscriptionData;
 
@@ -78,8 +76,12 @@ export default function AppContent() {
       }}
     >
       <div className={styles.app}>
-        <Topbar className={conditional(scrollTop && styles.topbarShadow)} />
-        {isTenantSuspended && <TenantSuspendedPage />}
+        {isTenantSuspended && (
+          <>
+            <Topbar />
+            <TenantSuspendedPage />
+          </>
+        )}
         {!isTenantSuspended && (
           <Outlet context={{ scrollableContent } satisfies AppContentOutletContext} />
         )}

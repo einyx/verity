@@ -55,6 +55,8 @@ function Item({
     return (
       <>
         <button
+          type="button"
+          aria-label={t(titleKey)}
           className={styles.row}
           onClick={() => {
             setIsOpen(true);
@@ -71,7 +73,13 @@ function Item({
 
   if (externalLink) {
     return (
-      <a href={externalLink} target="_blank" className={styles.row} rel="noopener">
+      <a
+        href={externalLink}
+        aria-label={t(titleKey)}
+        target="_blank"
+        className={styles.row}
+        rel="noopener"
+      >
         {content}
       </a>
     );
@@ -79,6 +87,8 @@ function Item({
 
   return (
     <Link
+      aria-label={t(titleKey)}
+      aria-current={isActive ? 'page' : undefined}
       data-tour={titleKey}
       to={getTo(`/${path ?? getPath(titleKey)}`)}
       className={classNames(styles.row, isActive && styles.active)}

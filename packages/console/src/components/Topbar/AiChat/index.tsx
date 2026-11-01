@@ -23,6 +23,8 @@ import workspaceStyles from './workspace.module.scss';
 
 type Props = {
   readonly className?: string;
+  readonly isCompact?: boolean;
+  readonly isSidebar?: boolean;
 };
 
 const iconMap = Object.freeze({
@@ -30,7 +32,7 @@ const iconMap = Object.freeze({
   [Theme.Dark]: <AskAiIconDark />,
 } satisfies Record<Theme, ReactNode>);
 
-function AiChat({ className }: Props) {
+function AiChat({ className, isCompact = false, isSidebar = false }: Props) {
   const theme = useTheme();
   const Icon = iconMap[theme];
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +51,7 @@ function AiChat({ className }: Props) {
   // Cloudflare-style shortcut: ⌘K (Ctrl+K on Windows/Linux) opens the assistant from anywhere.
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setIsModalOpen((isOpen) => !isOpen);
       }
@@ -123,7 +125,7 @@ function AiChat({ className }: Props) {
         aria-label={t('inkeep_ai_bot.ask_ai_label')}
         title="Ask AI about MeshX (⌘K)"
         role="button"
-        className={classNames(styles.askAiButton, className)}
+        className={classNames(styles.askAiButton, isSidebar && styles.sidebarTrigger, className)}
         onClick={() => {
           setIsModalOpen(true);
         }}
@@ -132,8 +134,8 @@ function AiChat({ className }: Props) {
         })}
       >
         {Icon}
-        <span className={styles.askAiLabel}>{t('inkeep_ai_bot.ask_ai_label')}</span>
-        <kbd className={styles.shortcut}>⌘K</kbd>
+        {!isCompact && <span className={styles.askAiLabel}>{t('inkeep_ai_bot.ask_ai_label')}</span>}
+        {!isCompact && <kbd className={styles.shortcut}>⌘K</kbd>}
       </div>
       {/* The expanded Ask AI workspace keeps the current console page mounted underneath. */}
       <Modal

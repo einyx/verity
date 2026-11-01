@@ -59,6 +59,9 @@ function UserInfo() {
       <div
         ref={anchorRef}
         role="button"
+        aria-label={t('menu.profile')}
+        aria-haspopup="menu"
+        aria-expanded={showDropdown}
         tabIndex={0}
         className={classNames(styles.container, showDropdown && styles.active)}
         onKeyDown={onKeyDownHandler(() => {

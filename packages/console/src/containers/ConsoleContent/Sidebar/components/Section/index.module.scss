@@ -1,10 +1,35 @@
-@use '@/scss/underscore' as _;
+.section {
+  margin-top: 18px;
+}
 
-// Foundation sidebar group label: secondary label colour, sentence case, medium weight.
 .title {
-  padding: _.unit(2) _.unit(2);
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 10px;
+  margin-bottom: 4px;
+  font-size: 11px;
   line-height: 16px;
-  font-weight: 500;
-  color: var(--ds-label-secondary);
+  font-weight: 550;
+  text-align: start;
+  color: var(--shell-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: default;
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &:is(button):hover {
+    background: var(--shell-hover);
+  }
+}
+
+:global(html.isNarrow) .title {
+  min-height: 44px;
+  font-size: 12px;
 }

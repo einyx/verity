@@ -1,57 +1,107 @@
 @use '@/scss/underscore' as _;
 
 .sidebar {
-  // Matches the foundation-frontend sidebar: w-60 (240px), surface-layer-cp fill, border-r.
-  width: 240px;
+  width: 264px;
   position: relative;
   min-height: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  overflow: hidden;
-  background: var(--ds-surface);
-  border-right: 1px solid var(--ds-border);
-  // Rounded top-right corner, to match the rounded content card beside it.
-  border-top-right-radius: 24px;
+  background: var(--shell-rail);
+  border-inline-end: 1px solid var(--shell-divider);
+  transition: width 200ms ease-out;
+}
+
+.scope {
+  padding: 17px 12px 8px;
+  min-width: 0;
+}
+
+.scopeCollapsed {
+  padding-inline: 8px;
 }
 
 .toggleRow {
-  // Expanded: sit in the top row beside the first heading, taking no vertical space.
-  position: absolute;
-  top: _.unit(6);
-  right: _.unit(6);
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .toggleRowCollapsed {
-  // Collapsed: centered over the icon column (the icons sit at 32..48px, so the 24px button
-  // starts at 28px) and kept inside the 60px rail, or the sidebar clips it away. Pushed down
-  // _.unit(3) so the rail's 24px rounded top corner does not clip the button.
-  position: static;
-  justify-content: flex-start;
-  margin-top: _.unit(3);
-  margin-bottom: _.unit(4);
-  padding-left: _.unit(1);
+  justify-content: center;
 }
 
 .toggle {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
   padding: 0;
-  border: 1px solid var(--ds-border);
+  border: none;
   border-radius: 6px;
-  background: var(--ds-surface);
-  color: var(--ds-label-secondary);
-  font-size: 16px;
-  line-height: 1;
+  background: transparent;
+  color: var(--shell-secondary);
+  font-size: 20px;
   cursor: pointer;
 }
 
-.toggle:focus-visible {
-  outline: 2px solid var(--ds-focus-ring, currentColor);
+.toggle:hover {
+  background: var(--shell-hover);
+}
+
+.sidebar :focus-visible {
+  outline: 2px solid #ff301a;
   outline-offset: 2px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin-bottom: 12px;
+  padding: 0 8px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 7px;
+  background: var(--shell-content);
+  color: var(--shell-secondary);
+  gap: 4px;
+
+  &[hidden] {
+    display: none;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--shell-ink);
+    font: inherit;
+    font-size: 12px;
+  }
+
+  input::placeholder {
+    color: var(--shell-secondary);
+  }
+
+  kbd {
+    white-space: nowrap;
+    font: inherit;
+    font-size: 10px;
+  }
+
+  button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    min-width: 32px;
+    min-height: 32px;
+    cursor: pointer;
+  }
+}
+
+.assistant {
+  margin-bottom: 8px;
 }
 
 .resizeHandle {
@@ -65,43 +115,78 @@
   z-index: 1;
 }
 
-.resizeHandle:focus-visible {
-  outline: 2px solid var(--ds-focus-ring, currentColor);
-  outline-offset: -2px;
-}
-
 .menu {
   flex: 1;
   min-height: 0;
 }
 
 .menuContent {
-  // Foundation sidebar: p-6 (24px) inset around the nav.
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  padding: _.unit(6);
+  padding: 0 12px 12px;
   box-sizing: border-box;
 }
 
 .menuContentCollapsed {
-  // Icon rail: keep the expanded left inset so icons don't shift when collapsing.
-  padding: _.unit(3) 0 _.unit(3) _.unit(6);
+  padding-inline: 8px;
+}
+
+.empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--shell-secondary);
+}
+
+.brand {
+  margin: 0 8px;
+  padding: 16px 8px;
+  border-top: 1px solid var(--shell-divider);
+  color: var(--shell-ink);
+  font-size: 18px;
+  font-weight: 500;
+  text-decoration: none;
+
+  img {
+    display: block;
+    width: 92px;
+    max-width: 100%;
+    height: 20px;
+    object-fit: contain;
+    object-position: left;
+  }
 }
 
 .skeleton {
-  width: 240px;
+  width: 264px;
   height: 100%;
   @include _.shimmering-animation;
 }
 
-/* On a small device the expanded sidebar covers the content instead of pushing it aside, so the
-   page keeps the width of the device. The collapsed rail stays in the flow. */
-:global(html.isNarrow) .sidebarExpanded {
-  position: fixed;
-  inset-block: 0;
-  left: 0;
-  z-index: 20;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 12%);
-  border-top-right-radius: 0;
+:global(html.isNarrow) {
+  .sidebarExpanded {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 12%);
+    max-width: calc(100vw - 44px);
+  }
+
+  .toggle,
+  .assistant,
+  .search,
+  .search button {
+    min-height: 44px;
+  }
+
+  .toggle {
+    width: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
 }

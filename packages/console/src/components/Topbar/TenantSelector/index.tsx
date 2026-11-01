@@ -1,4 +1,5 @@
 import { adminTenantId, OrganizationInvitationStatus } from '@logto/schemas';
+import classNames from 'classnames';
 import { useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +8,7 @@ import PlusSign from '@/assets/icons/plus.svg?react';
 import { type TenantResponse } from '@/cloud/types/router';
 import CreateTenantModal from '@/components/CreateTenantModal';
 import TenantEnvTag from '@/components/TenantEnvTag';
+import { isCloud } from '@/consts/env';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import Divider from '@/ds-components/Divider';
 import Dropdown from '@/ds-components/Dropdown';
@@ -25,7 +27,25 @@ import styles from './index.module.scss';
 const getTenantLabel = (tenant: TenantResponse) =>
   tenant.id === adminTenantId ? 'Admin' : tenant.name;
 
-export default function TenantSelector() {
+type Props = {
+  readonly isCompact?: boolean;
+  readonly isCollapsed?: boolean;
+};
+
+export default function TenantSelector(props: Props) {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  // OSS has no cloud tenant/invitation API or switcher. Keep its real console identity.
+  if (!isCloud) {
+    return (
+      <div className={styles.ossScope} title={t('title')}>
+        {props.isCollapsed ? 'm' : t('title')}
+      </div>
+    );
+  }
+  return <CloudTenantSelector {...props} />;
+}
+
+function CloudTenantSelector({ isCompact = false, isCollapsed = false }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const {
     tenants,
@@ -52,13 +72,30 @@ export default function TenantSelector() {
     return null;
   }
 
+  const accessibleLabel = [
+    getTenantLabel(currentTenantInfo),
+    currentTenantInfo.id !== adminTenantId && t(`tenants.full_env_tag.${currentTenantInfo.tag}`),
+    isReadOnly && t('tenants.view_only.tag'),
+    Boolean(pendingInvitations?.length) && `${pendingInvitations?.length} pending invitations`,
+  ]
+    .filter(Boolean)
+    .join(' — ');
+
   return (
     <>
       <div
         ref={anchorRef}
         tabIndex={0}
-        className={styles.currentTenantCard}
+        className={classNames(
+          styles.currentTenantCard,
+          isCompact && styles.compact,
+          isCollapsed && styles.collapsed
+        )}
         role="button"
+        aria-label={accessibleLabel}
+        aria-haspopup="menu"
+        aria-expanded={showDropdown}
+        title={getTenantLabel(currentTenantInfo)}
         onKeyDown={onKeyDownHandler(() => {
           setShowDropdown(true);
         })}
@@ -66,6 +103,11 @@ export default function TenantSelector() {
           setShowDropdown(true);
         }}
       >
+        {isCompact && (
+          <span aria-hidden className={styles.avatar}>
+            {getTenantLabel(currentTenantInfo).slice(0, 2)}
+          </span>
+        )}
         <div className={styles.name}>{getTenantLabel(currentTenantInfo)}</div>
         <TenantEnvTag tag={currentTenantInfo.tag} />
         {isReadOnly && (
@@ -78,12 +120,14 @@ export default function TenantSelector() {
       </div>
       <Dropdown
         hasOverflowContent
+        isFocusManaged
         className={styles.dropdown}
         anchorRef={anchorRef}
         isOpen={showDropdown}
         horizontalAlign="start"
         onClose={() => {
           setShowDropdown(false);
+          anchorRef.current?.focus();
         }}
       >
         <OverlayScrollbar className={styles.scrollableContent}>

@@ -1,11 +1,14 @@
-import { Prompt, useLogto } from '@logto/react';
+import { LogtoError, Prompt, useHandleSignInCallback, useLogto } from '@logto/react';
 import { AccountCenterControlValue } from '@logto/schemas';
+import { fireEvent } from '@testing-library/react';
 import { type ReactElement, type ReactNode } from 'react';
 
+import AccountLayout from './AccountLayout';
 import { Main } from './App';
 import renderWithPageContext, {
   mockAccountCenterSettings,
 } from './__mocks__/RenderWithPageContext';
+import { sessionStorage as accountStorage } from './utils/session-storage';
 
 jest.mock('@ac/constants/env', () => ({
   __esModule: true,
@@ -35,6 +38,9 @@ jest.mock('@logto/react', () => ({
     };
     return React.createElement(React.Fragment, undefined, children);
   },
+  LogtoError: class LogtoError extends Error {},
+  LogtoClientError: class LogtoClientError extends Error {},
+  LogtoRequestError: class LogtoRequestError extends Error {},
   useLogto: jest.fn(),
   useHandleSignInCallback: jest.fn(() => ({ error: undefined })),
 }));
@@ -126,11 +132,11 @@ describe('Account Center <Main /> auth-redirect effects', () => {
   });
 
   describe('silent re-auth failure fallback', () => {
-    it('redirects the root account route before falling back to tab-level auth', () => {
+    it('keeps error recovery explicit rather than dropping the query in a tab redirect', () => {
       setLocation('/account', '?error=login_required');
       const { signIn } = setupUseLogto({ isAuthenticated: false });
 
-      const { getByTestId } = renderWithPageContext(
+      const { queryByTestId } = renderWithPageContext(
         <Main />,
         { initialEntries: ['/account?error=login_required'] },
         {
@@ -143,7 +149,8 @@ describe('Account Center <Main /> auth-redirect effects', () => {
         }
       );
 
-      expect(getByTestId('navigate').dataset.to).toBe('/profile');
+      expect(queryByTestId('navigate')).toBeNull();
+      expect(useHandleSignInCallback).not.toHaveBeenCalled();
       expect(signIn).not.toHaveBeenCalled();
     });
 
@@ -182,6 +189,72 @@ describe('Account Center <Main /> auth-redirect effects', () => {
   });
 
   describe('root account route redirect', () => {
+    it('keeps a confirmed disabled Account Center distinct from a retryable load error', () => {
+      setLocation('/account');
+      const { signIn } = setupUseLogto({ isAuthenticated: false });
+      const { getByText, queryByRole } = renderWithPageContext(
+        <Main />,
+        { initialEntries: ['/'] },
+        {
+          pageContext: { accountCenterSettings: { ...mockAccountCenterSettings, enabled: false } },
+        }
+      );
+      expect(getByText('account_center.home.title')).toBeTruthy();
+      expect(
+        queryByRole('button', { name: 'account_center.security.trusted_devices.retry' })
+      ).toBeNull();
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it('redirects a hidden profile deep link to Security without changing configured fields', () => {
+      setLocation('/account/profile');
+      setupUseLogto();
+      const settings = {
+        ...mockAccountCenterSettings,
+        profileFields: [],
+        fields: { ...mockAccountCenterSettings.fields, session: AccountCenterControlValue.Off },
+      };
+      const { getByTestId } = renderWithPageContext(
+        <Main />,
+        { initialEntries: ['/profile'] },
+        { pageContext: { accountCenterSettings: settings } }
+      );
+      expect(getByTestId('navigate').dataset.to).toBe('/security');
+      expect(settings.profileFields).toEqual([]);
+      expect(settings.fields.session).toBe(AccountCenterControlValue.Off);
+    });
+
+    it('shows a retryable settings error instead of Home and does not start authentication', () => {
+      setLocation('/account/profile');
+      const { signIn } = setupUseLogto({ isAuthenticated: false });
+      const reloadSettings = jest.fn();
+      const { getByRole, queryByText } = renderWithPageContext(
+        <Main />,
+        { initialEntries: ['/profile'] },
+        { pageContext: { experienceError: new Error('private diagnostic'), reloadSettings } }
+      );
+      expect(queryByText('account_center.home.title')).toBeNull();
+      expect(queryByText('private diagnostic')).toBeNull();
+      fireEvent.click(
+        getByRole('button', { name: 'account_center.security.trusted_devices.retry' })
+      );
+      expect(reloadSettings).toHaveBeenCalledTimes(1);
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it('does not silently reauthenticate against stale settings during a failed load', () => {
+      setLocation('/account/security');
+      const { signIn } = setupUseLogto();
+      renderWithPageContext(
+        <Main />,
+        { initialEntries: ['/security'] },
+        {
+          pageContext: { experienceError: new Error('offline'), userInfoError: new Error('stale') },
+        }
+      );
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
     it('redirects to the profile tab when it is available', () => {
       setLocation('/account');
       const { signIn } = setupUseLogto({ isAuthenticated: false, isLoading: true });
@@ -286,6 +359,36 @@ describe('Account Center <Main /> auth-redirect effects', () => {
   });
 
   describe('auth callback in flight', () => {
+    it('does not let the layout boundary auto-sign-in on a shared SDK callback error', () => {
+      setLocation('/account', '?error=login_required&state=original');
+      const value = setupUseLogto({ isAuthenticated: false });
+      const error = new LogtoError('callback_uri_verification.state_mismatched');
+      (useLogto as jest.Mock).mockReturnValue({ ...value, error });
+      accountStorage.setRouteRestore('/account/password');
+      const { getByRole } = renderWithPageContext(
+        <AccountLayout>
+          <Main />
+        </AccountLayout>,
+        { initialEntries: ['/'] }
+      );
+      expect(getByRole('button', { name: 'action.sign_in' })).toBeTruthy();
+      expect(value.signIn).not.toHaveBeenCalled();
+      expect(value.clearAllTokens).not.toHaveBeenCalled();
+      expect(accountStorage.getRouteRestore()).toBe('/account/password');
+      fireEvent.click(getByRole('button', { name: 'action.sign_in' }));
+      expect(window.location.replace).toHaveBeenCalledWith('/account');
+      expect(accountStorage.getRouteRestore()).toBe('/account/password');
+      accountStorage.clearRouteRestore();
+    });
+
+    it('does not discard other OAuth error callbacks or launch a new sign-in', () => {
+      setLocation('/account', '?error=access_denied&state=original');
+      const { signIn } = setupUseLogto({ isAuthenticated: false });
+      const { queryByTestId } = renderWithPageContext(<Main />, { initialEntries: ['/'] });
+      expect(useHandleSignInCallback).not.toHaveBeenCalled();
+      expect(queryByTestId('navigate')).toBeNull();
+      expect(signIn).not.toHaveBeenCalled();
+    });
     it('does not fire the auth-redirect signIn while handling the ?code= callback', () => {
       setLocation('/account', '?code=abc123');
       const { signIn } = setupUseLogto({ isAuthenticated: false });

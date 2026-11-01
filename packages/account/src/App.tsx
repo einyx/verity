@@ -1,25 +1,17 @@
-import LogtoSignature from '@experience/shared/components/LogtoSignature';
 import { ReservedScope, UserScope } from '@logto/core-kit';
 import { LogtoProvider, useLogto } from '@logto/react';
 import { accountCenterApplicationId, SignInIdentifier } from '@logto/schemas';
-import classNames from 'classnames';
-import { useContext, useMemo } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useContext } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import AppBoundary from '@ac/Providers/AppBoundary';
 import LoadingContextProvider from '@ac/Providers/LoadingContextProvider';
-import MobileTabNav from '@ac/components/MobileTabNav';
-import PageHeader from '@ac/components/PageHeader';
-import Sidebar from '@ac/components/Sidebar';
-import { layoutClassNames } from '@ac/constants/layout';
 
-import styles from './App.module.scss';
-import Callback from './Callback';
-import { AccountLayoutProvider } from './Providers/AccountLayoutContext';
-import ErrorBoundary from './Providers/AppBoundary/ErrorBoundary';
-import LogtoErrorBoundary from './Providers/AppBoundary/LogtoErrorBoundary';
+import AccountLayout from './AccountLayout';
+import Callback, { CallbackError } from './Callback';
 import PageContextProvider from './Providers/PageContextProvider';
 import PageContext from './Providers/PageContextProvider/PageContext';
+import ErrorPage from './components/ErrorPage';
 import GlobalLoading from './components/GlobalLoading';
 import {
   securityRoute,
@@ -76,6 +68,22 @@ import './scss/normalized.scss';
 handleAccountCenterRoute();
 void initI18n();
 
+const ProfileEntry = () => {
+  const { accountCenterSettings, experienceSettings } = useContext(PageContext);
+  const { hasProfile, navItems } = getAccountTabSettings({
+    accountCenterSettings,
+    experienceSettings,
+  });
+  if (hasProfile) {
+    return <Profile />;
+  }
+  const [firstAvailable] = navItems;
+  return firstAvailable ? <Navigate replace to={firstAvailable.to} /> : <Home />;
+};
+
+const settingsUnavailable = (context: React.ContextType<typeof PageContext>) =>
+  Boolean(context.experienceError) || !context.accountCenterSettings || !context.experienceSettings;
+
 export const Main = () => {
   const params = new URLSearchParams(window.location.search);
   const { pathname } = window.location;
@@ -85,19 +93,20 @@ export const Main = () => {
     `${accountCenterBasePath}${socialCallbackRoutePrefix}/`
   );
   const isAuthCallback = Boolean(params.get('code')) && isAccountRoot;
-  const isSilentAuthFailed = params.get('error') === 'login_required' && isAccountRoot;
-  const isInCallback = isSocialCallback || isAuthCallback;
+  const isErrorCallback = params.has('error') && isAccountRoot;
   const { isAuthenticated, isLoading } = useLogto();
+  const context = useContext(PageContext);
   const {
     accountCenterSettings,
     experienceSettings,
     isLoadingExperience,
     isLoadingUserInfo,
     userInfo,
-  } = useContext(PageContext);
+    reloadSettings,
+  } = context;
   const isInitialAuthLoading = !isAuthenticated && isLoading;
 
-  useAuthRedirect({ isInCallback: isInCallback || isAccountRoot, isSilentAuthFailed });
+  useAuthRedirect({ isInCallback: isSocialCallback || isAccountRoot });
 
   if (isSocialCallback) {
     return (
@@ -111,7 +120,25 @@ export const Main = () => {
     return <Callback />;
   }
 
-  if (isLoadingExperience || (!isAccountRoot && (isInitialAuthLoading || isLoadingUserInfo))) {
+  if (isLoadingExperience) {
+    return <GlobalLoading />;
+  }
+
+  if (settingsUnavailable(context)) {
+    return (
+      <ErrorPage
+        titleKey="error.something_went_wrong"
+        action={{
+          titleKey: 'account_center.security.trusted_devices.retry',
+          onClick: () => {
+            void reloadSettings();
+          },
+        }}
+      />
+    );
+  }
+
+  if (!isAccountRoot && (isInitialAuthLoading || isLoadingUserInfo)) {
     return <GlobalLoading />;
   }
 
@@ -124,8 +151,13 @@ export const Main = () => {
     );
   }
 
+  // An error query is untrusted: show explicit recovery without clearing tokens,
+  // accepting authentication, or overwriting the stored restoration target.
+  if (isErrorCallback) {
+    return <CallbackError />;
+  }
+
   const {
-    hasProfile,
     hasSecurity,
     hasSessions,
     navItems: accountNavItems,
@@ -204,77 +236,10 @@ export const Main = () => {
       />
       {hasSecurity && <Route path={securityRoute} element={<Security />} />}
       {hasSessions && <Route path={sessionsRoute} element={<Sessions />} />}
-      {hasProfile && <Route path={profileRoute} element={<Profile />} />}
+      <Route path={profileRoute} element={<ProfileEntry />} />
       <Route index element={<Home />} />
       <Route path="*" element={<Home />} />
     </Routes>
-  );
-};
-
-const Layout = () => {
-  const { accountCenterSettings, experienceSettings, theme, platform } = useContext(PageContext);
-  const hideLogtoBranding = experienceSettings?.hideLogtoBranding === true;
-  const { pathname } = useLocation();
-  const accountNavItems = useMemo(
-    () => getAccountTabSettings({ accountCenterSettings, experienceSettings }).navItems,
-    [accountCenterSettings, experienceSettings]
-  );
-  const isFullPage = accountNavItems.some(({ to }) => to === pathname);
-  const showsMultiPageNav = isFullPage && accountNavItems.length > 1;
-  const showsMobileTabNav = platform === 'mobile' && showsMultiPageNav;
-  const showsSidebar = platform !== 'mobile' && showsMultiPageNav;
-
-  return (
-    <div className={classNames(styles.app, layoutClassNames.app)}>
-      <div
-        className={classNames(
-          styles.layout,
-          isFullPage && styles.fullPage,
-          showsMultiPageNav && layoutClassNames.withTabNav,
-          layoutClassNames.pageContainer
-        )}
-      >
-        {isFullPage && <PageHeader />}
-        {showsMobileTabNav && <MobileTabNav items={accountNavItems} />}
-        <div
-          className={classNames(
-            styles.container,
-            !isFullPage && styles.cardContainer,
-            !isFullPage && layoutClassNames.cardContainer,
-            showsSidebar && styles.withSidebar,
-            showsMobileTabNav && styles.withMobileTabNav
-          )}
-        >
-          {showsSidebar && <Sidebar items={accountNavItems} />}
-          <AccountLayoutProvider
-            value={{
-              showsMultiPageNav,
-              showsMobileTabNav,
-            }}
-          >
-            <main
-              className={classNames(
-                styles.main,
-                !isFullPage && styles.cardMain,
-                isFullPage ? layoutClassNames.mainContent : layoutClassNames.cardMain
-              )}
-            >
-              <ErrorBoundary>
-                <LogtoErrorBoundary>
-                  <Main />
-                </LogtoErrorBoundary>
-              </ErrorBoundary>
-              {!isFullPage && !hideLogtoBranding && (
-                <LogtoSignature
-                  className={classNames(styles.signature, layoutClassNames.signature)}
-                  theme={theme}
-                />
-              )}
-            </main>
-          </AccountLayoutProvider>
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -301,7 +266,9 @@ const App = () => (
       <LoadingContextProvider>
         <PageContextProvider>
           <AppBoundary>
-            <Layout />
+            <AccountLayout>
+              <Main />
+            </AccountLayout>
           </AppBoundary>
         </PageContextProvider>
       </LoadingContextProvider>

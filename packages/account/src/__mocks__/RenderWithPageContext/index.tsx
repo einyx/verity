@@ -176,6 +176,7 @@ export const createMockPageContext = (
   setVerificationId: noop,
   isLoadingExperience: false,
   experienceError: undefined,
+  reloadSettings: noopAsync,
   ...overrides,
 });
 

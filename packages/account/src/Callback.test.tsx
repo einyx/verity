@@ -37,8 +37,9 @@ describe('<Callback />', () => {
   it('renders an error UI when useHandleSignInCallback reports an error', () => {
     (useHandleSignInCallback as jest.Mock).mockReturnValue({ error: new Error('boom') });
 
-    const { getByText } = renderWithPageContext(<Callback />);
+    const { getByText, queryByText } = renderWithPageContext(<Callback />);
 
-    expect(getByText(/couldn't complete the sign in callback/i)).toBeTruthy();
+    expect(getByText('error.something_went_wrong')).toBeTruthy();
+    expect(queryByText('boom')).toBeNull();
   });
 });

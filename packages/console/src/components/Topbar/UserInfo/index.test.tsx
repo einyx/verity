@@ -53,3 +53,24 @@ it('opens console SSO with the router basename', () => {
 
   expect(open).toHaveBeenCalledWith('/console/console-sso', '_blank', 'noopener,noreferrer');
 });
+
+it('opens the supported Account Center landing rather than an optionally hidden Profile tab', () => {
+  const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+  const { getComputedStyle } = window;
+  jest.spyOn(window, 'getComputedStyle').mockImplementation((element) => getComputedStyle(element));
+  const { container } = render(
+    <MemoryRouter>
+      <UserInfo />
+    </MemoryRouter>
+  );
+  ReactModal.setAppElement(container);
+  fireEvent.click(screen.getByRole('button'));
+  fireEvent.click(
+    screen.getByRole('menuitem', { name: 'admin_console.sign_in_exp.tabs.account_center' })
+  );
+  expect(open).toHaveBeenCalledWith(
+    'https://auth.example.com/account',
+    '_blank',
+    'noopener,noreferrer'
+  );
+});

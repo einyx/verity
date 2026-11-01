@@ -2,7 +2,20 @@ import { useHandleSignInCallback, useLogto } from '@logto/react';
 import { useEffect } from 'react';
 
 import { clearVerificationRecord } from './Providers/PageContextProvider/verification-storage';
+import ErrorPage from './components/ErrorPage';
 import GlobalLoading from './components/GlobalLoading';
+
+export const CallbackError = () => (
+  <ErrorPage
+    titleKey="error.something_went_wrong"
+    action={{
+      titleKey: 'action.sign_in',
+      onClick: () => {
+        window.location.replace('/account');
+      },
+    }}
+  />
+);
 
 const Callback = () => {
   const { clearAllTokens } = useLogto();
@@ -17,20 +30,7 @@ const Callback = () => {
   });
 
   if (error) {
-    return (
-      <>
-        <p>We couldn&apos;t complete the sign in callback.</p>
-        <pre>{error.message}</pre>
-        <button
-          type="button"
-          onClick={() => {
-            window.location.replace('/account');
-          }}
-        >
-          Back to sign in
-        </button>
-      </>
-    );
+    return <CallbackError />;
   }
 
   return <GlobalLoading />;

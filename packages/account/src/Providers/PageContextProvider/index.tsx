@@ -1,6 +1,6 @@
 import { useLogto } from '@logto/react';
 import { Theme } from '@logto/schemas';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getAccountCenterSettings } from '@ac/apis/account-center';
 import { getSignInExperienceSettings } from '@ac/apis/sign-in-experience';
@@ -48,6 +48,8 @@ const PageContextProvider = ({ children }: Props) => {
   const [verificationId, setVerificationId] = useState<string>();
   const [isLoadingExperience, setIsLoadingExperience] = useState(true);
   const [experienceError, setExperienceError] = useState<Error>();
+  const settingsRequestPending = useRef(false);
+  const isMounted = useRef(true);
 
   const loadUserInfo = useCallback(
     async ({
@@ -134,37 +136,56 @@ const PageContextProvider = ({ children }: Props) => {
     });
   }, [isAuthenticated, loadUserInfo]);
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      setIsLoadingExperience(true);
+  const reloadSettings = useCallback(async () => {
+    if (settingsRequestPending.current) {
+      return;
+    }
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Deduplicate explicit retries synchronously, before React renders.
+    settingsRequestPending.current = true;
+    setIsLoadingExperience(true);
 
-      try {
-        const [settings, accountCenter] = await Promise.all([
-          getSignInExperienceSettings(),
-          getAccountCenterSettings(),
-        ]);
-        await changeLanguage(
-          getPreferredLanguage({
-            languageSettings: settings.languageInfo,
-            uiLocales: getUiLocales(),
-          })
-        );
-        setExperienceSettings(settings);
-        setAccountCenterSettings(accountCenter);
-        setExperienceError(undefined);
-      } catch (error: unknown) {
-        setExperienceSettings(undefined);
-        setAccountCenterSettings(undefined);
-        setExperienceError(
-          error instanceof Error ? error : new Error('Failed to load sign-in experience settings.')
-        );
-      } finally {
+    try {
+      const [settings, accountCenter] = await Promise.all([
+        getSignInExperienceSettings(),
+        getAccountCenterSettings(),
+      ]);
+      await changeLanguage(
+        getPreferredLanguage({
+          languageSettings: settings.languageInfo,
+          uiLocales: getUiLocales(),
+        })
+      );
+      if (!isMounted.current) {
+        return;
+      }
+      setExperienceSettings(settings);
+      setAccountCenterSettings(accountCenter);
+      setExperienceError(undefined);
+    } catch (error: unknown) {
+      if (!isMounted.current) {
+        return;
+      }
+      setExperienceError(
+        error instanceof Error ? error : new Error('Failed to load sign-in experience settings.')
+      );
+    } finally {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Release the per-provider request lock after settlement.
+      settingsRequestPending.current = false;
+      if (isMounted.current) {
         setIsLoadingExperience(false);
       }
-    };
-
-    void loadSettings();
+    }
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- React StrictMode can replay effect setup after cleanup.
+    isMounted.current = true;
+    void reloadSettings();
+    return () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Ignore completion after provider unmount.
+      isMounted.current = false;
+    };
+  }, [reloadSettings]);
 
   useEffect(() => {
     if (!experienceSettings) {
@@ -209,10 +230,12 @@ const PageContextProvider = ({ children }: Props) => {
       setVerificationId: setVerificationIdCallback,
       isLoadingExperience,
       experienceError,
+      reloadSettings,
     }),
     [
       accountCenterSettings,
       experienceError,
+      reloadSettings,
       experienceSettings,
       isLoadingExperience,
       platform,

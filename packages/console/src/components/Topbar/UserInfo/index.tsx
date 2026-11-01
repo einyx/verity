@@ -124,11 +124,11 @@ function UserInfo() {
           className={classNames(styles.dropdownItem, isLoading && styles.loading)}
           icon={<Profile className={styles.icon} />}
           onClick={() => {
-            const accountUrl = new URL('/account/profile', adminTenantEndpoint.href);
+            const accountUrl = new URL('/account', adminTenantEndpoint.href);
             window.open(accountUrl.toString(), '_blank', 'noopener,noreferrer');
           }}
         >
-          {t('menu.profile')}
+          {t('sign_in_exp.tabs.account_center')}
           <Spacer />
           <div className={styles.icon}>
             <FlipOnRtl>

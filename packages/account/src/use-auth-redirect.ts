@@ -9,7 +9,6 @@ const redirectUri = `${window.location.origin}${accountCenterBasePath}`;
 
 type UseAuthRedirectProps = {
   readonly isInCallback: boolean;
-  readonly isSilentAuthFailed: boolean;
 };
 
 /**
@@ -19,8 +18,8 @@ type UseAuthRedirectProps = {
  * - `userInfoError` while authenticated → try a silent OIDC re-auth (`Prompt.None`)
  *   so a user with a valid session cookie (e.g. the User B side of a user-switch
  *   with stale local tokens) is recovered without an interactive login.
- * - The OIDC provider answering `error=login_required` (caller derives this into
- *   `isSilentAuthFailed`) → fall back to an explicit `Prompt.Login`.
+ * - OAuth errors require explicit recovery; untrusted query parameters never
+ *   clear SDK credentials or trigger an automatic replacement login.
  *
  * All branches are gated on `accountCenterSettings?.enabled` to preserve the
  * disabled-tenant short-circuit added in #8637. When disabled, both effects
@@ -28,28 +27,29 @@ type UseAuthRedirectProps = {
  * query param is left in the URL in that case, which is harmless because no
  * further redirect is issued.
  */
-export const useAuthRedirect = ({
-  isInCallback,
-  isSilentAuthFailed,
-}: UseAuthRedirectProps): void => {
+export const useAuthRedirect = ({ isInCallback }: UseAuthRedirectProps): void => {
   const uiLocales = getUiLocales();
   const { isAuthenticated, isLoading, signIn } = useLogto();
-  const { accountCenterSettings, isLoadingExperience, isLoadingUserInfo, userInfoError } =
-    useContext(PageContext);
+  const {
+    accountCenterSettings,
+    experienceSettings,
+    experienceError,
+    isLoadingExperience,
+    isLoadingUserInfo,
+    userInfoError,
+  } = useContext(PageContext);
   const isInitialAuthLoading = !isAuthenticated && isLoading;
   const hasAttemptedSilentReauth = useRef(false);
+  const settingsReady = Boolean(experienceSettings) && !experienceError && !isLoadingExperience;
 
   useEffect(() => {
-    if (isInCallback || isInitialAuthLoading || isLoadingExperience) {
+    if (isInCallback || isInitialAuthLoading || !settingsReady) {
       return;
     }
 
     const extraParams = uiLocales ? { [ExtraParamsKey.UiLocales]: uiLocales } : undefined;
 
-    if (isSilentAuthFailed && accountCenterSettings?.enabled) {
-      // Prompt=none failed (no valid OIDC session); fall back to an explicit login.
-      void signIn({ redirectUri, prompt: Prompt.Login, extraParams });
-    } else if (!isAuthenticated && accountCenterSettings?.enabled) {
+    if (!isAuthenticated && accountCenterSettings?.enabled) {
       setRouteRestore(window.location.pathname);
       void signIn({ redirectUri, extraParams });
     }
@@ -57,15 +57,14 @@ export const useAuthRedirect = ({
     isAuthenticated,
     isInCallback,
     isInitialAuthLoading,
-    isLoadingExperience,
-    isSilentAuthFailed,
+    settingsReady,
     accountCenterSettings,
     signIn,
     uiLocales,
   ]);
 
   useEffect(() => {
-    if (isInCallback || isSilentAuthFailed) {
+    if (isInCallback || !settingsReady) {
       return;
     }
     if (isInitialAuthLoading || !isAuthenticated || isLoadingUserInfo) {
@@ -74,8 +73,7 @@ export const useAuthRedirect = ({
 
     // Skip re-authentication when account center is disabled - the API will always reject.
     // Otherwise let the OIDC provider decide: silent re-auth via the session cookie if
-    // possible, and on failure it redirects back with error=login_required so the effect
-    // above can trigger an explicit Prompt.Login.
+    // possible. On failure the callback UI provides explicit recovery.
     //
     // Guard with a ref so this fires at most once per page load: userInfoError
     // stays truthy until navigation, so without the guard every dependency
@@ -89,9 +87,9 @@ export const useAuthRedirect = ({
     }
   }, [
     accountCenterSettings,
+    settingsReady,
     isAuthenticated,
     isInCallback,
-    isSilentAuthFailed,
     isInitialAuthLoading,
     isLoadingUserInfo,
     signIn,

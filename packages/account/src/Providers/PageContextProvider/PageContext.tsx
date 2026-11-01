@@ -25,6 +25,7 @@ export type PageContextType = {
   setVerificationId: (verificationId?: string, expiresAt?: string) => void;
   isLoadingExperience: boolean;
   experienceError?: Error;
+  reloadSettings: () => Promise<void>;
 };
 
 const PageContext = createContext<PageContextType>({
@@ -45,6 +46,7 @@ const PageContext = createContext<PageContextType>({
   setVerificationId: noop,
   isLoadingExperience: false,
   experienceError: undefined,
+  reloadSettings: noopAsync,
 });
 
 export default PageContext;

@@ -1,3 +1,6 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
 import { type ScriptRunInput } from './types.js';
 import { WorkerThreadScriptRunner } from './worker-thread-script-runner.js';
 
@@ -62,18 +65,32 @@ describe('WorkerThreadScriptRunner runaway containment', () => {
   }, 10_000);
 
   it('reports oom for a runaway allocation', async () => {
-    const runner = createRunner();
-    const result = await runner.run(
-      buildInput(
-        `const runAction = () => {
+    const input = buildInput(
+      `const runAction = () => {
            const chunks = [];
            while (true) { chunks.push(new Array(1_000_000).fill('x')); }
          };`,
-        { wallClockMs: 20_000, memoryMb: 16 }
-      )
+      { wallClockMs: 20_000, memoryMb: 16 }
+    );
+    // Jest's 4 GB heap flag overrides Worker resourceLimits. Exercise the real 16 MB limit in
+    // a fresh process without that inherited override, rather than allocating gigabytes in CI.
+    const { stdout } = await promisify(execFile)(
+      process.execPath,
+      [
+        '--eval',
+        `
+        (async () => {
+        const { WorkerThreadScriptRunner } = await import(${JSON.stringify(new URL('worker-thread-script-runner.js', import.meta.url).href)});
+        const runner = new WorkerThreadScriptRunner();
+        try { console.log(JSON.stringify(await runner.run(${JSON.stringify(input)}))); }
+        finally { await runner.dispose(); }
+        })().catch((error) => { console.error(error); process.exitCode = 1; });
+      `,
+      ],
+      { env: { ...process.env, NODE_OPTIONS: '' }, timeout: 25_000 }
     );
 
-    expect(result).toEqual({ ok: false, kind: 'oom' });
+    expect(JSON.parse(stdout)).toEqual({ ok: false, kind: 'oom' });
   }, 30_000);
 
   it('reports runtime when the script exits the thread', async () => {
@@ -85,9 +102,8 @@ describe('WorkerThreadScriptRunner runaway containment', () => {
     expect(result).toMatchObject({ ok: false, kind: 'runtime' });
   }, 10_000);
 
-  // Recycling after an out-of-memory kill lives in `worker-thread-script-runner.spawn.test.ts`:
-  // reproducing a real OOM here would race a multi-gigabyte allocation against the wall clock,
-  // because the jest process's `--max_old_space_size` overrides the per-worker limit.
+  // Recycling after an out-of-memory kill is deterministic in the spawn-contract suite.
+  // The real OOM check above uses a child to avoid Jest's inherited heap override.
 
   it('serves the next run on a fresh worker after the script exits the thread', async () => {
     const runner = createRunner();
@@ -126,7 +142,7 @@ describe('WorkerThreadScriptRunner runaway containment', () => {
     expect(runner.size).toBe(0);
 
     await expect(
-      runner.run(buildInput('const runAction = () => ({ healthy: true });'))
+      runner.run(buildInput('const runAction = () => ({ healthy: true });', { wallClockMs: 5000 }))
     ).resolves.toEqual({ ok: true, value: { healthy: true } });
   }, 15_000);
 
@@ -139,7 +155,7 @@ describe('WorkerThreadScriptRunner runaway containment', () => {
     expect(runner.size).toBe(0);
     await expect(runner.run(buildInput(script))).resolves.toEqual({ ok: false, kind: 'timeout' });
     await expect(
-      runner.run(buildInput('const runAction = () => ({ ok: true });'))
+      runner.run(buildInput('const runAction = () => ({ ok: true });', { wallClockMs: 5000 }))
     ).resolves.toEqual({ ok: true, value: { ok: true } });
   }, 15_000);
 

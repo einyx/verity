@@ -43,6 +43,38 @@ const lead: LandingLead = {
 const mockFetch = jest.fn();
 const mockListing = jest.fn();
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch');
+type QueueQueries = Pick<typeof screen, 'findByText' | 'queryByText'>;
+
+// Naming every rich lead button on every retry is expensive under coverage. Locate its label
+// first, then keep the same visible-role/name assertion scoped to that single list item.
+const findLeadButton = async (queue: QueueQueries, name: string) => {
+  const label = await queue.findByText(name, { selector: 'strong' });
+  const row = label.closest('li');
+  if (!row) {
+    throw new Error(`Lead ${name} has no list item`);
+  }
+  return within(row).getByRole('button', { name: (value) => value.startsWith(name) });
+};
+
+const queryPageButton = (queue: QueueQueries, page: string) => {
+  const label = queue.queryByText(page);
+  if (!label) {
+    return null;
+  }
+  const item = label.closest('li');
+  if (!item) {
+    throw new Error(`Page ${page} has no pagination item`);
+  }
+  return within(item).getByRole('button', { name: page });
+};
+
+const getPageButton = (queue: QueueQueries, page: string) => {
+  const button = queryPageButton(queue, page);
+  if (!button) {
+    throw new Error(`Page ${page} is not present`);
+  }
+  return button;
+};
 
 beforeAll(() => {
   // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- jsdom may lack fetch; install a suite-local mock and restore the original descriptor below.
@@ -286,7 +318,7 @@ it.each([false, true])(
       target: { value: 'qualified' },
     });
     await queue.findByText('21 matching');
-    fireEvent.click(queue.getByRole('button', { name: '2' }));
+    fireEvent.click(getPageButton(queue, '2'));
     await waitFor(() => {
       expect(waitForPageTwo.mock.calls.length).toBeGreaterThanOrEqual(1);
     });
@@ -298,17 +330,17 @@ it.each([false, true])(
     await act(async () => {
       releasePageTwo();
     });
-    fireEvent.click(await queue.findByRole('button', { name: /Visitor 20 Lovelace/ }));
+    fireEvent.click(await findLeadButton(queue, 'Visitor 20 Lovelace'));
     fireEvent.change(screen.getByLabelText('Sales notes'), {
       target: { value: 'Retain this selected draft' },
     });
     fireEvent.change(screen.getByLabelText('Pipeline status'), { target: { value: 'contacted' } });
     expect(await queue.findByText('20 matching')).toBeTruthy();
-    expect(await queue.findByRole('button', { name: /Visitor 0 Lovelace/ })).toBeTruthy();
+    expect(await findLeadButton(queue, 'Visitor 0 Lovelace')).toBeTruthy();
     expect(queue.getAllByRole('button', { name: /Visitor/ })).toHaveLength(20);
     expect(queue.queryByText('No leads match your filters.')).toBeNull();
     await waitFor(() => {
-      expect(queue.queryByRole('button', { name: '2' })).toBeNull();
+      expect(queryPageButton(queue, '2')).toBeNull();
     });
     expect(screen.getByLabelText('Sales notes')).toHaveProperty(
       'value',
@@ -335,7 +367,7 @@ it.each([false, true])(
       lead: { ...lead.lead, firstName: 'Visitor 21' },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Refresh fixture list' }));
+      fireEvent.click(screen.getByText('Refresh fixture list', { selector: 'button' }));
     });
     await queue.findByText('21 matching');
     fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'Retain local tags' } });
@@ -343,7 +375,7 @@ it.each([false, true])(
     const pageOneRequests = mockFetch.mock.calls.filter(([url]) =>
       String(url).includes('stage=qualified&limit=20&offset=0')
     ).length;
-    fireEvent.click(await queue.findByRole('button', { name: '2' }));
+    fireEvent.click(getPageButton(queue, '2'));
     await waitFor(() => {
       expect(waitForPageTwo).toHaveBeenCalledTimes(pageTwoRequests + 1);
     });
@@ -356,7 +388,7 @@ it.each([false, true])(
       )
     ).toHaveLength(pageOneRequests);
     expect(queue.getByText('Loading leads…')).toBeTruthy();
-    expect(queue.getByRole('button', { name: '2' }).className).toContain('active');
+    expect(getPageButton(queue, '2').className).toContain('active');
     expect(screen.getByRole('heading', { name: 'Visitor 20 Lovelace' })).toBeTruthy();
     expect(screen.getByLabelText('Sales notes')).toHaveProperty(
       'value',
@@ -366,10 +398,10 @@ it.each([false, true])(
     await act(async () => {
       releaseRevisit();
     });
-    expect(await queue.findByRole('button', { name: /Visitor 21 Lovelace/ })).toBeTruthy();
+    expect(await findLeadButton(queue, 'Visitor 21 Lovelace')).toBeTruthy();
     expect(queue.getByText('21 matching')).toBeTruthy();
     expect(queue.queryByRole('button', { name: /Visitor 0 Lovelace/ })).toBeNull();
-    expect(queue.getByRole('button', { name: '2' }).className).toContain('active');
+    expect(getPageButton(queue, '2').className).toContain('active');
     expect(screen.getByLabelText('Sales notes')).toHaveProperty(
       'value',
       'Retain this selected draft'

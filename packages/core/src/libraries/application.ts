@@ -3,7 +3,7 @@ import {
   Scopes,
   type Scope,
   ApplicationUserConsentScopeType,
-  getManagementApiResourceIndicator,
+  getManagementApiIndicatorFor,
   ApplicationType,
 } from '@logto/schemas';
 
@@ -118,7 +118,7 @@ export const createApplicationLibrary = (queries: Queries) => {
       )
     );
 
-    const managementApiResourceIndicator = getManagementApiResourceIndicator(tenantId);
+    const managementApiResourceIndicator = getManagementApiIndicatorFor(tenantId);
 
     const managementApiScopes = await findScopesByIdsAndResourceIndicator(
       [...resourceScopes, ...organizationResourceScopes],

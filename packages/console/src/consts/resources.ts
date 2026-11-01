@@ -1,7 +1,7 @@
 import {
   getCloudApiIndicator,
   CloudScope,
-  getManagementApiResourceIndicator,
+  getManagementApiIndicatorFor,
   getMeApiResourceIndicator,
   PredefinedScope,
 } from '@logto/schemas';
@@ -15,10 +15,9 @@ export type ApiResource = {
 
 export const getManagementApi = (tenantId: string) =>
   Object.freeze({
-    indicator: getManagementApiResourceIndicator(tenantId),
+    indicator: getManagementApiIndicatorFor(tenantId),
     scopes: PredefinedScope,
   } satisfies ApiResource);
-
 export const meApi = Object.freeze({
   indicator: getMeApiResourceIndicator(isCloud ? window.location.origin : undefined),
   scopes: PredefinedScope,

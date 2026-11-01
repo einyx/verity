@@ -87,6 +87,30 @@ export function getManagementApiResourceIndicator(tenantId: string, path = 'api'
 }
 
 /**
+ * The indicator of a tenant's Management API as seen from the admin tenant.
+ *
+ * A deployment serves every tenant from one host, so the tenants share one public
+ * indicator. The admin tenant still needs a resource per managed tenant, and the
+ * indicator is unique per tenant, so the proxy rows carry the target tenant in
+ * their path instead.
+ */
+export function getManagementApiProxyIndicator(tenantId: string, path = 'api') {
+  return `https://prysm.sh/_tenants/${tenantId}/${path}`;
+}
+
+/**
+ * The indicator a client uses to reach a tenant's Management API.
+ *
+ * The admin tenant reaches the API through its own proxy, so it uses the proxy
+ * indicator. Every other tenant uses the shared public indicator.
+ */
+export function getManagementApiIndicatorFor(tenantId: string, path = 'api') {
+  return tenantId === adminTenantId
+    ? getManagementApiProxyIndicator(tenantId, path)
+    : getManagementApiResourceIndicator(tenantId, path);
+}
+
+/**
  * The fixed Management API user role for `default` tenant in the admin tenant. It is used for
  * OSS only.
  */
@@ -131,7 +155,7 @@ export const createAdminDataInAdminTenant = (tenantId: string) => {
     resource: {
       tenantId: adminTenantId,
       id: resourceId,
-      indicator: getManagementApiResourceIndicator(tenantId),
+      indicator: getManagementApiProxyIndicator(tenantId),
       name: `Logto Management API for tenant ${tenantId}`,
     },
     scopes: [

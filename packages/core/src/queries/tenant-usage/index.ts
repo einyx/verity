@@ -3,7 +3,7 @@ import {
   ApplicationType,
   Scopes,
   Resources,
-  getManagementApiResourceIndicator,
+  getManagementApiIndicatorFor,
   Roles,
   RoleType,
   RolesScopes,
@@ -139,7 +139,7 @@ export default class TenantUsageQuery {
       from ${scopesTable}
       join ${resourcesTable} on ${scopesFields.resourceId} = ${resourcesFields.id}
       where ${scopesFields.resourceId} = ${entityId}
-      and ${resourcesFields.indicator} != ${getManagementApiResourceIndicator(tenantId)}
+      and ${resourcesFields.indicator} != ${getManagementApiIndicatorFor(tenantId)}
     `);
     return Number(result.count);
   };
@@ -195,7 +195,7 @@ export default class TenantUsageQuery {
       select
         count(*)
       from ${resourcesTable}
-      where ${resourcesFields.indicator} != ${getManagementApiResourceIndicator(tenantId)}
+      where ${resourcesFields.indicator} != ${getManagementApiIndicatorFor(tenantId)}
     `);
 
     return Number(result.count);

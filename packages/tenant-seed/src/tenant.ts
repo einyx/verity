@@ -81,79 +81,26 @@ export const seedAdminData = async (
     return id;
   };
 
-  // A deployment serves every tenant from one host, so several tenants can ask for a
-  // Management API with the same indicator. The indicator is unique per tenant, so the
-  // second request reuses the row the first one created instead of inserting a duplicate.
-  const existingResource = await pool.maybeOne<{ id: string }>(sql`
-    select id from resources
-    where indicator = ${resource.indicator} and tenant_id = ${String(resource.tenantId)}
-  `);
-
-  const resourceId = existingResource?.id ?? resource.id;
-
-  if (existingResource) {
-    await pool.query(
-      sql`
-        update resources
-        set name = ${resource.name}
-        where id = ${resourceId}
-      `
-    );
-  } else {
-    await pool.query(insertInto(resource, 'resources'));
-  }
-
-  // The scope name is unique per tenant and resource, so a scope that already exists on the
-  // reused resource is adopted rather than inserted again.
-  const allScopes: CreateScope[] = [...scopes, ...additionalScopes];
-  const scopeIds: string[] = await Promise.all(
-    allScopes.map(async (scope) => {
-      const existingScope = await pool.maybeOne<{ id: string }>(sql`
-        select id from scopes
-        where name = ${scope.name}
-          and resource_id = ${resourceId}
-          and tenant_id = ${String(scope.tenantId)}
-      `);
-
-      if (existingScope) {
-        return existingScope.id;
-      }
-
-      const scopeId = generateStandardId();
-      await pool.query(insertInto({ ...scope, id: scopeId, resourceId }, 'scopes'));
-
-      return scopeId;
-    })
+  await pool.query(insertInto(resource, 'resources'));
+  await Promise.all(
+    [...scopes, ...additionalScopes].map(async (scope) => pool.query(insertInto(scope, 'scopes')))
   );
 
   const roleId = await processRole();
   await Promise.all(
-    scopeIds.map(async (scopeId) => {
-      // The binding is unique per role and scope, and a reused resource can make the
-      // same binding appear twice.
-      const existing = await pool.maybeOne<{ id: string }>(sql`
-        select id from roles_scopes
-        where tenant_id = ${String(resource.tenantId)}
-          and role_id = ${roleId}
-          and scope_id = ${scopeId}
-      `);
-
-      if (existing) {
-        return;
-      }
-
-      await pool.query(
+    scopes.map(async ({ id }) =>
+      pool.query(
         insertInto(
           {
             id: generateStandardId(),
             roleId,
-            scopeId,
+            scopeId: id,
             tenantId: resource.tenantId,
           } satisfies CreateRolesScope,
           'roles_scopes'
         )
-      );
-    })
+      )
+    )
   );
 };
 

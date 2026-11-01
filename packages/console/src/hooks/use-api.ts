@@ -10,7 +10,7 @@ import {
   adminTenantId,
   getTenantOrganizationId,
   type RequestErrorBody,
-  getManagementApiResourceIndicator,
+  getManagementApiIndicatorFor,
   defaultTenantId,
 } from '@logto/schemas';
 import { appendPath, conditionalArray } from '@silverhand/essentials';
@@ -221,12 +221,12 @@ const useApi = (props: Omit<StaticApiProps, 'prefixUrl' | 'resourceIndicator'> =
             // organization as audience, which its API does not accept. Other tenants keep the organization token.
             resourceIndicator:
               currentTenantId === adminTenantId
-                ? getManagementApiResourceIndicator(currentTenantId)
+                ? getManagementApiIndicatorFor(currentTenantId)
                 : buildOrganizationUrn(getTenantOrganizationId(currentTenantId)),
           }
         : {
             prefixUrl: tenantEndpoint,
-            resourceIndicator: getManagementApiResourceIndicator(currentTenantId),
+            resourceIndicator: getManagementApiIndicatorFor(currentTenantId),
           },
     [currentTenantId, tenantEndpoint, useCloudProxy]
   );

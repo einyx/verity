@@ -12,7 +12,10 @@ const adminConsoleAppId = 'admin-console';
 const adminRoleName = 'admin';
 const adminOrganizationId = `t-${adminTenantId}`;
 const adminManagementApiName = 'Logto Management API for tenant admin';
-const adminManagementApiIndicator = 'https://prysm.sh/api';
+// The admin tenant's proxy for the admin tenant's own Management API. A deployment
+// serves every tenant from one host, so the proxy indicator carries the target
+// tenant in its path.
+const adminManagementApiIndicator = 'https://prysm.sh/_tenants/admin/api';
 const previousAdminManagementApiIndicator = 'https://admin.logto.app/api';
 const cloudApiIndicators = ['https://auth.prysm.sh:8443/api', 'https://auth.prysm.sh:8443/me'];
 

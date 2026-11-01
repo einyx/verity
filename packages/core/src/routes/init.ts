@@ -1,5 +1,5 @@
 import { buildOrganizationUrn } from '@logto/core-kit';
-import { getManagementApiResourceIndicator, getTenantOrganizationId } from '@logto/schemas';
+import { getManagementApiIndicatorFor, getTenantOrganizationId } from '@logto/schemas';
 import Koa from 'koa';
 import Router from 'koa-router';
 
@@ -80,7 +80,7 @@ const createRouters = (tenant: TenantContext) => {
   managementRouter.use(mcpPortalOauthCallback(tenant).routes());
   // In cloud, a tenant's Management API also accepts the console's organization token, once the
   // membership check in koaAuth has passed. Other deployments keep the Management API audience only.
-  const managementAudience = [getManagementApiResourceIndicator(tenant.id)];
+  const managementAudience = [getManagementApiIndicatorFor(tenant.id)];
   managementRouter.use(
     koaAuth(
       tenant.envSet,

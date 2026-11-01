@@ -8,7 +8,7 @@ import ContactIcon from '@/assets/icons/contact-us.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
 import DocumentIcon from '@/assets/icons/document-nav-button.svg?react';
 import Globe from '@/assets/icons/globe.svg?react';
-import meshxWordmark from '@/assets/images/meshx-wordmark.png';
+import prysmWordmark from '@/assets/images/prysm-wordmark.svg';
 import { githubReleasesLink } from '@/consts';
 import { isCloud } from '@/consts/env';
 import Dropdown, { DropdownItem } from '@/ds-components/Dropdown';
@@ -54,7 +54,7 @@ function Topbar({ className, hideTenantSelector, hideTitle }: Props) {
           }
         }}
       >
-        <img className={styles.wordmark} src={meshxWordmark} alt="meshX" />
+        <img className={styles.wordmark} src={prysmWordmark} alt="Prysm" />
       </div>
       {isCloud && !hideTenantSelector && <TenantSelector />}
       {!isCloud && !hideTitle && (

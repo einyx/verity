@@ -81,7 +81,7 @@ const subscriptionRow = z.object({
 });
 
 /**
- * Reads billing data from the `meshx_cloud` database. Rows are parsed with the same guards the
+ * Reads billing data from the `prysm_cloud` database. Rows are parsed with the same guards the
  * routes respond with, so a row that drifts from the contract fails here instead of reaching a
  * customer's console.
  */

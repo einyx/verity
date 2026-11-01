@@ -89,14 +89,14 @@
       return;
     }
 
-    if (event.data?.type === 'meshx-cms-draft' && event.data.doc) {
+    if (event.data?.type === 'prysm-cms-draft' && event.data.doc) {
       fill(event.data.doc);
     }
 
     // The editor picked a language to preview. The page switches to it with its own language menu,
     // then the draft is filled again so the overrides for that language show. The translation loads
     // asynchronously, so the refill waits for it.
-    if (event.data?.type === 'meshx-cms-locale' && /^[a-z-]+$/.test(event.data.code)) {
+    if (event.data?.type === 'prysm-cms-locale' && /^[a-z-]+$/.test(event.data.code)) {
       document
         .querySelector(`[data-locale-list] button[data-locale="${event.data.code}"]`)
         ?.click();
@@ -124,7 +124,7 @@
     });
     el.addEventListener('input', () => {
       window.parent.postMessage(
-        { type: 'meshx-cms-edit', path: path(), value: el.textContent },
+        { type: 'prysm-cms-edit', path: path(), value: el.textContent },
         location.origin
       );
     });
@@ -167,7 +167,7 @@
         el.removeEventListener('pointercancel', onUp);
         const offset = offsets.get(id) ?? start.base;
         window.parent.postMessage(
-          { type: 'meshx-cms-move', id, x: offset.x, y: offset.y },
+          { type: 'prysm-cms-move', id, x: offset.x, y: offset.y },
           location.origin
         );
       };
@@ -178,5 +178,5 @@
     });
   }
 
-  window.parent.postMessage({ type: 'meshx-cms-ready' }, location.origin);
+  window.parent.postMessage({ type: 'prysm-cms-ready' }, location.origin);
 })();

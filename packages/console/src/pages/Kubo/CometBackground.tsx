@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 /* eslint-disable @silverhand/fp/no-let, @silverhand/fp/no-mutation -- The canvas animation carries its frame state across requestAnimationFrame callbacks, so the loop variables must be mutable. Geometry and comet updates below are pure. */
 
 // Comets that travel along faint circuit-like lines behind the Infrastructure pages.
-// Adapted from meshx.io's hero background: 15 comets, brand-coloured tails, desktop only.
+// Adapted from the Prysm hero background: 15 comets, brand-coloured tails, desktop only.
 const cometCount = 15;
 const desktopMinWidth = 1024;
 const tailMin = 160;

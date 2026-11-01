@@ -55,7 +55,7 @@ function RefreshTokenSettings({ data: { type } }: Props) {
               components={{
                 a: (
                   <TextLink
-                    href="https://docs.meshx.io/docs/references/applications/#rotate-refresh-token"
+                    href="https://docs.prysm.sh/docs/references/applications/#rotate-refresh-token"
                     targetBlank="noopener"
                   />
                 ),

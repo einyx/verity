@@ -13,11 +13,11 @@ import { adminTenantId, defaultTenantId } from './tenant.js';
 
 export const defaultPrimaryColor = '#6139F6';
 
-/** The MeshX brand accent, used as the admin tenant's default primary colour. */
-const meshxPrimaryColor = '#FE330A';
-/** MeshX wordmarks served by the console build (`packages/console/public`). */
-const meshxLogoUrl = 'https://console.meshx.foundation/console/meshx-logo.svg';
-const meshxDarkLogoUrl = 'https://console.meshx.foundation/console/meshx-logo-dark.svg';
+/** The Prysm brand accent, used as the admin tenant's default primary colour. */
+const prysmPrimaryColor = '#4F46E5';
+/** Prysm wordmarks served by the console build (`packages/console/public`). */
+const prysmLogoUrl = 'https://auth.prysm.sh:8443/console/prysm-logo.svg';
+const prysmDarkLogoUrl = 'https://auth.prysm.sh:8443/console/prysm-logo-dark.svg';
 
 export const createDefaultSignInExperience = (
   forTenantId: string,
@@ -93,14 +93,14 @@ export const createAdminTenantSignInExperience = (
     ...defaultSignInExperience,
     tenantId: adminTenantId,
     color: {
-      primaryColor: meshxPrimaryColor,
+      primaryColor: prysmPrimaryColor,
       isDarkModeEnabled: true,
-      darkPrimaryColor: generateDarkColor(meshxPrimaryColor),
+      darkPrimaryColor: generateDarkColor(prysmPrimaryColor),
     },
     signInMode: SignInMode.Register,
     branding: {
-      logoUrl: meshxLogoUrl,
-      darkLogoUrl: meshxDarkLogoUrl,
+      logoUrl: prysmLogoUrl,
+      darkLogoUrl: prysmDarkLogoUrl,
     },
     passwordPolicy: options.disablePwnedPasswordCheck
       ? {

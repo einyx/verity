@@ -1,12 +1,12 @@
 const inkeep_ai_bot = {
   intro_message:
-    "Hi, I'm MeshX AI!\n\nI'm an AI assistant trained on documentation, help articles, and other content.\n\nAsk me anything about `MeshX`.",
-  chat_placeholder: 'Ask MeshX AI your question for a step-by-step guide',
-  disclaimer_label: 'MeshX AI disclaimer',
+    "Hi, I'm Prysm AI!\n\nI'm an AI assistant trained on documentation, help articles, and other content.\n\nAsk me anything about `Prysm`.",
+  chat_placeholder: 'Ask Prysm AI your question for a step-by-step guide',
+  disclaimer_label: 'Prysm AI disclaimer',
   disclaimer_tooltip: 'Responses are AI-generated and may require verification.',
   example_questions_label: 'Example questions',
   example_questions: [
-    'Quickstart guide for MeshX setup',
+    'Quickstart guide for Prysm setup',
     'Configure multi-tenancy architecture',
     'How to integrate user profile?',
   ],
@@ -20,7 +20,7 @@ const inkeep_ai_bot = {
     'Calculating your preferences…',
     'Finding the right meshX answer…',
   ],
-  unavailable: 'MeshX AI is unavailable right now. Please try again later.',
+  unavailable: 'Prysm AI is unavailable right now. Please try again later.',
   get_help: 'Get help',
   copy_chat: 'Copy',
   ask_ai_label: 'Ask AI',
@@ -35,13 +35,13 @@ const inkeep_ai_bot = {
   action_failed: 'Not created',
   action_failed_detail: 'This change could not be made. It may have expired; ask again to retry.',
   setup_prompt_copied: 'Setup prompt copied',
-  onboard_agent: 'Onboard your agent to MeshX',
+  onboard_agent: 'Onboard your agent to Prysm',
   attached_files_label: 'Attached files',
   attach_file: 'Attach file',
   remove_file: 'Remove {{name}}',
   attachment_error: 'Only text files up to 100 KB can be attached: {{names}}',
   copy_you: 'You',
-  copy_assistant: 'MeshX AI',
+  copy_assistant: 'Prysm AI',
   file_label: 'File: {{name}}',
 };
 

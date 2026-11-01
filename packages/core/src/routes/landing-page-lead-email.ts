@@ -8,7 +8,7 @@ import { type DemoLead } from './landing-page-chat-guard.js';
 
 /** The team inbox that receives every demo lead. */
 // Temporary: lead notifications go to these inboxes while the sales flow is tested.
-export const demoLeadRecipients = ['alessio@meshx.io', 'clinton@meshx.io'];
+export const demoLeadRecipients = ['alessio@prysm.sh', 'clinton@prysm.sh'];
 
 const apiVersion = '2023-03-31';
 

@@ -171,7 +171,7 @@ const getAdminTenantEndpoint = () => {
 
 export const adminTenantEndpoint = getAdminTenantEndpoint();
 
-export const mainTitle = isCloud ? 'MeshX Cloud' : 'MeshX Console';
+export const mainTitle = isCloud ? 'Prysm Cloud' : 'Prysm Console';
 
 // The threshold days to show the convert to production card in the get started page
 export const convertToProductionThresholdDays = 7;

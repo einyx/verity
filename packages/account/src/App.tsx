@@ -1,4 +1,4 @@
-import LogtoSignature from '@experience/shared/components/LogtoSignature';
+import PrysmSignature from '@experience/shared/components/PrysmSignature';
 import { ReservedScope, UserScope } from '@logto/core-kit';
 import { LogtoProvider, useLogto } from '@logto/react';
 import { accountCenterApplicationId, SignInIdentifier } from '@logto/schemas';
@@ -265,7 +265,7 @@ const Layout = () => {
                 </LogtoErrorBoundary>
               </ErrorBoundary>
               {!isFullPage && !hideLogtoBranding && (
-                <LogtoSignature
+                <PrysmSignature
                   className={classNames(styles.signature, layoutClassNames.signature)}
                   theme={theme}
                 />

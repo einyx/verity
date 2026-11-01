@@ -119,7 +119,7 @@ export const mcpPortalOauthStart = <T extends ManagementApiRouter>(
     const clientId =
       current?.kind === 'oauth'
         ? current.clientId
-        : await registerClient(metadata, { redirectUri, clientName: 'MeshX MCP Portal' }).then(
+        : await registerClient(metadata, { redirectUri, clientName: 'Prysm MCP Portal' }).then(
             ({ client_id: id }) => id,
             () => undefined
           );

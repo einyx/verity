@@ -46,7 +46,7 @@ export const defaultManagementApi = Object.freeze({
      *
      * Admin Console requires the access token of this resource to be functional.
      */
-    indicator: `https://${defaultTenantId}.meshx.foundation/api`,
+    indicator: 'https://prysm.sh/api',
     name: 'Logto Management API',
   },
   scopes: [
@@ -76,14 +76,14 @@ export const defaultManagementApi = Object.freeze({
 
 export function getManagementApiResourceIndicator<TenantId extends string>(
   tenantId: TenantId
-): `https://${TenantId}.meshx.foundation/api`;
+): `https://prysm.sh/api`;
 export function getManagementApiResourceIndicator<TenantId extends string, Path extends string>(
   tenantId: TenantId,
   path: Path
-): `https://${TenantId}.meshx.foundation/${Path}`;
+): `https://prysm.sh/${Path}`;
 
 export function getManagementApiResourceIndicator(tenantId: string, path = 'api') {
-  return `https://${tenantId}.meshx.foundation/${path}`;
+  return `https://prysm.sh/${path}`;
 }
 
 /**

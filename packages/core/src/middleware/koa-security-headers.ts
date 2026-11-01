@@ -59,7 +59,7 @@ const createSecurityHeaderSettings = (tenantId: string): SecurityHeaderSettings 
   // Logto Cloud uses cloud service to serve the admin console; while Logto OSS uses a fixed path under the admin URL set.
   const adminOrigins = isCloud ? cloudUrlSet.origins : adminUrlSet.origins;
   const coreOrigins = urlSet.origins;
-  // The default tenant sits on the bare host (e.g. auth.meshx.foundation), which the wildcard origins do not cover.
+  // The default tenant sits on the bare host (e.g. auth.prysm.sh), which the wildcard origins do not cover.
   const defaultTenantOrigin = getTenantEndpoint(defaultTenantId, EnvSet.values).origin;
   const developmentOrigins = isProduction
     ? []
@@ -353,8 +353,8 @@ export default function koaSecurityHeaders<StateT, ContextT, ResponseBodyT>(
       // The admin tenant's sign-in experience embeds these public branding images from the
       // console origin. Keep the console's default same-origin policy for every other asset.
       if (
-        requestPath === `/${AdminApps.Console}/meshx-logo.svg` ||
-        requestPath === `/${AdminApps.Console}/meshx-logo-dark.svg`
+        requestPath === `/${AdminApps.Console}/prysm-logo.svg` ||
+        requestPath === `/${AdminApps.Console}/prysm-logo-dark.svg`
       ) {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       }

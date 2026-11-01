@@ -1,7 +1,7 @@
 import { sql } from '@silverhand/slonik';
 
 /**
- * Console SSO tables in the `meshx_cloud` database, next to the billing tables. A domain belongs to
+ * Console SSO tables in the `prysm_cloud` database, next to the billing tables. A domain belongs to
  * one connection and is removed with it. The challenge token is stored so a retry re-shows the same
  * record; it is not a credential.
  */

@@ -75,16 +75,16 @@ describe('parsing the docs export', () => {
 
   it('maps section titles to page URLs from the index', () => {
     const urls = parseIndexUrls(
-      '- [Glossary](https://docs.meshx.io/glossary.md): terms\n- [Overview](https://docs.meshx.io/a/overview.md)'
+      '- [Glossary](https://docs.prysm.sh/glossary.md): terms\n- [Overview](https://docs.prysm.sh/a/overview.md)'
     );
 
-    expect(urls.get('Glossary')).toBe('https://docs.meshx.io/glossary');
-    expect(urls.get('Overview')).toBe('https://docs.meshx.io/a/overview');
+    expect(urls.get('Glossary')).toBe('https://docs.prysm.sh/glossary');
+    expect(urls.get('Overview')).toBe('https://docs.prysm.sh/a/overview');
   });
 
   it('splits a long section into chunks of whole paragraphs', () => {
     const paragraph = 'x'.repeat(700);
-    const chunks = chunkSection('Long', 'https://docs.meshx.io/long', [paragraph, paragraph, paragraph].join('\n\n'));
+    const chunks = chunkSection('Long', 'https://docs.prysm.sh/long', [paragraph, paragraph, paragraph].join('\n\n'));
 
     expect(chunks.length).toBeGreaterThan(1);
     expect(chunks.every((chunk) => chunk.text.split('\n\n').every((part) => part.length === 700))).toBe(true);
@@ -148,10 +148,10 @@ describe('formatDocsContext', () => {
     expect(formatDocsContext([])).toBeUndefined();
 
     const context = formatDocsContext([
-      { title: 'Lineage', url: 'https://docs.meshx.io/lineage', text: 'Tracks sources.', score: 0.9 },
+      { title: 'Lineage', url: 'https://docs.prysm.sh/lineage', text: 'Tracks sources.', score: 0.9 },
     ]);
 
     expect(context).toContain('not instructions');
-    expect(context).toContain('Source: https://docs.meshx.io/lineage');
+    expect(context).toContain('Source: https://docs.prysm.sh/lineage');
   });
 });

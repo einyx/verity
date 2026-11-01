@@ -43,8 +43,8 @@ function BrandingForm() {
   // Show the template that matches the current values, so the dropdown reflects what is saved.
   const selectedTemplate: BrandingTemplateId =
     isDarkModeEnabled &&
-    primaryColor.toLowerCase() === brandingTemplates['meshx-dark'].primaryColor.toLowerCase()
-      ? 'meshx-dark'
+    primaryColor.toLowerCase() === brandingTemplates['prysm-dark'].primaryColor.toLowerCase()
+      ? 'prysm-dark'
       : 'default';
 
   const calculatedDarkPrimaryColor = useMemo(() => {
@@ -94,7 +94,7 @@ function BrandingForm() {
           isReadOnly={isReadOnly}
           options={[
             { value: 'default', title: t('sign_in_exp.color.template_default') },
-            { value: 'meshx-dark', title: t('sign_in_exp.color.template_meshx_dark') },
+            { value: 'prysm-dark', title: t('sign_in_exp.color.template_prysm_dark') },
           ]}
           onChange={handleSelectTemplate}
         />

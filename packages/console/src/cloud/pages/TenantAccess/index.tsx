@@ -73,7 +73,7 @@ const TenantAccess = () => {
       </Helmet>
       <p className={styles.description}>
         Users whose email is on this list can create and manage customer tenants. Anyone else is refused.
-        Enter a domain such as meshx.io, without the @.
+        Enter a domain such as prysm.sh, without the @.
       </p>
 
       {error ? (
@@ -110,7 +110,7 @@ const TenantAccess = () => {
             />
           </div>
 
-          {invalid && <p className={styles.error}>Enter a domain such as meshx.io.</p>}
+          {invalid && <p className={styles.error}>Enter a domain such as prysm.sh.</p>}
 
           <div className={styles.row}>
             <Button

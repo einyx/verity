@@ -204,7 +204,7 @@ function UserMessage() {
 
 // Links the assistant may show. The model can be steered by visitor text, so only our own HTTPS pages
 // become links; anything else is shown as plain text.
-const allowedLinkHosts = new Set(['meshx.io', 'www.meshx.io', 'docs.meshx.io']);
+const allowedLinkHosts = new Set(['prysm.sh', 'www.prysm.sh', 'docs.prysm.sh']);
 
 const isAllowedLink = (href: string | undefined): href is string => {
   if (!href) {

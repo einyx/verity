@@ -45,14 +45,14 @@ describe('console SSO store', () => {
   });
 });
 
-const resolveSplit = async () => [['meshx-console-sso=', 'abc123']];
+const resolveSplit = async () => [['prysm-console-sso=', 'abc123']];
 
 describe('domain challenge', () => {
   const token = 'abc123';
 
   it('names the record under the challenge prefix', () => {
-    expect(challengeRecordName('acme.com')).toBe('_meshx-console-sso.acme.com');
-    expect(challengeRecordValue(token)).toBe('meshx-console-sso=abc123');
+    expect(challengeRecordName('acme.com')).toBe('_prysm-console-sso.acme.com');
+    expect(challengeRecordValue(token)).toBe('prysm-console-sso=abc123');
   });
 
   it('is satisfied when the expected TXT value is published, even split into chunks', async () => {
@@ -61,7 +61,7 @@ describe('domain challenge', () => {
 
   it('is not satisfied for a wrong token or a failed lookup', async () => {
     expect(
-      await isDomainChallengeSatisfied('acme.com', token, async () => [['meshx-console-sso=other']])
+      await isDomainChallengeSatisfied('acme.com', token, async () => [['prysm-console-sso=other']])
     ).toBe(false);
     expect(
       await isDomainChallengeSatisfied('acme.com', token, async () => {

@@ -24,7 +24,7 @@ import {
   settingsKey,
 } from './types';
 
-const documentationUrl = 'https://docs.meshx.io/';
+const documentationUrl = 'https://docs.prysm.sh/';
 
 // The portal list. Opening a portal shows its servers; adding one creates a hostname under the base domain.
 function PortalList({ onOpen }: { readonly onOpen: (portal: Portal) => void }) {

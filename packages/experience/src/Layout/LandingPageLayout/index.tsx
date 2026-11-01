@@ -7,7 +7,7 @@ import { useContext } from 'react';
 import PageContext from '@/Providers/PageContextProvider/PageContext';
 import BrandingHeader from '@/components/BrandingHeader';
 import { getBrandingLogoUrl } from '@/shared/utils/logo';
-import { isMeshxDarkBranding } from '@/shared/utils/meshx-dark-branding';
+import { isPrysmDarkBranding } from '@/shared/utils/prysm-dark-branding';
 import { layoutClassNames } from '@/utils/consts';
 
 import FirstScreenLayout from '../FirstScreenLayout';
@@ -34,7 +34,7 @@ const LandingPageLayout = ({ children, title, titleInterpolation, thirdPartyBran
     color: { isDarkModeEnabled },
     branding,
   } = experienceSettings;
-  const isMeshxDark = isMeshxDarkBranding(experienceSettings.color);
+  const isPrysmDark = isPrysmDarkBranding(experienceSettings.color);
 
   return (
     <FirstScreenLayout pageMeta={{ titleKey: title, titleKeyInterpolation: titleInterpolation }}>
@@ -43,8 +43,8 @@ const LandingPageLayout = ({ children, title, titleInterpolation, thirdPartyBran
         headline={title}
         headlineInterpolation={titleInterpolation}
         logo={
-          isMeshxDark
-            ? '/console/meshx-logo-dark.svg'
+          isPrysmDark
+            ? '/console/prysm-logo-dark.svg'
             : getBrandingLogoUrl({ theme, branding, isDarkModeEnabled })
         }
         thirdPartyLogo={

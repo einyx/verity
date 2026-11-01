@@ -68,7 +68,7 @@ const developmentSubscription = (
 };
 
 /**
- * Billing routes served under `@meshx/cloud/routes`. Paths and response shapes match what the
+ * Billing routes served under `@prysm/cloud/routes`. Paths and response shapes match what the
  * console and core already call on the Cloud API, so they can switch imports without changes.
  */
 export const createBillingRouter = (

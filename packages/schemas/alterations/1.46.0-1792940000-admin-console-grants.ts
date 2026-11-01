@@ -4,7 +4,7 @@ import { sql } from '@silverhand/slonik';
 import type { AlterationScript } from '../lib/types/alteration.js';
 
 // Lets the admin console sign in to the admin tenant and use its APIs. The admin tenant's Management API
-// is addressed by its meshx.foundation origin, the operator gets the `all` scope on that API through the
+// is addressed by the deployment's own domain, the operator gets the `all` scope on that API through the
 // `admin` role, and the console app is granted consent for the Cloud API, the Me API, the admin
 // Management API and the admin tenant's organization. Instances without the Cloud API have nothing to attach.
 const adminTenantId = 'admin';
@@ -12,12 +12,9 @@ const adminConsoleAppId = 'admin-console';
 const adminRoleName = 'admin';
 const adminOrganizationId = `t-${adminTenantId}`;
 const adminManagementApiName = 'Logto Management API for tenant admin';
-const adminManagementApiIndicator = 'https://admin.meshx.foundation/api';
+const adminManagementApiIndicator = 'https://prysm.sh/api';
 const previousAdminManagementApiIndicator = 'https://admin.logto.app/api';
-const cloudApiIndicators = [
-  'https://console.meshx.foundation/api',
-  'https://console.meshx.foundation/me',
-];
+const cloudApiIndicators = ['https://auth.prysm.sh:8443/api', 'https://auth.prysm.sh:8443/me'];
 
 const alteration: AlterationScript = {
   up: async (pool) => {

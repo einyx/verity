@@ -18,7 +18,7 @@ describe('proactive docs fixtures', () => {
     ],
     [
       'a URL that is not a sentence break',
-      'See docs.meshx.io for the details. Which team owns the report?',
+      'See docs.prysm.sh for the details. Which team owns the report?',
     ],
   ])('passes %s', (_name, reply) => {
     expect(replyShapeProblems(reply)).toEqual([]);

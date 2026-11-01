@@ -95,7 +95,7 @@ function AiChat({ className }: Props) {
       <div
         tabIndex={0}
         aria-label={t('inkeep_ai_bot.ask_ai_label')}
-        title="Ask AI about MeshX (⌘K)"
+        title="Ask AI about Prysm (⌘K)"
         role="button"
         className={classNames(styles.askAiButton, className)}
         onClick={() => {

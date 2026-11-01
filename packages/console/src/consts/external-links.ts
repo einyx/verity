@@ -1,16 +1,16 @@
-export const slackLink = 'https://meshxhq.slack.com';
+export const slackLink = 'https://prysmsh.slack.com';
 export const githubOrgLink = 'https://github.com/logto-io';
 export const githubLink = 'https://github.com/logto-io/logto';
-export const githubIssuesLink = 'https://github.com/meshxdata';
+export const githubIssuesLink = 'https://github.com/prysm-sh';
 export const githubReleasesLink = 'https://github.com/einyx/logto/releases';
-export const contactEmail = 'hello@meshx.io';
+export const contactEmail = 'hello@prysm.sh';
 export const contactEmailLink = `mailto:${contactEmail}`;
 export const reservationLink = 'https://cal.com/alessio-garofalo-4qowra/30min';
 export const officialWebsiteLink = 'https://logto.io';
 export const trustAndSecurityLink = `${officialWebsiteLink}/trust-and-security`;
 export const pricingLink = `${officialWebsiteLink}/pricing`;
-export const selfHostedPlansLink = 'https://cloud.meshx.app';
-export const logtoCloudConsoleLink = 'https://cloud.meshx.app';
+export const selfHostedPlansLink = 'https://cloud.prysm.sh';
+export const logtoCloudConsoleLink = 'https://cloud.prysm.sh';
 export const officialWebsiteContactPageLink = `${officialWebsiteLink}/contact`;
 export const buildOfficialWebsiteContactPageUrl = (source: string) => {
   const url = new URL(officialWebsiteContactPageLink);
@@ -19,9 +19,9 @@ export const buildOfficialWebsiteContactPageUrl = (source: string) => {
 
   return url.toString();
 };
-export const entityPolicyLink = 'https://docs.meshx.io/logto-cloud/system-limit';
+export const entityPolicyLink = 'https://docs.prysm.sh/logto-cloud/system-limit';
 export const logtoOssFeatureSupportLink =
-  'https://docs.meshx.io/logto-oss#feature-supported-by-logto-oss';
+  'https://docs.prysm.sh/logto-oss#feature-supported-by-logto-oss';
 
 /** Docs link */
 export const organizationsFeatureLink = '/organizations';
@@ -99,7 +99,7 @@ export const customDomain = '/logto-cloud/custom-domain#use-custom-domain';
 export const customDomainFeatureLink = '/logto-cloud/custom-domain';
 export const retrieveTokenStorage = '/secret-vault/federated-token-set#token-retrieval';
 
-export const addOnPricingExplanationLink = 'https://docs.meshx.io/logto-cloud/billing-and-pricing';
-export const logtoCloudConsoleUrl = 'https://cloud.meshx.app';
+export const addOnPricingExplanationLink = 'https://docs.prysm.sh/logto-cloud/billing-and-pricing';
+export const logtoCloudConsoleUrl = 'https://cloud.prysm.sh';
 
 export const dateFnsDocumentationLink = 'https://date-fns.org/v2.30.0/docs/format';

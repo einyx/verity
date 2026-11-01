@@ -2,7 +2,7 @@
 // into sections, each section is embedded once, and every visitor question is matched against them.
 // Everything here fails soft: without the docs or embeddings, the chat answers from its own prompt.
 
-const docsOrigin = 'https://docs.meshx.io';
+const docsOrigin = 'https://docs.prysm.sh';
 const fullTextUrl = `${docsOrigin}/llms-full.txt`;
 const indexUrl = `${docsOrigin}/llms.txt`;
 const refreshMs = 24 * 60 * 60 * 1000;
@@ -40,7 +40,7 @@ export const parseSections = (fullText: string): Array<{ title: string; body: st
 /** Maps each section title to its page URL, from the index's `- [Title](https://…/page.md)` lines. */
 export const parseIndexUrls = (indexText: string): Map<string, string> =>
   new Map(
-    [...indexText.matchAll(/^- \[([^\]]+)]\((https:\/\/docs\.meshx\.io\/[^\s)]+?)\.md\)/gm)].map(
+    [...indexText.matchAll(/^- \[([^\]]+)]\((https:\/\/docs\.prysm.sh\/[^\s)]+?)\.md\)/gm)].map(
       ([, title, url]) => [title ?? '', url ?? docsOrigin]
     )
   );

@@ -21,7 +21,7 @@ import { type StackOption, stackOptions, templateHighlights, toStep } from './op
 import wizardStyles from './wizard.module.scss';
 
 // Lowercase RFC-1123 label, as the portal requires for a tenant ID.
-const documentationUrl = 'https://docs.meshx.io/';
+const documentationUrl = 'https://docs.prysm.sh/';
 
 // What is missing before the Next button enables, shown beside it.
 const continueHints: Record<1 | 2 | 3, string> = {
@@ -135,7 +135,7 @@ function KuboWizard() {
 
   return (
     <div className={wizardStyles.page}>
-      <Helmet title="MeshX · New workspace" />
+      <Helmet title="Prysm · New workspace" />
       <div className={wizardStyles.stats}>
         <div className={wizardStyles.stat}>
           <div className={wizardStyles.statLabel}>Workspaces</div>

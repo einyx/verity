@@ -150,7 +150,7 @@ function ProtectedAppForm({
                 <Trans
                   components={{
                     a: (
-                      <TextLink to="https://docs.meshx.io/docs/recipes/protected-app/#local-development" />
+                      <TextLink to="https://docs.prysm.sh/docs/recipes/protected-app/#local-development" />
                     ),
                   }}
                 >

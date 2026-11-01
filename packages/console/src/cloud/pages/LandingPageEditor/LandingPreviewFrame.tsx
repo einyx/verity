@@ -51,14 +51,14 @@ function LandingPreviewFrame({
 
   const sendDraft = useCallback(() => {
     frameRef.current?.contentWindow?.postMessage(
-      { type: 'meshx-cms-draft', doc: draft },
+      { type: 'prysm-cms-draft', doc: draft },
       window.location.origin
     );
   }, [draft]);
 
   const sendLocale = useCallback(() => {
     frameRef.current?.contentWindow?.postMessage(
-      { type: 'meshx-cms-locale', code: locale },
+      { type: 'prysm-cms-locale', code: locale },
       window.location.origin
     );
   }, [locale]);
@@ -86,19 +86,19 @@ function LandingPreviewFrame({
         return;
       }
 
-      if (data.type === 'meshx-cms-ready') {
+      if (data.type === 'prysm-cms-ready') {
         sendDraft();
         sendLocale();
       }
 
-      if (data.type === 'meshx-cms-edit' && typeof data.path === 'string') {
+      if (data.type === 'prysm-cms-edit' && typeof data.path === 'string') {
         onEdit(data.path, typeof data.value === 'string' ? data.value : '');
       }
 
       // Offsets are clamped to the range the document schema accepts, so a bad message cannot save an
       // invalid layout.
       if (
-        data.type === 'meshx-cms-move' &&
+        data.type === 'prysm-cms-move' &&
         typeof data.id === 'string' &&
         typeof data.x === 'number' &&
         typeof data.y === 'number'

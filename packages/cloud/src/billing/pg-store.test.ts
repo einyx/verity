@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPgBillingStore } from './pg-store.js';
 import { migrateBillingSchema } from './schema.js';
 
-// Runs against the scratch `meshx_cloud_test` database. Skipped when no URL is set, so unit runs
+// Runs against the scratch `prysm_cloud_test` database. Skipped when no URL is set, so unit runs
 // on machines without Postgres still pass.
 const databaseUrl = process.env.BILLING_TEST_DATABASE_URL;
 

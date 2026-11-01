@@ -36,7 +36,7 @@ describe('buildLicensePurchaseUrl', () => {
   it('points at the self-hosted plans page with its own attribution', () => {
     const url = new URL(buildLicensePurchaseUrl());
 
-    expect(url.origin).toBe('https://cloud.meshx.app');
+    expect(url.origin).toBe('https://cloud.prysm.sh');
     expect(url.pathname).toBe('/');
     expect(url.searchParams.get('utm_source')).toBe('logto_oss');
     expect(url.searchParams.get('utm_medium')).toBe('console');
@@ -49,7 +49,7 @@ describe('buildLicenseManagementUrl', () => {
   it('keeps the existing contact flow with refresh attribution until self-service ships', () => {
     const url = new URL(buildLicenseManagementUrl());
 
-    expect(url.origin).toBe('https://cloud.meshx.app');
+    expect(url.origin).toBe('https://cloud.prysm.sh');
     expect(url.pathname).toBe('/');
     expect(url.searchParams.get('utm_content')).toBe('tenant_settings_license_refresh');
   });

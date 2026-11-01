@@ -312,7 +312,7 @@ function Stack() {
 
   return (
     <div className={styles.container}>
-      <Helmet title={`MeshX · ${name}`} />
+      <Helmet title={`Prysm · ${name}`} />
       <div className={styles.header}>
         <div className={styles.eyebrow}>Infrastructure / Workspaces / {namespace}</div>
         <h2 className={styles.title}>{name}</h2>

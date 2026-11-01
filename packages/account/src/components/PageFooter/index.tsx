@@ -1,4 +1,4 @@
-import LogtoSignature from '@experience/shared/components/LogtoSignature';
+import PrysmSignature from '@experience/shared/components/PrysmSignature';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -37,7 +37,7 @@ const PageFooter = () => {
           </a>
         )}
       </div>
-      {!hideLogtoBranding && <LogtoSignature className={styles.signature} theme={theme} />}
+      {!hideLogtoBranding && <PrysmSignature className={styles.signature} theme={theme} />}
     </footer>
   );
 };

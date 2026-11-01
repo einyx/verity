@@ -20,7 +20,7 @@ import type { AnonymousRouter, RouterInitArgs } from './types.js';
 // through to here (see mcp-portal-endpoint.ts). Tools run with the caller's token, so the
 // Management API decides what each caller can read and create.
 
-const logtoMcpName = 'meshx';
+const logtoMcpName = 'prysm';
 
 /** One MCP server per request, bound to the caller's token and the tenant's Management API. */
 const createLogtoMcpServer = (token: string, apiBase: string): Server => {

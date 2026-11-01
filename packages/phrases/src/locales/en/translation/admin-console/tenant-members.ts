@@ -11,9 +11,9 @@ const tenant_members = {
   inviter: 'Inviter',
   expiration_date: 'Expiration date',
   invite_modal: {
-    title: 'Invite people to MeshX Cloud',
+    title: 'Invite people to Prysm Cloud',
     subtitle: 'To invite members to an organization, they must accept the invitation.',
-    subtitle_oss: 'Invited members receive full administrator access to this MeshX instance.',
+    subtitle_oss: 'Invited members receive full administrator access to this Prysm instance.',
     to: 'To',
     added_as: 'Added as roles',
     email_input_placeholder: 'johndoe@example.com',

@@ -28,12 +28,12 @@ const sign_in_exp = {
     title: 'COLOR',
     template: 'Template',
     template_default: 'Default',
-    template_meshx_dark: 'MeshX Dark',
+    template_prysm_dark: 'Prysm Dark',
     primary_color: 'Brand color',
     dark_primary_color: 'Brand color (dark)',
     dark_mode: 'Enable dark mode',
     dark_mode_description:
-      'Your app will have an auto-generated dark mode theme based on your brand color and MeshX algorithm. You are free to customize.',
+      'Your app will have an auto-generated dark mode theme based on your brand color and Prysm algorithm. You are free to customize.',
     dark_mode_reset_tip: 'Recalculate dark mode color based on brand color.',
     reset: 'Recalculate',
   },
@@ -45,11 +45,11 @@ const sign_in_exp = {
     app_logo_and_favicon: 'App logo and favicon',
     company_logo_and_favicon: 'Company logo and favicon',
     organization_logo_and_favicon: 'Organization logo and favicon',
-    hide_logto_branding: 'Hide MeshX branding',
+    hide_logto_branding: 'Hide Prysm branding',
     hide_logto_branding_description:
-      'Remove "Powered by MeshX". Spotlight your brand exclusively with a clean, professional sign-in experience.',
+      'Remove "Powered by Prysm". Spotlight your brand exclusively with a clean, professional sign-in experience.',
     hide_logto_branding_oss_note:
-      'This feature is available in <a>MeshX Cloud</a> or <selfHosted>self-hosted plans</selfHosted>.',
+      'This feature is available in <a>Prysm Cloud</a> or <selfHosted>self-hosted plans</selfHosted>.',
   },
   branding_uploads: {
     app_logo: {
@@ -96,7 +96,7 @@ const sign_in_exp = {
     bring_your_ui_title: 'Bring your UI',
     bring_your_ui_upload_title: 'Upload custom UI assets',
     bring_your_ui_description:
-      'Upload a compressed package (.zip) to replace the MeshX prebuilt UI with your own code. <a>Learn more</a>',
+      'Upload a compressed package (.zip) to replace the Prysm prebuilt UI with your own code. <a>Learn more</a>',
     bring_your_ui_oss_description: 'Customize the sign-in UI with your own code.',
     bring_your_ui_oss_card_description:
       'Custom UI upload is included in this self-hosted installation. No need to fork and redeploy.',
@@ -121,7 +121,7 @@ const sign_in_exp = {
       'Implement your account center for end users to manage account security and profile information.',
     enable_account_api: 'Enable account center and Account API',
     enable_account_api_description:
-      "Turn on both the user-facing Account API and MeshX's out-of-the-box account center. When off, both features are unavailable.",
+      "Turn on both the user-facing Account API and Prysm's out-of-the-box account center. When off, both features are unavailable.",
     field_options: {
       off: 'Off',
       edit: 'Edit',

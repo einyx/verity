@@ -50,7 +50,7 @@ const reservedRoutes: Readonly<string[]> = Object.freeze([
  *
  * @example
  * ```md
- * [Console > Applications](https://cloud.meshx.app/to/applications)
+ * [Console > Applications](https://cloud.prysm.sh/to/applications)
  * ```
  */
 export const reservedTenantIdWildcard = 'to';

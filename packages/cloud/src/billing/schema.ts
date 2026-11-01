@@ -1,7 +1,7 @@
 import { type CommonQueryMethods, sql } from '@silverhand/slonik';
 
 /**
- * Billing tables in the `meshx_cloud` database. Billing is platform data read across every
+ * Billing tables in the `prysm_cloud` database. Billing is platform data read across every
  * customer by the operator backoffice, so these tables have no tenant row-level security; access
  * is granted to the cloud service's database role only.
  *

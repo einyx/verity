@@ -8,7 +8,7 @@ import { Helmet } from 'react-helmet';
 import PageContext from '@/Providers/PageContextProvider/PageContext';
 import defaultAppleTouchLogo from '@/shared/assets/apple-touch-icon.png';
 import defaultFavicon from '@/shared/assets/favicon.png';
-import { isMeshxDarkBranding } from '@/shared/utils/meshx-dark-branding';
+import { isPrysmDarkBranding } from '@/shared/utils/prysm-dark-branding';
 import { type SignInExperienceResponse } from '@/types';
 
 import styles from './index.module.scss';
@@ -49,8 +49,8 @@ const AppMeta = () => {
           platform === 'mobile' ? 'mobile' : 'desktop',
           conditionalString(styles[theme]),
           conditionalString(
-            experienceSettings && isMeshxDarkBranding(experienceSettings.color)
-              ? styles.meshxDarkBranding
+            experienceSettings && isPrysmDarkBranding(experienceSettings.color)
+              ? 'prysmDarkBranding'
               : undefined
           )
         )}

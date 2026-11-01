@@ -4,9 +4,8 @@ import { Outlet } from 'react-router-dom';
 
 import PageContext from '@/Providers/PageContextProvider/PageContext';
 import usePlatform from '@/hooks/use-platform';
-import MeshxMark from '@/shared/assets/icons/meshx-mark.svg?react';
-import LogtoSignature from '@/shared/components/LogtoSignature';
-import { isMeshxDarkBranding } from '@/shared/utils/meshx-dark-branding';
+import PrysmSignature from '@/shared/components/PrysmSignature';
+import { isPrysmDarkBranding } from '@/shared/utils/prysm-dark-branding';
 import { layoutClassNames } from '@/utils/consts';
 
 import CustomContent from './CustomContent';
@@ -16,57 +15,30 @@ const AppLayout = () => {
   const { experienceSettings, theme } = useContext(PageContext);
   const { isMobile } = usePlatform();
   const hideLogtoBranding = experienceSettings?.hideLogtoBranding === true;
-  const isMeshxDark =
-    experienceSettings !== undefined && isMeshxDarkBranding(experienceSettings.color);
-  const meshxLogo = (
-    <a className={styles.meshxLogo} href="https://meshx.io" aria-label="MeshX">
-      <MeshxMark aria-hidden="true" />
-      <span>meshx</span>
-    </a>
-  );
+  const isPrysmDark =
+    experienceSettings !== undefined && isPrysmDarkBranding(experienceSettings.color);
 
   return (
-    <div className={classNames(styles.viewBox, isMeshxDark && styles.meshxViewBox)}>
+    <div className={classNames(styles.viewBox, isPrysmDark && styles.prysmViewBox)}>
       <div
         className={classNames(
           styles.container,
           layoutClassNames.pageContainer,
-          isMeshxDark && styles.meshxContainer
+          isPrysmDark && styles.prysmContainer
         )}
       >
-        {isMeshxDark && !isMobile && (
-          <aside className={styles.meshxHero}>
-            {meshxLogo}
-            <div className={styles.meshxHeroCopy}>
-              <h1>
-                Enterprise-trusted.
-                <br />
-                <span>Conversationally simple.</span>
-              </h1>
-              <p>
-                Your Intelligence Layer — a living, queryable foundation of trusted knowledge,
-                turning data into decisions, actions, and outcomes.
-              </p>
-            </div>
-            <footer className={styles.meshxCopyright}>
-              <MeshxMark aria-hidden="true" />
-              <span>© 2026 meshx inc. All rights reserved.</span>
-            </footer>
-          </aside>
-        )}
-        {isMeshxDark && isMobile && <div className={styles.meshxMobileLogo}>{meshxLogo}</div>}
         {!isMobile && <CustomContent className={layoutClassNames.customContent} />}
         <main
           className={classNames(
             styles.main,
             layoutClassNames.mainContent,
-            isMeshxDark && styles.meshxMain
+            isPrysmDark && styles.prysmMain
           )}
         >
-          <div className={isMeshxDark ? styles.meshxCard : undefined}>
+          <div className={isPrysmDark ? styles.prysmCard : undefined}>
             <Outlet />
-            {!hideLogtoBranding && !isMeshxDark && (
-              <LogtoSignature
+            {!hideLogtoBranding && (
+              <PrysmSignature
                 className={classNames(styles.signature, layoutClassNames.signature)}
                 theme={theme}
               />

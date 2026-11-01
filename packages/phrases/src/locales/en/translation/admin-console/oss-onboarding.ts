@@ -2,15 +2,15 @@ const oss_onboarding = {
   page_title: 'Onboarding',
   title: 'A little bit about you',
   description:
-    'Tell us a bit about yourself and your project. This helps us build a better MeshX for everyone.',
+    'Tell us a bit about yourself and your project. This helps us build a better Prysm for everyone.',
   email: {
     label: 'Email address',
     description: 'We’ll use this address if we need to contact you about your account.',
     placeholder: 'email@example.com',
   },
-  newsletter: 'Receive product updates, security advisories, and curated content from MeshX.',
+  newsletter: 'Receive product updates, security advisories, and curated content from Prysm.',
   project: {
-    label: 'I’m using MeshX for',
+    label: 'I’m using Prysm for',
     personal: 'Personal project',
     company: 'Company project',
   },

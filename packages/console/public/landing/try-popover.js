@@ -1,5 +1,5 @@
 (() => {
-  const links = [...document.querySelectorAll('a[href="https://try.meshx.foundation"]')];
+  const links = [...document.querySelectorAll('a[href="https://try.prysm.sh"]')];
   const pop = document.getElementById('try-popover');
   if (!links.length || !pop) return;
   let timer;

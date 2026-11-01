@@ -27,13 +27,13 @@ const inkeep_ai_bot = {
   action_failed_detail:
     'この変更を実行できませんでした。期限切れの可能性があります。もう一度依頼してください。',
   setup_prompt_copied: 'セットアップ用プロンプトをコピーしました',
-  onboard_agent: 'MeshX にエージェントを導入する',
+  onboard_agent: 'Prysm にエージェントを導入する',
   attached_files_label: '添付ファイル',
   attach_file: 'ファイルを添付',
   remove_file: '{{name}} を削除',
   attachment_error: '100KB 以下のテキストファイルのみ添付できます: {{names}}',
   copy_you: 'あなた',
-  copy_assistant: 'MeshX AI',
+  copy_assistant: 'Prysm AI',
   file_label: 'ファイル: {{name}}',
   enter_to_send: 'Enterで送信',
   thinking_steps: [

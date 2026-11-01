@@ -167,7 +167,7 @@ function AccountCenter({ isActive, data }: Props) {
                       a: (
                         <TextLink
                           targetBlank="noopener"
-                          href="https://docs.meshx.io/end-user-flows/account-settings/by-account-api#get-a-verification-record-id"
+                          href="https://docs.prysm.sh/end-user-flows/account-settings/by-account-api#get-a-verification-record-id"
                         />
                       ),
                     }}

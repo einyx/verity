@@ -1,5 +1,5 @@
 import { getCloudApiIndicator } from '@logto/schemas';
-import { createPgBillingStore } from '@meshx/cloud/routes';
+import { createPgBillingStore } from '@prysm/cloud/routes';
 import { createPool } from '@silverhand/slonik';
 import { endOfDay, startOfMonth, subDays } from 'date-fns';
 import type { Context, Next } from 'koa';

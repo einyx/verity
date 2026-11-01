@@ -5,7 +5,7 @@ import CopyIcon from '@/assets/icons/copy.svg?react';
 
 import styles from './index.module.scss';
 
-const mcpSetupPrompt = `Set up the MeshX MCP portal in my MCP client. Ask me for the portal URL (https://<portal-hostname>/mcp), then add it to my client configuration as an MCP server using \`npx -y mcp-remote@latest <portal-url>\`, restart the client, and confirm the portal's servers are listed.`;
+const mcpSetupPrompt = `Set up the Prysm MCP portal in my MCP client. Ask me for the portal URL (https://<portal-hostname>/mcp), then add it to my client configuration as an MCP server using \`npx -y mcp-remote@latest <portal-url>\`, restart the client, and confirm the portal's servers are listed.`;
 
 type Props = {
   readonly icon: ReactNode;

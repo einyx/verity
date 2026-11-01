@@ -26,7 +26,7 @@ jest.mock('@/hooks/use-api', () => ({
 }));
 
 jest.mock('@/consts', () => ({
-  emailBlocklist: 'https://docs.meshx.io/email-blocklist',
+  emailBlocklist: 'https://docs.prysm.sh/email-blocklist',
 }));
 
 jest.mock('@/consts/env', () => ({

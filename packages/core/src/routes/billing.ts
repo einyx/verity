@@ -5,7 +5,7 @@ import {
   createPgBillingStore,
   migrateBillingSchema,
   stripeWebhookPath,
-} from '@meshx/cloud/routes';
+} from '@prysm/cloud/routes';
 import { createPool } from '@silverhand/slonik';
 import { createRemoteJWKSet } from 'jose';
 import type { Context, Next } from 'koa';

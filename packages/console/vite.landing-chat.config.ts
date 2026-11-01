@@ -16,7 +16,7 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: 'src/landing-chat/index.tsx',
-      name: 'MeshxDemoChat',
+      name: 'PrysmDemoChat',
       formats: ['iife'],
       fileName: () => 'demo-chat-app.js',
     },

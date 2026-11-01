@@ -1,11 +1,11 @@
 import type { Theme } from '@logto/schemas';
 import { useEffect, useRef } from 'react';
 
-import MeshxMark from '@/shared/assets/icons/meshx-mark.svg?react';
+import PrysmMark from '@/shared/assets/icons/prysm-mark.svg?react';
 
 import styles from './index.module.scss';
 
-const meshxUrl = `https://meshx.io/?${new URLSearchParams({
+const prysmUrl = `https://prysm.sh/?${new URLSearchParams({
   utm_source: 'sign_in',
   utm_medium: 'powered_by',
 }).toString()}`;
@@ -74,12 +74,12 @@ body.mobile [data-logto-signature="secured"][data-logto-signature="secured"] {
 
 type Props = {
   readonly className?: string;
-  // The MeshX mark is the same in both themes, so the theme prop only keeps the call sites unchanged.
+  // The Prysm mark is the same in both themes, so the theme prop only keeps the call sites unchanged.
   // eslint-disable-next-line react/no-unused-prop-types -- Kept so existing call sites still type-check.
   readonly theme: Theme;
 };
 
-const LogtoSignature = ({ className }: Props) => {
+const PrysmSignature = ({ className }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLAnchorElement>(null);
 
@@ -168,21 +168,21 @@ const LogtoSignature = ({ className }: Props) => {
     <div ref={containerRef} className={className} data-logto-signature-container="secured">
       <a
         ref={anchorRef}
-        aria-label="Powered By MeshX"
+        aria-label="Powered By Prysm"
         className={styles.signature}
         data-logto-signature="secured"
-        href={meshxUrl.toString()}
+        href={prysmUrl.toString()}
         rel="noopener"
         target="_blank"
       >
         <span data-logto-signature-text className={styles.text}>
           Powered by
         </span>
-        <MeshxMark data-logto-signature-icon="static" className={styles.staticIcon} />
-        <MeshxMark data-logto-signature-icon="highlight" className={styles.highlightIcon} />
+        <PrysmMark data-logto-signature-icon="static" className={styles.staticIcon} />
+        <PrysmMark data-logto-signature-icon="highlight" className={styles.highlightIcon} />
       </a>
     </div>
   );
 };
 
-export default LogtoSignature;
+export default PrysmSignature;

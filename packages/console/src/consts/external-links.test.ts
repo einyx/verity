@@ -6,11 +6,11 @@ import {
 
 describe('external links', () => {
   it('uses the cloud console URL for OSS members upsell entry', () => {
-    expect(logtoCloudConsoleUrl).toBe('https://cloud.meshx.app');
+    expect(logtoCloudConsoleUrl).toBe('https://cloud.prysm.sh');
   });
 
   it('points self-hosted plans upsell at the public landing page', () => {
-    expect(selfHostedPlansLink).toBe('https://cloud.meshx.app');
+    expect(selfHostedPlansLink).toBe('https://cloud.prysm.sh');
   });
 
   it('attributes official website contact links', () => {

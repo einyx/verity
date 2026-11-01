@@ -59,7 +59,7 @@ describe('client credentials token', () => {
       tokenEndpoint: 'https://auth.example.com/oidc/token',
       clientId: 'cloud',
       clientSecret: 'secret',
-      resource: 'https://console.meshx.foundation/api',
+      resource: 'https://auth.prysm.sh:8443/api',
       fetch: fetchMock as unknown as typeof fetch,
     });
 
@@ -73,7 +73,7 @@ describe('client credentials token', () => {
       tokenEndpoint: 'https://auth.example.com/oidc/token',
       clientId: 'cloud',
       clientSecret: 'wrong',
-      resource: 'https://console.meshx.foundation/api',
+      resource: 'https://auth.prysm.sh:8443/api',
       fetch: (async () => new Response(null, { status: 401 })) as unknown as typeof fetch,
     });
 

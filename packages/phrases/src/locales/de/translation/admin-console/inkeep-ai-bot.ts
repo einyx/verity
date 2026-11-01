@@ -27,13 +27,13 @@ const inkeep_ai_bot = {
   action_failed_detail:
     'Diese Änderung konnte nicht durchgeführt werden. Sie ist möglicherweise abgelaufen; bitte fragen Sie erneut.',
   setup_prompt_copied: 'Setup-Prompt kopiert',
-  onboard_agent: 'Ihren Agenten bei MeshX einarbeiten',
+  onboard_agent: 'Ihren Agenten bei Prysm einarbeiten',
   attached_files_label: 'Angehängte Dateien',
   attach_file: 'Datei anhängen',
   remove_file: '{{name}} entfernen',
   attachment_error: 'Es können nur Textdateien bis 100 KB angehängt werden: {{names}}',
   copy_you: 'Du',
-  copy_assistant: 'MeshX AI',
+  copy_assistant: 'Prysm AI',
   file_label: 'Datei: {{name}}',
   enter_to_send: 'Enter zum Senden',
   thinking_steps: [

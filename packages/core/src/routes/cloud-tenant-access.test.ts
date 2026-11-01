@@ -16,8 +16,8 @@ describe('canManageTenants', () => {
     await expect(canManageTenants(pool, 'operator')).resolves.toBe(true);
   });
 
-  it('allows a user on the default meshx.io domain when no list is saved', async () => {
-    const pool = poolWith(undefined, { primaryEmail: 'ada@meshx.io' }, undefined);
+  it('allows a user on the default prysm.sh domain when no list is saved', async () => {
+    const pool = poolWith(undefined, { primaryEmail: 'ada@prysm.sh' }, undefined);
 
     await expect(canManageTenants(pool, 'ada')).resolves.toBe(true);
   });
@@ -47,14 +47,14 @@ describe('canManageTenants', () => {
 
 describe('tenantAccessPolicyBody', () => {
   it('lowercases and trims domains', () => {
-    expect(tenantAccessPolicyBody.parse({ domains: [' MeshX.IO '] })).toEqual({
-      domains: ['meshx.io'],
+    expect(tenantAccessPolicyBody.parse({ domains: [' Prysm.IO '] })).toEqual({
+      domains: ['prysm.sh'],
     });
   });
 
   it('rejects an empty list, a bare word, and a URL', () => {
     expect(() => tenantAccessPolicyBody.parse({ domains: [] })).toThrow();
-    expect(() => tenantAccessPolicyBody.parse({ domains: ['meshx'] })).toThrow();
-    expect(() => tenantAccessPolicyBody.parse({ domains: ['https://meshx.io'] })).toThrow();
+    expect(() => tenantAccessPolicyBody.parse({ domains: ['prysm'] })).toThrow();
+    expect(() => tenantAccessPolicyBody.parse({ domains: ['https://prysm.sh'] })).toThrow();
   });
 });

@@ -5,7 +5,7 @@ export type ClientCredentialsOptions = {
   tokenEndpoint: string;
   clientId: string;
   clientSecret: string;
-  /** The Management API resource indicator, e.g. `https://console.meshx.foundation/api`. */
+  /** The Management API resource indicator, e.g. `https://auth.prysm.sh:8443/api`. */
   resource: string;
   fetch?: typeof fetch;
 };

@@ -144,7 +144,7 @@ function Kubo() {
 
   return (
     <div className={styles.container}>
-      <Helmet title="MeshX Workspaces" />
+      <Helmet title="Prysm Workspaces" />
       <div className={styles.header}>
         <div className={styles.eyebrow}>Infrastructure / Overview</div>
         <h2 className={styles.title}>Workspaces</h2>

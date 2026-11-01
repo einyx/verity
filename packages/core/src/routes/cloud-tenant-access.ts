@@ -6,7 +6,7 @@ import { z } from 'zod';
 // primary email is on the allow-list. The allow-list is set from the admin tenant's console and stored in
 // the admin tenant's own config, so the console is the only place it can change.
 
-export const defaultTenantAccessDomains = ['meshx.io'] as const;
+export const defaultTenantAccessDomains = ['prysm.sh'] as const;
 
 const configKey = 'cloud_tenant_access';
 

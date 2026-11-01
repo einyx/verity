@@ -61,7 +61,7 @@ function Agent() {
 
   return (
     <div className={styles.container}>
-      <Helmet title="MeshX · Agent" />
+      <Helmet title="Prysm · Agent" />
       <div className={styles.header}>
         <div className={styles.eyebrow}>Infrastructure / Agent</div>
         <h2 className={styles.title}>

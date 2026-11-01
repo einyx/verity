@@ -6,7 +6,7 @@ import InfraShell from '@/pages/Kubo/InfraShell';
 const McpPortal = safeLazy(async () => import('@/pages/McpPortal'));
 
 const mcpPortalElement = (
-  // Wrapped like the other Infrastructure pages so it gets the MeshX tokens and fonts.
+  // Wrapped like the other Infrastructure pages so it gets the Prysm tokens and fonts.
   <InfraShell>
     <McpPortal />
   </InfraShell>

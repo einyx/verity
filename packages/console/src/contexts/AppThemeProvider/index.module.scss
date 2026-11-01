@@ -1,7 +1,7 @@
 @use '@logto/core-kit/scss/console-themes' as themes;
 @use '@/scss/underscore' as _;
 
-// MeshX fonts (from foundation-frontend), used by the whole console.
+// Prysm fonts (from foundation-frontend), used by the whole console.
 @font-face {
   font-family: 'Stack Sans Headline';
   src: url('./fonts/stack-sans-headline-latin-wght-normal.woff2') format('woff2');
@@ -26,7 +26,7 @@
   font-display: swap;
 }
 
-// MeshX colour tokens (from foundation-frontend / meshx-design-system), applied on top of the
+// Prysm colour tokens (from foundation-frontend / prysm-design-system), applied on top of the
 // console's theme so every shared component uses them.
 .light {
   @include themes.light;

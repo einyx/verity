@@ -7,10 +7,10 @@ export type TxtResolver = (name: string) => Promise<string[][]>;
 export const defaultTxtResolver: TxtResolver = resolveTxt;
 
 /** The DNS name the customer publishes the challenge record at. */
-export const challengeRecordName = (domain: string) => `_meshx-console-sso.${domain}`;
+export const challengeRecordName = (domain: string) => `_prysm-console-sso.${domain}`;
 
 /** The TXT value that proves control of the domain. Scoped by a random token per challenge. */
-export const challengeRecordValue = (token: string) => `meshx-console-sso=${token}`;
+export const challengeRecordValue = (token: string) => `prysm-console-sso=${token}`;
 
 export const createChallengeToken = () => randomBytes(24).toString('base64url');
 

@@ -7,7 +7,7 @@ import PasswordSignInForm from '@/components/PasswordSignInForm';
 import SocialSignInList from '@/containers/SocialSignInList';
 import TermsAndPrivacyCheckbox from '@/containers/TermsAndPrivacyCheckbox';
 import useTerms from '@/hooks/use-terms';
-import { isMeshxDarkBranding } from '@/shared/utils/meshx-dark-branding';
+import { isPrysmDarkBranding } from '@/shared/utils/prysm-dark-branding';
 
 import useIdentifierSignInMethods from '../IdentifierSignIn/use-identifier-sign-in-methods';
 
@@ -22,13 +22,13 @@ const Main = ({ signInMethods, socialConnectors }: Props) => {
   const { agreeToTermsPolicy } = useTerms();
   const { experienceSettings } = useContext(PageContext);
   const { isPasswordOnly } = useIdentifierSignInMethods();
-  const isMeshxDark =
-    experienceSettings !== undefined && isMeshxDarkBranding(experienceSettings.color);
+  const isPrysmDark =
+    experienceSettings !== undefined && isPrysmDarkBranding(experienceSettings.color);
 
-  if (isMeshxDark) {
+  if (isPrysmDark) {
     return (
       <>
-        <header className={styles.meshxHeader}>
+        <header className={styles.prysmHeader}>
           <h2>Welcome back</h2>
           <p>Please enter your details to sign in.</p>
         </header>

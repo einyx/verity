@@ -258,11 +258,11 @@ describe('koaSecurityHeaders() middleware — experience CSP', () => {
     expect(queries.signInExperiences.findDefaultSignInExperience).not.toHaveBeenCalled();
   });
 
-  it('allows the public MeshX branding SVGs to load on cross-origin sign-in pages', async () => {
+  it('allows the public Prysm branding SVGs to load on cross-origin sign-in pages', async () => {
     const run = koaSecurityHeaders(['api', 'oidc'], 'default');
     const logoContext = createMockContext({
       method: 'GET',
-      url: '/console/meshx-logo-dark.svg',
+      url: '/console/prysm-logo-dark.svg',
     });
     const consoleContext = createMockContext({ method: 'GET', url: '/console/index.html' });
 

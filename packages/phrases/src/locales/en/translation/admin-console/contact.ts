@@ -3,8 +3,8 @@ const contact = {
   description:
     'For help requests or product feedback, please contact us through the following methods.',
   slack: {
-    title: 'Join MeshX Slack',
-    description: 'Connect with the MeshX team and other users to find solutions',
+    title: 'Join Prysm Slack',
+    description: 'Connect with the Prysm team and other users to find solutions',
     button: 'Join',
   },
   github: {
@@ -18,7 +18,7 @@ const contact = {
     button: 'Send',
   },
   reserve: {
-    title: 'Reserve your time with MeshX team',
+    title: 'Reserve your time with Prysm team',
     description: 'Quickly book a session for a live chat',
     button: 'Book',
   },

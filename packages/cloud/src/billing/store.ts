@@ -41,7 +41,7 @@ export type StripeSubscriptionUpdate = {
 
 /**
  * Read and write access to billing, membership, and invitation data. The Postgres implementation
- * reads and writes the `meshx_cloud` database; the in-memory one exists for tests only.
+ * reads and writes the `prysm_cloud` database; the in-memory one exists for tests only.
  */
 export type BillingStore = {
   /** The subscription of a tenant, or `null` when the tenant has none on record. */

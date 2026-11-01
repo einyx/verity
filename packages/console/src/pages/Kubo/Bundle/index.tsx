@@ -89,7 +89,7 @@ function Bundle() {
 
   return (
     <div className={getStartedStyles.container}>
-      <Helmet title="MeshX · Bundle" />
+      <Helmet title="Prysm · Bundle" />
       <div className={getStartedStyles.pageHeader}>
         <div className={getStartedStyles.header}>
           <div className={getStartedStyles.title}>Upload an offline bundle</div>

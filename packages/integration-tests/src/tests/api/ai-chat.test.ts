@@ -40,7 +40,7 @@ const createAdminM2mToken = async () => {
       body: new URLSearchParams({
         grant_type: 'client_credentials',
         // The admin tenant's own Management API, which is what the admin port serves.
-        resource: `https://${adminTenantId}.meshx.foundation/api`,
+        resource: `https://prysm.sh/api`,
         scope: 'all',
       }),
     })

@@ -118,10 +118,10 @@ describe('mcp-portal admin routes', () => {
 
     const response = await request(callback)
       .put('/mcp-portal/settings')
-      .send({ baseDomain: 'mcp.meshx.foundation' });
+      .send({ baseDomain: 'mcp.prysm.sh' });
 
     expect(response.status).toBe(200);
-    expect(stores.settings.setBaseDomain).toHaveBeenCalledWith('mcp.meshx.foundation');
+    expect(stores.settings.setBaseDomain).toHaveBeenCalledWith('mcp.prysm.sh');
   });
 
   it('reads the base domain for the console', async () => {

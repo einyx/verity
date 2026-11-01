@@ -1,7 +1,7 @@
 {
-  "name": "@meshx/cloud",
+  "name": "@prysm/cloud",
   "version": "0.1.0",
-  "description": "MeshX Cloud: the license service (signs self-hosted license keys) and, later, billing.",
+  "description": "Prysm Cloud: the license service (signs self-hosted license keys) and, later, billing.",
   "author": "Silverhand Inc. <contact@silverhand.io>",
   "license": "MPL-2.0",
   "type": "module",

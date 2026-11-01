@@ -5,7 +5,7 @@ import { generateDarkColor } from '@logto/core-kit';
  * the rest of the form stays editable. 'default' restores Logto's default colours,
  * so the dropdown can always switch back.
  */
-const brandingTemplateIds = ['default', 'meshx-dark'] as const;
+const brandingTemplateIds = ['default', 'prysm-dark'] as const;
 
 export type BrandingTemplateId = (typeof brandingTemplateIds)[number];
 
@@ -15,7 +15,7 @@ type BrandingTemplateValues = {
   darkPrimaryColor: string;
 };
 
-const meshxOrange = '#da2c09';
+const prysmIndigo = '#4f46e5';
 
 // Logto's default sign-in colours, the same values the seed uses (packages/schemas/src/seeds).
 const logtoDefaultPrimaryColor = '#6139F6';
@@ -26,9 +26,9 @@ export const brandingTemplates: Record<BrandingTemplateId, BrandingTemplateValue
     isDarkModeEnabled: false,
     darkPrimaryColor: generateDarkColor(logtoDefaultPrimaryColor),
   },
-  'meshx-dark': {
-    primaryColor: meshxOrange,
+  'prysm-dark': {
+    primaryColor: prysmIndigo,
     isDarkModeEnabled: true,
-    darkPrimaryColor: generateDarkColor(meshxOrange),
+    darkPrimaryColor: generateDarkColor(prysmIndigo),
   },
 };

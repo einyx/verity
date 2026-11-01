@@ -607,7 +607,7 @@
   color: var(--color-text-secondary);
 }
 
-// MeshX fonts (from foundation-frontend).
+// Prysm fonts (from foundation-frontend).
 @font-face {
   font-family: 'Stack Sans Headline';
   src: url('./fonts/stack-sans-headline-latin-wght-normal.woff2') format('woff2');
@@ -907,7 +907,7 @@
   pointer-events: none;
 }
 
-/* meshx.io-style motion: cards rise in with a short stagger, and the active phase filter
+/* prysm.sh-style motion: cards rise in with a short stagger, and the active phase filter
    pulses once in brand colour. Both are off under reduced motion. */
 @keyframes infra-rise {
   from {

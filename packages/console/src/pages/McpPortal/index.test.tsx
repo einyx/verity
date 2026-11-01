@@ -177,7 +177,7 @@ const mockState = ({
 
     if (key === settingsKey) {
       return {
-        data: { baseDomain: 'mcp.meshx.foundation' },
+        data: { baseDomain: 'mcp.prysm.sh' },
         error: undefined,
         isLoading: false,
         mutate: jest.fn(),

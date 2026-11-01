@@ -146,7 +146,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
     name: 'create_application',
     description:
-      'Create an application in this tenant. MeshX generates its id and credentials; the client secret is not returned here.',
+      'Create an application in this tenant. Prysm generates its id and credentials; the client secret is not returned here.',
     path: '/applications',
     method: 'POST',
     properties: {

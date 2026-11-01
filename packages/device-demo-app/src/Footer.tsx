@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import styles from './App.module.scss';
-import meshxMark from './assets/meshx-mark.svg';
+import prysmMark from './assets/prysm-mark.svg';
 
-const meshxUrl = `https://meshx.io/?${new URLSearchParams({
+const prysmUrl = `https://prysm.sh/?${new URLSearchParams({
   utm_source: 'sign_in',
   utm_medium: 'powered_by',
 }).toString()}`;
@@ -31,14 +31,14 @@ const Footer = ({ isDarkMode }: { readonly isDarkMode: boolean }) => (
   <div className={styles.footerContainer}>
     <a
       className={styles.footer}
-      href={meshxUrl}
+      href={prysmUrl}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Powered By MeshX"
+      aria-label="Powered By Prysm"
     >
       <span>Powered by</span>
-      <img className={styles.staticLogo} src={meshxMark} alt="MeshX" />
-      <img className={styles.highlightLogo} src={meshxMark} alt="MeshX" />
+      <img className={styles.staticLogo} src={prysmMark} alt="Prysm" />
+      <img className={styles.highlightLogo} src={prysmMark} alt="Prysm" />
     </a>
   </div>
 );

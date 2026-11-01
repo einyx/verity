@@ -8,13 +8,19 @@
  */
 export const managementApiIndicatorPattern = String.raw`^https://prysm\.sh/api$`;
 
+/**
+ * The legacy per-tenant indicator shape. A database that has not been migrated yet still
+ * holds those, so they are recognised as Management APIs as well.
+ */
+const legacyManagementApiIndicatorRegExpPattern = String.raw`^https://[^.]+\.meshx\.foundation/api$`;
+
 const managementApiIndicatorRegExp = new RegExp(managementApiIndicatorPattern);
 
 /**
  * Whether the indicator addresses a Management API. The legacy per-tenant indicators are
  * included so an existing database keeps working until it is migrated.
  */
-const legacyManagementApiIndicatorRegExp = String.raw`^https://[^.]+\.meshx\.foundation/api$`;
+const legacyManagementApiIndicatorRegExp = new RegExp(legacyManagementApiIndicatorRegExpPattern);
 
 export const isManagementApi = (indicator: string) =>
   managementApiIndicatorRegExp.test(indicator) || legacyManagementApiIndicatorRegExp.test(indicator);

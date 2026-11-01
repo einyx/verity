@@ -1,6 +1,6 @@
-import { type DemoLead } from './landing-page-chat-guard.js';
-
 import { sendMail, toSingleLine, type AcsMailConfig } from '../libraries/acs-mail.js';
+
+import { type DemoLead } from './landing-page-chat-guard.js';
 
 // Sends a demo lead through Azure Communication Services (ACS) Email. Recipients are configured by
 // the operator, never by model output or visitor input.

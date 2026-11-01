@@ -23,17 +23,17 @@ export const meshxLogoBase64 =
 const logo =
   '<img src="cid:meshx-logo" width="164" height="42" alt="meshX" style="display:block;width:164px;height:42px;border:0;outline:none;text-decoration:none;">';
 
-const step = (n: number, title: string, description: string, padding: string) =>
+const step = (stepNumber: number, title: string, description: string, padding: string) =>
   '<tr>' +
   `<td style="width:28px;vertical-align:top;padding:${padding};">` +
-  `<span style="display:inline-block;width:22px;height:22px;background:${brand};border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#fff;">${n}</span>` +
+  `<span style="display:inline-block;width:22px;height:22px;background:${brand};border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#fff;">${stepNumber}</span>` +
   '</td>' +
   `<td style="padding:${padding} 0 0 10px;vertical-align:top;">` +
   `<p style="margin:0;font-size:14px;font-weight:600;color:${fg};">${title}</p>` +
   `<p style="margin:4px 0 0;font-size:13px;color:${fgMuted};line-height:1.5;">${description}</p>` +
   '</td></tr>';
 
-export type OnboardingEmailContent = {
+type OnboardingEmailContent = {
   /** The person who is invited. */
   firstName: string;
   /** Who invited them. */
@@ -76,9 +76,24 @@ export const buildOnboardingEmailHtml = (content: OnboardingEmailContent): strin
     `<table width="100%" cellpadding="0" cellspacing="0" style="background:${surface};border:1px solid ${border};border-radius:10px;">` +
     `<tr><td style="padding:20px 24px 14px;"><p style="margin:0;font-size:11px;font-weight:700;color:${fg};text-transform:uppercase;letter-spacing:0.06em;">Getting started</p></td></tr>` +
     '<tr><td style="padding:0 24px 20px;"><table width="100%" cellpadding="0" cellspacing="0">' +
-    step(1, 'Sign in', 'Use the button above. The link signs you in, so no new password is needed.', '0 0 12px') +
-    step(2, 'Set a password', 'Once you are in, set a password in your profile so you can sign in without the link.', '0 0 12px') +
-    step(3, `The link works until ${expiresAt}`, 'Need more time? Reply to this email and an administrator can send a new one.', '0 0 0') +
+    step(
+      1,
+      'Sign in',
+      'Use the button above. The link signs you in, so no new password is needed.',
+      '0 0 12px'
+    ) +
+    step(
+      2,
+      'Set a password',
+      'Once you are in, set a password in your profile so you can sign in without the link.',
+      '0 0 12px'
+    ) +
+    step(
+      3,
+      `The link works until ${expiresAt}`,
+      'Need more time? Reply to this email and an administrator can send a new one.',
+      '0 0 0'
+    ) +
     '</table></td></tr>' +
     '</table>' +
     '</td></tr>' +

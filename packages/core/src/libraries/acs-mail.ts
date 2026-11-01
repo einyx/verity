@@ -70,6 +70,7 @@ export const parseAcsConnectionString = (
 };
 
 /** Removes line breaks and collapses spaces, so a value stays on one line of the mail. */
+// eslint-disable-next-line @typescript-eslint/ban-types -- Database-backed optional mail fields may explicitly be null.
 export const toSingleLine = (value?: string | null): string =>
   (value ?? '')
     .replaceAll(/[\t\n\r]+/g, ' ')
@@ -123,7 +124,7 @@ export const sendMail = async (
   send: typeof fetch = fetch,
   now: () => Date = () => new Date()
 ): Promise<void> => {
-  const recipients = (Array.isArray(mail.to) ? mail.to : [mail.to])
+  const recipients = (typeof mail.to === 'string' ? [mail.to] : mail.to)
     .map((address) => toSingleLine(address))
     .filter(Boolean);
 

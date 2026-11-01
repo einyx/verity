@@ -198,7 +198,10 @@
           "*.json5",
           "*.jsonc"
         ],
-        "parser": "jsonc-eslint-parser"
+        "parser": "jsonc-eslint-parser",
+        "rules": {
+          "import/no-unused-modules": "off"
+        }
       }
     ]
   },

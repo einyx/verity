@@ -12,7 +12,6 @@ import Modal from 'react-modal';
 import useSWR from 'swr';
 
 import AddOnNoticeFooter from '@/components/AddOnNoticeFooter';
-import ContactUsPhraseLink from '@/components/ContactUsPhraseLink';
 import Skeleton from '@/components/CreateConnectorForm/Skeleton';
 import { getConnectorRadioGroupSize } from '@/components/CreateConnectorForm/utils';
 import QuotaGuardFooter from '@/components/QuotaGuardFooter';
@@ -198,7 +197,7 @@ function SsoCreationModal({ isOpen, onClose: rawOnClose }: Props) {
             <QuotaGuardFooter>
               <Trans
                 components={{
-                  a: <ContactUsPhraseLink />,
+                  a: <TextLink href="https://meshx.io" />,
                 }}
               >
                 {t('upsell.paywall.sso_connectors')}

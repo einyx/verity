@@ -169,7 +169,8 @@
       .map((section, index) => renderOne(section, sourceIndexes[index] ?? index, usedAnchors))
       .filter(Boolean);
     container.replaceChildren(...children);
-    if (activePath) {
+    // Detached rendering buffers must not steal the live document's selection.
+    if (activePath && container.isConnected) {
       const restored = [...container.querySelectorAll('[data-cms]')].find((item) => item.dataset.cms === activePath);
       if (restored) {
         restored.focus();

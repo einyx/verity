@@ -7,6 +7,8 @@ import { z } from 'zod/v3';
 import { isCloudPluginInstalled, loadCloudPlugin } from '#src/cloud-plugin/index.js';
 import { EnvSet } from '#src/env-set/index.js';
 
+import { createCloudConsoleHost } from './cloud-console-host.js';
+
 const billingEnvironment = z.object({
   BILLING_DATABASE_URL: z.string().url(),
   /** Comma-separated user IDs that may call operator-only billing routes. */
@@ -30,6 +32,7 @@ const billingPaths = [
   /^\/api\/invitations/,
   /^\/api\/checkout-session/,
   /^\/api\/webhooks\/stripe$/,
+  /^\/api\/me\/(?:regions|logto-enterprises|self-hosted-licenses|stripe-customers)(?:\/|$)/,
 ];
 
 /**
@@ -69,6 +72,7 @@ const buildBillingHandler = async () => {
       },
       stripeSecretKey: environment.STRIPE_SECRET_KEY,
       stripeWebhookSecret: environment.STRIPE_WEBHOOK_SECRET,
+      console: createCloudConsoleHost(),
     })
   );
 };

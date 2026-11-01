@@ -6,10 +6,13 @@ import {
 } from '@assistant-ui/react';
 import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSWRConfig } from 'swr';
 
+import { landingPageEditorKey } from '@/cloud/hooks/use-landing-page';
 import useApi from '@/hooks/use-api';
 
 import { type ProposedAction } from './ProposedActionCard';
+import { confirmChatAction } from './confirm-action';
 import useLandingPageAiHeaders from './use-landing-page-ai-headers';
 
 type ChatResponse = {
@@ -25,7 +28,7 @@ export type ConversationApi = {
 
 type ActionContextValue = {
   readonly statuses: Record<string, ActionStatus | undefined>;
-  readonly onConfirm: (actionId: string) => void;
+  readonly onConfirm: (action: Pick<ProposedAction, 'id' | 'tool'>) => void;
   readonly onCancel: (actionId: string) => void;
 };
 
@@ -68,6 +71,7 @@ type ConversationProps = {
 function Conversation({ children, onReady, onRunStateChange }: ConversationProps) {
   const api = useApi();
   const landingPageAiHeaders = useLandingPageAiHeaders();
+  const { mutate } = useSWRConfig();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const [statuses, setStatuses] = useState<Record<string, ActionStatus | undefined>>({});
 
@@ -115,15 +119,21 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
   const actionContext = useMemo<ActionContextValue>(
     () => ({
       statuses,
-      onConfirm: (actionId) => {
+      onConfirm: (action) => {
+        const actionId = action.id;
         setStatuses((current) => ({ ...current, [actionId]: { status: 'running' } }));
         void (async () => {
           try {
-            await api
-              .post(`api/ai-chat/actions/${actionId}/confirm`, {
-                headers: await landingPageAiHeaders(),
-              })
-              .json();
+            await confirmChatAction(
+              action,
+              async (id) =>
+                api
+                  .post(`api/ai-chat/actions/${id}/confirm`, {
+                    headers: await landingPageAiHeaders(),
+                  })
+                  .json(),
+              async () => mutate(landingPageEditorKey)
+            );
             setStatuses((current) => ({ ...current, [actionId]: { status: 'done' } }));
           } catch {
             setStatuses((current) => ({
@@ -144,7 +154,7 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
         })();
       },
     }),
-    [api, landingPageAiHeaders, statuses, t]
+    [api, landingPageAiHeaders, mutate, statuses, t]
   );
 
   return (

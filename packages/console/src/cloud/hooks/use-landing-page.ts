@@ -27,6 +27,7 @@ export type LandingPageVersion = z.infer<typeof landingPageVersionsGuard>[number
 const landingPageChatReplyGuard = z.object({ reply: z.string(), submitted: z.boolean() });
 
 const landingPageBase = '/api/landing-page';
+export const landingPageEditorKey = `${landingPageBase}/editor`;
 
 /** The draft save response's publish precondition: the server's draft updated time. */
 const landingPageEditorWriteGuard = z.object({ updatedAt: z.string().optional() });
@@ -69,7 +70,7 @@ export const useLandingPage = () => {
   const getToken = useCallback(async () => getAccessToken(cloudApi.indicator), [getAccessToken]);
 
   const { data, error, isLoading, mutate } = useSWR<LandingPageResponse, Error>(
-    isAuthenticated ? `${landingPageBase}/editor` : undefined,
+    isAuthenticated ? landingPageEditorKey : undefined,
     async () => {
       const body = await request(getToken, '/editor');
       return landingPageResponseGuard.parse(body);

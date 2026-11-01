@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
+import { isDevFeaturesEnabled } from '@/consts/env';
+
+import LandingPageArtifact from './LandingPageArtifact';
 import styles from './index.module.scss';
 
 /** A write the assistant proposed. It only runs when the user confirms it here. */
@@ -26,6 +29,11 @@ const formatValue = (value: unknown) => (typeof value === 'string' ? value : JSO
  */
 function ProposedActionCard({ action, onConfirm, onCancel }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+
+  // Landing-page artifact previews are being developed alongside the editor's review workflow.
+  if (isDevFeaturesEnabled && action.tool === 'save_landing_page_draft') {
+    return <LandingPageArtifact action={action} onConfirm={onConfirm} onCancel={onCancel} />;
+  }
 
   const statusLabel = {
     running: t('inkeep_ai_bot.action_running'),

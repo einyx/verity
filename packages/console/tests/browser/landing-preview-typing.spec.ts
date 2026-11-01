@@ -20,7 +20,7 @@ test('keeps slow typing and the caret in an added section positioned before the 
     ],
   };
   const preview =
-    html.replaceAll(/<script\b[^>]*>[\S\s]*?<\/script>/gi, '') +
+    html.replaceAll(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '') +
     '<script src="/landing-renderer.js"></script><script src="/landing-elements.js"></script><script src="/cms.js"></script>';
   const host = `<!doctype html><iframe id="preview" src="/preview?cmsPreview=1" style="width:100%;height:900px"></iframe><output id="typed"></output>
     <script>

@@ -1,11 +1,10 @@
 import { isLanguageTag } from '@logto/language-kit';
 import { ConnectorType } from '@logto/schemas';
 import type { ConnectorFactoryResponse, RequestErrorBody } from '@logto/schemas';
-import { generateStandardId } from '@logto/shared/universal';
 import { conditional } from '@silverhand/essentials';
 import i18next from 'i18next';
 import { HTTPError } from 'ky';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -45,16 +44,9 @@ type Props = {
 function Guide({ connector, onClose }: Props) {
   const { createConnector } = useConnectorApi();
   const { navigate } = useTenantPathname();
-  const callbackConnectorId = useRef(generateStandardId());
   const [conflictConnectorName, setConflictConnectorName] = useState<Record<string, string>>();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
-  const {
-    type: connectorType,
-    formItems,
-    isStandard,
-    id: connectorFactoryId,
-    isTokenStorageSupported,
-  } = connector ?? {};
+  const { type: connectorType, formItems, isStandard, isTokenStorageSupported } = connector ?? {};
   const { language } = i18next;
 
   const isSocialConnector =
@@ -77,11 +69,29 @@ function Guide({ connector, onClose }: Props) {
     reset,
   } = methods;
 
+  /**
+   * The connector ID is the last segment of the social connector's callback URI. It is part of
+   * the IdP configuration, so it must be chosen before the connector is created and stay stable
+   * afterwards: IdPs such as Google match the callback URI exactly, and a regenerated ID would
+   * invalidate the registered one.
+   */
+  const connectorId = watch('connectorId');
+
   useEffect(() => {
     if (!connector) {
       return;
     }
-    reset(convertFactoryResponseToForm(connector));
+
+    const formData = convertFactoryResponseToForm(connector);
+
+    reset({
+      ...formData,
+      /**
+       * Seed the connector ID with the IdP name, so the callback URI the operator registers at
+       * the IdP (e.g. `/callback/google`) is predictable and stays stable across recreations.
+       */
+      connectorId: formData.connectorId ?? formData.target,
+    });
   }, [reset, connector]);
 
   const configParser = useConnectorFormConfigParser();
@@ -94,7 +104,7 @@ function Guide({ connector, onClose }: Props) {
     return null;
   }
 
-  const { id: connectorId, name, readme } = connector;
+  const { id: connectorFactoryId, name, readme } = connector;
   const { title, content } = splitMarkdownByTitle(readme);
   const connectorName = conditional(isLanguageTag(language) && name[language]) ?? name.en;
 
@@ -109,12 +119,12 @@ function Guide({ connector, onClose }: Props) {
 
       const config = configParser(data, formItems);
 
-      const { syncProfile, name, logo, logoDark, target, enableTokenStorage } = data;
+      const { syncProfile, name, logo, logoDark, target, enableTokenStorage, connectorId } = data;
 
       const basePayload = {
         config,
-        connectorId,
-        id: conditional(connectorType === ConnectorType.Social && callbackConnectorId.current),
+        connectorId: connectorFactoryId,
+        id: conditional(connectorType === ConnectorType.Social && connectorId),
         metadata: conditional(
           isStandard && {
             logo,
@@ -176,7 +186,7 @@ function Guide({ connector, onClose }: Props) {
           <IconButton
             size="large"
             onClick={() => {
-              onClose(callbackConnectorId.current);
+              onClose(connectorId);
             }}
           >
             <Close className={styles.closeIcon} />
@@ -203,6 +213,7 @@ function Guide({ connector, onClose }: Props) {
                       <div>{t('connectors.guide.general_setting')}</div>
                     </div>
                     <BasicForm
+                      isConnectorIdEditable
                       isAllowEditTarget={isStandard}
                       isStandard={isStandard}
                       conflictConnectorName={conflictConnectorName}
@@ -216,7 +227,7 @@ function Guide({ connector, onClose }: Props) {
                     <div>{t('connectors.guide.parameter_configuration')}</div>
                   </div>
                   <ConfigForm
-                    connectorId={callbackConnectorId.current}
+                    connectorId={connectorId ?? ''}
                     connectorFactoryId={connectorFactoryId}
                     connectorType={connectorType}
                     formItems={formItems}
@@ -229,7 +240,7 @@ function Guide({ connector, onClose }: Props) {
                       <div>{t('connectors.guide.test_connection')}</div>
                     </div>
                     <ConnectorTester
-                      connectorFactoryId={connectorId}
+                      connectorFactoryId={connectorFactoryId}
                       connectorType={connectorType}
                       parse={() => configParser(watch(), formItems)}
                     />

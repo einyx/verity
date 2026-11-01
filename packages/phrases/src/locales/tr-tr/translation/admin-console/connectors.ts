@@ -53,6 +53,12 @@ const connectors = {
       'Eski kullanıcıların yeniden kayıt olma olmadan oturum açmasına izin vermek için önceki <span>adı</span> bağlayıcıyı silerek aynı "IdP adı" ile yeni bir bağlayıcı oluşturmak isterseniz yapın.',
     target_conflict_line3:
       'Farklı bir kimlik sağlayıcıya bağlanmak isterseniz, "IdP adı" nı değiştirin ve devam edin.',
+    connector_id: 'Bağlantı Kimliği',
+    connector_id_placeholder: 'Bağlantı kimliği girin',
+    connector_id_tip:
+      'Bağlantı kimliği, aşağıdaki geri çağırma URI’sinin son parçasıdır. Bunu sabit tutun: kimlik sağlayıcınız geri çağırma URI’sini birebir eşleştirir, bu nedenle değiştirmek orada kaydettiğiniz URI’yi geçersiz kılar.',
+    connector_id_tip_standard:
+      'Harfler, rakamlar, noktalar, kısa çizgiler ve alt çizgiler kullanılabilir. Bu ayar bağlantı oluşturulduktan sonra değiştirilemez.',
     config: "Konfigürasyon JSON'ınızı girin",
     sync_profile: 'Profil bilgisini senkronize et',
     sync_profile_only_at_sign_up: 'Sadece kayıtta senkronize et',

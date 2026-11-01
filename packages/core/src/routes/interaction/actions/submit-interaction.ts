@@ -212,9 +212,10 @@ async function handleSubmitRegister(
     for (const tenantId of [adminTenantId, defaultTenantId]) {
       const organizationId = getTenantOrganizationId(tenantId);
 
-      // eslint-disable-next-line no-await-in-loop -- Assign the role only after its membership exists, on the same transaction connection.
+      // The role relation requires the user relation to exist, so the inserts run in order.
+      // eslint-disable-next-line no-await-in-loop
       await organizations.relations.users.insert({ organizationId, userId: id });
-      // eslint-disable-next-line no-await-in-loop -- The foreign key requires the preceding membership insert to complete.
+      // eslint-disable-next-line no-await-in-loop
       await organizations.relations.usersRoles.insert({
         organizationId,
         organizationRoleId: getTenantRole(TenantRole.Admin).id,

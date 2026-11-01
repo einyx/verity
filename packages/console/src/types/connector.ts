@@ -27,6 +27,12 @@ export type ConnectorFormType = {
   logo?: string;
   logoDark?: Nullable<string>;
   target?: string;
+  /**
+   * The connector ID, which is the last segment of the social connector's callback URI.
+   * It must be stable across connector recreations, since the IdP (e.g. Google) matches the
+   * callback URI exactly.
+   */
+  connectorId?: string;
   syncProfile: SyncProfileMode;
   /** The raw config data in JSON string. Used for code editor. */
   jsonConfig: string;

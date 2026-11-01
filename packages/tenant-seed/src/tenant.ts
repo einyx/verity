@@ -105,8 +105,9 @@ export const seedAdminData = async (
 
   // The scope name is unique per tenant and resource, so a scope that already exists on the
   // reused resource is adopted rather than inserted again.
-  const scopeIds = await Promise.all(
-    [...scopes, ...additionalScopes].map(async (scope) => {
+  const allScopes: CreateScope[] = [...scopes, ...additionalScopes];
+  const scopeIds: string[] = await Promise.all(
+    allScopes.map(async (scope) => {
       const existingScope = await pool.maybeOne<{ id: string }>(sql`
         select id from scopes
         where name = ${scope.name}
@@ -123,7 +124,9 @@ export const seedAdminData = async (
 
       return scopeId;
     })
-  );  const roleId = await processRole();
+  );
+
+  const roleId = await processRole();
   await Promise.all(
     scopeIds.map(async (scopeId) => {
       // The binding is unique per role and scope, and a reused resource can make the

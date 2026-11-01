@@ -96,6 +96,8 @@ const validateDisposableEmailDomain = async (email: string) => {
       .post(
         new URL('/api/disposable-email-domain-validation', EnvSet.values.azureFunctionAppEndpoint),
         {
+          timeout: { request: 2000 },
+          retry: { limit: 0 },
           json: {
             email,
           },

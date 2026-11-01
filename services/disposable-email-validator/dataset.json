@@ -1,0 +1,11 @@
+{
+  "package": "disposable-email-domains-js",
+  "version": "1.26.0",
+  "license": "CC0-1.0",
+  "source": "https://github.com/mziyut/disposable-email-domains-js/tree/83534395df76bff1cae597540fd4402d0d1c4d45",
+  "upstreamData": "https://github.com/martenson/disposable-email-domains/tree/be0dd1affed11ea9b1ffcd14da81319f9a080609",
+  "upstreamLicense": "https://github.com/martenson/disposable-email-domains/blob/be0dd1affed11ea9b1ffcd14da81319f9a080609/LICENSE.txt",
+  "reviewedAt": "2026-11-02T00:00:00Z",
+  "expiresAt": "2027-02-01T00:00:00Z",
+  "sha256": "4bc4c52a1d89848ff75ce569714eab38e47d87e57612d530f1d3821036091bd3"
+}

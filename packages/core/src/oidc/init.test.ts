@@ -167,9 +167,9 @@ const advertisedIdTokenAlgs = (envSet: EnvSet, isDevFeaturesEnabled: boolean) =>
 };
 
 describe('oidc provider init', () => {
-  it('advertises ML-DSA-65 only for an ML-DSA tenant when dev features are enabled', () => {
+  it('advertises ML-DSA-65 for an opted-in tenant independently of the dev flag', () => {
     expect(advertisedIdTokenAlgs(mlEnvSet, true)).toContain('ML-DSA-65');
-    expect(advertisedIdTokenAlgs(mlEnvSet, false)).not.toContain('ML-DSA-65');
+    expect(advertisedIdTokenAlgs(mlEnvSet, false)).toContain('ML-DSA-65');
   });
 
   it('keeps the advertised algorithms of RSA and EC tenants unchanged by the dev flag', () => {

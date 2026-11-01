@@ -1,6 +1,10 @@
 import { defaultLandingPageContent } from '@logto/schemas';
 
-import { editLandingPageDraft, enabledAskAiTools } from './ai-chat-landing-page.js';
+import {
+  editLandingPageDraft,
+  enabledAskAiTools,
+  pendingActionTools,
+} from './ai-chat-landing-page.js';
 
 const { jest } = import.meta;
 
@@ -60,8 +64,9 @@ describe('editLandingPageDraft', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
-  it('offers landing-page editing only when dev features are enabled', () => {
-    expect(enabledAskAiTools(false).map(({ name }) => name)).not.toContain('edit_landing_page');
+  it('offers production landing-page editing and confirmed draft saves with dev features disabled', () => {
+    expect(enabledAskAiTools(false).map(({ name }) => name)).toContain('edit_landing_page');
+    expect(pendingActionTools(false).map(({ name }) => name)).toContain('save_landing_page_draft');
     expect(enabledAskAiTools(true).map(({ name }) => name)).toContain('edit_landing_page');
   });
 });

@@ -91,7 +91,7 @@
               "schema": {
                 "properties": {
                   "signingKeyAlgorithm": {
-                    "description": "The signing key algorithm the new generated private key is using.\n\nOnly applicable when `keyType` is `private-keys`."
+                    "description": "The signing key algorithm for the newly generated private key. Only applicable when `keyType` is `private-keys`. ML-DSA-65 is an explicit per-tenant opt-in, requires Node.js 24.7+ and compatible JWT consumers, and does not require development features. Existing RSA/EC tenants are not switched automatically. Discovery advertises ML-DSA-65 only after an ML-DSA-65 key becomes current."
                   }
                 }
               }

@@ -93,16 +93,13 @@ import { getAcceptedUserClaims, getUserClaimsData } from './scope.js';
 const supportedSigningAlgs = Object.freeze(['RS256', 'PS256', 'ES256', 'ES384', 'ES512'] as const);
 
 /**
- * Dev feature: post-quantum signing keys. ML-DSA-65 is advertised only for a tenant whose current
- * signing key is ML-DSA-65, and only when dev features are enabled. Every other tenant keeps the
+ * ML-DSA-65 is advertised only for a tenant whose current signing key is ML-DSA-65. Every other tenant keeps the
  * same algorithm list it has today, so existing clients see no change in discovery.
  */
 const getEnabledSigningAlgs = (currentSigningAlg: string | undefined): SigningAlgorithm[] => {
   const algs: string[] = [
     ...supportedSigningAlgs,
-    ...(EnvSet.values.isDevFeaturesEnabled && currentSigningAlg === 'ML-DSA-65'
-      ? ['ML-DSA-65']
-      : []),
+    ...(currentSigningAlg === 'ML-DSA-65' ? ['ML-DSA-65'] : []),
   ];
 
   // The bundled @types/oidc-provider does not list ML-DSA; the provider accepts it on Node.js 24.7+.

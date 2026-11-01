@@ -56,12 +56,86 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
+it.each([
+  ['/users/:userId/custom-data', { name: 'PRIVATE_CUSTOMER_CREDENTIAL' }],
+  [
+    '/users/:userId/custom-data',
+    {
+      ...mockUser,
+      id: 'PRIVATE_SPOOFED_ID',
+      name: 'PRIVATE_SPOOFED_NAME',
+      username: 'PRIVATE_SPOOFED_USERNAME',
+    },
+  ],
+  [
+    '/users/:userId/profile',
+    {
+      givenName: 'PRIVATE_GIVEN_NAME',
+      familyName: 'PRIVATE_FAMILY_NAME',
+      preferredUsername: 'PRIVATE_PREFERRED_USERNAME',
+      address: { streetAddress: 'PRIVATE_ADDRESS' },
+    },
+  ],
+])('keeps raw %s response data out of Slack sending/signing/audit', async (matchedRoute, data) => {
+  const context = new HookContextManager({ ip: 'PRIVATE_IP' });
+  const registration = context.getRegisteredHookEventContext({
+    method: 'PATCH',
+    _matchedRoute: matchedRoute,
+    path: matchedRoute.replace(':userId', 'verified-route-user'),
+    params: { userId: 'verified-route-user' },
+    status: 200,
+    response: { body: data },
+  } as unknown as Parameters<typeof context.getRegisteredHookEventContext>[0]);
+  expect(registration).toBeDefined();
+  if (!registration) {
+    throw new Error('Expected registered user subresource producer');
+  }
+  context.appendDataHookContext(registration[0], registration[1]);
+  await library.triggerDataHooks(new ConsoleLog(), context);
+  const sent: unknown = requestBodies.mock.lastCall?.[0];
+  expect(sent).toMatchObject({
+    text: expect.stringContaining('Affected user: verified-route-user') as unknown,
+  });
+  expect(JSON.stringify(sent)).not.toContain('PRIVATE_');
+  expect(sign).toHaveBeenLastCalledWith('test-key', sent);
+  expect(insertLog.mock.lastCall?.[0]).toHaveProperty('payload.hookRequest.body', sent);
+  expect(JSON.stringify(insertLog.mock.lastCall?.[0])).not.toContain('PRIVATE_');
+
+  // Generic event data must still be sent/signed intact, including custom-data responses.
+  const genericPayload = {
+    ...generateHookTestPayload(hook.id, 'User.Data.Updated'),
+    ...registration[1],
+  };
+  await sendWebhookRequest({
+    hookConfig: { url: 'https://example.com' },
+    payload: genericPayload,
+    signingKey: 'test-key',
+  });
+  expect(requestBodies).toHaveBeenLastCalledWith(genericPayload);
+  expect(sign).toHaveBeenLastCalledWith('test-key', genericPayload);
+});
+
 it('sends and signs the readable minimal-context Slack body', async () => {
   await sendWebhookRequest({ hookConfig: { url }, payload, signingKey: 'test-key' });
   const request = fetch.mock.lastCall?.[0];
   expect(requestBodies).toHaveBeenLastCalledWith(body);
   expect(sign).toHaveBeenLastCalledWith('test-key', body);
   expect(request?.headers.get('logto-signature-sha-256')).toBe('test-signature');
+});
+
+it('keeps the typed user subject readable in the sent, signed and audited body', async () => {
+  const context = new HookContextManager({ ip: 'PRIVATE_IP' });
+  context.appendDataHookContext('User.Data.Updated', {
+    user: { ...mockUser, name: 'Typed subject', customData: { name: 'PRIVATE_CUSTOM_DATA' } },
+  });
+  await library.triggerDataHooks(new ConsoleLog(), context);
+  const sent: unknown = requestBodies.mock.lastCall?.[0];
+  expect(sent).toMatchObject({
+    text: expect.stringContaining('Affected user: Typed subject') as unknown,
+  });
+  expect(JSON.stringify(sent)).not.toContain('PRIVATE_');
+  expect(sign).toHaveBeenLastCalledWith('test-key', sent);
+  expect(insertLog.mock.lastCall?.[0]).toHaveProperty('payload.hookRequest.body', sent);
 });
 
 it.each([

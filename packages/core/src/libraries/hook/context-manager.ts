@@ -15,11 +15,31 @@ import { pick } from '@silverhand/essentials';
 import { type Context } from 'koa';
 import { type IRouterParamContext } from 'koa-router';
 
+import { registerHookDataSubject } from './data-subject.js';
 import {
   buildManagementApiContext,
   buildManagementApiDataHookRegistrationKey,
   hasRegisteredDataHookEvent,
 } from './utils.js';
+
+// These registered producers return the affected entity itself. Subresources such as
+// custom-data/profile and role scopes return a different object and must never be treated as it.
+const entityResponseRegistrations = new Set([
+  'POST /users',
+  'PATCH /users/:userId',
+  'PATCH /users/:userId/password',
+  'PATCH /users/:userId/is-suspended',
+  'POST /roles',
+  'PATCH /roles/:id',
+  'POST /resources/:resourceId/scopes',
+  'PATCH /resources/:resourceId/scopes/:scopeId',
+  'POST /organizations',
+  'PATCH /organizations/:id',
+  'POST /organization-roles',
+  'PATCH /organization-roles/:id',
+  'POST /organization-scopes',
+  'PATCH /organization-scopes/:id',
+]);
 
 export type HookMetadata = {
   userAgent?: string;
@@ -95,7 +115,9 @@ export class HookContextManager {
       managementApiHooksRegistration[key],
       {
         ...buildManagementApiContext(ctx),
-        data: ctx.response.body,
+        data: entityResponseRegistrations.has(key)
+          ? registerHookDataSubject(ctx.response.body)
+          : ctx.response.body,
       },
     ]);
   }
@@ -107,13 +129,18 @@ export class HookContextManager {
       : HookContext
   ) {
     const { user, ...rest } = context;
+    // eslint-disable-next-line no-restricted-syntax -- typed UserContext producers supply the user
+    const selectedUser = user && pick(user as User, ...userInfoSelectFields);
     // eslint-disable-next-line @silverhand/fp/no-mutating-methods
     this.dataHookContextArray.push({
       event,
-      // eslint-disable-next-line no-restricted-syntax -- trust the input
-      ...(user ? { data: pick(user as User, ...userInfoSelectFields) } : {}),
+      ...(selectedUser ? { data: registerHookDataSubject(selectedUser) } : {}),
       ...rest,
     });
+    // These event-specific producers supply typed TrustedDeviceEventData, not a route response.
+    if (event === 'TrustedDevice.Created' || event === 'TrustedDevice.Deleted') {
+      registerHookDataSubject(rest.data);
+    }
   }
 
   appendExceptionHookContext<Event extends ExceptionHookEvent>(event: Event, context: HookContext) {

@@ -53,6 +53,7 @@ type Props = {
   readonly onChange: (document: unknown) => void;
   readonly onEdit: (path: string, value: string) => void;
   readonly onMove: (id: string, x: number, y: number) => void;
+  readonly onActiveSectionChange?: (sectionId: string) => void;
 };
 
 function PuckLandingPageEditor({
@@ -62,12 +63,17 @@ function PuckLandingPageEditor({
   onChange,
   onEdit,
   onMove,
+  onActiveSectionChange,
 }: Props) {
   const lastEmitted = useRef(document);
   const [activeSection, setActiveSection] = useState('hero');
-  const selectSection = useCallback((sectionId: string) => {
-    setActiveSection(sectionId);
-  }, []);
+  const selectSection = useCallback(
+    (sectionId: string) => {
+      setActiveSection(sectionId);
+      onActiveSectionChange?.(sectionId);
+    },
+    [onActiveSectionChange]
+  );
   const selectLink = useCallback(
     (path: string) => {
       const match = /^sections\.(\d+)/.exec(path);
@@ -76,10 +82,10 @@ function PuckLandingPageEditor({
         isRecord(document) && Array.isArray(document.sections) ? document.sections : [];
       const section: unknown = sections[index];
       if (isRecord(section) && typeof section.id === 'string') {
-        setActiveSection(section.id);
+        selectSection(section.id);
       }
     },
-    [document]
+    [document, selectSection]
   );
   const navigation = useMemo<EditorNavigation>(
     () => ({

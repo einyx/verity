@@ -7,7 +7,10 @@ import {
   useMemo,
   useState,
   type MutableRefObject,
+  type CSSProperties,
 } from 'react';
+
+import { isDevFeaturesEnabled } from '@/consts/env';
 
 import { isRecord } from './ContentEditor';
 import FittedPreview from './FittedPreview';
@@ -31,6 +34,7 @@ import {
 import LandingSectionsOutline from './LandingSectionsOutline';
 import PreviewDeviceSwitch from './PreviewDeviceSwitch';
 import styles from './index.module.scss';
+import useInspectorResize from './use-inspector-resize';
 
 type PageProps = { readonly document: unknown };
 
@@ -55,6 +59,10 @@ export function PageCanvas() {
   const [panel, setPanel] = useState<'preview' | 'sections' | 'properties'>('preview');
   const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const inspector = useInspectorResize();
+  const workspaceStyle: CSSProperties & { '--inspector-width': string } = {
+    '--inspector-width': `${inspector.width}px`,
+  };
   const preview = useContext(PreviewContext);
   const navigation = useContext(EditorNavigationContext);
   const { appState, dispatch, history } =
@@ -220,9 +228,14 @@ export function PageCanvas() {
 
   return (
     <div
+      ref={inspector.workspaceRef}
+      style={workspaceStyle}
       className={styles.editorWorkspace}
       data-panel={panel}
       data-properties-collapsed={propertiesCollapsed}
+      data-compact={inspector.isCompact}
+      data-resizing={inspector.isDragging}
+      data-inspector-resizable={isDevFeaturesEnabled}
     >
       <div className={styles.editorPanelTabs} aria-label="Editor panels">
         {(['sections', 'preview', 'properties'] as const).map((name) => (
@@ -310,6 +323,10 @@ export function PageCanvas() {
           </FittedPreview>
         </div>
       </section>
+      {/* Landing-page inspector resizing is part of the editor workflow improvements. */}
+      {isDevFeaturesEnabled && !propertiesCollapsed && !inspector.isCompact && (
+        <div {...inspector.separatorProps} className={styles.inspectorResizer} />
+      )}
       <aside
         id="landing-editor-properties"
         className={styles.editorInspector}

@@ -75,7 +75,7 @@ function AssistantMessage() {
             ...actionContext?.statuses[action.id],
           }}
           onConfirm={() => {
-            actionContext?.onConfirm(action.id);
+            actionContext?.onConfirm(action);
           }}
           onCancel={() => {
             actionContext?.onCancel(action.id);

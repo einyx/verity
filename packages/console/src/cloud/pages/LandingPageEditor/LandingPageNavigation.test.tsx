@@ -5,6 +5,7 @@ import PuckLandingPageEditor from './PuckLandingPageEditor';
 import type { installPuckBrowserApis } from './puck-test-environment';
 
 jest.mock('@puckeditor/core/puck.css', () => ({}));
+jest.mock('@/consts/env', () => ({ isDevFeaturesEnabled: true }));
 jest.mock('@puckeditor/core', () => {
   const environment = jest.requireActual<{ installPuckBrowserApis: typeof installPuckBrowserApis }>(
     './puck-test-environment'

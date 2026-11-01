@@ -5,6 +5,7 @@ import PuckLandingPageEditor from './PuckLandingPageEditor';
 import type { installPuckBrowserApis } from './puck-test-environment';
 
 jest.mock('@puckeditor/core/puck.css', () => ({}));
+jest.mock('@/consts/env', () => ({ isDevFeaturesEnabled: true }));
 jest.mock('@puckeditor/core', () => {
   // The mock factory runs before the imports are initialized, so the browser-API stub is loaded here.
 
@@ -58,6 +59,35 @@ it('uses one inspector and keeps the preview separate from the editor controls',
   expect(screen.getByText('Sections', { selector: 'button' })).toBeTruthy();
 });
 
+it('adds an externally applied AI edit to canvas history so Undo restores the prior draft', async () => {
+  const onChange = jest.fn();
+  const { rerender } = renderEditor(onChange);
+  const edited = {
+    ...defaultLandingPageContent,
+    sections: defaultLandingPageContent.sections.map((section) =>
+      section.type === 'hero' ? { ...section, lede: 'AI suggestion' } : section
+    ),
+  };
+  rerender(
+    <PuckLandingPageEditor
+      document={edited}
+      locale="en"
+      onLocaleChange={jest.fn()}
+      onChange={onChange}
+      onEdit={jest.fn()}
+      onMove={jest.fn()}
+    />
+  );
+  const undo = screen.getByText('Undo', { selector: 'button' });
+  await waitFor(() => {
+    expect(undo.hasAttribute('disabled')).toBe(false);
+  });
+  fireEvent.click(undo);
+  await waitFor(() => {
+    expect(onChange).toHaveBeenCalledWith(defaultLandingPageContent);
+  });
+});
+
 it('switches between compact-screen panels without unmounting the preview', () => {
   renderEditor(jest.fn());
   const frame = screen.getByTitle('Landing page preview');
@@ -87,6 +117,25 @@ it('collapses the section properties column and restores it without remounting t
   expect(
     screen.getByText('Collapse properties', { selector: 'button' }).getAttribute('aria-expanded')
   ).toBe('true');
+  expect(screen.getByTitle('Landing page preview')).toBe(frame);
+});
+
+it('resizes the right inspector without editing content or reloading the preview and retains width after collapse', () => {
+  jest.replaceProperty(window, 'innerWidth', 1440);
+  const onChange = jest.fn();
+  renderEditor(onChange);
+  const frame = screen.getByTitle('Landing page preview');
+  const initialChanges = onChange.mock.calls.length;
+  const handle = screen.getByRole('separator', { hidden: true });
+  expect(handle.getAttribute('aria-label')).toBe('Resize properties');
+  fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+  expect(handle.getAttribute('aria-valuenow')).toBe('336');
+  expect(screen.getByTitle('Landing page preview')).toBe(frame);
+  expect(onChange.mock.calls.length).toBe(initialChanges);
+  fireEvent.click(screen.getByText('Collapse properties', { selector: 'button' }));
+  expect(screen.queryByRole('separator', { hidden: true })).toBeNull();
+  fireEvent.click(screen.getByText('Show properties', { selector: 'button' }));
+  expect(screen.getByRole('separator', { hidden: true }).getAttribute('aria-valuenow')).toBe('336');
   expect(screen.getByTitle('Landing page preview')).toBe(frame);
 });
 

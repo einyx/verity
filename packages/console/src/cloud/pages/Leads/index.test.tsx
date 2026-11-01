@@ -96,6 +96,7 @@ const listing = {
   loadSlidesPptx: jest.fn(),
   updateLead: jest.fn(),
   loadAssist: jest.fn(),
+  sendFollowUp: jest.fn(),
 };
 const defaultQuery = { page: 1, pageSize: 20 };
 

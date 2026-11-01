@@ -25,5 +25,5 @@ export const formatFollowUpDraft = (value: string): string => {
   const paragraphs = Array.from({ length: Math.ceil(sentences.length / 2) }, (_, index) =>
     sentences.slice(index * 2, index * 2 + 2).join(' ')
   );
-  return [greeting?.[0].trim(), ...paragraphs, closing?.[1].trim()].filter(Boolean).join('\n\n');
+  return [greeting?.[0].trim(), ...paragraphs, closing?.[1]?.trim()].filter(Boolean).join('\n\n');
 };

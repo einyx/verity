@@ -272,6 +272,7 @@ describe('triggerTestHook', () => {
       hookConfig: hook.config,
       payload: triggerTestHookPayload,
       signingKey: hook.signingKey,
+      isTest: true,
     });
 
     jest.useRealTimers();

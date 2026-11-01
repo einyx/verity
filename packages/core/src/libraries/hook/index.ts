@@ -239,6 +239,7 @@ export const createHookLibrary = (queries: Queries) => {
             hookConfig: config,
             payload: testPayload,
             signingKey,
+            isTest: true,
           });
         })
       );

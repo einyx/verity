@@ -19,6 +19,7 @@ mockEsm('#src/utils/sign.js', () => ({ sign }));
 const { sendWebhookRequest, generateHookTestPayload } = await import('./utils.js');
 const { createHookLibrary } = await import('./index.js');
 const { HookContextManager } = await import('./context-manager.js');
+const { buildWebhookRequestBody } = await import('./slack-payload.js');
 const { MockQueries } = await import('#src/test-utils/tenant.js');
 
 const url = 'https://hooks.slack.com/services/T_TEST/B_TEST/TEST_ONLY_SECRET';
@@ -28,7 +29,7 @@ const payload = {
   sessionId: 'PRIVATE_SESSION',
   data: { primaryEmail: 'private@example.com', name: '<!channel>', customData: { secret: 'x' } },
 };
-const body = { text: 'User.Data.Updated at 2026-11-01T00:00:00.000Z' };
+const body = buildWebhookRequestBody(url, payload);
 const hook: Hook = {
   tenantId: 'tenant',
   id: 'test-hook',
@@ -55,7 +56,7 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-it('sends and signs only event and timestamp for Slack', async () => {
+it('sends and signs the readable minimal-context Slack body', async () => {
   await sendWebhookRequest({ hookConfig: { url }, payload, signingKey: 'test-key' });
   const request = fetch.mock.lastCall?.[0];
   expect(requestBodies).toHaveBeenLastCalledWith(body);
@@ -92,9 +93,23 @@ it.each([
 
 it('formats triggerTestHook through the same sender', async () => {
   await library.triggerTestHook(hook.id, hook.events, hook.config);
-  expect(requestBodies).toHaveBeenLastCalledWith({
-    text: expect.stringMatching(/^User\.Data\.Updated at /) as unknown,
-  });
+  expect(requestBodies).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      text: expect.stringMatching(/^Test notification — User profile updated/) as unknown,
+      blocks: expect.arrayContaining([expect.objectContaining({ type: 'header' })]) as unknown,
+    })
+  );
+});
+
+it('keeps generic manual test payloads unchanged', async () => {
+  await library.triggerTestHook(hook.id, hook.events, { url: 'https://example.com' });
+  expect(requestBodies).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      event: 'User.Data.Updated',
+      hookId: hook.id,
+    })
+  );
+  expect(requestBodies.mock.lastCall?.[0]).not.toHaveProperty('isTest');
 });
 
 it('logs the transmitted Slack body and safe 400 diagnostics without retrying', async () => {
@@ -112,14 +127,14 @@ it('logs the transmitted Slack body and safe 400 diagnostics without retrying', 
   const logged: unknown = insertLog.mock.lastCall?.[0];
   expect(logged).toMatchObject({
     payload: {
-      hookRequest: { body: { text: expect.stringMatching(/^User\.Data\.Updated at /) as unknown } },
+      hookRequest: { body: { text: expect.stringMatching(/^User profile updated/) as unknown } },
       response: { statusCode: 400, body: 'missing_text_or_fallback_or_attachments' },
       error: 'HTTPError (400)',
     },
   });
   expect(logged).toHaveProperty('payload.hookRequest.body', requestBodies.mock.lastCall?.[0]);
   expect(JSON.stringify(logged)).not.toMatch(
-    /TEST_ONLY_SECRET|private@example.com|PRIVATE_SESSION|PRIVATE_AGENT|<!channel>/
+    /TEST_ONLY_SECRET|private@example.com|PRIVATE_SESSION|PRIVATE_AGENT/
   );
 });
 

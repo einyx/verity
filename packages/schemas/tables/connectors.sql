@@ -11,7 +11,7 @@ create table connectors (
   config jsonb /* @use JsonObject */ not null default '{}'::jsonb,
   metadata jsonb /* @use ConfigurableConnectorMetadata */ not null default '{}'::jsonb,
   created_at timestamptz not null default(now()),
-  primary key (id)
+  primary key (tenant_id, id)
 );
 
 create index connectors__id

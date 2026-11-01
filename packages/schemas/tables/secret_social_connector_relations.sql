@@ -6,8 +6,7 @@ create table secret_social_connector_relations (
   secret_id varchar(21) not null
     references secrets (id) on update cascade on delete cascade,
   /** Social connector ID foreign reference. Only present for secrets that store social connector tokens. Note: avoid directly cascading deletes here, need to delete the secrets first.*/
-  connector_id varchar(128) not null
-    references connectors (id) on update cascade,
+  connector_id varchar(128) not null,
   /** The target of the social connector. e.g. 'github', 'google', etc. */
   target varchar(256) not null,
   /** User social identity ID foreign reference. Only present for secrets that store social identity tokens. */
@@ -15,7 +14,11 @@ create table secret_social_connector_relations (
   primary key (tenant_id, secret_id),
   /** Ensures that each social identity is associated with only one secret. */
   constraint secret_social_connector_relations__target__identity_id
-    unique (tenant_id, target, identity_id)
+    unique (tenant_id, target, identity_id),
+  /** The connector is scoped to the tenant, so the reference is tenant-scoped as well. */
+  constraint secret_social_connector_relations_connector_id_fkey
+    foreign key (connector_id, tenant_id)
+    references connectors (id, tenant_id) on update cascade
 );
 
 /** Trigger function to delete secrets when the social connector is deleted. */

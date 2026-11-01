@@ -50,6 +50,12 @@ const connectors = {
     target_conflict_line2:
       '현재 연동을 동일한 ID 공급자로 바꾸고 이전 사용자가 다시 등록하지 않고도 로그인할 수 있도록 하려면 <span>name</span> 커넥터를 삭제하고 동일한 "IdP 이름"으로 새 커넥터를 만드세요.',
     target_conflict_line3: '다른 ID 공급자에 연결하려면 "IdP 이름"을 수정한 후 계속 진행하세요.',
+    connector_id: '커넥터 ID',
+    connector_id_placeholder: '커넥터 ID를 입력하세요',
+    connector_id_tip:
+      '커넥터 ID는 아래 콜백 URI의 마지막 부분입니다. 그대로 유지하세요: ID 공급자가 콜백 URI를 정확히 일치시키므로 변경하면 등록한 URI가 무효화됩니다.',
+    connector_id_tip_standard:
+      '문자, 숫자, 점, 하이픈, 밑줄을 사용할 수 있습니다. 이 설정은 커넥터를 만든 후 변경할 수 없습니다.',
     config: '여기에 JSON을 입력',
     sync_profile: '프로필 정보 동기화',
     sync_profile_only_at_sign_up: '회원가입할 때 동기화',

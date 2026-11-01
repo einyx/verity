@@ -52,6 +52,12 @@ const connectors = {
       'Se você deseja substituir o conector atual pelo mesmo fornecedor de identidade e permitir que usuários antigos façam login sem se registrar novamente, exclua o conector <span>nome</span> e crie um novo com o mesmo "Nome do fornecedor de identidade".',
     target_conflict_line3:
       'Se você deseja se conectar a um provedor de identidade diferente, modifique o "Nome do fornecedor de identidade" e prossiga.',
+    connector_id: 'ID do conector',
+    connector_id_placeholder: 'Digite o ID do conector',
+    connector_id_tip:
+      'O ID do conector é a última parte da URI de retorno abaixo. Mantenha-o estável: seu provedor de identidade compara a URI de retorno de forma exata, portanto alterá-la invalidaria a URI que você registrou lá.',
+    connector_id_tip_standard:
+      'Letras, números, pontos, hifens e sublinhados são permitidos. Esta configuração não pode ser alterada depois que o conector é criado.',
     config: 'Digite seu JSON aqui',
     sync_profile: 'Sincronizar informações de perfil',
     sync_profile_only_at_sign_up: 'Sincronizar apenas no registro',

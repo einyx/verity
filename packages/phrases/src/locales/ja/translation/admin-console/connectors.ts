@@ -51,6 +51,12 @@ const connectors = {
       '以前のユーザーが再登録せずにサインインできるように、同じ Identity Provider を持つ現在のコネクタを削除し、新しいコネクタを "IdP 名" と同じで作成する場合は、前のユーザーが再登録せずにサインインできるように、同じ Identity Provider を持つ現在のコネクタを削除し、新しいコネクタを "IdP 名" で作成してください。',
     target_conflict_line3:
       '別の Identity Provider に接続する場合は、「IdP 名」を変更して続行してください。',
+    connector_id: 'コネクタ ID',
+    connector_id_placeholder: 'コネクタ ID を入力',
+    connector_id_tip:
+      'コネクタ ID は以下のコールバック URI の最後の部分です。変更しない}): Your identity provider matches the callback URI exactly, so changing it invalidates the URI you registered there.',
+    connector_id_tip_standard:
+      '英字、数字、ドット、ハイフン、アンダースコアを使用できます。この設定はコネクタの作成後に変更できません。',
     config: '構成 JSON を入力してください',
     sync_profile: 'プロファイル情報の同期',
     sync_profile_only_at_sign_up: 'サインアップ時にのみ同期する',

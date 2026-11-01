@@ -47,6 +47,11 @@ const connectors = {
     target_conflict_line2:
       '如果你想替換當前的連接器，並連接相同的身份提供商（IdP），以便先前的用戶可以直接登錄而無需重新註冊，請先刪除 <span>name</span> 連接器，再創建一個新的連接器並使用相同的「身份供應商名稱」值。',
     target_conflict_line3: '如果你想連接一個新的身份驗證提供程序，請修改「身份供應商名稱」並繼續。',
+    connector_id: '連接器 ID',
+    connector_id_placeholder: '輸入連接器 ID',
+    connector_id_tip:
+      '連接器 ID 是下方回呼 URI 的最後一段。請保持不變：您的身分提供者會精確比對回呼 URI，修改它將使您在其中註冊的 URI 失效。',
+    connector_id_tip_standard: '允許使用字母、數字、點、短橫線和底線。建立連接器後無法變更此設定。',
     config: '粘貼你的 JSON 代碼',
     sync_profile: '開啟用戶資料同步',
     sync_profile_only_at_sign_up: '首次註冊時同步',

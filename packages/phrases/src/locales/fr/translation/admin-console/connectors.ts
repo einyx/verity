@@ -54,6 +54,12 @@ const connectors = {
       'Si vous souhaitez remplacer le connecteur actuel par le même fournisseur d\'identité et permettre aux utilisateurs précédents de se connecter sans s\'inscrire à nouveau, veuillez supprimer le connecteur <span>nom</span> et créer un nouveau connecteur avec le même nom "IdP".',
     target_conflict_line3:
       'Si vous souhaitez vous connecter à un fournisseur d\'identité différent, modifiez le "nom de l\'IdP" et poursuivez.',
+    connector_id: 'ID du connecteur',
+    connector_id_placeholder: "Saisissez l'ID du connecteur",
+    connector_id_tip:
+      "L'ID du connecteur correspond à la dernière partie de l'URI de rappel ci-dessous. Gardez-le stable : votre fournisseur d'identité compare l'URI de rappel de manière exacte, donc le modifier invaliderait l'URI que vous y avez enregistré.",
+    connector_id_tip_standard:
+      "Les lettres, les chiffres, les points, les tirets et les traits d'underscore sont autorisés. Ce paramètre ne peut pas être modifié après la création du connecteur.",
     config: 'Entrez votre JSON de configuration',
     sync_profile: 'Synchroniser les informations de profil',
     sync_profile_only_at_sign_up: "Synchroniser uniquement à l'inscription",

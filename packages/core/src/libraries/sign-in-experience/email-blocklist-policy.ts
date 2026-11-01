@@ -53,6 +53,20 @@ export const parseEmailBlocklistPolicy = (
         details: 'Disposable email domain validation is not supported in this environment',
       })
     );
+
+    /**
+     * The check is only as good as the validation service behind it. Reject the setting at save
+     * time when the service is unreachable, rather than failing every registration with a 500 at
+     * sign-in time.
+     */
+    assertThat(
+      EnvSet.values.azureFunctionAppEndpoint,
+      new RequestError({
+        code: 'request.invalid_input',
+        details:
+          'Disposable email domain validation requires AZURE_FUNCTION_APP_ENDPOINT to be configured',
+      })
+    );
   }
 
   return {

@@ -53,6 +53,12 @@ const connectors = {
       'Si desea reemplazar el conector actual con el mismo proveedor de identidad y permitir que los usuarios anteriores inicien sesión sin registrarse nuevamente, elimine el conector <span></span> y cree uno nuevo con el mismo "nombre de IdP".',
     target_conflict_line3:
       'Si desea conectarse a un proveedor de identidad diferente, modifique el "nombre del IdP" y continúe.',
+    connector_id: 'ID del conector',
+    connector_id_placeholder: 'Ingrese el ID del conector',
+    connector_id_tip:
+      'El ID del conector es la última parte de la URI de callback a continuación. Manténgalo estable: su proveedor de identidad coincide la URI de callback de forma exacta, por lo que cambiarla invalidaría la URI que registró allí.',
+    connector_id_tip_standard:
+      'Se permiten letras, números, puntos, guiones y guiones bajos. Esta configuración no se puede cambiar después de crear el conector.',
     config: 'Ingrese su JSON de configuración',
     sync_profile: 'Sincronizar información del perfil',
     sync_profile_only_at_sign_up: 'Sincronice solo en el registro',

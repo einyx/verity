@@ -53,6 +53,12 @@ const connectors = {
       'Wenn Sie den aktuellen Connector durch denselben Identity Provider ersetzen und früheren Benutzern ermöglichen möchten, sich ohne erneute Registrierung anzumelden, löschen Sie bitte den <span>Namen</span>-Connector und erstellen Sie einen neuen mit dem gleichen "IdP-Namen".',
     target_conflict_line3:
       'Wenn Sie sich mit einem anderen Identity Provider verbinden möchten, ändern Sie bitte den "IdP-Name" und fahren Sie fort.',
+    connector_id: 'Connector-ID',
+    connector_id_placeholder: 'Connector-ID eingeben',
+    connector_id_tip:
+      'Die Connector-ID ist der letzte Teil der Callback-URI unten. Behalten Sie sie stabil: Ihr Identitätsanbieter gleicht die Callback-URI exakt ab, daher würde eine Änderung die dort registrierte URI ungültig machen.',
+    connector_id_tip_standard:
+      'Buchstaben, Zahlen, Punkte, Bindestriche und Unterstriche sind erlaubt. Diese Einstellung kann nach dem Erstellen des Connectors nicht mehr geändert werden.',
     config: 'Geben Sie Ihre Konfigurations-JSON ein',
     sync_profile: 'Profilinformationen synchronisieren',
     sync_profile_only_at_sign_up: 'Nur bei der Anmeldung synchronisieren',

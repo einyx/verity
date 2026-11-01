@@ -52,6 +52,12 @@ const connectors = {
       'Jeśli chcesz zastąpić aktualny łącznik tym samym dostawcą tożsamości i umożliwić poprzednim użytkownikom logowanie bez rejestracji ponownie, usuń łącznik <span>nazwa</span> i utwórz nowy z tą samą „Nazwą dostawcy tożsamości”.',
     target_conflict_line3:
       'Jeśli chcesz połączyć się z innym dostawcą tożsamości, zmodyfikuj „Nazwę dostawcy tożsamości” i kontynuuj.',
+    connector_id: 'Identyfikator konektora',
+    connector_id_placeholder: 'Wprowadź identyfikator konektora',
+    connector_id_tip:
+      'Identyfikator konektora to ostatnia część poniższego adresu URI wywołania zwrotnego. Zachowaj go bez zmian: dostawca tożsamości porównuje adres URI wywołania zwrotnego dokładnie, więc jego zmiana unieważni adres zarejestrowany po tamtej stronie.',
+    connector_id_tip_standard:
+      'Dozwolone są litery, cyfry, kropki, myślniki i podkreślenia. Tego ustawienia nie można zmienić po utworzeniu konektora.',
     config: 'Wprowadź swój JSON konfiguracji',
     sync_profile: 'Synchronizuj informacje profilowe',
     sync_profile_only_at_sign_up: 'Synchronizuj tylko podczas rejestracji',

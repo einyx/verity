@@ -52,6 +52,12 @@ const connectors = {
       'If you\'d like to replace the current connector with the same identity provider and allow previous users to sign in without registering again, please delete the <span>name</span> connector and create a new one with the same "IdP name".',
     target_conflict_line3:
       'If you\'d like to connect to a different identity provider, please modify the "IdP name" and proceed.',
+    connector_id: 'Connector ID',
+    connector_id_placeholder: 'Enter connector ID',
+    connector_id_tip:
+      'The connector ID is the last part of the callback URI below. Keep it stable: your identity provider matches the callback URI exactly, so changing it invalidates the URI you registered there.',
+    connector_id_tip_standard:
+      'Letters, numbers, dots, dashes and underscores are allowed. This setting cannot be changed after the connector is built.',
     config: 'Enter your config JSON',
     sync_profile: 'Sync profile information',
     sync_profile_only_at_sign_up: 'Only sync at sign-up',

@@ -53,6 +53,12 @@ const connectors = {
       'Se desideri sostituire il connettore corrente con lo stesso provider di identità e consentire agli utenti precedenti di accedere senza registrarsi nuovamente, elimina il connettore <span>nome</span> e crea un nuovo connettore con lo stesso "Nome IdP".',
     target_conflict_line3:
       'Se desideri connetterti a un provider di identità diverso, modifica il "Nome IdP" e procedi.',
+    connector_id: 'ID del connettore',
+    connector_id_placeholder: "Inserisci l'ID del connettore",
+    connector_id_tip:
+      "L'ID del connettore è l'ultima parte dell'URI di callback qui sotto. Mantienilo stabile: il tuo provider di identità confronta l'URI di callback in modo esatto, quindi modificarlo invaliderebbe l'URI che hai registrato lì.",
+    connector_id_tip_standard:
+      'Sono consentite lettere, numeri, punti, trattini e trattini bassi. Questa impostazione non può essere modificata dopo la creazione del connettore.',
     config: 'Inserisci il tuo JSON di configurazione',
     sync_profile: 'Sincronizza le informazioni del profilo',
     sync_profile_only_at_sign_up: 'Sincronizza solo al momento della registrazione',

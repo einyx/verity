@@ -27,6 +27,11 @@ type Props = {
   readonly isStandard?: boolean;
   readonly conflictConnectorName?: Record<string, string>;
   readonly isTokenStorageSupported?: boolean;
+  /**
+   * Whether the connector ID can be chosen by the operator. The ID is the last segment of the
+   * social connector's callback URI, so it can only be set while the connector is being created.
+   */
+  readonly isConnectorIdEditable?: boolean;
 };
 
 function BasicForm({
@@ -34,6 +39,7 @@ function BasicForm({
   isStandard,
   conflictConnectorName,
   isTokenStorageSupported,
+  isConnectorIdEditable,
 }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const { getDocumentationUrl } = useDocumentationUrl();
@@ -150,6 +156,28 @@ function BasicForm({
           </div>
         )}
       </FormField>
+      {isConnectorIdEditable && (
+        <FormField
+          isRequired
+          title="connectors.guide.connector_id"
+          tip={t('connectors.guide.connector_id_tip')}
+        >
+          <TextInput
+            placeholder={t('connectors.guide.connector_id_placeholder')}
+            error={Boolean(errors.connectorId)}
+            aria-invalid={Boolean(errors.connectorId)}
+            {...register('connectorId', {
+              required: true,
+              /**
+               * The ID becomes a path segment of the callback URI, so it must not contain
+               * characters that would change its meaning.
+               */
+              pattern: /^[\w.-]+$/i,
+            })}
+          />
+          <div className={styles.tip}>{t('connectors.guide.connector_id_tip_standard')}</div>
+        </FormField>
+      )}
       <FormField title="connectors.guide.sync_profile">
         <Controller
           name="syncProfile"

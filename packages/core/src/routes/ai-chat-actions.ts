@@ -14,6 +14,8 @@ import { type LogtoMcpTool } from './mcp-logto-tools.js';
 // takes a payload from the client, and the stored body is checked against its hash before it runs.
 
 export const pendingActionTtlMs = 5 * 60 * 1000;
+// A full landing-page preview needs human review time; other write confirmations remain short-lived.
+const landingDraftReviewTtlMs = 30 * 60 * 1000;
 
 type PendingActionState = 'pending' | 'confirmed' | 'executed' | 'cancelled' | 'expired';
 
@@ -121,7 +123,10 @@ export const proposePendingAction = async ({
     bodyHash: hashBody(body),
     state: 'pending',
     result: null,
-    expiresAt: new Date(now.getTime() + pendingActionTtlMs),
+    expiresAt: new Date(
+      now.getTime() +
+        (found.name === 'save_landing_page_draft' ? landingDraftReviewTtlMs : pendingActionTtlMs)
+    ),
   };
 
   await store.insert(action);

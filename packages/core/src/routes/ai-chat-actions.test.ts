@@ -1,3 +1,4 @@
+import { defaultLandingPageContent } from '@logto/schemas';
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import {
@@ -110,6 +111,34 @@ const confirm = async (
   });
 
 describe('proposePendingAction', () => {
+  it('keeps a landing-page draft review usable after six minutes without extending other writes', async () => {
+    const { store, rows } = createFakeStore();
+    await propose(store, {
+      tool: 'save_landing_page_draft',
+      args: { draft: defaultLandingPageContent },
+    });
+    expect(rows.get('action-1')?.expiresAt.getTime()).toBe(now.getTime() + 30 * 60_000);
+    const execute = jest.fn(async () => okResult);
+    expect(await confirm(store, { now: new Date(now.getTime() + 6 * 60_000), execute })).toEqual({
+      ok: true,
+      result: okResult,
+    });
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('still expires a landing-page review after its bounded thirty-minute window', async () => {
+    const { store } = createFakeStore();
+    await propose(store, {
+      tool: 'save_landing_page_draft',
+      args: { draft: defaultLandingPageContent },
+    });
+    const execute = jest.fn(async () => okResult);
+    expect(await confirm(store, { now: new Date(now.getTime() + 31 * 60_000), execute })).toEqual({
+      ok: false,
+      code: 'expired',
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
   it('stores the body and runs nothing', async () => {
     const { store, rows } = createFakeStore();
     const execute = jest.fn(async () => okResult);

@@ -1,5 +1,6 @@
 import { defaultLandingPageContent } from '@logto/schemas';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 
 import ProposedActionCard, { type ProposedAction } from './ProposedActionCard';
 
@@ -13,9 +14,47 @@ const action: ProposedAction = {
   id: 'proposal',
   tool: 'save_landing_page_draft',
   body: defaultLandingPageContent,
-  expiresAt: '2026-11-01T12:00:00Z',
+  expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
   status: 'pending',
 };
+
+it('keeps an expired draft visible and requires a refreshed review before explicit saving', async () => {
+  const confirm = jest.fn();
+  const refresh = jest.fn();
+  function Review() {
+    const [proposal, setProposal] = useState({
+      ...action,
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    });
+    return (
+      <ProposedActionCard
+        action={proposal}
+        onConfirm={confirm}
+        onCancel={jest.fn()}
+        onRefresh={async () => {
+          refresh();
+          setProposal({
+            ...action,
+            id: 'renewed',
+            expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+          });
+        }}
+      />
+    );
+  }
+  render(<Review />);
+  const frame = screen.getByTitle('Proposed landing page preview');
+  expect(screen.getByRole('button', { name: 'Save draft' })).toHaveProperty('disabled', true);
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh review' }));
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Save draft' })).toHaveProperty('disabled', false);
+  });
+  expect(refresh).toHaveBeenCalledTimes(1);
+  expect(confirm).not.toHaveBeenCalled();
+  expect(screen.getByTitle('Proposed landing page preview')).toBe(frame);
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  expect(confirm).toHaveBeenCalledTimes(1);
+});
 
 it('shows a rendered landing-page artifact instead of raw draft JSON', () => {
   render(<ProposedActionCard action={action} onConfirm={jest.fn()} onCancel={jest.fn()} />);

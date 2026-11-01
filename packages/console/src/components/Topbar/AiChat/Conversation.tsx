@@ -4,7 +4,7 @@ import {
   useLocalRuntime,
   type ChatModelAdapter,
 } from '@assistant-ui/react';
-import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSWRConfig } from 'swr';
 
@@ -12,7 +12,8 @@ import { landingPageEditorKey } from '@/cloud/hooks/use-landing-page';
 import useApi from '@/hooks/use-api';
 
 import { type ProposedAction } from './ProposedActionCard';
-import { confirmChatAction } from './confirm-action';
+import { refreshDraftReview } from './refresh-draft-review';
+import useChatActionReviews from './use-chat-action-reviews';
 import useLandingPageAiHeaders from './use-landing-page-ai-headers';
 
 type ChatResponse = {
@@ -20,17 +21,11 @@ type ChatResponse = {
   readonly actions?: Array<Omit<ProposedAction, 'status'>>;
 };
 
-type ActionStatus = Pick<ProposedAction, 'status' | 'message'>;
-
 export type ConversationApi = {
   readonly send: (text: string) => void;
 };
 
-type ActionContextValue = {
-  readonly statuses: Record<string, ActionStatus | undefined>;
-  readonly onConfirm: (action: Pick<ProposedAction, 'id' | 'tool'>) => void;
-  readonly onCancel: (actionId: string) => void;
-};
+type ActionContextValue = ReturnType<typeof useChatActionReviews>;
 
 // Proposed actions ride on the assistant message's metadata, which is read-only. Their live status is
 // kept here, so confirming or cancelling one doesn't rewrite the transcript.
@@ -73,7 +68,26 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
   const landingPageAiHeaders = useLandingPageAiHeaders();
   const { mutate } = useSWRConfig();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
-  const [statuses, setStatuses] = useState<Record<string, ActionStatus | undefined>>({});
+  const actionContext = useChatActionReviews({
+    confirm: async (id) =>
+      api
+        .post(`api/ai-chat/actions/${id}/confirm`, {
+          headers: await landingPageAiHeaders(),
+        })
+        .json(),
+    cancel: async (id) => api.post(`api/ai-chat/actions/${id}/cancel`).json(),
+    refresh: async (action) =>
+      refreshDraftReview(action, async (request) =>
+        api
+          .post('api/ai-chat/actions', {
+            json: request,
+            headers: await landingPageAiHeaders(),
+          })
+          .json()
+      ),
+    refreshEditor: async () => mutate(landingPageEditorKey),
+    failureMessage: t('inkeep_ai_bot.action_failed_detail'),
+  });
 
   const adapter = useMemo<ChatModelAdapter>(
     () => ({
@@ -115,47 +129,6 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
   );
 
   const runtime = useLocalRuntime(adapter);
-
-  const actionContext = useMemo<ActionContextValue>(
-    () => ({
-      statuses,
-      onConfirm: (action) => {
-        const actionId = action.id;
-        setStatuses((current) => ({ ...current, [actionId]: { status: 'running' } }));
-        void (async () => {
-          try {
-            await confirmChatAction(
-              action,
-              async (id) =>
-                api
-                  .post(`api/ai-chat/actions/${id}/confirm`, {
-                    headers: await landingPageAiHeaders(),
-                  })
-                  .json(),
-              async () => mutate(landingPageEditorKey)
-            );
-            setStatuses((current) => ({ ...current, [actionId]: { status: 'done' } }));
-          } catch {
-            setStatuses((current) => ({
-              ...current,
-              [actionId]: { status: 'failed', message: t('inkeep_ai_bot.action_failed_detail') },
-            }));
-          }
-        })();
-      },
-      onCancel: (actionId) => {
-        void (async () => {
-          try {
-            await api.post(`api/ai-chat/actions/${actionId}/cancel`).json();
-          } catch {
-            // If the cancel did not reach the server, the proposal expires on its own.
-          }
-          setStatuses((current) => ({ ...current, [actionId]: { status: 'cancelled' } }));
-        })();
-      },
-    }),
-    [api, landingPageAiHeaders, mutate, statuses, t]
-  );
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

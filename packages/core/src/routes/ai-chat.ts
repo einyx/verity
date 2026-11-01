@@ -214,7 +214,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
             actions,
             userId: ctx.auth.id,
             tenantId: tenant.id,
-            now: new Date(),
+            now: () => new Date(),
           });
 
           return proposal.response;

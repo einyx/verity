@@ -26,7 +26,7 @@ export const proposeLandingPageEdit = async ({
   actions: Map<string, ProposedActionView>;
   userId: string;
   tenantId: string;
-  now: Date;
+  now: Date | (() => Date);
 }): Promise<{ response: string }> => {
   try {
     const editorToken = getToken ? await getToken() : token;
@@ -41,7 +41,7 @@ export const proposeLandingPageEdit = async ({
       actions,
       userId,
       tenantId,
-      now,
+      now: typeof now === 'function' ? now() : now,
       note: 'Not saved yet. The user must confirm saving this exact landing-page draft.',
     });
 

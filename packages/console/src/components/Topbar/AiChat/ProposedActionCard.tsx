@@ -13,12 +13,14 @@ export type ProposedAction = {
   readonly expiresAt: string;
   readonly status: 'pending' | 'running' | 'done' | 'cancelled' | 'failed';
   readonly message?: string;
+  readonly operation?: 'confirm' | 'cancel' | 'refresh';
 };
 
 type Props = {
   readonly action: ProposedAction;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
+  readonly onRefresh?: () => Promise<void>;
 };
 
 const formatValue = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value));
@@ -27,12 +29,19 @@ const formatValue = (value: unknown) => (typeof value === 'string' ? value : JSO
  * Shows a proposed write the way a coding agent shows an edit: each field of the request is a
  * `+` line, and Allow / Reject sit under it while the write is pending.
  */
-function ProposedActionCard({ action, onConfirm, onCancel }: Props) {
+function ProposedActionCard({ action, onConfirm, onCancel, onRefresh }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
 
   // Landing-page artifact previews are being developed alongside the editor's review workflow.
   if (isDevFeaturesEnabled && action.tool === 'save_landing_page_draft') {
-    return <LandingPageArtifact action={action} onConfirm={onConfirm} onCancel={onCancel} />;
+    return (
+      <LandingPageArtifact
+        action={action}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        onRefresh={onRefresh}
+      />
+    );
   }
 
   const statusLabel = {
@@ -67,10 +76,20 @@ function ProposedActionCard({ action, onConfirm, onCancel }: Props) {
       </div>
       {action.status === 'pending' && (
         <div className={styles.actionButtons}>
-          <button type="button" className={styles.actionConfirm} onClick={onConfirm}>
+          <button
+            type="button"
+            className={styles.actionConfirm}
+            disabled={Boolean(action.operation)}
+            onClick={onConfirm}
+          >
             {t('inkeep_ai_bot.action_confirm')}
           </button>
-          <button type="button" className={styles.actionCancel} onClick={onCancel}>
+          <button
+            type="button"
+            className={styles.actionCancel}
+            disabled={Boolean(action.operation)}
+            onClick={onCancel}
+          >
             {t('inkeep_ai_bot.action_cancel')}
           </button>
         </div>

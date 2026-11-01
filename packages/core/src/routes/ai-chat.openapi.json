@@ -67,7 +67,7 @@
     "/api/ai-chat/actions": {
       "post": {
         "summary": "Propose a write",
-        "description": "Store a write as a pending action. Nothing is created here. The stored body is returned for review, and the write runs only when the user confirms the action.",
+        "description": "Store a write as a pending action. Nothing is created here. The stored body is returned for review, and the write runs only when the user confirms the action. Landing-page draft reviews last 30 minutes from proposal creation; other write reviews last 5 minutes. An expired landing draft can be proposed again with the same validated draft body to refresh its review. This creates a new action ID and still requires an explicit confirmation; it never saves, publishes, or merges newer edits automatically.",
         "requestBody": {
           "required": true,
           "content": {

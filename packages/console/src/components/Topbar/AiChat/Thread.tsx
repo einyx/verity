@@ -66,22 +66,31 @@ function AssistantMessage() {
       <MessagePrimitive.If hasContent>
         <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
       </MessagePrimitive.If>
-      {actions.map((action) => (
-        <ProposedActionCard
-          key={action.id}
-          action={{
-            ...action,
-            status: 'pending',
-            ...actionContext?.statuses[action.id],
-          }}
-          onConfirm={() => {
-            actionContext?.onConfirm(action);
-          }}
-          onCancel={() => {
-            actionContext?.onCancel(action.id);
-          }}
-        />
-      ))}
+      {actions.map((original) => {
+        const state = actionContext?.statuses[original.id];
+        const action: ProposedAction = {
+          ...original,
+          ...state?.replacement,
+          status: state?.status ?? 'pending',
+          message: state?.message,
+          operation: state?.operation,
+        };
+        return (
+          <ProposedActionCard
+            key={original.id}
+            action={action}
+            onConfirm={() => {
+              actionContext?.onConfirm(action, original.id);
+            }}
+            onCancel={() => {
+              actionContext?.onCancel(action.id, original.id);
+            }}
+            onRefresh={
+              actionContext ? async () => actionContext.onRefresh(action, original.id) : undefined
+            }
+          />
+        );
+      })}
       <MessagePrimitive.Error>
         <p className="demo-chat-error" role="alert">
           {t('inkeep_ai_bot.unavailable')}

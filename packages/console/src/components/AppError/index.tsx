@@ -1,5 +1,5 @@
 import { useLogto } from '@logto/react';
-import { Theme } from '@logto/schemas';
+import { ossConsolePath, Theme } from '@logto/schemas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,7 +25,7 @@ function AppError({ title, errorCode, errorMessage, callStack, children }: Props
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const theme = useTheme();
-  const { clearAllTokens } = useLogto();
+  const { clearAllTokens, signIn } = useLogto();
 
   return (
     <div className={styles.container}>
@@ -36,6 +36,12 @@ function AppError({ title, errorCode, errorMessage, callStack, children }: Props
         size="large"
         onClick={async () => {
           await clearAllTokens();
+          // Replaying an errored OAuth callback repeats its error/code instead of starting login.
+          // These are the console's registered callback paths; never reuse its query or fragment.
+          if (['/callback', `${ossConsolePath}/callback`].includes(window.location.pathname)) {
+            await signIn(new URL(window.location.pathname, window.location.origin).href);
+            return;
+          }
           window.location.reload();
         }}
       />

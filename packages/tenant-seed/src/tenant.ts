@@ -48,16 +48,22 @@ export const createTenant = async (
   // role may already exist. Create it when it does not, and set its password either way: the
   // stored password is what the runtime connects with, so a role left over from an earlier
   // seed has to match it.
+  //
+  // The role name and the password are inlined through `format()` rather than bound as
+  // parameters, because a `DO` block is parsed as a single statement and cannot carry them.
   await pool.query(sql`
-    do $$
+    do $seed$
     begin
-      if not exists (select 1 from pg_roles where rolname = ${role}) then
-        create role ${sql.identifier([role])} with inherit login
-          password '${sql.raw(password)}'
-          in role ${sql.identifier([parentRole])};
+      if not exists (select 1 from pg_roles where rolname = '${sql.raw(role)}') then
+        execute format(
+          'create role %I with inherit login password %L in role %I',
+          '${sql.raw(role)}',
+          '${sql.raw(password)}',
+          '${sql.raw(parentRole)}'
+        );
       end if;
     end
-    $$;
+    $seed$;
   `);
 
   await pool.query(sql`

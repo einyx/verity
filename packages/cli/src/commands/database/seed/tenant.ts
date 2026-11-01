@@ -13,7 +13,7 @@ import {
   defaultManagementApiAdminName,
   Roles,
   PredefinedScope,
-  getManagementApiResourceIndicator,
+  getManagementApiProxyIndicator,
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { assert } from '@silverhand/essentials';
@@ -86,7 +86,7 @@ export const seedLegacyManagementApiUserRole = async (
       (
         select scopes.id from scopes
         join resources on scopes.resource_id = resources.id
-        where resources.indicator = ${getManagementApiResourceIndicator(defaultTenantId)}
+        where resources.indicator = ${getManagementApiProxyIndicator(defaultTenantId)}
         and scopes.name = ${PredefinedScope.All}
         and scopes.tenant_id = ${adminTenantId}
       ),

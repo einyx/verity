@@ -3,6 +3,8 @@ import { adminTenantId, defaultTenantId } from '@logto/schemas';
 import type { CommonQueryMethods } from '@silverhand/slonik';
 import { sql } from '@silverhand/slonik';
 
+import { consoleLog } from '../utils.js';
+
 export const getDatabaseName = async (pool: CommonQueryMethods, normalized = false) => {
   const { currentDatabase } = await pool.one<{ currentDatabase: string }>(sql`
     select current_database();
@@ -15,9 +17,11 @@ export const getDatabaseName = async (pool: CommonQueryMethods, normalized = fal
  * Check the roles that a fresh Logto database needs before the seed opens its transaction.
  *
  * PostgreSQL roles are shared by the whole cluster, so dropping a database does not remove the
- * roles that were created for it. Reusing an existing role could change the permissions of another
- * Logto installation, therefore the seed command must stop and let an administrator inspect the
- * roles instead.
+ * roles that were created for it. A role left behind by a seed that failed part way through is
+ * harmless: the seed reuses it and sets its password to the stored one.
+ *
+ * A role that another Logto installation owns is a different matter. Reusing it would change that
+ * installation's permissions, so the seed has to stop and let an administrator look at it.
  */
 export const assertNoExistingTenantRoles = async (pool: CommonQueryMethods, database: string) => {
   // Derive the names from the same helper `createTenant()` uses at seed time, so this check keeps
@@ -36,15 +40,40 @@ export const assertNoExistingTenantRoles = async (pool: CommonQueryMethods, data
     order by rolname
   `);
 
-  if (existingRoles.length > 0) {
+  if (existingRoles.length === 0) {
+    return;
+  }
+
+  // The role names carry the database name, so they can only have been created for this
+  // database. The remaining question is whether another installation already claimed them, which
+  // shows up as a tenant row that points at one of these roles.
+  // The check runs before the seed creates the tables, so the table may not be there yet.
+  const owners = await pool
+    .any<{ id: string; dbUser: string }>(sql`
+      select id, db_user as "dbUser" from tenants
+      where db_user in (${sql.join(
+        roleNames.map((roleName) => sql`${roleName}`),
+        sql`, `
+      )})
+    `)
+    .catch(() => []);
+
+  if (owners.length > 0) {
     throw new Error(
       [
-        `Cannot seed database "${database}" because these PostgreSQL roles already exist:`,
+        `Cannot seed database "${database}" because these PostgreSQL roles are already in use:`,
         ...existingRoles.map(({ roleName }) => `  - ${roleName}`),
+        ...owners.map(({ id, dbUser }) => `  - used by tenant "${id}" (${dbUser})`),
         '',
-        'PostgreSQL roles are cluster-wide and are not removed when a database is dropped.',
-        'Verify that the roles belong to an old Logto installation, remove them as a PostgreSQL administrator, and run the seed command again.',
+        'Reusing them would change the permissions of that installation.',
+        'Remove them as a PostgreSQL administrator, or point this deployment at a different database, and run the seed command again.',
       ].join('\n')
     );
   }
+
+  consoleLog.info(
+    `Reusing the PostgreSQL roles left behind by an earlier seed of "${database}": ${existingRoles
+      .map(({ roleName }) => roleName)
+      .join(', ')}`
+  );
 };

@@ -43,10 +43,25 @@ export const createTenant = async (
   };
 
   await pool.query(insertInto(createTenant, 'tenants'));
+
+  // PostgreSQL roles are cluster-wide and outlive the database they were created for, so a
+  // role may already exist. Create it when it does not, and set its password either way: the
+  // stored password is what the runtime connects with, so a role left over from an earlier
+  // seed has to match it.
   await pool.query(sql`
-    create role ${sql.identifier([role])} with inherit login
-      password '${sql.raw(password)}'
-      in role ${sql.identifier([parentRole])};
+    do $$
+    begin
+      if not exists (select 1 from pg_roles where rolname = ${role}) then
+        create role ${sql.identifier([role])} with inherit login
+          password '${sql.raw(password)}'
+          in role ${sql.identifier([parentRole])};
+      end if;
+    end
+    $$;
+  `);
+
+  await pool.query(sql`
+    alter role ${sql.identifier([role])} with login password '${sql.raw(password)}';
   `);
 };
 

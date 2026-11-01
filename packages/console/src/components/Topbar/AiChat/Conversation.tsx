@@ -99,6 +99,9 @@ function Conversation({ children, onReady, onRunStateChange }: ConversationProps
         try {
           const response = await api
             .post('api/ai-chat/completions', {
+              // Tool-backed reviews can outlive the ordinary 20s management request budget.
+              // Bound this request only; confirmations and other writes keep their defaults.
+              timeout: 180_000,
               headers: await landingPageAiHeaders(),
               // Only role and content go to the server; proposed actions stay on the client.
               json: {

@@ -885,6 +885,14 @@
   min-height: 0;
 }
 
+// Both console presentations share this transcript. Beat the public demo's fixed bubble
+// surface regardless of stylesheet order, without changing the public landing chat palette.
+// stylelint-disable-next-line selector-class-pattern -- The public demo owns this global class.
+.consoleThread :global(.demo-chat-message[data-role='user']) {
+  background: var(--color-layer-2);
+  color: var(--color-text);
+}
+
 .demoViewport {
   display: flex;
   flex: 1;

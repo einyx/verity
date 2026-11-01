@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ActionContext } from './Conversation';
 import ProposedActionCard, { type ProposedAction } from './ProposedActionCard';
+import styles from './index.module.scss';
 
 // Metadata comes from the chat response, so each entry is checked before it is rendered as an action.
 const isActionList = (value: unknown): value is Array<Omit<ProposedAction, 'status'>> =>
@@ -137,7 +138,7 @@ function Thread() {
   const questions = t('inkeep_ai_bot.example_questions', { returnObjects: true });
 
   return (
-    <ThreadPrimitive.Root className="demo-chat-thread">
+    <ThreadPrimitive.Root className={`${styles.consoleThread} demo-chat-thread`}>
       <ThreadPrimitive.Viewport className="demo-chat-log">
         <ThreadPrimitive.Empty>
           <div className="demo-chat-welcome">

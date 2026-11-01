@@ -4258,7 +4258,7 @@ importers:
       '@logto/tenant-seed':
         specifier: workspace:^
         version: link:../tenant-seed
-      '@meshx/cloud':
+      '@prysm/cloud':
         specifier: workspace:^
         version: link:../cloud
       '@modelcontextprotocol/sdk':

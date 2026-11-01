@@ -13,10 +13,16 @@ import { conditionalSql, convertToIdentifiers } from '#src/utils/sql.js';
 
 const { table, fields } = convertToIdentifiers(Resources);
 
+// The legacy per-tenant indicator shape. A database that has not been migrated yet still
+// holds those, so they are excluded from the Management API list as well.
+const legacyManagementApiIndicatorPattern = String.raw`^https://[^.]+\.meshx\.foundation/api$`;
+
 const buildManagementApiExclusion = (excludeManagementApis: boolean) =>
   conditionalSql(
     excludeManagementApis,
-    () => sql`where ${fields.indicator} !~ ${managementApiIndicatorPattern}`
+    () =>
+      sql`where ${fields.indicator} !~ ${managementApiIndicatorPattern}
+        and ${fields.indicator} !~ ${legacyManagementApiIndicatorPattern}`
   );
 
 export const createResourceQueries = (pool: CommonQueryMethods, wellKnownCache: WellKnownCache) => {

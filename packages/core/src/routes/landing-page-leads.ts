@@ -18,6 +18,7 @@ import {
   leadAssistSystemPrompt,
   parseLeadAssistResult,
 } from './landing-page-lead-assist.js';
+import { mountLeadFollowUpRoute } from './landing-page-lead-follow-up-route.js';
 import {
   completeWeeks,
   toWeekBuckets,
@@ -203,7 +204,10 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
       new RequestError({ code: 'auth.forbidden', status: 403 })
     );
     assertThat(sub !== clientId, new RequestError({ code: 'auth.forbidden', status: 403 }));
+    return sub;
   };
+
+  mountLeadFollowUpRoute(router, authenticateAdmin, async () => EnvSet.sharedPool);
 
   router.get('/api/landing-leads', async (ctx, next) => {
     await authenticateAdmin(ctx);

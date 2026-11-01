@@ -41,3 +41,4 @@ export * from './personal-access-token.js';
 export * from './authentication-context.js';
 export * from './landing-page.js';
 export * from './landing-page-defaults.js';
+export * from './landing-lead-synthetic.js';

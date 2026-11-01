@@ -125,3 +125,32 @@
   color: var(--color-error);
   font-size: 14px;
 }
+
+.followUpParagraphs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 75ch;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.emailAction {
+  padding: 8px 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-primary);
+  font: var(--font-label-2);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

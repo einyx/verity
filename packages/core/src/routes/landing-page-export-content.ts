@@ -1,3 +1,5 @@
+import { isSyntheticLandingLead } from '@logto/schemas';
+
 import { type BriefInput } from './landing-page-brief.js';
 import { budgetAssessmentGuard, type BudgetAssessment } from './landing-page-budget.js';
 
@@ -14,21 +16,6 @@ export const exportLink = (value: string | undefined): string | undefined => {
   } catch {
     return undefined;
   }
-};
-
-const isSynthetic = ({ lead, profile, exportContext }: BriefInput) => {
-  const domains = [available(lead.email, '').split('@').at(-1), profile?.domain];
-  return (
-    profile?.syntheticContact === true ||
-    ['synthetic', 'demo-data', 'fixture'].includes(profile?.researchStatus ?? '') ||
-    ['synthetic', 'demo-data', 'demo data', 'test-data', 'fixture'].some((tag) =>
-      exportContext?.tags?.some((value) => value.toLowerCase().trim() === tag)
-    ) ||
-    domains.some((value) => {
-      const domain = value?.trim().toLowerCase();
-      return domain === 'example.invalid' || domain?.endsWith('.example.invalid');
-    })
-  );
 };
 
 const userMessages = (transcript: unknown): string[] =>
@@ -78,7 +65,11 @@ const budgetLines = (value: unknown): string[] => {
 /** Deterministic audience boundary. The prospect object is an explicit whitelist, never a spread. */
 export const buildExportContent = (input: BriefInput) => {
   const { lead, profile, exportContext } = input;
-  const synthetic = Boolean(isSynthetic(input));
+  const synthetic = isSyntheticLandingLead({
+    email: lead.email,
+    profile,
+    tags: exportContext?.tags,
+  });
   const company = available(lead.company, 'Company not available');
   const objective = available(
     lead.decision,

@@ -109,6 +109,34 @@ describe('buildLeadsQuery', () => {
 });
 
 describe('useLandingLeads', () => {
+  it('submits the reviewed message with the same Cloud token and encoded session ID', async () => {
+    const { result } = renderHook(() => useLandingLeads(), { wrapper });
+    await waitFor(() => {
+      expect(result.current.leads).toEqual([]);
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'accepted', requestId: 'mail-1' }),
+    });
+    const draft = {
+      subject: 'Follow-up',
+      text: 'Reviewed body',
+      confirmed: true as const,
+      idempotencyKey: 'review-key-1234567890',
+    };
+    await expect(result.current.sendFollowUp('session/one', draft)).resolves.toEqual({
+      status: 'accepted',
+      requestId: 'mail-1',
+    });
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      `${window.location.origin}/api/landing-leads/session%2Fone/follow-up`,
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer admin-token', 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      }
+    );
+  });
   it('fetches the exact keyed query once, with bearer auth and a single base prefix', async () => {
     const query: LandingLeadQuery = {
       search: 'acme corp',

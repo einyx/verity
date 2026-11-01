@@ -38,6 +38,43 @@ const props = (): LeadDetailsProps => ({
   hasAssistFailed: false,
 });
 
+it('opens a reviewable email draft only for a stored consenting email contact', () => {
+  const onSendEmail = jest.fn();
+  const eligible = { ...lead, lead: { ...lead.lead, consent: true, contactMethod: 'email' } };
+  const { rerender } = render(
+    <LeadDetails {...props()} lead={eligible} onSendEmail={onSendEmail} />
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Send email' }));
+  expect(screen.getByRole('region', { name: 'Lead follow-up email' })).toBeTruthy();
+  expect(screen.getByLabelText('Recipient')).toHaveProperty('value', 'sarah@acme.com');
+  expect(onSendEmail).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.queryByRole('region', { name: 'Lead follow-up email' })).toBeNull();
+  rerender(
+    <LeadDetails
+      {...props()}
+      lead={{ ...lead, lead: { ...lead.lead, consent: false } }}
+      onSendEmail={onSendEmail}
+    />
+  );
+  expect(screen.getByRole('button', { name: 'Send email' })).toHaveProperty('disabled', true);
+});
+
+it.each([
+  { companyProfile: { researchStatus: 'fixture' } },
+  { tags: ['test-data'] },
+  { companyProfile: { domain: 'team.example.invalid' } },
+])('disables email for existing synthetic/demo record markers: %j', (marker) => {
+  render(
+    <LeadDetails
+      {...props()}
+      lead={{ ...lead, lead: { ...lead.lead, consent: true }, ...marker }}
+      onSendEmail={jest.fn()}
+    />
+  );
+  expect(screen.getByRole('button', { name: 'Send email' })).toHaveProperty('disabled', true);
+});
+
 it('shows identity, controlled saved values and the missing company profile copy', () => {
   render(<LeadDetails {...props()} />);
   expect(screen.getByText('Sarah Chen, Acme Corp')).toBeTruthy();

@@ -6,6 +6,57 @@
     }
   ],
   "paths": {
+    "/api/landing-leads/{sessionId}/follow-up": {
+      "post": {
+        "summary": "Send a reviewed lead follow-up email",
+        "description": "Administrator user token with landing-page permission required. The recipient comes only from the stored admin-tenant lead, which must have consented to email contact and must not be synthetic. Explicit confirmation, edited subject/body and a stable idempotency key are required. The exact message and provider outcome are audited in pending actions. Atomic claims prevent concurrent/replayed sends; ambiguous outcomes are never automatically retried. Limited to 20 submissions per administrator per hour across replicas. Acceptance is not proof of delivery. Pipeline status and lead notes are not changed.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["subject", "text", "confirmed", "idempotencyKey"],
+                "properties": {
+                  "subject": { "type": "string", "minLength": 1, "maxLength": 200 },
+                  "text": { "type": "string", "minLength": 1, "maxLength": 8000 },
+                  "confirmed": { "type": "boolean", "enum": [true] },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 80,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "ACS accepted this request, or an accepted idempotent result was replayed; not a delivery claim."
+          },
+          "400": { "description": "Invalid, unconfirmed, injected or unfinished message." },
+          "403": {
+            "description": "Missing permission or stored lead not eligible for email contact."
+          },
+          "404": { "description": "Lead not found or feature disabled." },
+          "409": {
+            "description": "Conflicting key, expired request or request already processing. Do not automatically resend."
+          },
+          "429": { "description": "Administrator hourly send limit reached." },
+          "502": {
+            "description": "Submission outcome is uncertain. Check before sending another email."
+          },
+          "503": { "description": "Platform email service is not configured." }
+        }
+      }
+    },
     "/api/landing-leads/{sessionId}/brief.pdf": {
       "get": {
         "summary": "Download confidential internal sales brief with budget advisory",

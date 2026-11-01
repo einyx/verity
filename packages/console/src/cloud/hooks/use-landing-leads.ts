@@ -75,6 +75,13 @@ const assistResultGuard = z.object({
   followUpDraft: z.string(),
 });
 export type LandingLeadAssist = z.infer<typeof assistResultGuard>;
+export type LandingLeadEmailDraft = {
+  subject: string;
+  text: string;
+  confirmed: true;
+  idempotencyKey: string;
+};
+export type LandingLeadEmailAcceptance = { status: 'accepted'; requestId: string };
 
 const leadsResponseGuard = z.object({
   leads: z.array(landingLeadGuard),
@@ -281,6 +288,22 @@ export const useLandingLeads = (query: LandingLeadQuery = defaultLeadQuery) => {
     [getToken]
   );
 
+  const sendFollowUp = useCallback(
+    async (
+      sessionId: string,
+      draft: LandingLeadEmailDraft
+    ): Promise<LandingLeadEmailAcceptance> => {
+      const token = await getToken();
+      const result = await request(token, `/${encodeURIComponent(sessionId)}/follow-up`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      });
+      return z.object({ status: z.literal('accepted'), requestId: z.string() }).parse(result);
+    },
+    [getToken]
+  );
+
   return {
     key,
     totalCount: data?.totalCount ?? 0,
@@ -299,6 +322,7 @@ export const useLandingLeads = (query: LandingLeadQuery = defaultLeadQuery) => {
     loadTranscript,
     updateLead,
     loadAssist,
+    sendFollowUp,
     loadBriefPdf,
     loadSlides,
   };

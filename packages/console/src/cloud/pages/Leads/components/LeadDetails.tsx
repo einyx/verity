@@ -1,8 +1,11 @@
-/* eslint-disable max-lines -- Keep the extracted detail markup and control order intact in this pure move. */
+/* eslint-disable max-lines -- Keep lead detail panels and their existing action order together; email composition is extracted separately. */
+
 import {
   type LandingLead,
   type LandingLeadAssist,
   type LandingLeadTranscript,
+  type LandingLeadEmailDraft,
+  type LandingLeadEmailAcceptance,
 } from '@/cloud/hooks/use-landing-leads';
 import Button from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
@@ -12,8 +15,10 @@ import DangerousRaw from '@/ds-components/DangerousRaw';
 import { leadStages } from '../stages';
 
 import BudgetInsights from './BudgetInsights';
+import LeadAssistPanel from './LeadAssistPanel';
 import styles from './LeadDetails.module.scss';
 import Transcript from './Transcript';
+import { useLeadFollowUpEmail } from './use-lead-follow-up-email';
 
 export type KuboDemoRequest = {
   name: string;
@@ -47,6 +52,7 @@ export type LeadDetailsProps = {
   readonly onSave: () => void;
   readonly onStageChange: (status: string) => void;
   readonly onRunAssist: () => void;
+  readonly onSendEmail?: (draft: LandingLeadEmailDraft) => Promise<LandingLeadEmailAcceptance>;
   readonly onDecideDemo: (decision: 'approve' | 'reject') => void;
   readonly onDownloadBrief: () => void;
   readonly onDownloadSlides: () => void;
@@ -130,6 +136,7 @@ function LeadDetails({
   onSave,
   onStageChange,
   onRunAssist,
+  onSendEmail,
   onDecideDemo,
   onDownloadBrief,
   onDownloadSlides,
@@ -139,6 +146,7 @@ function LeadDetails({
   hasFileFailed,
   hasAssistFailed,
 }: LeadDetailsProps) {
+  const email = useLeadFollowUpEmail({ lead, assist, onSend: onSendEmail });
   return (
     <Card className={styles.detailCard}>
       <CardTitle
@@ -240,8 +248,11 @@ function LeadDetails({
               }}
             />
           )}
+          {email.action}
         </div>
+        {email.notice}
       </div>
+      {email.composer}
       {hasFileFailed && <p className={styles.notice}>The file could not be created.</p>}
       {hasSaveFailed && <p className={styles.notice}>Lead changes could not be saved.</p>}
       {isSaving && (
@@ -254,23 +265,7 @@ function LeadDetails({
           AI assistance is unavailable. Check the AI configuration and try again.
         </p>
       )}
-      {assist && (
-        <div className={styles.section}>
-          <p className={styles.heading}>AI lead assist · {assist.qualification} fit</p>
-          <p>{assist.summary}</p>
-          {assist.rationale.map((item) => (
-            <p key={item}>{item}</p>
-          ))}
-          <p className={styles.heading}>Suggested next steps</p>
-          <ul>
-            {assist.suggestedNextSteps.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <p className={styles.heading}>Follow-up draft (not sent)</p>
-          <p>{assist.followUpDraft}</p>
-        </div>
-      )}
+      {assist && <LeadAssistPanel assist={assist} />}
       {(() => {
         const request = demoRequest;
 

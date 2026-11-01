@@ -99,6 +99,7 @@ function LeadsContent() {
     loadSlidesPptx,
     updateLead,
     loadAssist,
+    sendFollowUp,
   } = useLandingLeads({
     page,
     pageSize: 20,
@@ -371,6 +372,7 @@ function LeadsContent() {
                 {opened.lead.firstName} {opened.lead.lastName}
               </h2>
               <LeadDetails
+                key={opened.id}
                 lead={opened}
                 profile={profile}
                 transcript={transcript}
@@ -385,6 +387,7 @@ function LeadsContent() {
                 isSaving={savingLeadIds.has(opened.id)}
                 hasFileFailed={fileFailed}
                 hasAssistFailed={assistFailed}
+                onSendEmail={async (draft) => sendFollowUp(opened.sessionId, draft)}
                 onNotesChange={(notes) => {
                   editDraft({ notes });
                 }}

@@ -117,41 +117,48 @@ export const mountCloudTenantSettingsRoutes = (
     koaGuard({ body: settingsGuard, status: [200, 400, 401, 403, 404, 503] }),
     async (ctx) => {
       const row = await authorize(ctx, TenantScope.ManageTenant);
-      await readSettings(row.id);
       const { isMfaRequired } = ctx.guard.body;
-      if (isMfaRequired && row.tag !== TenantTag.Development) {
-        // Only the target's authoritative service is eligible; the tenant response is not entitlement data.
-        const subscription = await (async () => {
-          try {
-            const tenant = await getTenantForUsage(row.id);
-            return await tenant.subscription.getSubscriptionData?.();
-          } catch {
-            throw new RequestError(
+      const pool = await EnvSet.sharedPool;
+      const settings = await pool.transaction(async (connection) => {
+        // Conversion UPDATEs acquire the same row lock. Re-read after waiting, and retain
+        // the lock through entitlement verification and the tenant-qualified settings write.
+        const locked = await connection.maybeOne<{ tag: string }>(sql`
+          select tag from tenants where id = ${row.id} for update
+        `);
+        assertThat(locked, notFound());
+        if (isMfaRequired && locked.tag !== TenantTag.Development) {
+          // Only the target's authoritative service is eligible; the tenant response is not entitlement data.
+          const subscription = await (async () => {
+            try {
+              const tenant = await getTenantForUsage(row.id);
+              return await tenant.subscription.getSubscriptionData?.();
+            } catch {
+              throw new RequestError(
+                { code: 'auth.forbidden', status: 503 },
+                { reason: 'entitlement_unavailable' }
+              );
+            }
+          })();
+          assertThat(
+            subscription,
+            new RequestError(
               { code: 'auth.forbidden', status: 503 },
               { reason: 'entitlement_unavailable' }
-            );
-          }
-        })();
-        assertThat(
-          subscription,
-          new RequestError(
-            { code: 'auth.forbidden', status: 503 },
-            { reason: 'entitlement_unavailable' }
-          )
-        );
-        assertThat(
-          isReportablePlan(subscription.planId, subscription.isEnterprisePlan),
-          forbidden()
-        );
-      }
-      const pool = await EnvSet.sharedPool;
-      const settings = await pool.maybeOne<{ isMfaRequired: boolean }>(sql`
-      update organizations set is_mfa_required = ${isMfaRequired}
-      where tenant_id = ${adminTenantId} and id = ${getTenantOrganizationId(row.id)}
-        and exists (select 1 from tenants where id = ${row.id} and tag = ${row.tag})
-      returning is_mfa_required as "isMfaRequired"
-    `);
-      assertThat(settings, notFound());
+            )
+          );
+          assertThat(
+            isReportablePlan(subscription.planId, subscription.isEnterprisePlan),
+            forbidden()
+          );
+        }
+        const settings = await connection.maybeOne<{ isMfaRequired: boolean }>(sql`
+        update organizations set is_mfa_required = ${isMfaRequired}
+        where tenant_id = ${adminTenantId} and id = ${getTenantOrganizationId(row.id)}
+        returning is_mfa_required as "isMfaRequired"
+      `);
+        assertThat(settings, notFound());
+        return settings;
+      });
       ctx.body = settings;
     }
   );

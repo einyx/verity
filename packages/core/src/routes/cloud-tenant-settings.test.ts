@@ -1,4 +1,5 @@
 /* eslint-disable @silverhand/fp/no-let, @silverhand/fp/no-mutation -- Jest lifecycle owns the isolated pools and deterministic race switch. */
+/* eslint max-lines: [error, 500] -- Keep real-PG authorization and overlapping-conversion regressions on one owned fixture. */
 /* eslint-disable unicorn/no-await-expression-member -- Keep HTTP status/body assertions next to their request. */
 /* eslint-disable no-await-in-loop -- Sequential requests prove persistence and absence of partial writes. */
 import { randomUUID } from 'node:crypto';
@@ -84,6 +85,7 @@ const createApp = () => {
 (testUrl ? describe : describe.skip)('cloud tenant settings with real isolated PostgreSQL', () => {
   let setupPool: DatabasePool | undefined;
   let convertBeforeProfileUpdate = false;
+  let finishConversion: (() => void) | undefined;
   const app = createApp();
   beforeAll(async () => {
     if (!testUrl) {
@@ -101,6 +103,13 @@ const createApp = () => {
             return null;
           },
           beforeQueryExecution: async (_context, query) => {
+            if (
+              finishConversion &&
+              (query.sql.includes('for update') || query.sql.includes('update organizations'))
+            ) {
+              finishConversion();
+              finishConversion = undefined;
+            }
             if (convertBeforeProfileUpdate && query.sql.includes('update tenants set name')) {
               convertBeforeProfileUpdate = false;
               await setupPool?.query(sql`update ${sql.identifier([schema, 'tenants'])}
@@ -126,6 +135,50 @@ const createApp = () => {
     getSubscriptionData.mockReset().mockResolvedValue({ planId: 'pro', isEnterprisePlan: false });
     await resetSettingsFixtures(pool);
   });
+
+  it.each([
+    { enable: true, unavailable: false, status: 403 },
+    { enable: true, unavailable: true, status: 503 },
+    { enable: false, unavailable: true, status: 200 },
+  ])(
+    'revalidates an overlapping uncommitted conversion: %j',
+    async ({ enable, unavailable, status }) => {
+      if (unavailable) {
+        getSubscriptionData.mockRejectedValue(new Error('Subscription service unavailable'));
+      } else {
+        getSubscriptionData.mockResolvedValue({ planId: 'free', isEnterprisePlan: false });
+      }
+      const bearer = await token();
+      let conversionReady: (() => void) | undefined;
+      const ready = new Promise<void>((resolve) => {
+        conversionReady = resolve;
+      });
+      const release = new Promise<void>((resolve) => {
+        finishConversion = resolve;
+      });
+      const conversion = pool.transaction(async (connection) => {
+        await connection.query(sql`update tenants set tag = 'production' where id = 'target'`);
+        conversionReady?.();
+        await release;
+      });
+      await ready;
+      try {
+        const response = await request(app)
+          .patch('/api/tenants/target/settings')
+          .auth(bearer, { type: 'bearer' })
+          .send({ isMfaRequired: enable });
+        expect(response.status).toBe(status);
+      } finally {
+        finishConversion?.();
+        await conversion;
+      }
+      expect(
+        await pool.oneFirst(sql`select is_mfa_required from organizations
+      where tenant_id = 'admin' and id = 't-target'`)
+      ).toBe(false);
+      expect(getSubscriptionData).toHaveBeenCalledTimes(enable ? 1 : 0);
+    }
+  );
 
   it('owns successful tenant/profile/settings responses rather than reaching billing', async () => {
     const bearer = await token();

@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 
+import { defaultLandingPageContent } from '@logto/schemas';
+
 const rendererSource = readFileSync(`${process.cwd()}/public/landing/landing-renderer.js`, 'utf8');
 const cmsSource = readFileSync(`${process.cwd()}/public/landing/cms.js`, 'utf8');
 const elementsSource = readFileSync(`${process.cwd()}/public/landing/landing-elements.js`, 'utf8');
@@ -23,6 +25,72 @@ const postDraft = (sections: unknown[]) => {
     })
   );
 };
+
+it('renders the Hero Intro text field rather than leaving the unrelated inline-copy introduction visible', () => {
+  const sections = [
+    { id: 'hero', type: 'hero', headline: ['Title'], lede: 'Previous introduction' },
+    { id: 'closing', type: 'closingCta' },
+  ];
+  sendDraftDocument({ sections, copy: { 'top-3': { en: 'Preserved diagram label' } } });
+  sendDraftDocument({
+    sections: [{ ...sections[0], lede: 'XXXXXXXX' }, sections[1]],
+    copy: { 'top-3': { en: 'Preserved diagram label' } },
+  });
+  expect(document.querySelector('#top')?.textContent).toContain('XXXXXXXX');
+  expect(document.querySelector('#top')?.textContent).not.toContain('Previous introduction');
+  expect(document.querySelector('#top [data-cms="sections.0.lede"]')?.textContent).toBe('XXXXXXXX');
+  expect(document.querySelector('[data-cms-copy="top-3"]')?.textContent).toBe(
+    'Preserved diagram label'
+  );
+});
+
+it.each(['en', 'it'])(
+  'preserves existing %s inline intro edits until the structured Intro is changed',
+  (locale) => {
+    document.documentElement.setAttribute('lang', locale);
+    const hero = defaultLandingPageContent.sections.find((section) => section.type === 'hero')!;
+    const copy = {
+      'top-1': { [locale]: 'Existing first line' },
+      'top-2': { [locale]: 'Existing second line' },
+    };
+    sendDraftDocument({ ...defaultLandingPageContent, copy });
+    expect(document.querySelector('#top [data-cms="sections.0.lede"]')?.textContent).toBe(
+      'Existing first line Existing second line'
+    );
+    sendDraftDocument({
+      ...defaultLandingPageContent,
+      copy,
+      sections: [{ ...hero, lede: 'XXXXXXXX' }, ...defaultLandingPageContent.sections.slice(1)],
+    });
+    expect(document.querySelector('#top [data-cms="sections.0.lede"]')?.textContent).toBe(
+      'XXXXXXXX'
+    );
+  }
+);
+
+it('keeps the newly bound hero introduction focused when its draft echo returns', () => {
+  sendDraftDocument(defaultLandingPageContent);
+  const field = document.querySelector<HTMLElement>('#top [data-cms="sections.0.lede"]')!;
+  field.focus();
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- Simulates a user typing before the parent echoes the draft document.
+  field.textContent = 'XXXXXXXX';
+  const range = document.createRange();
+  range.setStart(field.firstChild!, 4);
+  range.collapse(true);
+  const selection = window.getSelection()!;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  sendDraftDocument({
+    ...defaultLandingPageContent,
+    sections: defaultLandingPageContent.sections.map((section) =>
+      section.type === 'hero' ? { ...section, lede: 'XXXXXXXX' } : section
+    ),
+  });
+  expect(field.isConnected).toBe(true);
+  expect(document.activeElement).toBe(field);
+  expect(selection.anchorNode).toBe(field.firstChild);
+  expect(selection.anchorOffset).toBe(4);
+});
 
 it('keeps a focused added-section text field connected when its draft update is echoed back', () => {
   const section = { id: 'typing-section', type: 'text', heading: 'Editable heading', body: 'Body' };
@@ -101,6 +169,7 @@ it('keeps editor actions outside the site header and accepts only its parent too
 });
 
 beforeEach(() => {
+  document.documentElement.setAttribute('lang', 'en');
   const windowListeners = jest.spyOn(window, 'addEventListener');
   const documentListeners = jest.spyOn(document, 'addEventListener');
   // eslint-disable-next-line @silverhand/fp/no-mutation -- Dispose only the listeners installed by this test's evaluated preview scripts.

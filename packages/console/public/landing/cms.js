@@ -345,6 +345,22 @@
     }
   };
 
+  const shippedHeroIntro = document.querySelector('#top p.mt-6');
+  const shippedHeroIntroLines = shippedHeroIntro
+    ? [...shippedHeroIntro.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()).map((node) => node.textContent.trim())
+    : [];
+  const defaultHeroIntro = 'The intelligence layer sits between your data and your AI. It captures the context, expertise and decisions your people create every day, so every answer, app and agent gets smarter the more your business uses it.';
+  const heroIntroValue = (doc, value) => {
+    const language = pageLanguage();
+    const legacy = [doc.copy?.['top-1']?.[language], doc.copy?.['top-2']?.[language]];
+    // Old documents edited these two inline slots. Keep that per-language copy while the
+    // structured field is still inherited; an explicitly authored Intro value takes precedence.
+    if ((value === defaultHeroIntro || typeof value !== 'string') && legacy.some((part) => typeof part === 'string')) {
+      return legacy.map((part, index) => typeof part === 'string' ? part : shippedHeroIntroLines[index] || '').join(' ').trim();
+    }
+    return value;
+  };
+
   const fill = (doc) => {
     lastDoc = doc;
 
@@ -357,6 +373,14 @@
     // The copy that no structured field covers is marked on the published page too, so the words
     // the editor changed show up there.
     markEditableCopy();
+
+    // The authored hero splits its introduction with a <br>, but Properties owns one lede field.
+    // Bind that paragraph after allocating legacy copy IDs so unrelated saved copy keeps its IDs.
+    const heroIntro = document.querySelector('#top p.mt-6');
+    if (heroIntro && !heroIntro.dataset.cmsSource) {
+      heroIntro.dataset.cms = 'hero.lede';
+      heroIntro.dataset.cmsSource = 'hero.lede';
+    }
 
     if (isPreview) {
       // A section added in the editor brings its own copy, which is editable in place too.
@@ -371,7 +395,8 @@
         continue;
       }
 
-      const value = read(doc, el.dataset.cms);
+      const fieldValue = read(doc, el.dataset.cms);
+      const value = el.dataset.cmsSource === 'hero.lede' ? heroIntroValue(doc, fieldValue) : fieldValue;
       // A headline can have fewer lines than the page has spans; an absent line is cleared.
       el.textContent = typeof value === 'string' ? value : '';
     }

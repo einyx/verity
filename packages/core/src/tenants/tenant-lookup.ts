@@ -5,10 +5,12 @@
 import { type CommonQueryMethods } from '@silverhand/slonik';
 
 import { type ConnectorLibrary } from '#src/libraries/connector.js';
+import { type SubscriptionLibrary } from '#src/libraries/subscription.js';
 import type TenantUsageQuery from '#src/queries/tenant-usage/index.js';
 
 type UsageTenant = {
   subscription: {
+    getSubscriptionData?: SubscriptionLibrary['getSubscriptionData'];
     getTenantTokenUsage: (range: { from: Date; to: Date }) => Promise<{
       totalUsage: number;
       userTokenUsage: number;

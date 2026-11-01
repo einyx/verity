@@ -26,7 +26,11 @@ const countKeys = [
   'customDomainsLimit',
 ] as const;
 
-const readScopes = async (pool: CommonQueryMethods, tenantId: string, userId: string) => {
+export const readTenantScopes = async (
+  pool: CommonQueryMethods,
+  tenantId: string,
+  userId: string
+) => {
   if (await isAdminTenantOperator(pool, userId)) {
     const tenant = await pool.maybeOne<{ id: string }>(
       sql`select id from tenants where id = ${tenantId}`
@@ -63,14 +67,15 @@ export const createCloudConsoleHost = (): CloudConsoleHost => ({
   },
   memberScopes: async (actorId, tenantId, memberId) => {
     const pool = await EnvSet.sharedPool;
-    const callerScopes = await readScopes(pool, tenantId, actorId);
+    const callerScopes = await readTenantScopes(pool, tenantId, actorId);
     if (
       callerScopes.length === 0 ||
       (actorId !== memberId && !callerScopes.some(({ name }) => name === TenantScope.ReadMember))
     ) {
       return;
     }
-    const scopes = actorId === memberId ? callerScopes : await readScopes(pool, tenantId, memberId);
+    const scopes =
+      actorId === memberId ? callerScopes : await readTenantScopes(pool, tenantId, memberId);
     return scopes.length > 0 ? [...scopes] : undefined;
   },
   invitations: async (userId) => {

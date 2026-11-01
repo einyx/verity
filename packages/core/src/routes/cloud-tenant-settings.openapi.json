@@ -1,0 +1,136 @@
+{
+  "tags": [
+    {
+      "name": "Cloud tenant settings",
+      "description": "Admin-tenant Cloud API endpoints. Require an active admin-tenant user, an admin-issued Cloud API bearer token with manage:tenant:self (or all), the global tenant-access policy, and the target organization's effective role scope. An allow-listed email alone never grants target access. Machine tokens and suspended users are refused. Nonoperators cannot access the admin target."
+    }
+  ],
+  "paths": {
+    "/api/tenants/{tenantId}": {
+      "parameters": [
+        { "name": "tenantId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "tags": ["Cloud tenant settings"],
+        "summary": "Read a Cloud tenant",
+        "description": "Requires target ReadData. Returns the existing tenant response envelope and terminates the route; subscription, invoice and checkout subpaths remain owned by billing. Does not mutate or provision data. The existing response's development subscription metadata is not an entitlement source.",
+        "responses": {
+          "200": {
+            "description": "Existing tenant envelope, including persisted id, name, tag, regionName and createdAt."
+          },
+          "304": { "description": "Not modified." },
+          "401": {
+            "description": "Missing, expired or invalid Cloud bearer token, issuer or audience."
+          },
+          "403": { "description": "Caller, global access policy or target ReadData scope denied." },
+          "404": { "description": "Target does not exist or admin target is concealed." }
+        }
+      },
+      "patch": {
+        "tags": ["Cloud tenant settings"],
+        "summary": "Rename a Cloud tenant",
+        "description": "Requires target ManageTenant. Accepts optional name and, for Console compatibility, an unchanged tag echo. Writes name only. Different tags are rejected before any write; a conditional tag predicate also rejects concurrent environment conversion without overwriting it. Environment and billing conversion remain separate operations. All other fields, including subscription, plan, quota, region and suspension, are rejected.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+                  "tag": {
+                    "type": "string",
+                    "enum": ["development", "production"],
+                    "description": "Must equal the current stored tag; never written."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Existing tenant envelope with the actual persisted profile." },
+          "400": {
+            "description": "Invalid/unknown fields, different tag or concurrent environment conversion; no profile write on failure."
+          },
+          "401": { "description": "Invalid Cloud bearer token, issuer or audience." },
+          "403": { "description": "Caller, global access policy or target ManageTenant denied." },
+          "404": { "description": "Missing or concealed target." }
+        }
+      }
+    },
+    "/api/tenants/{tenantId}/settings": {
+      "parameters": [
+        { "name": "tenantId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "tags": ["Cloud tenant settings"],
+        "summary": "Read tenant membership MFA settings",
+        "description": "Requires target ManageTenant. Reads the real admin-tenant organization t-{tenantId}. Missing tenant or organization is 404, never a fabricated false. No mutation, provisioning or entitlement/provider lookup on reads.",
+        "responses": {
+          "200": {
+            "description": "Persisted membership MFA requirement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["isMfaRequired"],
+                  "properties": { "isMfaRequired": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid Cloud bearer token, issuer or audience." },
+          "403": { "description": "Caller, global access policy or target ManageTenant denied." },
+          "404": { "description": "Missing tenant/organization or concealed admin target." }
+        }
+      },
+      "patch": {
+        "tags": ["Cloud tenant settings"],
+        "summary": "Update tenant membership MFA requirement",
+        "description": "Requires target ManageTenant and explicit user Save. Updates only the admin-tenant organization t-{tenantId}. Enabling requires either the real tenant Development tag or the target SubscriptionLibrary.getSubscriptionData paid/enterprise plan via isReportablePlan. Missing/unavailable entitlement fails closed; synthetic tenant-response metadata never grants eligibility. Authorized disabling remains allowed without paid eligibility. No implicit writes or replay of failed requests. Profile and settings saves are separate: a client Promise.all is not cross-endpoint atomic.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["isMfaRequired"],
+                "properties": { "isMfaRequired": { "type": "boolean" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actual persisted membership MFA requirement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["isMfaRequired"],
+                  "properties": { "isMfaRequired": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, nonboolean value, missing flag or unknown fields."
+          },
+          "401": { "description": "Invalid Cloud bearer token, issuer or audience." },
+          "403": {
+            "description": "Caller/global/target permission denied, or enabling is not eligible on the authoritative plan."
+          },
+          "404": {
+            "description": "Missing tenant/organization, concealed admin target or concurrently changed environment."
+          },
+          "503": {
+            "description": "Authoritative entitlement unavailable; auth.forbidden with data.reason=entitlement_unavailable. Nothing saved; retry only on fresh user intent."
+          }
+        }
+      }
+    }
+  }
+}

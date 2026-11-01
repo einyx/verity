@@ -27,6 +27,8 @@ import {
 import { provisionTenant } from '#src/tenants/provision.js';
 import assertThat from '#src/utils/assert-that.js';
 
+import { mountCloudTenantSettingsRoutes, type TenantRow } from './cloud-tenant-settings.js';
+
 // Cloud tenant API: list, read and create tenants on this instance. Served on the admin tenant's `/api`
 // only when `IS_CLOUD` is set. A caller needs a token issued for the instance's own cloud API resource,
 // `<admin endpoint>/api`, and the scope for the route.
@@ -39,14 +41,6 @@ type TenantMemberRow = {
   primaryPhone: string | undefined;
   avatar: string | undefined;
   organizationRoles: Array<{ id: string; name: string; description: string | undefined }>;
-};
-
-type TenantRow = {
-  id: string;
-  name: string;
-  tag: string;
-  regionName: string | undefined;
-  createdAt: string | number | Date;
 };
 
 const toTenantResponse = (row: TenantRow) => {
@@ -218,23 +212,10 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     return next();
   });
 
-  router.get(
-    '/api/tenants/:tenantId',
-    koaGuard({ status: [200, 304, 401, 403, 404] }),
-    async (ctx, next) => {
-      await authenticate(ctx, CloudScope.ManageTenantSelf);
-      const pool = await EnvSet.sharedPool;
-
-      const row = await pool.maybeOne<TenantRow>(sql`
-        select id, name, tag, region_name as "regionName", created_at as "createdAt"
-        from tenants
-        where id = ${ctx.params.tenantId ?? ''} and id <> ${adminTenantId}
-      `);
-      assertThat(row, new RequestError({ code: 'entity.not_found', status: 404 }));
-      ctx.body = toTenantResponse(row);
-
-      return next();
-    }
+  mountCloudTenantSettingsRoutes(
+    router,
+    async (ctx) => authenticate(ctx, CloudScope.ManageTenantSelf),
+    toTenantResponse
   );
 
   // Members of a tenant are the users in its organization in the admin tenant. A caller sees the list only

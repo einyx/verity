@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const packageJson = (name) =>
   JSON.parse(
@@ -9,6 +11,16 @@ const packageJson = (name) =>
       "utf8",
     ),
   );
+
+test("CLI tests do not widen the emitted runtime module root", () => {
+  const directory = fileURLToPath(new URL("../packages/cli/", import.meta.url));
+  const filename = `${directory}tsconfig.build.json`;
+  const config = ts.readConfigFile(filename, ts.sys.readFile);
+  assert.equal(config.error, undefined);
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, directory);
+  const program = ts.createProgram(parsed.fileNames, parsed.options);
+  assert.equal(program.getCommonSourceDirectory(), `${directory}src/`);
+});
 
 test("tenant-seed builds its published entry points during recursive CI lifecycles", () => {
   const tenantSeed = packageJson("tenant-seed");

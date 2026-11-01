@@ -81,9 +81,32 @@ export const seedAdminData = async (
     return id;
   };
 
-  await pool.query(insertInto(resource, 'resources'));
+  // A deployment serves every tenant from one host, so several tenants can ask for a
+  // Management API with the same indicator. The indicator is unique per tenant, so the
+  // second request reuses the row the first one created instead of inserting a duplicate.
+  const existingResource = await pool.maybeOne<{ id: string }>(sql`
+    select id from resources
+    where indicator = ${resource.indicator} and tenant_id = ${String(resource.tenantId)}
+  `);
+
+  const resourceId = existingResource?.id ?? resource.id;
+
+  if (existingResource) {
+    await pool.query(
+      sql`
+        update resources
+        set name = ${resource.name}
+        where id = ${resourceId}
+      `
+    );
+  } else {
+    await pool.query(insertInto(resource, 'resources'));
+  }
+
   await Promise.all(
-    [...scopes, ...additionalScopes].map(async (scope) => pool.query(insertInto(scope, 'scopes')))
+    [...scopes, ...additionalScopes].map(async (scope) =>
+      pool.query(insertInto({ ...scope, resourceId }, 'scopes'))
+    )
   );
 
   const roleId = await processRole();

@@ -65,4 +65,16 @@ describe('Console sidebar links', () => {
     // No link may repeat the page that is currently open.
     expect(hrefs.filter((href) => href.startsWith(currentPath))).toEqual([]);
   });
+
+  it('shows the released landing-page editor for the Cloud admin tenant with dev features disabled', () => {
+    mockEnv({ isCloud: true, isProduction: true, isDevFeaturesEnabled: false });
+    const { container } = renderSidebar();
+    expect(getSidebarHrefs(container)).toContain('/admin/landing-page');
+  });
+
+  it('keeps the landing-page editor hidden outside Cloud', () => {
+    mockEnv({ isCloud: false, isProduction: true, isDevFeaturesEnabled: false });
+    const { container } = renderSidebar();
+    expect(getSidebarHrefs(container)).not.toContain('/admin/landing-page');
+  });
 });

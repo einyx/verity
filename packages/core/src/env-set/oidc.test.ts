@@ -109,18 +109,21 @@ describe('loadOidcValues', () => {
     })();
     const itIfMlDsa = supportsMlDsa ? it : it.skip;
 
-    itIfMlDsa('excludes ML-DSA keys from the keystore when dev features are disabled', async () => {
-      const { privateJwks, publicJwks, jwkSigningAlg } = await loadOidcValues(
-        issuer,
-        buildConfigs([generateEcPrivateKeyPem('prime256v1'), generateMlDsaPrivateKeyPem()]),
-        defaultCimdConfig,
-        false
-      );
+    itIfMlDsa(
+      'retains ML-DSA verification keys in production when dev features are disabled',
+      async () => {
+        const { privateJwks, publicJwks, jwkSigningAlg } = await loadOidcValues(
+          issuer,
+          buildConfigs([generateEcPrivateKeyPem('prime256v1'), generateMlDsaPrivateKeyPem()]),
+          defaultCimdConfig,
+          false
+        );
 
-      expect(jwkSigningAlg).toBe('ES256');
-      expect(privateJwks.map(({ kty }) => kty)).toEqual(['EC']);
-      expect(publicJwks.map(({ kty }) => kty)).toEqual(['EC']);
-    });
+        expect(jwkSigningAlg).toBe('ES256');
+        expect(privateJwks.map(({ kty }) => kty)).toEqual(['EC', 'AKP']);
+        expect(publicJwks.map(({ kty }) => kty)).toEqual(['EC', 'AKP']);
+      }
+    );
 
     itIfMlDsa('keeps ML-DSA keys in the keystore when dev features are enabled', async () => {
       const { privateJwks, publicJwks } = await loadOidcValues(
@@ -148,7 +151,7 @@ describe('loadOidcValues', () => {
       expect(jwkSigningAlg).toBe('ML-DSA-65');
     });
 
-    itIfMlDsa('rejects an ML-DSA current key when dev features are disabled', async () => {
+    itIfMlDsa('loads an ML-DSA current key when dev features are disabled', async () => {
       await expect(
         loadOidcValues(
           issuer,
@@ -156,7 +159,7 @@ describe('loadOidcValues', () => {
           defaultCimdConfig,
           false
         )
-      ).rejects.toThrow('requires dev features to be enabled');
+      ).resolves.toHaveProperty('jwkSigningAlg', 'ML-DSA-65');
     });
   });
 });

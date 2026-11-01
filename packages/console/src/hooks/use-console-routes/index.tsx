@@ -4,7 +4,7 @@ import { Navigate, useParams, type RouteObject } from 'react-router-dom';
 import { safeLazy } from 'react-safe-lazy';
 
 import ConsoleNotFound from '@/components/ConsoleNotFound';
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import { isCloud } from '@/consts/env';
 import useIsActionsEnabled from '@/hooks/use-is-actions-enabled';
 
 import { actions } from './routes/actions';
@@ -62,8 +62,7 @@ export const useConsoleRoutes = () => {
       webhooks,
       ...(isActionsEnabled ? [actions] : []),
       ...(isCloud ? [leads, tenantAccess] : []),
-      // The landing page editor is an in-development feature, so it stays behind the dev flag.
-      ...(isCloud && isDevFeaturesEnabled ? [landingPage] : []),
+      ...(isCloud ? [landingPage] : []),
       users,
       auditLogs,
       roles,

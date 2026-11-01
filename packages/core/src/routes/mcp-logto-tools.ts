@@ -136,7 +136,6 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
       'Get the sign-in experience of this tenant: sign-in and sign-up methods, sign-in mode, branding, language and terms links.',
     path: '/sign-in-exp',
     properties: {},
-    devFeature: true,
     project: pickSignInExperience,
   },
   {

@@ -13,7 +13,6 @@ import useSWR from 'swr';
 import Delete from '@/assets/icons/delete.svg?react';
 import FormCard from '@/components/FormCard';
 import { signingKeysLink } from '@/consts';
-import { isDevFeaturesEnabled } from '@/consts/env';
 import Button from '@/ds-components/Button';
 import DangerConfirmModal from '@/ds-components/DeleteConfirmModal';
 import DynamicT from '@/ds-components/DynamicT';
@@ -265,15 +264,10 @@ function SigningKeysFormCard() {
         {isPrivateKey && (
           <FormField title="signing_keys.select_private_key_algorithm">
             <Select
-              options={Object.values(SupportedSigningKeyAlgorithm)
-                .filter(
-                  (value) =>
-                    isDevFeaturesEnabled || value !== SupportedSigningKeyAlgorithm.ML_DSA_65
-                )
-                .map((value) => ({
-                  title: value,
-                  value,
-                }))}
+              options={Object.values(SupportedSigningKeyAlgorithm).map((value) => ({
+                title: value,
+                value,
+              }))}
               value={rotateKeyAlgorithm}
               onChange={(value) => {
                 if (!value) {

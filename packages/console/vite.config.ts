@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import mdx from '@mdx-js/rollup';
 import react from '@vitejs/plugin-react';
 import dotenv from 'dotenv';
@@ -9,6 +11,8 @@ import viteCompression from 'vite-plugin-compression';
 import svgr from 'vite-plugin-svgr';
 
 import { defaultConfig } from '../../vite.shared.config';
+
+import { versionLandingCms } from './scripts/version-landing-cms';
 
 // We need to explicitly import the `.env` file and use `define` later because we do not have a
 // prefix for our environment variables which it is required in Vite.
@@ -43,6 +47,15 @@ const buildConfig = (mode: string): UserConfig => ({
     },
     react(),
     svgr(),
+    {
+      name: 'version-landing-cms',
+      apply: 'build',
+      async writeBundle(options) {
+        if (options.dir) {
+          await versionLandingCms(path.resolve(options.dir, 'landing'));
+        }
+      },
+    },
     viteCompression({ disable: mode === 'development' }),
     viteCompression({ disable: mode === 'development', algorithm: 'brotliCompress' }),
   ],

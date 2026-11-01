@@ -3,6 +3,7 @@ export type StackOption = {
   id: 'foundation' | 'dai' | 'fai' | 'v1';
   title: string;
   description: string;
+  setupRequirement?: string;
   template?: string;
   exclude: string[];
   available: boolean;
@@ -42,7 +43,7 @@ export const stackOptions: StackOption[] = [
   {
     id: 'foundation',
     title: 'Foundation',
-    description: 'The complete platform: high-availability database and Trino catalog.',
+    description: 'Manage business data, analytics, and AI in one complete workspace.',
     template: 'full',
     exclude: [],
     available: true,
@@ -50,7 +51,7 @@ export const stackOptions: StackOption[] = [
   {
     id: 'dai',
     title: 'Dashboards AI',
-    description: 'Just the AI dashboard components and their database.',
+    description: 'Explore business data and turn questions into insights and dashboards.',
     template: 'full',
     exclude: daiExcluded,
     available: true,
@@ -58,16 +59,17 @@ export const stackOptions: StackOption[] = [
   {
     id: 'fai',
     title: 'Foundation AI',
-    description: 'Only the foundation-ai component.',
+    description: 'Add AI capabilities to your existing data and applications.',
     template: 'full',
     exclude: faiExcluded,
     available: true,
   },
   {
     id: 'v1',
-    title: 'V1',
-    description:
-      'The v1.ai demo: Vite client and Node server on Postgres. Needs the v1-demo-secrets Secret in the tenant namespace before it deploys.',
+    title: 'V1 demo',
+    description: 'Evaluate the V1 app-building experience in a standalone demo workspace.',
+    setupRequirement:
+      'An administrator must configure the deployment credentials (v1-demo-secrets) in the workspace namespace before this demo can launch.',
     template: 'v1',
     exclude: [],
     available: true,
@@ -110,8 +112,8 @@ export const templateHighlights: Record<
   StackOption['id'],
   { tags: string[]; recommended?: boolean }
 > = {
-  foundation: { tags: ['Full platform', 'High availability', 'Trino catalog'], recommended: true },
-  dai: { tags: ['AI dashboards', 'Smaller setup'] },
-  fai: { tags: ['foundation-ai only', 'Smaller setup'] },
-  v1: { tags: ['v1.ai demo', 'Standalone', 'Postgres'] },
+  foundation: { tags: ['Data platform', 'Analytics', 'AI ready'], recommended: true },
+  dai: { tags: ['Business insights', 'AI dashboards'] },
+  fai: { tags: ['AI integration', 'Existing platforms'] },
+  v1: { tags: ['App creation', 'Product demo'] },
 };

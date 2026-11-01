@@ -16,6 +16,7 @@ import useApi, { type RequestError } from '@/hooks/use-api';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 
 import ChoiceItem from './ChoiceItem';
+import SetupRequirement from './SetupRequirement';
 import { StepIntro } from './StepIntro';
 import { readError } from './errors';
 import { type StackOption, stackOptions, templateHighlights, toStep } from './options';
@@ -41,7 +42,7 @@ const resourceCards = [
   {
     icon: CubeIcon,
     title: 'Choose a template',
-    text: 'Select a template. Foundation is the full platform. It has high availability.',
+    text: 'Choose a complete data workspace, AI dashboards, or an AI integration workspace.',
     action: { label: 'Open docs', href: documentationUrl },
   },
   {
@@ -177,8 +178,8 @@ function KuboWizard() {
           <>
             <h2 className={wizardStyles.sectionTitle}>Templates</h2>
             <p className={wizardStyles.recommendation}>
-              Recommended for most teams: <strong>Foundation</strong>. Dashboards AI and Foundation
-              AI are smaller, single-purpose setups.
+              Choose <strong>Foundation</strong> for a complete data workspace, or select a focused
+              workspace for dashboards or AI integration.
             </p>
             <ul className={wizardStyles.templateGrid}>
               {stackOptions.map((option) => (
@@ -278,6 +279,8 @@ function KuboWizard() {
             {submitError && <p className={wizardStyles.error}>{submitError}</p>}
           </>
         )}
+
+        <SetupRequirement requirement={selected?.setupRequirement} />
 
         <div className={wizardStyles.actions}>
           {step < 3 && !canContinue && <p className={wizardStyles.hint}>{continueHints[step]}</p>}

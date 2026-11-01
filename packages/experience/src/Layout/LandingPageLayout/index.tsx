@@ -44,7 +44,7 @@ const LandingPageLayout = ({ children, title, titleInterpolation, thirdPartyBran
         headlineInterpolation={titleInterpolation}
         logo={
           isMeshxDark
-            ? '/console/meshx-logo-dark.svg'
+            ? '/meshx-logo-dark.svg'
             : getBrandingLogoUrl({ theme, branding, isDarkModeEnabled })
         }
         thirdPartyLogo={

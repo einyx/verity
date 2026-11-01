@@ -26,6 +26,12 @@ import {
   type HookMetadata,
   type HookContext,
 } from './context-manager.js';
+import {
+  buildWebhookRequestBody,
+  getSlackWebhookError,
+  isSlackWebhookUrl,
+  redactSlackWebhookSecrets,
+} from './slack-payload.js';
 import { generateHookTestPayload, parseResponse, sendWebhookRequest } from './utils.js';
 
 type HookEventPayloadWithoutHookId = BetterOmit<HookEventPayload, 'hookId'>;
@@ -53,7 +59,10 @@ export const createHookLibrary = (queries: Queries) => {
     const json: HookEventPayload = { ...payload, hookId: id };
     const logEntry = new LogEntry(`TriggerHook.${payload.event}`);
 
-    logEntry.append({ hookId: id, hookRequest: { body: json } });
+    logEntry.append({
+      hookId: id,
+      hookRequest: { body: buildWebhookRequestBody(config.url, json) },
+    });
 
     // Trigger web hook and log response
     try {
@@ -64,13 +73,17 @@ export const createHookLibrary = (queries: Queries) => {
       });
 
       logEntry.append({
-        response: await parseResponse(response),
+        response: await parseResponse(response, config.url),
       });
     } catch (error: unknown) {
       logEntry.append({
         result: LogResult.Error,
-        response: conditional(error instanceof HTTPError && (await parseResponse(error.response))),
-        error: String(normalizeError(error)),
+        response: conditional(
+          error instanceof HTTPError && (await parseResponse(error.response, config.url))
+        ),
+        error: isSlackWebhookUrl(config.url)
+          ? getSlackWebhookError(error instanceof HTTPError ? error.response.status : undefined)
+          : String(normalizeError(error)),
       });
     }
 
@@ -238,14 +251,16 @@ export const createHookLibrary = (queries: Queries) => {
           },
           {
             responseStatus: error.response.status,
-            responseBody: await error.response.text(),
+            responseBody: redactSlackWebhookSecrets(config.url, await error.response.text()),
           } satisfies HookTestErrorResponseData
         );
       }
 
       throw new RequestError({
         code: 'hook.send_test_payload_failed',
-        message: conditional(error instanceof Error && String(error)) ?? 'Unknown error',
+        message: isSlackWebhookUrl(config.url)
+          ? getSlackWebhookError()
+          : (conditional(error instanceof Error && String(error)) ?? 'Unknown error'),
         status: 422,
       });
     }

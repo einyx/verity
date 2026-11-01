@@ -16,8 +16,11 @@ import ky, { HTTPError, type KyResponse } from 'ky';
 import { ssrfProtectedFetch } from '#src/utils/outbound-request.js';
 import { sign } from '#src/utils/sign.js';
 
-export const parseResponse = async (response: KyResponse) => {
-  const body = await response.text();
+import { buildWebhookRequestBody, redactSlackWebhookSecrets } from './slack-payload.js';
+
+export const parseResponse = async (response: KyResponse, url?: string) => {
+  const text = await response.text();
+  const body = url ? redactSlackWebhookSecrets(url, text) : text;
   return {
     statusCode: response.status,
     // eslint-disable-next-line no-restricted-syntax
@@ -89,14 +92,15 @@ export const sendWebhookRequest = async ({
   signingKey,
 }: SendWebhookRequest) => {
   const { url, headers, retries } = hookConfig;
+  const body = buildWebhookRequestBody(url, payload);
 
   return ky.post(url, {
     headers: {
       'user-agent': 'Logto (https://logto.io/)',
       ...headers,
-      ...conditional(signingKey && { 'logto-signature-sha-256': sign(signingKey, payload) }),
+      ...conditional(signingKey && { 'logto-signature-sha-256': sign(signingKey, body) }),
     },
-    json: payload,
+    json: body,
     // The hook URL is tenant-supplied; keep delivery off the deployment's private network.
     fetch: ssrfProtectedFetch,
     // Public webhook delivery contract: retry POST requests on HTTP 5xx only.

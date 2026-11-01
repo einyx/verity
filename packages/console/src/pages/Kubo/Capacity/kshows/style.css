@@ -29,7 +29,7 @@
   --ink-3: var(--color-text-secondary, #6e6b7d);
   --line: var(--color-border, #e4e2ee);
   /* Page-owned name for the brand accent. tokens.css also sets --accent, so this page does not use it. */
-  --brand: var(--color-primary, #ff301a);
+  --brand: var(--color-primary, #1f1f23);
   --good: var(--color-success, #19c37d);
   --crit: var(--color-error, #e5484d);
 }

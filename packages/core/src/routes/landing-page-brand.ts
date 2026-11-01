@@ -5,7 +5,7 @@ export const brand = {
   surface: 'FFFFFF',
   ink: '0E0E0E',
   muted: '63625F',
-  accent: 'FE330A',
+  accent: '1F1F23',
   headingFont: 'Stack Sans Headline',
   bodyFont: 'Stack Sans Text',
 } as const;

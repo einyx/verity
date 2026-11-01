@@ -1,15 +1,13 @@
-import CloudLogo from '@/assets/images/cloud-logo.svg?react';
-import PrysmMark from '@/assets/images/prysm-mark.svg?react';
+import prysmWordmark from '@/assets/images/prysm-wordmark.svg';
 
 import styles from './index.module.scss';
 
-// The same lockup as the console topbar: the mark, then the wordmark.
+// The console wordmark stands alone: there is no separate emblem.
 function Topbar() {
   return (
     <div className={styles.topbar}>
       <div className={styles.brand}>
-        <PrysmMark className={styles.mark} />
-        <CloudLogo className={styles.logo} />
+        <img className={styles.wordmark} src={prysmWordmark} alt="Prysm" />
       </div>
     </div>
   );

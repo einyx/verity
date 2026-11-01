@@ -15,7 +15,7 @@ type BrandingTemplateValues = {
   darkPrimaryColor: string;
 };
 
-const prysmIndigo = '#4f46e5';
+const prysmInk = '#1f1f23';
 
 // Logto's default sign-in colours, the same values the seed uses (packages/schemas/src/seeds).
 const logtoDefaultPrimaryColor = '#6139F6';
@@ -27,8 +27,8 @@ export const brandingTemplates: Record<BrandingTemplateId, BrandingTemplateValue
     darkPrimaryColor: generateDarkColor(logtoDefaultPrimaryColor),
   },
   'prysm-dark': {
-    primaryColor: prysmIndigo,
+    primaryColor: prysmInk,
     isDarkModeEnabled: true,
-    darkPrimaryColor: generateDarkColor(prysmIndigo),
+    darkPrimaryColor: generateDarkColor(prysmInk),
   },
 };

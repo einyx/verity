@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """Generate the Prysm wordmark SVG.
 
-The wordmark is the brand mark followed by the lowercase letters "prysm",
-drawn as straight-edged geometric letterforms so the result matches the
-angular character of the mark itself. Every glyph is built from rectangles and
-diagonals, so the output stays crisp at any size.
+The wordmark is the lowercase letters "prysm", drawn as straight-edged
+geometric letterforms so the result stays crisp at any size. There is no
+separate emblem: the word stands alone as the brand.
 
-Usage: python3 tools/make-prysm-wordmark.py <output.svg>
+Usage:
+    python3 tools/make-prysm-wordmark.py <output.svg>
 """
 
 import sys
 
-# Brand palette. The mark keeps the shape of the previous logo but in the
-# Prysm indigo; the lettering is near-black.
-INDIGO = '#4F46E5'
+# Brand palette. The lettering is near-black; the accent is used by the
+# console's theme tokens rather than by the wordmark itself.
 INK = '#0E0E0E'
 
 # Letter geometry, in a 100-unit em. Cap height is 100, x-height 72.
@@ -39,7 +38,7 @@ def rect(x, y, w, h):
 
 def glyph_p(x):
     """p: stem with a bowl on the upper right. The stem descends below the baseline."""
-    parts = [
+    return [
         # stem, running below the baseline
         f'M{x:.2f} {DESCENDER:.2f}v{-(XH + DESCENDER):.2f}h{STROKE:.2f}V{DESCENDER:.2f}z',
         # bowl: top bar, right stem, bottom bar
@@ -47,7 +46,6 @@ def glyph_p(x):
         f'M{x + 40 + STROKE:.2f} {-XH:.2f}v{XH:.2f}h{STROKE:.2f}V{-XH:.2f}z',
         rect(x + STROKE, -STROKE, 40, STROKE),
     ]
-    return parts
 
 
 def glyph_r(x):
@@ -107,32 +105,22 @@ GLYPHS = {
 }
 
 
-def build(word='prysm', mark_gap=40.0, mark_width=82.0, height=116.0):
+def build(word='prysm', height=116.0):
     """Return the SVG source for the wordmark."""
     # The lettering is set in a 100-unit em: the x-height is 72 units and the
     # descenders reach 22 units below the baseline, so the full letter height
-    # is 94 units. Scale the em so that band fits the canvas with a small
-    # margin, and centre it vertically.
+    # is 94 units. Scale the em so that band fills most of the canvas, and
+    # centre it vertically.
     letter_height = XH + DESCENDER
-    scale = (height * 0.66) / letter_height
-    # The mark is drawn in the same vertical band as the lettering.
-    mark_height = height * 0.62
-    mark_scale = mark_height / 116.0
+    scale = (height * 0.82) / letter_height
 
-    paths = [
-        # The brand mark: the same angular chevron pair, in Prysm indigo.
-        f'<g transform="translate(0 {height * 0.19:.2f}) scale({mark_scale:.4f})">'
-        f'<path d="M82 37V19L41 45 0 18v19l27 17 14 9 14-9zM82 89v18L41 81 0 108V89l27-17 14-9 14 9z" fill="{INDIGO}"/>'
-        f'</g>'
-    ]
-
-    # Lettering, vertically centred against the mark.
     # The glyph functions draw with the baseline at y=0, the x-height line at
     # y=-XH and the descenders down to y=+DESCENDER. The baseline therefore
     # sits DESCENDER below the bottom of the letter band, and the band's
     # centre lands on the canvas centre.
     band_height = letter_height * scale
     baseline = height * 0.5 + band_height / 2 - DESCENDER * scale
+
     letters = []
     pen = 0.0
     for ch in word:
@@ -141,19 +129,13 @@ def build(word='prysm', mark_gap=40.0, mark_width=82.0, height=116.0):
             letters.append(d)
         pen += ADVANCE[ch]
 
-    # Wrap the letters in a group so the whole word can be placed at once.
-    # Each glyph contributes raw path data; wrap it in a <path> element.
     body = ''.join(f'<path d="{d}"/>' for d in letters)
-    paths.append(
-        f'<g transform="translate({mark_width + mark_gap:.2f} {baseline:.2f}) '
-        f'scale({scale:.4f})" fill="{INK}">{body}</g>'
-    )
+    width = pen * scale
 
-    width = mark_width + mark_gap + pen * scale
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height:.0f}" '
         f'viewBox="0 0 {width:.0f} {height:.0f}" fill="none">'
-        f'{"".join(paths)}'
+        f'<g transform="translate(0 {baseline:.2f}) scale({scale:.4f})" fill="{INK}">{body}</g>'
         f'</svg>\n'
     )
 

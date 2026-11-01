@@ -70,16 +70,16 @@ export const buildBriefHtml = (input: BriefInput): string => {
   @page { size: A4; margin: 18mm; }
   body { margin: 0; background: #F0EEE6; color: #1F1E1C; font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; line-height: 1.45; }
   .wordmark { font-size: 16pt; font-weight: bold; color: #1F1E1C; }
-  .wordmark span { color: #FE330A; }
+  .wordmark span { color: #1F1F23; }
   h1 { font-size: 22pt; margin: 14px 0 4px; font-weight: normal; }
-  h2 { font-size: 12pt; margin: 18px 0 6px; color: #FE330A; text-transform: uppercase; letter-spacing: 0.06em; }
+  h2 { font-size: 12pt; margin: 18px 0 6px; color: #1F1F23; text-transform: uppercase; letter-spacing: 0.06em; }
   .card { background: #FDFDFD; border: 1px solid #E4E2DA; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
   .muted { color: #6F6C66; font-size: 10pt; }
   .meta { color: #6F6C66; font-size: 10pt; }
   ul { margin: 4px 0 0 18px; padding: 0; }
   li { margin-bottom: 4px; }
-  .booking { margin-top: 18px; padding: 10px 14px; border-left: 4px solid #FE330A; background: #FDFDFD; }
-  a { color: #FE330A; }
+  .booking { margin-top: 18px; padding: 10px 14px; border-left: 4px solid #1F1F23; background: #FDFDFD; }
+  a { color: #1F1F23; }
   footer { margin-top: 24px; font-size: 8pt; color: #6F6C66; }
 </style></head>
 <body>
@@ -124,7 +124,7 @@ const toWinAnsi = (value: string) => value.replaceAll(/[^ -~ -ÿ]/g, '?');
 const pageSize: [number, number] = [595.28, 841.89];
 const margin = 52;
 const contentWidth = pageSize[0] - margin * 2;
-const accent = rgb(0.996, 0.2, 0.039); // FE330A, the deck accent
+const accent = rgb(0.122, 0.122, 0.137); // 1F1F23, the deck accent
 const ink = rgb(0.055, 0.055, 0.055); // 0E0E0E
 const muted = rgb(0.388, 0.384, 0.373); // 63625F
 

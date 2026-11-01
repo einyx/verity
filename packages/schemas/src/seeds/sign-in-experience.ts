@@ -13,8 +13,8 @@ import { adminTenantId, defaultTenantId } from './tenant.js';
 
 export const defaultPrimaryColor = '#6139F6';
 
-/** The Prysm brand accent, used as the admin tenant's default primary colour. */
-const prysmPrimaryColor = '#4F46E5';
+/** The Prysm brand colour, used as the admin tenant's default primary colour. */
+const prysmPrimaryColor = '#1F1F23';
 /** Prysm wordmarks served by the console build (`packages/console/public`). */
 const prysmLogoUrl = 'https://auth.prysm.sh:8443/console/prysm-logo.svg';
 const prysmDarkLogoUrl = 'https://auth.prysm.sh:8443/console/prysm-logo-dark.svg';

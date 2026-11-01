@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import styles from './App.module.scss';
-import prysmMark from './assets/prysm-mark.svg';
+import prysmWordmark from './assets/prysm-wordmark.svg';
 
 const prysmUrl = `https://prysm.sh/?${new URLSearchParams({
   utm_source: 'sign_in',
@@ -37,8 +37,8 @@ const Footer = ({ isDarkMode }: { readonly isDarkMode: boolean }) => (
       aria-label="Powered By Prysm"
     >
       <span>Powered by</span>
-      <img className={styles.staticLogo} src={prysmMark} alt="Prysm" />
-      <img className={styles.highlightLogo} src={prysmMark} alt="Prysm" />
+      <img className={styles.staticLogo} src={prysmWordmark} alt="Prysm" />
+      <img className={styles.highlightLogo} src={prysmWordmark} alt="Prysm" />
     </a>
   </div>
 );

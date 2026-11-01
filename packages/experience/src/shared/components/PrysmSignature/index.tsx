@@ -1,7 +1,7 @@
 import type { Theme } from '@logto/schemas';
 import { useEffect, useRef } from 'react';
 
-import PrysmMark from '@/shared/assets/icons/prysm-mark.svg?react';
+import prysmWordmark from '@/shared/assets/icons/prysm-wordmark.svg?react';
 
 import styles from './index.module.scss';
 
@@ -178,8 +178,8 @@ const PrysmSignature = ({ className }: Props) => {
         <span data-logto-signature-text className={styles.text}>
           Powered by
         </span>
-        <PrysmMark data-logto-signature-icon="static" className={styles.staticIcon} />
-        <PrysmMark data-logto-signature-icon="highlight" className={styles.highlightIcon} />
+        <prysmWordmark data-logto-signature-icon="static" className={styles.staticIcon} />
+        <prysmWordmark data-logto-signature-icon="highlight" className={styles.highlightIcon} />
       </a>
     </div>
   );

@@ -31,19 +31,19 @@
 .light {
   @include themes.light;
 
-  --color-primary: #ff301a;
-  --color-divider: #dddcdb;
+  --color-primary: #1f1f23;
+  --color-divider: #e4e4e7;
   --color-hover: rgba(27, 25, 25, 5%);
   --color-hover-variant: rgba(27, 25, 25, 5%);
-  --color-focused-variant: #ff301a;
-  --color-primary-hover: #da2c09;
-  --color-text: #1b1919;
-  --color-text-secondary: #615f59;
-  --color-text-link: #da2c09;
-  --color-background: #faf9f7;
+  --color-focused-variant: #1f1f23;
+  --color-primary-hover: #3f3f46;
+  --color-text: #1f1f23;
+  --color-text-secondary: #6b6b72;
+  --color-text-link: #3f3f46;
+  --color-background: #fafafa;
   --color-layer-1: #fff;
-  --color-layer-2: #f3f3f1;
-  --color-border: #dbdad5;
+  --color-layer-2: #f4f4f5;
+  --color-border: #e4e4e7;
 
   // foundation-frontend sidebar tokens (surface-layer-cp, label, highlight, border).
   --ds-surface: #fff;
@@ -61,26 +61,26 @@
 .dark {
   @include themes.dark;
 
-  --color-primary: #ff5a40;
-  --color-divider: #3b3a3a;
+  --color-primary: #f4f4f5;
+  --color-divider: #3f3f46;
   --color-hover: rgba(255, 255, 255, 6%);
   --color-hover-variant: rgba(255, 255, 255, 6%);
-  --color-focused-variant: #ff5a40;
-  --color-primary-hover: #fe8168;
-  --color-text: #faf9f7;
-  --color-text-secondary: #c2c0ba;
-  --color-text-link: #fe8168;
-  --color-background: #1b1919;
-  --color-layer-1: #2d2c2a;
-  --color-layer-2: #3b3a37;
-  --color-border: #464540;
+  --color-focused-variant: #f4f4f5;
+  --color-primary-hover: #d4d4d8;
+  --color-text: #fafafa;
+  --color-text-secondary: #c4c4c9;
+  --color-text-link: #d4d4d8;
+  --color-background: #18181b;
+  --color-layer-1: #27272a;
+  --color-layer-2: #3f3f46;
+  --color-border: #52525b;
 
   // foundation-frontend sidebar tokens (surface-layer-cp, label, highlight, border).
   --ds-surface: #37383a;
   --ds-border: oklch(38.626% 0.007 95.233deg);
   --ds-label-primary: #f8f8f7;
   --ds-label-secondary: #ccc;
-  --ds-label-secondary-hover: #dddcdb;
+  --ds-label-secondary-hover: #e4e4e7;
   --ds-highlight-m: rgba(255, 255, 255, 4%);
   --ds-highlight-tone: rgba(0, 153, 255, 8%);
 

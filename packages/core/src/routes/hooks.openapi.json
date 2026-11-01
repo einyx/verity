@@ -178,7 +178,7 @@
     "/api/hooks/{id}/test": {
       "post": {
         "summary": "Test hook",
-        "description": "Test the specified hook with the given events and config.",
+        "description": "Test the specified hook with the given events and config. Standard Slack Incoming Webhooks receive readable summaries with affected subject and application context when available, localized event time, and an explicit Test notification label. Other webhook endpoints receive the original test event payload.",
         "requestBody": {
           "content": {
             "application/json": {

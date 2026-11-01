@@ -32,6 +32,7 @@ type SendWebhookRequest = {
   hookConfig: HookConfig;
   payload: HookEventPayload;
   signingKey: string;
+  isTest?: boolean;
 };
 
 const rangeInclusive = (start: number, end: number) =>
@@ -90,9 +91,10 @@ export const sendWebhookRequest = async ({
   hookConfig,
   payload,
   signingKey,
+  isTest,
 }: SendWebhookRequest) => {
   const { url, headers, retries } = hookConfig;
-  const body = buildWebhookRequestBody(url, payload);
+  const body = buildWebhookRequestBody(url, payload, { isTest });
 
   return ky.post(url, {
     headers: {

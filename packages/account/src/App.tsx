@@ -2,7 +2,7 @@ import { ReservedScope, UserScope } from '@logto/core-kit';
 import { LogtoProvider, useLogto } from '@logto/react';
 import { accountCenterApplicationId, SignInIdentifier } from '@logto/schemas';
 import { useContext } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import AppBoundary from '@ac/Providers/AppBoundary';
 import LoadingContextProvider from '@ac/Providers/LoadingContextProvider';
@@ -85,6 +85,9 @@ const settingsUnavailable = (context: React.ContextType<typeof PageContext>) =>
   Boolean(context.experienceError) || !context.accountCenterSettings || !context.experienceSettings;
 
 export const Main = () => {
+  // Subscribe to SPA navigation; window.location alone leaves auth effects stuck
+  // on the landing route after Navigate selects the first available tab.
+  useLocation();
   const params = new URLSearchParams(window.location.search);
   const { pathname } = window.location;
   const isAccountRoot =

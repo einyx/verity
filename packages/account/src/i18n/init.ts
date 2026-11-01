@@ -1,10 +1,11 @@
+import resource from '@logto/phrases-experience';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 i18next.use(initReactI18next);
 
 /**
- * Initialize i18next without fetching phrase bundles.
+ * Initialize with a bundled fallback so settings/phrase failures remain readable.
  * Remote phrases are loaded once in PageContextProvider via changeLanguage().
  */
 const initI18n = async () => {
@@ -13,7 +14,8 @@ const initI18n = async () => {
   }
 
   await i18next.init({
-    resources: {},
+    // Phrase exports are frozen; i18next must own a mutable copy for remote overrides.
+    resources: { en: structuredClone(resource.en) },
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,

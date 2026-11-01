@@ -30,12 +30,14 @@ describe('sendMail', () => {
         attachments: [attachment],
       },
       config,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- the mock stands in for fetch.
       send as unknown as typeof fetch
     );
 
     const [, init] = send.mock.calls[0] ?? [];
-    const body = JSON.parse(String(init?.body));
+    const body = JSON.parse(String(init?.body)) as {
+      content: Record<string, string>;
+      attachments: AcsAttachment[];
+    };
 
     expect(body.content).toEqual({ subject: 'Hello', plainText: 'Hello', html: '<p>Hello</p>' });
     // ACS reads the file name from `name`; it refuses the mail when the field is missing.
@@ -54,7 +56,6 @@ describe('sendMail', () => {
       sendMail(
         { to: 'someone@example.com', subject: 'Hello', text: 'Hello' },
         config,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- the mock stands in for fetch.
         send as unknown as typeof fetch
       )
     ).rejects.toThrow('ACS returned 400: {"error":{"code":"BadRequest"}}');

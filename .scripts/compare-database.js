@@ -1,5 +1,8 @@
 import pg from 'pg';
 import assert from 'node:assert';
+import { isDeepStrictEqual } from 'node:util';
+
+import { alterationDataContract } from './alteration-data-contract.js';
 
 const omit = (object, ...keys) =>
   Object.fromEntries(
@@ -20,7 +23,7 @@ const tryCompare = (a, b) => {
   }
 };
 
-const queryDatabaseManifest = async (database) => {
+export const queryDatabaseManifest = async (database) => {
   const pool = new pg.Pool({
     database,
     user: 'postgres',
@@ -160,6 +163,8 @@ const queryDatabaseManifest = async (database) => {
     return { policyname, ...rest };
   };
 
+  await pool.end();
+
   // Omit generated ids and values
   return {
     tables: omitArray(tables, 'table_catalog'),
@@ -232,10 +237,10 @@ export const autoCompare = (a, b) => {
 
 export const buildSortByKeys = (keys) => (a, b) => {
   // Filter out keys where either value is boolean, then use original strategy
-  const filteredKeys = keys.filter((key) => 
-    typeof a[key] !== 'boolean' && typeof b[key] !== 'boolean'
+  const filteredKeys = keys.filter(
+    (key) => typeof a[key] !== 'boolean' && typeof b[key] !== 'boolean'
   );
-  
+
   const found = filteredKeys.find((key) => {
     const comparison = autoCompare(a[key], b[key]);
     return comparison !== 0;
@@ -243,13 +248,97 @@ export const buildSortByKeys = (keys) => (a, b) => {
   return found ? autoCompare(a[found], b[found]) : 0;
 };
 
-const queryDatabaseData = async (database, manifests) => {
+export const normalizeOrganizationScopeIds = (rows, scopes) =>
+  rows.map((row) => {
+    if (!Object.hasOwn(row, 'organization_scope_id')) return row;
+    const scope = scopes.find(
+      ({ id, tenant_id }) =>
+        id === row.organization_scope_id && tenant_id === row.tenant_id
+    );
+    assert(
+      scope,
+      'Organization scope reference must resolve within the same tenant'
+    );
+    return { ...row, organization_scope_id: scope.name };
+  });
+
+const subtractRows = (left, right) => {
+  const remaining = [...right];
+  return left.filter((row) => {
+    const index = remaining.findIndex((candidate) =>
+      isDeepStrictEqual(row, candidate)
+    );
+    if (index < 0) return true;
+    remaining.splice(index, 1);
+    return false;
+  });
+};
+
+export const databaseDataDifferences = (left, right) => {
+  assert.deepStrictEqual(
+    Object.keys(left).sort(),
+    Object.keys(right).sort(),
+    'Data table sets differ'
+  );
+  return Object.fromEntries(
+    Object.keys(left)
+      .sort()
+      .flatMap((table) => {
+        const leftOnly = subtractRows(left[table], right[table]).sort(
+          autoCompare
+        );
+        const rightOnly = subtractRows(right[table], left[table]).sort(
+          autoCompare
+        );
+        return leftOnly.length || rightOnly.length
+          ? [[table, { leftOnly, rightOnly }]]
+          : [];
+      })
+  );
+};
+
+// No table is exempt: every divergent row and its multiplicity must match the reviewed contract.
+// Unexpected changes and expectations that became stale both fail closed.
+export const assertDatabaseData = (left, right, expectedDifferences = {}) => {
+  assert.deepStrictEqual(
+    databaseDataDifferences(left, right),
+    expectedDifferences
+  );
+};
+
+export const selectExpectedDifferences = (
+  direction,
+  baselineTag,
+  baselineCommit
+) => {
+  if (!direction && !baselineTag && !baselineCommit) return {};
+  assert.equal(
+    alterationDataContract.baselineTag,
+    baselineTag,
+    'Seed data contract requires its reviewed release tag'
+  );
+  assert.equal(
+    alterationDataContract.baselineCommit,
+    baselineCommit,
+    'Seed data contract requires its immutable release commit'
+  );
+  assert(
+    ['up', 'down'].includes(direction),
+    'Data comparison direction must be up or down'
+  );
+  return alterationDataContract[direction];
+};
+
+export const queryDatabaseData = async (database, manifests) => {
   const pool = new pg.Pool({
     database,
     user: 'postgres',
     password: 'postgres',
   });
 
+  const { rows: organizationScopes } = await pool.query(
+    'select tenant_id, id, name from organization_scopes'
+  );
   const result = await Promise.all(
     manifests[0].tables.map(async ({ table_schema, table_name }) => {
       const { rows } = await pool.query(
@@ -266,7 +355,7 @@ const queryDatabaseData = async (database, manifests) => {
       }
 
       const data = omitArray(
-        rows,
+        normalizeOrganizationScopeIds(rows, organizationScopes),
         'id',
         'resource_id',
         'role_id',
@@ -280,18 +369,29 @@ const queryDatabaseData = async (database, manifests) => {
         'add_on_sku_id'
       );
 
-      return [table_name, data.sort(buildSortByKeys(Object.keys(data[0] ?? {})))];
+      return [
+        table_name,
+        data.sort(buildSortByKeys(Object.keys(data[0] ?? {}))),
+      ];
     })
   );
 
+  await pool.end();
   return Object.fromEntries(result);
 };
 
 // Main execution logic - only runs when file is executed directly
-const isMainModule = import.meta.url === new URL(process.argv[1], 'file://').href;
+const isMainModule =
+  import.meta.url === new URL(process.argv[1], 'file://').href;
 
 if (isMainModule) {
-  const [, , database1, database2] = process.argv;
+  const [, , database1, database2, direction, baselineTag, baselineCommit] =
+    process.argv;
+  const expectedDifferences = selectExpectedDifferences(
+    direction,
+    baselineTag,
+    baselineCommit
+  );
 
   console.log('Compare database manifest between', database1, 'and', database2);
 
@@ -304,8 +404,9 @@ if (isMainModule) {
 
   console.log('Compare database data between', database1, 'and', database2);
 
-  tryCompare(
+  assertDatabaseData(
     await queryDatabaseData(database1, manifests),
-    await queryDatabaseData(database2, manifests)
+    await queryDatabaseData(database2, manifests),
+    expectedDifferences
   );
 }

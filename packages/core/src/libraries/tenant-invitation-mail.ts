@@ -2,10 +2,9 @@ import { generateStandardId, generateStandardSecret } from '@logto/shared';
 
 import type Queries from '#src/tenants/Queries.js';
 
-
 // The sign-in link of a tenant invitation. The mail itself is in onboarding-email.ts.
 
-export type TenantInvitationLink = {
+type TenantInvitationLink = {
   /** The Console accept link, which signs the invitee in with a fresh one-time token. */
   link: string;
   oneTimeTokenId: string;

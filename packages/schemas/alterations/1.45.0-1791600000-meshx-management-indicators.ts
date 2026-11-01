@@ -8,6 +8,8 @@ import type { AlterationScript } from '../lib/types/alteration.js';
 // (the `/api` indicators under the Logto domain); other resources keep their values.
 const logtoIndicator = String.raw`^https://([^.]+)\.logto\.app/api$`;
 const meshxIndicator = String.raw`https://\1.meshx.foundation/api`;
+const meshxIndicatorPattern = String.raw`^https://([^.]+)\.meshx\.foundation/api$`;
+const logtoReplacement = String.raw`https://\1.logto.app/api`;
 
 const alteration: AlterationScript = {
   up: async (pool) => {
@@ -20,8 +22,8 @@ const alteration: AlterationScript = {
   down: async (pool) => {
     await pool.query(sql`
       update resources
-      set indicator = regexp_replace(indicator, '^https://([^.]+)\.meshx\.foundation/api$', 'https://\1.logto.app/api')
-      where indicator ~ '^https://[^.]+\.meshx\.foundation/api$';
+      set indicator = regexp_replace(indicator, ${meshxIndicatorPattern}, ${logtoReplacement})
+      where indicator ~ ${meshxIndicatorPattern};
     `);
   },
 };

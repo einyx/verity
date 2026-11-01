@@ -4,9 +4,10 @@ const { join } = require('node:path');
 const { runInNewContext } = require('node:vm');
 const { test } = require('node:test');
 
-function claims(changes = {}, userChanges = {}) {
+function claims(changes = {}, userChanges = {}, globals = {}) {
   const script = readFileSync(join(__dirname, '../scripts/foundation-viewer-claims.js'), 'utf8');
   return JSON.parse(JSON.stringify(runInNewContext(`${script}\ngetCustomJwtClaims(input)`, {
+    ...globals,
     input: {
       token: { kind: 'AccessToken', accountId: 'viewer', aud: 'https://demo.meshx.foundation/', ...changes },
       context: { user: { id: 'viewer', primaryEmail: 'viewer@example.invalid', isSuspended: false, ...userChanges } },
@@ -17,6 +18,15 @@ function claims(changes = {}, userChanges = {}) {
 test('Foundation viewer receives standard signed email claims', () => {
   assert.deepEqual(claims(), { email: 'viewer@example.invalid', email_verified: true });
   assert.deepEqual(claims({ aud: ['https://demo.meshx.foundation/'] }), claims());
+});
+
+test('audiences are exact OAuth identifiers, even when a URL parser is available', () => {
+  for (const aud of [
+    'https://demo.meshx.foundation/evil',
+    'https://demo.meshx.foundation.evil.example/',
+    'https://demo.meshx.foundation@evil.example/',
+    'https://demo.meshx.foundation/?aud=other',
+  ]) assert.deepEqual(claims({ aud }, {}, { URL }), {});
 });
 
 test('other audiences and machine identities receive no email claims', () => {

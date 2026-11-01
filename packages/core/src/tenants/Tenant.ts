@@ -25,6 +25,12 @@ import koaSpaSessionGuard from '#src/middleware/koa-spa-session-guard.js';
 import initOidc from '#src/oidc/init.js';
 import { mountCallbackRouter } from '#src/routes/callback.js';
 import initApis, { initMcpRouter, initPublicWellKnownApis } from '#src/routes/init.js';
+import { createSharedHitStore } from '#src/routes/landing-page-chat-counters.js';
+import {
+  createChatState,
+  createProductionChatDeps,
+  landingPageChatRoutes,
+} from '#src/routes/landing-page-chat.js';
 import BasicSentinel from '#src/sentinel/basic-sentinel.js';
 
 import { redisCache } from '../caches/index.js';
@@ -36,12 +42,6 @@ import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
 import { mountAdminRoutes } from './admin-routes.js';
 import { mountAdminTenantApps } from './admin-tenant-apps.js';
-import { createSharedHitStore } from '#src/routes/landing-page-chat-counters.js';
-import {
-  createChatState,
-  createProductionChatDeps,
-  landingPageChatRoutes,
-} from '#src/routes/landing-page-chat.js';
 import { mountBaseMiddleware } from './base-middleware.js';
 import {
   getSigningKeyRotationState,

@@ -1,12 +1,6 @@
-const isAllowedAudience = (audience) => {
-  if (typeof audience !== 'string' || !audience) return false;
-  try {
-    const parsed = new URL(audience);
-    return parsed.protocol === 'https:' && parsed.hostname === 'demo.meshx.foundation';
-  } catch {
-    return false;
-  }
-};
+// OAuth audiences are exact identifiers, not any URL on an allowed host. Avoid relying on
+// URL globals as the custom-claims sandbox may not provide them.
+const isAllowedAudience = (audience) => audience === 'https://demo.meshx.foundation/';
 
 const getCustomJwtClaims = ({ token, context }) => {
   const audiences = Array.isArray(token.aud) ? token.aud : [token.aud];

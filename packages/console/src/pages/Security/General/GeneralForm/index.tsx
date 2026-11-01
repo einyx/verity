@@ -7,11 +7,9 @@ import { useSWRConfig } from 'swr';
 
 import UnlockIcon from '@/assets/icons/unlock.svg?react';
 import DetailsForm from '@/components/DetailsForm';
-import { addOnLabels, CombinedAddOnAndFeatureTag } from '@/components/FeatureTag';
 import FormCard from '@/components/FormCard';
 import UnsavedChangesAlertModal from '@/components/UnsavedChangesAlertModal';
 import { sentinel } from '@/consts';
-import { latestProPlanId } from '@/consts/subscriptions';
 import { SubscriptionDataContext } from '@/contexts/SubscriptionDataProvider';
 import Button from '@/ds-components/Button';
 import FormField from '@/ds-components/FormField';
@@ -19,7 +17,6 @@ import Switch from '@/ds-components/Switch';
 import NumericInput from '@/ds-components/TextInput/NumericInput';
 import useApi from '@/hooks/use-api';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
-import usePaywall from '@/hooks/use-paywall';
 import { trySubmitSafe } from '@/utils/form';
 
 import PaywallNotification from '../../PaywallNotification';
@@ -36,7 +33,6 @@ function GeneralForm({ formData }: Props) {
   const api = useApi();
   const { mutate: mutateGlobal } = useSWRConfig();
   const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const { isFreeTenant } = usePaywall();
   const {
     access: { isReadOnly },
   } = useCurrentTenantScopes();
@@ -100,17 +96,10 @@ function GeneralForm({ formData }: Props) {
           title="security.sentinel_policy.card_title"
           description="security.sentinel_policy.card_description"
           learnMoreLink={{ href: sentinel }}
-          tag={
-            <CombinedAddOnAndFeatureTag
-              hasAddOnTag
-              paywall={latestProPlanId}
-              addOnLabel={addOnLabels.addOnBundle}
-            />
-          }
         >
           <FormField title="security.sentinel_policy.enable_sentinel_policy.title">
             <Switch
-              disabled={isFreeTenant}
+              disabled={isReadOnly}
               label={t('sentinel_policy.enable_sentinel_policy.description')}
               {...register('sentinelPolicyEnabled')}
             />

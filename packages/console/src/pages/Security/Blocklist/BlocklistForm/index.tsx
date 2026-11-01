@@ -7,19 +7,17 @@ import { useTranslation } from 'react-i18next';
 import { useSWRConfig } from 'swr';
 
 import DetailsForm from '@/components/DetailsForm';
-import { CombinedAddOnAndFeatureTag, addOnLabels } from '@/components/FeatureTag';
 import FormCard from '@/components/FormCard';
 import MultiOptionInput from '@/components/MultiOptionInput';
 import UnsavedChangesAlertModal from '@/components/UnsavedChangesAlertModal';
 import { emailBlocklist } from '@/consts';
 import { isCloud } from '@/consts/env';
-import { latestProPlanId } from '@/consts/subscriptions';
 import { SubscriptionDataContext } from '@/contexts/SubscriptionDataProvider';
 import FormField from '@/ds-components/FormField';
 import InlineNotification from '@/ds-components/InlineNotification';
 import Switch from '@/ds-components/Switch';
 import useApi from '@/hooks/use-api';
-import usePaywall from '@/hooks/use-paywall';
+import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
 import { trySubmitSafe } from '@/utils/form';
 
 import PaywallNotification from '../../PaywallNotification';
@@ -38,7 +36,9 @@ type Props = {
 function BlocklistForm({ formData }: Props) {
   const api = useApi();
   const { mutate: mutateGlobal } = useSWRConfig();
-  const { isFreeTenant } = usePaywall();
+  const {
+    access: { isReadOnly },
+  } = useCurrentTenantScopes();
   const { mutateSubscriptionQuotaAndUsages } = useContext(SubscriptionDataContext);
 
   const { t } = useTranslation(undefined, {
@@ -104,19 +104,12 @@ function BlocklistForm({ formData }: Props) {
         <FormCard
           title="security.blocklist.card_title"
           description="security.blocklist.card_description"
-          tag={
-            <CombinedAddOnAndFeatureTag
-              hasAddOnTag
-              paywall={latestProPlanId}
-              addOnLabel={addOnLabels.addOnBundle}
-            />
-          }
           learnMoreLink={{ href: emailBlocklist }}
         >
           {isCloud && (
             <FormField title="security.blocklist.disposable_email.title">
               <Switch
-                disabled={isFreeTenant}
+                disabled={isReadOnly}
                 label={t('blocklist.disposable_email.description')}
                 {...register('blockDisposableAddresses')}
               />
@@ -124,7 +117,7 @@ function BlocklistForm({ formData }: Props) {
           )}
           <FormField title="security.blocklist.email_subaddressing.title">
             <Switch
-              disabled={isFreeTenant}
+              disabled={isReadOnly}
               label={t('blocklist.email_subaddressing.description')}
               {...register('blockSubaddressing')}
             />
@@ -138,7 +131,7 @@ function BlocklistForm({ formData }: Props) {
               control={control}
               render={({ field: { onChange, value = [] } }) => (
                 <MultiOptionInput
-                  disabled={isFreeTenant}
+                  disabled={isReadOnly}
                   values={value}
                   placeholder={t('blocklist.custom_email_address.placeholder')}
                   renderValue={(value) => value}
@@ -174,7 +167,7 @@ function BlocklistForm({ formData }: Props) {
               control={control}
               render={({ field: { onChange, value = [] } }) => (
                 <MultiOptionInput
-                  disabled={isFreeTenant}
+                  disabled={isReadOnly}
                   values={value}
                   placeholder={t('blocklist.custom_email_allowlist.placeholder')}
                   renderValue={(value) => value}

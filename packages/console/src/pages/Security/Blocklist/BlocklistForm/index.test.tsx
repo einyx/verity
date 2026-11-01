@@ -4,11 +4,18 @@ import { toast } from 'react-hot-toast';
 import { useSWRConfig } from 'swr';
 
 import useApi from '@/hooks/use-api';
+import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
+import usePaywall from '@/hooks/use-paywall';
 
 import BlocklistForm from '.';
 
 const mockPatch = jest.fn();
 const mockMutateGlobal = jest.fn();
+
+jest.mock('@/hooks/use-current-tenant-scopes', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({ access: { isReadOnly: false } })),
+}));
 
 jest.mock('react-hot-toast', () => ({
   toast: {
@@ -176,6 +183,16 @@ const addCustomAllowlistValue = async (value: string) => {
 describe('BlocklistForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest
+      .mocked(usePaywall)
+      .mockReturnValue({ isFreeTenant: false, isPaidTenant: true } as ReturnType<
+        typeof usePaywall
+      >);
+    jest
+      .mocked(useCurrentTenantScopes)
+      .mockReturnValue({ access: { isReadOnly: false } } as ReturnType<
+        typeof useCurrentTenantScopes
+      >);
     mockPatch.mockReturnValue({
       json: async () => ({
         emailBlocklistPolicy: {
@@ -192,6 +209,48 @@ describe('BlocklistForm', () => {
     mockedUseSWRConfig.mockReturnValue({
       mutate: mockMutateGlobal,
     } as unknown as ReturnType<typeof useSWRConfig>);
+  });
+
+  it('allows Free admins to edit every blocklist control without changing stored policy on mount', async () => {
+    jest
+      .mocked(usePaywall)
+      .mockReturnValue({ isFreeTenant: true, isPaidTenant: false } as ReturnType<
+        typeof usePaywall
+      >);
+    renderBlocklistForm();
+
+    for (const input of screen.getAllByRole('checkbox').concat(screen.getAllByRole('textbox'))) {
+      expect((input as HTMLInputElement).disabled).toBe(false);
+    }
+    expect((screen.getAllByRole('checkbox')[1] as HTMLInputElement).checked).toBe(true);
+    expect(mockPatch).not.toHaveBeenCalled();
+    await addCustomAllowlistValue('free@example.com');
+    fireEvent.click(screen.getByText('general.save_changes'));
+    await waitFor(() => {
+      expect(mockPatch).toHaveBeenCalledWith('api/sign-in-exp', {
+        json: {
+          emailBlocklistPolicy: {
+            blockDisposableAddresses: false,
+            blockSubaddressing: true,
+            customAllowlist: ['allowed@example.com', 'free@example.com'],
+            customBlocklist: ['@blocked.com'],
+          },
+        },
+      });
+    });
+  });
+
+  it('keeps blocklist controls disabled for read-only members', () => {
+    jest
+      .mocked(useCurrentTenantScopes)
+      .mockReturnValue({ access: { isReadOnly: true } } as ReturnType<
+        typeof useCurrentTenantScopes
+      >);
+    renderBlocklistForm();
+    for (const input of screen.getAllByRole('checkbox').concat(screen.getAllByRole('textbox'))) {
+      expect((input as HTMLInputElement).disabled).toBe(true);
+    }
+    expect(mockPatch).not.toHaveBeenCalled();
   });
 
   it('renders the custom allowlist section from the form data', () => {
@@ -262,5 +321,27 @@ describe('BlocklistForm', () => {
         screen.getByText('admin_console.security.blocklist.custom_email_allowlist.duplicate_error')
       ).toBeTruthy();
     });
+  });
+
+  it('keeps invalid email/domain validation for Free admins', async () => {
+    jest
+      .mocked(usePaywall)
+      .mockReturnValue({ isFreeTenant: true, isPaidTenant: false } as ReturnType<
+        typeof usePaywall
+      >);
+    renderBlocklistForm();
+    const input = getCustomAllowlistInput();
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'not-an-email-or-domain' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'admin_console.security.blocklist.custom_email_allowlist.invalid_format_error'
+        )
+      ).toBeTruthy();
+    });
+    expect(mockPatch).not.toHaveBeenCalled();
   });
 });

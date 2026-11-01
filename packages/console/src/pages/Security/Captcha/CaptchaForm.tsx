@@ -7,17 +7,14 @@ import { useSWRConfig } from 'swr';
 
 import Plus from '@/assets/icons/plus.svg?react';
 import DetailsForm from '@/components/DetailsForm';
-import { addOnLabels, CombinedAddOnAndFeatureTag } from '@/components/FeatureTag';
 import FormCard from '@/components/FormCard';
 import UnsavedChangesAlertModal from '@/components/UnsavedChangesAlertModal';
 import { captcha } from '@/consts/external-links';
-import { latestProPlanId } from '@/consts/subscriptions';
 import { SubscriptionDataContext } from '@/contexts/SubscriptionDataProvider';
 import Button from '@/ds-components/Button';
 import FormField from '@/ds-components/FormField';
 import useApi from '@/hooks/use-api';
 import useCurrentTenantScopes from '@/hooks/use-current-tenant-scopes';
-import usePaywall from '@/hooks/use-paywall';
 import { trySubmitSafe } from '@/utils/form';
 
 import CaptchaCard from './CaptchaCard';
@@ -32,7 +29,6 @@ type Props = {
 
 function CaptchaForm({ captchaProvider, formData }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
-  const { isFreeTenant } = usePaywall();
   const {
     access: { isReadOnly },
   } = useCurrentTenantScopes();
@@ -79,33 +75,25 @@ function CaptchaForm({ captchaProvider, formData }: Props) {
             title="security.bot_protection.title"
             description="security.bot_protection.description"
             learnMoreLink={{ href: captcha }}
-            tag={
-              <CombinedAddOnAndFeatureTag
-                hasAddOnTag
-                paywall={latestProPlanId}
-                addOnLabel={addOnLabels.addOnBundle}
-              />
-            }
           >
             <FormField title="security.bot_protection.captcha.title">
               <div className={styles.description}>
                 {t('security.bot_protection.captcha.placeholder')}
               </div>
-              {isFreeTenant || !captchaProvider ? (
+              {captchaProvider ? (
+                <CaptchaCard captchaProvider={captchaProvider} />
+              ) : (
                 !isReadOnly && (
                   <Button
                     title="security.bot_protection.captcha.add"
                     icon={<Plus />}
-                    disabled={isFreeTenant}
                     onClick={() => {
                       setIsCreateCaptchaFormOpen(true);
                     }}
                   />
                 )
-              ) : (
-                <CaptchaCard captchaProvider={captchaProvider} />
               )}
-              <EnableCaptcha disabled={isFreeTenant || !captchaProvider} />
+              <EnableCaptcha disabled={isReadOnly || !captchaProvider} />
             </FormField>
           </FormCard>
         </DetailsForm>

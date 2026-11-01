@@ -55,6 +55,8 @@ const createQuotaLibrary = ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Boolean guards return before reading the subscription; discard unused one-shot fixtures.
+  mockGetTenantSubscription.mockReset();
   setEnvFlag('isCloud', true);
   setEnvFlag('isIntegrationTest', false);
 
@@ -67,6 +69,24 @@ afterEach(() => {
 });
 
 describe('guardTenantUsageByKey', () => {
+  it('allows advanced security with a false subscription quota without subscription work', async () => {
+    mockGetTenantSubscription.mockResolvedValueOnce({
+      ...mockSubscriptionData,
+      planId: ReservedPlanId.Free,
+      quota: { ...mockSubscriptionData.quota, securityFeaturesEnabled: false },
+    });
+    const { tenant, quotaLibrary } = createQuotaLibrary();
+    const getSubscriptionData = jest.spyOn(tenant.subscription, 'getSubscriptionData');
+
+    await expect(
+      quotaLibrary.guardTenantUsageByKey('securityFeaturesEnabled')
+    ).resolves.toBeUndefined();
+
+    expect(getSubscriptionData).not.toHaveBeenCalled();
+    expect(mockGetTenantSubscription).not.toHaveBeenCalled();
+    expect(mockReportSubscriptionUpdates).not.toHaveBeenCalled();
+  });
+
   it('skips guard in non-cloud environment', async () => {
     setEnvFlag('isCloud', false);
 

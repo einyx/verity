@@ -17,7 +17,7 @@
     "build": "tsup",
     "build:test": "rm -rf build/ && tsc -p tsconfig.test.json && pnpm copy:apidocs",
     "build:instrument": "rm -rf build/ && tsc -p tsconfig.integration.json && nyc instrument build/ --in-place && pnpm copy:apidocs",
-    "lint": "eslint --ext .ts --ext .json src",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint --ext .ts --ext .json src",
     "lint:report": "pnpm lint --format json --output-file report.json",
     "dev": "tsup --config tsup.dev.config.ts",
     "start": "NODE_ENV=production node .",
@@ -162,7 +162,8 @@
       "import/no-unused-modules": [
         "error",
         {
-          "unusedExports": true
+          "unusedExports": true,
+          "src": ["src/**/*.ts"]
         }
       ]
     },

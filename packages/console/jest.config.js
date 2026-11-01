@@ -2,6 +2,8 @@
 const config = {
   roots: ['<rootDir>/src'],
   testEnvironment: 'jsdom',
+  // Drop accumulated jsdom/module/coverage state between files on shared CI runners.
+  workerIdleMemoryLimit: '512MB',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   transform: {
     '^.+\\.(t|j)sx?$': [

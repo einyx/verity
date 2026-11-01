@@ -12,11 +12,11 @@ const config = {
   roots: ['./build'],
   /**
    * Workers accumulate module registry and v8 coverage state across test files, and the whole run
-   * peaks within a few percent of the 4 GB heap cap. Recycle a worker once it goes idle above this
-   * limit. The limit is checked between test files only, so it has to leave room for the largest
-   * single-file growth (~1 GB observed) on top of it.
+   * can retain gigabytes before reaching the 4 GB heap cap. Recycle earlier so two core workers
+   * and another package's tests fit the CI runner together. Leave room for the largest single-file
+   * growth (~1 GB observed); this limit is checked only between test files.
    */
-  workerIdleMemoryLimit: '2.5GB',
+  workerIdleMemoryLimit: '768MB',
   moduleNameMapper: {
     '^#src/(.*)\\.js(x)?$': '<rootDir>/build/$1',
     '^(chalk|inquirer)$': '<rootDir>/../shared/lib/esm/module-proxy.js',

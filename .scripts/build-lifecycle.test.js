@@ -74,7 +74,7 @@ test("recursive CI work stays bounded instead of launching every package at once
   );
   assert.equal(
     root.scripts["ci:test"],
-    "pnpm -r --workspace-concurrency=2 --no-bail test:ci && pnpm test:scripts",
+    "pnpm -r --workspace-concurrency=1 --no-bail test:ci && pnpm test:scripts",
   );
 });
 
@@ -94,5 +94,18 @@ test("Core bounds heavyweight V8 coverage workers without raising test timeouts"
     "utf8",
   );
   assert.match(config, /^\s*maxWorkers: 2,$/m);
+  assert.ok(!config.includes("testTimeout"));
+  assert.match(config, /workerIdleMemoryLimit: '768MB'/);
+});
+
+test("typed core lint has a bounded source graph and an explicit runner heap", () => {
+  const { scripts, eslintConfig } = packageJson("core");
+  assert.match(scripts.lint, /^NODE_OPTIONS=--max-old-space-size=4096 eslint /);
+  assert.deepEqual(eslintConfig.rules["import/no-unused-modules"][1].src, ["src/**/*.ts"]);
+});
+
+test("Console recycles coverage workers without increasing test timeouts", () => {
+  const config = readFileSync(new URL("../packages/console/jest.config.js", import.meta.url), "utf8");
+  assert.match(config, /workerIdleMemoryLimit: '512MB'/);
   assert.ok(!config.includes("testTimeout"));
 });

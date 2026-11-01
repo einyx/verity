@@ -1,3 +1,5 @@
+import RequestError from '#src/errors/RequestError/index.js';
+
 import {
   proposeAndRecordAction,
   type PendingActionStore,
@@ -9,6 +11,7 @@ export const proposeLandingPageEdit = async ({
   instruction,
   apiBase,
   token,
+  getToken,
   store,
   actions,
   userId,
@@ -17,19 +20,20 @@ export const proposeLandingPageEdit = async ({
 }: {
   instruction: string;
   apiBase: string;
-  token: string | undefined;
+  token?: string;
+  getToken?: () => Promise<string>;
   store: PendingActionStore;
   actions: Map<string, ProposedActionView>;
   userId: string;
   tenantId: string;
   now: Date;
 }): Promise<{ response: string }> => {
-  if (!token) {
-    return { response: JSON.stringify({ error: 'missing_bearer_token' }) };
-  }
-
   try {
-    const draft = await editLandingPageDraft({ instruction, apiBase, token });
+    const editorToken = getToken ? await getToken() : token;
+    if (!editorToken) {
+      return { response: JSON.stringify({ error: 'missing_bearer_token' }) };
+    }
+    const draft = await editLandingPageDraft({ instruction, apiBase, token: editorToken });
     const response = await proposeAndRecordAction({
       store,
       tool: saveLandingPageDraftTool.name,
@@ -43,6 +47,15 @@ export const proposeLandingPageEdit = async ({
 
     return { response };
   } catch (error) {
+    if (error instanceof RequestError && error.status === 401) {
+      return {
+        response: JSON.stringify({
+          error: 'landing_page_authentication_failed',
+          message:
+            'The editor credential is missing or invalid. No draft was changed. Refresh the session and retry; do not infer missing editing rights.',
+        }),
+      };
+    }
     return {
       response: JSON.stringify({
         error: 'landing_page_edit_failed',

@@ -9,7 +9,16 @@
     "/api/ai-chat/completions": {
       "post": {
         "summary": "Ask AI chat",
-        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them.",
+        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them. Landing-page tools additionally require a Cloud API token for the same user with landing-page editing permission.",
+        "parameters": [
+          {
+            "name": "x-landing-page-authorization",
+            "in": "header",
+            "required": false,
+            "description": "Bearer Cloud API token used only for landing-page tools. Must belong to the authenticated caller and carry manage:landing:page or all. Never sent to the model or stored with proposals.",
+            "schema": { "type": "string" }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -98,9 +107,16 @@
     "/api/ai-chat/actions/{id}/confirm": {
       "post": {
         "summary": "Confirm a pending action",
-        "description": "Run a pending action once, with the body stored when it was proposed. The caller's bearer token is used for the Management API call.",
+        "description": "Run a pending action once, with the body stored when it was proposed. The caller's bearer token is used for Management API calls. Saving a landing-page draft instead requires the same user's Cloud API token, revalidated at confirmation time.",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "x-landing-page-authorization",
+            "in": "header",
+            "required": false,
+            "description": "Bearer Cloud API token required when confirming a landing-page draft save; belongs to the caller and carries landing-page editing permission.",
+            "schema": { "type": "string" }
+          }
         ],
         "responses": {
           "200": {

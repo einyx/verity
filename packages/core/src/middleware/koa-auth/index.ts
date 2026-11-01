@@ -29,7 +29,7 @@ export * from './constants.js';
 
 export const verifyBearerTokenFromRequest = async (
   envSet: EnvSet,
-  request: Request,
+  request: Pick<Request, 'headers'>,
   audience: Optional<string | string[]>
 ): Promise<TokenInfo> => {
   const { isProduction, isIntegrationTest, developmentUserId } = EnvSet.values;

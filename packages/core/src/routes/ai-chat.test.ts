@@ -4,17 +4,35 @@ import request from 'supertest';
 
 import type TenantContext from '#src/tenants/TenantContext.js';
 
+import { type confirmPendingAction as ConfirmPendingAction } from './ai-chat-actions.js';
+import { type proposeLandingPageEdit as ProposeLandingPageEdit } from './ai-chat-landing-page-action.js';
+import { type runToolLoop as RunToolLoop } from './ai-chat-loop.js';
 import { type ManagementApiRouter } from './types.js';
 
 const { jest } = import.meta;
+type ConfirmOptions = Parameters<typeof ConfirmPendingAction>[0];
+type LoopOptions = Parameters<typeof RunToolLoop>[0];
+type ProposalOptions = Parameters<typeof ProposeLandingPageEdit>[0];
 
 // The isUnitTest flag lets koaGuard fall back to a silent logger instead of needing a console.
-const envValues = { isDevFeaturesEnabled: true, isProduction: false, isUnitTest: true };
+const envValues = {
+  isDevFeaturesEnabled: true,
+  isProduction: false,
+  isUnitTest: true,
+  cloudUrlSet: { endpoint: new URL('https://console.example.com') },
+};
 
 const confirmPendingAction = jest.fn();
 const cancelPendingAction = jest.fn();
 const proposePendingAction = jest.fn();
 const proposeAndRecordAction = jest.fn();
+const getLandingPageAiToken = jest.fn();
+const proposeLandingPageEdit = jest.fn();
+const runToolLoopWithGraph = jest.fn();
+
+jest.unstable_mockModule('./ai-chat-landing-page-auth.js', () => ({ getLandingPageAiToken }));
+jest.unstable_mockModule('./ai-chat-landing-page-action.js', () => ({ proposeLandingPageEdit }));
+jest.unstable_mockModule('./ai-chat-graph.js', () => ({ runToolLoopWithGraph }));
 
 jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: envValues },
@@ -83,9 +101,113 @@ beforeEach(() => {
   confirmPendingAction.mockReset();
   cancelPendingAction.mockReset();
   proposePendingAction.mockReset();
+  getLandingPageAiToken.mockReset();
+  proposeLandingPageEdit.mockReset();
+  runToolLoopWithGraph.mockReset();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+it('uses the same-user Cloud credential and Cloud origin for landing-page proposals', async () => {
+  jest.replaceProperty(process, 'env', { ...process.env, OPENAI_API_KEY: 'test-key' });
+  getLandingPageAiToken.mockResolvedValue('cloud-token');
+  proposeLandingPageEdit.mockImplementation(async ({ getToken }: ProposalOptions) => {
+    expect(await getToken?.()).toBe('cloud-token');
+    return { response: '{"proposed":true}' };
+  });
+  runToolLoopWithGraph.mockImplementation(async ({ executeTool }: LoopOptions) => ({
+    ok: true,
+    content: await executeTool({
+      id: 'call-1',
+      function: {
+        name: 'edit_landing_page',
+        arguments: '{"instruction":"Improve the hero"}',
+      },
+    }),
+  }));
+
+  const response = await request(createApp())
+    .post('/ai-chat/completions')
+    .set(bearer)
+    .set('x-landing-page-authorization', 'Bearer cloud-token')
+    .send({ messages: [{ role: 'user', content: 'Improve the hero' }] });
+
+  expect(response.status).toBe(200);
+  expect(getLandingPageAiToken).toHaveBeenCalledWith(tenant.envSet, 'Bearer cloud-token', 'user-a');
+  expect(proposeLandingPageEdit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      apiBase: 'https://console.example.com/api',
+      userId: 'user-a',
+    })
+  );
 });
 
 describe('POST /ai-chat/actions/:id/confirm', () => {
+  it('revalidates the Cloud credential when confirming a landing-page draft save', async () => {
+    getLandingPageAiToken.mockResolvedValue('fresh-cloud-token');
+    const fetchSpy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{}', { status: 200 }));
+    confirmPendingAction.mockImplementation(async ({ execute }: ConfirmOptions) => ({
+      ok: true,
+      result: await execute(
+        {
+          name: 'save_landing_page_draft',
+          description: 'Save the confirmed draft',
+          path: '/landing-page/draft',
+          method: 'PUT',
+          properties: {},
+        },
+        { sections: [] }
+      ),
+    }));
+
+    const response = await request(createApp())
+      .post('/ai-chat/actions/action-1/confirm')
+      .set(bearer)
+      .set('x-landing-page-authorization', 'Bearer fresh-cloud-token');
+
+    expect(response.status).toBe(200);
+    expect(getLandingPageAiToken).toHaveBeenCalledWith(
+      tenant.envSet,
+      'Bearer fresh-cloud-token',
+      'user-a'
+    );
+    expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
+      'https://console.example.com/api/landing-page/draft'
+    );
+    expect(fetchSpy.mock.calls[0]?.[1]).toMatchObject({
+      headers: { authorization: 'Bearer fresh-cloud-token' },
+    });
+  });
+
+  it('keeps ordinary Management API writes on the tenant token and endpoint', async () => {
+    const fetchSpy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{}', { status: 200 }));
+    confirmPendingAction.mockImplementation(async ({ execute }: ConfirmOptions) => ({
+      ok: true,
+      result: await execute(
+        {
+          name: 'create_organization',
+          description: 'Create an organization',
+          path: '/organizations',
+          method: 'POST',
+          properties: {},
+        },
+        { name: 'Team' }
+      ),
+    }));
+    await request(createApp()).post('/ai-chat/actions/action-1/confirm').set(bearer);
+    expect(getLandingPageAiToken).not.toHaveBeenCalled();
+    expect(String(fetchSpy.mock.calls[0]?.[0])).toBe('https://logto.example.com/api/organizations');
+    expect(fetchSpy.mock.calls[0]?.[1]).toMatchObject({
+      headers: { authorization: 'Bearer caller-token' },
+    });
+  });
+
   it('returns the Management API result when the action runs', async () => {
     confirmPendingAction.mockResolvedValue({
       ok: true,

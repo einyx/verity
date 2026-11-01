@@ -1,5 +1,8 @@
 import { hookEvents, type HookEventPayload } from '@logto/schemas';
 
+import { mockUser } from '#src/__mocks__/user.js';
+
+import { HookContextManager } from './context-manager.js';
 import {
   buildWebhookRequestBody,
   isSlackWebhookUrl,
@@ -11,6 +14,26 @@ const url = 'https://hooks.slack.com/services/T_TEST/B_TEST/TEST_ONLY_SECRET';
 
 const format = (input: Record<string, unknown>, isTest = false) =>
   buildWebhookRequestBody(url, input as HookEventPayload, { isTest });
+
+const typedUserContext = () => {
+  const context = new HookContextManager({ ip: 'not-sent' });
+  context.appendDataHookContext('User.Data.Updated', { user: { ...mockUser, name: 'Affected' } });
+  return context.dataHookContextArray[0];
+};
+
+const registeredContext = (method: string, matchedRoute: string, data: unknown) => {
+  const context = new HookContextManager({ ip: 'not-sent' });
+  const registration = context.getRegisteredHookEventContext({
+    method,
+    _matchedRoute: matchedRoute,
+    response: { body: data },
+    params: {},
+  } as unknown as Parameters<typeof context.getRegisteredHookEventContext>[0]);
+  if (!registration) {
+    throw new Error('Expected registered producer');
+  }
+  return { ...registration[1], event: registration[0] };
+};
 
 describe('business Slack summaries', () => {
   const base = { createdAt: '2026-11-01T00:00:00.000Z' };
@@ -44,7 +67,7 @@ describe('business Slack summaries', () => {
   it.each([
     [
       'User.Data.Updated',
-      { data: { name: 'Affected' }, user: { name: 'Not the actor' } },
+      { ...typedUserContext(), user: { name: 'Not the actor' } },
       'Affected user: Affected',
     ],
     [
@@ -77,6 +100,102 @@ describe('business Slack summaries', () => {
       expect(format({ ...base, event }, true).text).toContain('Test notification');
     }
     expect(format({ event: 'Future.Event' }).text).toContain('Event notification');
+  });
+
+  it.each([
+    ['User.Data.Updated', { userId: 'user-id' }, 'Affected user: user-id'],
+    ['Role.Scopes.Updated', { id: 'role-id' }, 'Role: role-id'],
+    ['OrganizationRole.Scopes.Updated', { id: 'org-role-id' }, 'Organization role: org-role-id'],
+  ])(
+    'does not treat unknown or subresource data as the subject for %s',
+    (event, params, expected) => {
+      const body = format({
+        event,
+        params,
+        data: { id: 'PRIVATE_ID', name: 'PRIVATE_NAME', username: 'PRIVATE_USERNAME' },
+      });
+      expect(body.text).toContain(expected);
+      expect(JSON.stringify(body)).not.toContain('PRIVATE_');
+    }
+  );
+
+  it('does not infer a subject from unprovenanced complete user-shaped data', () => {
+    const body = format({
+      event: 'User.Data.Updated',
+      method: 'PATCH',
+      matchedRoute: '/users/:userId',
+      data: {
+        id: 'PRIVATE_ID',
+        name: 'PRIVATE_NAME',
+        username: 'PRIVATE_USERNAME',
+        isSuspended: false,
+        customData: {},
+        identities: {},
+        profile: {},
+      },
+    });
+    expect(body.text).toContain('Affected user: Not provided');
+    expect(JSON.stringify(body)).not.toContain('PRIVATE_');
+  });
+
+  it.each([
+    ['POST', '/users'],
+    ['PATCH', '/users/:userId'],
+    ['PATCH', '/users/:userId/password'],
+    ['POST', '/roles'],
+    ['PATCH', '/roles/:id'],
+    ['POST', '/resources/:resourceId/scopes'],
+    ['PATCH', '/resources/:resourceId/scopes/:scopeId'],
+    ['POST', '/organizations'],
+    ['PATCH', '/organizations/:id'],
+    ['POST', '/organization-roles'],
+    ['PATCH', '/organization-roles/:id'],
+    ['POST', '/organization-scopes'],
+    ['PATCH', '/organization-scopes/:id'],
+  ])('uses entity identity from the registered %s %s producer', (method, route) => {
+    expect(
+      format(registeredContext(method, route, { id: 'entity-id', name: 'Entity display name' }))
+        .text
+    ).toContain('Entity display name');
+  });
+
+  it.each(['User.Created', 'User.Data.Updated', 'User.Deleted'])(
+    'retains typed user producer identity for %s',
+    (event) => {
+      expect(format({ ...typedUserContext(), event }).text).toContain('Affected user: Affected');
+    }
+  );
+
+  it.each(['PostSignIn', 'PostRegister'])(
+    'retains the existing interaction user for %s',
+    (event) => {
+      expect(format({ event, user: { ...mockUser, name: 'Registered user' } }).text).toContain(
+        'User: Registered user'
+      );
+    }
+  );
+
+  it.each([
+    ['POST', '/roles/:id/scopes', [{ id: 'PRIVATE_SCOPE_ID', name: 'PRIVATE_PERMISSION_NAME' }]],
+    [
+      'PUT',
+      '/organization-roles/:id/scopes',
+      [{ id: 'PRIVATE_SCOPE_ID', name: 'PRIVATE_PERMISSION_NAME' }],
+    ],
+    ['DELETE', '/roles/:id/scopes/:scopeId', undefined],
+    ['DELETE', '/organization-roles/:id/scopes/:organizationScopeId', undefined],
+  ])('uses only parent role ID for registered %s %s subresource', (method, route, data) => {
+    const context = registeredContext(method, route, data);
+    const body = format({
+      ...context,
+      params: {
+        id: 'parent-role-id',
+        scopeId: 'PRIVATE_SCOPE_ID',
+        organizationScopeId: 'PRIVATE_SCOPE_ID',
+      },
+    });
+    expect(body.text).toContain('role-id');
+    expect(JSON.stringify(body)).not.toContain('PRIVATE_');
   });
 
   it.each([
@@ -150,10 +269,10 @@ describe('business Slack summaries', () => {
         .text
     ).toContain('User access status changed');
     expect(
-      format({ event: 'User.SuspensionStatus.Updated', data: { isSuspended: false } }).text
+      format(registeredContext('PATCH', '/users/:userId/is-suspended', { isSuspended: false })).text
     ).toContain('User access restored');
     expect(
-      format({ event: 'User.SuspensionStatus.Updated', data: { isSuspended: true } }).text
+      format(registeredContext('PATCH', '/users/:userId/is-suspended', { isSuspended: true })).text
     ).toContain('User suspended');
   });
 });

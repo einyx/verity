@@ -1,6 +1,8 @@
 import { type HookEvent, type HookEventPayload } from '@logto/schemas';
 import { trySafe } from '@silverhand/essentials';
 
+import { getHookDataSubject } from './data-subject.js';
+
 /** Only standard Incoming Webhooks, not Workflow, Gov, or lookalike endpoints. */
 export const isSlackWebhookUrl = (url: string): boolean => {
   const parsed = trySafe(() => new URL(url));
@@ -66,9 +68,29 @@ const getAction = (event: string, data: Record<string, unknown>) => {
   return Object.entries(actions).find(([key]) => key === event)?.[1] ?? 'Event notification';
 };
 
-const getDetails = (url: string, context: Record<string, unknown>, event: string) => {
-  const data = record(context.data);
+const getEntitySubjectIds = (entity: string | undefined, context: Record<string, unknown>) => {
   const params = record(context.params);
+  switch (entity) {
+    case 'User': {
+      return [context.userId, params.userId];
+    }
+    case 'Organization': {
+      return [context.organizationId, params.id];
+    }
+    case 'OrganizationRole': {
+      return [context.organizationRoleId, params.id];
+    }
+    case 'Scope': {
+      return [params.scopeId];
+    }
+    default: {
+      return [params.id];
+    }
+  }
+};
+
+const getDetails = (url: string, context: Record<string, unknown>, event: string) => {
+  const data = getHookDataSubject(context.data) ?? {};
   const user = record(context.user);
   const application = record(context.application);
   const safeText = (...values: unknown[]) => {
@@ -106,9 +128,7 @@ const getDetails = (url: string, context: Record<string, unknown>, event: string
         data.name,
         entity === 'User' && data.username,
         data.id,
-        entity === 'User' && context.userId,
-        entity === 'Organization' && context.organizationId,
-        entity === 'User' ? params.userId : entity === 'Scope' ? params.scopeId : params.id
+        ...getEntitySubjectIds(entity, context)
       );
   const label = interaction ? 'User' : Object.entries(labels).find(([key]) => key === entity)?.[1];
   const app = safeText(application.name, application.id, context.applicationId);
@@ -142,7 +162,7 @@ export const buildWebhookRequestBody = (
   }
   const context = record(payload);
   const event = typeof context.event === 'string' ? context.event : '';
-  const heading = `${isTest ? 'Test notification — ' : ''}${getAction(event, record(context.data))}`;
+  const heading = `${isTest ? 'Test notification — ' : ''}${getAction(event, getHookDataSubject(context.data) ?? {})}`;
   const details = getDetails(url, context, event);
   const { utc, when } = getTime(context);
 

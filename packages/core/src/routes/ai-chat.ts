@@ -24,7 +24,6 @@ import {
 import {
   maxProposalsPerRequest,
   maxToolOutputLength,
-  runToolLoop,
   toFunctionTools,
   type ModelMessage,
   type ModelReply,
@@ -250,9 +249,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
           .slice(0, maxToolOutputLength);
       };
 
-      // The LangGraph loop is in-development: it is used only when dev features are enabled.
-      const runLoop = EnvSet.values.isDevFeaturesEnabled ? runToolLoopWithGraph : runToolLoop;
-      const outcome = await runLoop({ messages, callModel, executeTool });
+      const outcome = await runToolLoopWithGraph({ messages, callModel, executeTool });
 
       if (!outcome.ok) {
         ctx.status = 503;

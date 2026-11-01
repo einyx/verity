@@ -238,10 +238,10 @@ describe('get_sign_in_experience', () => {
     connectorTargets: ['internal-connector'],
   };
 
-  it('hides the tool while dev features are disabled', () => {
+  it('offers the released tool while dev features are disabled', () => {
     const names = enabledLogtoMcpTools(false).map(({ name }) => name);
 
-    expect(names).not.toContain('get_sign_in_experience');
+    expect(names).toContain('get_sign_in_experience');
   });
 
   it('offers the tool while dev features are enabled', () => {

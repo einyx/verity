@@ -12,7 +12,6 @@ export const editLandingPageTool: LogtoMcpTool = {
     instruction: { type: 'string', description: 'The requested landing page change.' },
   },
   required: ['instruction'],
-  devFeature: true,
 };
 
 export const saveLandingPageDraftTool: LogtoMcpTool = {
@@ -22,17 +21,16 @@ export const saveLandingPageDraftTool: LogtoMcpTool = {
   method: 'PUT',
   properties: {},
   body: (args) => ({ ...landingPageDocumentGuard.parse(args.draft) }),
-  devFeature: true,
 };
 
 export const enabledAskAiTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] => [
   ...enabledLogtoMcpTools(isDevFeaturesEnabled),
-  ...(isDevFeaturesEnabled ? [editLandingPageTool] : []),
+  editLandingPageTool,
 ];
 
 export const pendingActionTools = (isDevFeaturesEnabled: boolean): readonly LogtoMcpTool[] => [
   ...enabledLogtoMcpTools(isDevFeaturesEnabled),
-  ...(isDevFeaturesEnabled ? [saveLandingPageDraftTool] : []),
+  saveLandingPageDraftTool,
 ];
 
 export const editLandingPageDraft = async ({

@@ -29,10 +29,15 @@ const proposeAndRecordAction = jest.fn();
 const getLandingPageAiToken = jest.fn();
 const proposeLandingPageEdit = jest.fn();
 const runToolLoopWithGraph = jest.fn();
+const modelPost = jest.fn();
 
 jest.unstable_mockModule('./ai-chat-landing-page-auth.js', () => ({ getLandingPageAiToken }));
 jest.unstable_mockModule('./ai-chat-landing-page-action.js', () => ({ proposeLandingPageEdit }));
 jest.unstable_mockModule('./ai-chat-graph.js', () => ({ runToolLoopWithGraph }));
+jest.unstable_mockModule('got', () => ({
+  got: { post: modelPost },
+  HTTPError: class extends Error {},
+}));
 
 jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: envValues },
@@ -98,12 +103,19 @@ const bearer = { authorization: 'Bearer caller-token' };
 beforeEach(() => {
   // eslint-disable-next-line @silverhand/fp/no-mutation -- Each case sets the mocked env flag it needs.
   envValues.isDevFeaturesEnabled = true;
+  // eslint-disable-next-line @silverhand/fp/no-mutation -- Restore the mocked environment between cases.
+  envValues.isProduction = false;
   confirmPendingAction.mockReset();
   cancelPendingAction.mockReset();
   proposePendingAction.mockReset();
   getLandingPageAiToken.mockReset();
   proposeLandingPageEdit.mockReset();
-  runToolLoopWithGraph.mockReset();
+  runToolLoopWithGraph
+    .mockReset()
+    .mockResolvedValue({ ok: true, content: 'Production graph response' });
+  modelPost
+    .mockReset()
+    .mockResolvedValue({ body: { choices: [{ message: { content: 'Legacy loop response' } }] } });
 });
 
 afterEach(() => {
@@ -142,6 +154,23 @@ it('uses the same-user Cloud credential and Cloud origin for landing-page propos
       userId: 'user-a',
     })
   );
+});
+
+describe('production Ask AI execution', () => {
+  it('uses graph execution with dev features disabled and does not execute a write', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Explicitly exercise the production flag-off configuration.
+    envValues.isDevFeaturesEnabled = false;
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Explicitly exercise production behavior.
+    envValues.isProduction = true;
+    jest.replaceProperty(process, 'env', { ...process.env, OPENAI_API_KEY: 'test-only-ai-key' });
+    const response = await request(createApp())
+      .post('/ai-chat/completions')
+      .set(bearer)
+      .send({ messages: [{ role: 'user', content: 'What can you do?' }] });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ content: 'Production graph response', actions: [] });
+    expect(confirmPendingAction).not.toHaveBeenCalled();
+  });
 });
 
 describe('POST /ai-chat/actions/:id/confirm', () => {

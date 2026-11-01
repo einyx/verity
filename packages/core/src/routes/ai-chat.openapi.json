@@ -132,7 +132,7 @@
           },
           "400": { "description": "The action's tool is no longer available." },
           "401": { "description": "No bearer token was sent." },
-          "404": { "description": "No such action for this user, or dev features are disabled." },
+          "404": { "description": "No such action for this user." },
           "409": {
             "description": "The action was already run or cancelled, or its body was changed."
           },

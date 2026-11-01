@@ -34,27 +34,12 @@ const getEcSigningAlg = (crv: string | undefined) => {
   }
 };
 
-/**
- * Dev feature: post-quantum signing keys. ML-DSA keys are removed from the provider keystore
- * (and so from JWKS) when dev features are disabled.
- */
-const excludeMlDsaKeys = async (keys: LogtoOidcConfigType[LogtoOidcConfigKey.PrivateKeys]) => {
-  const keyTypes = await Promise.all(
-    keys.map(async ({ value }) => {
-      const jwk = await exportJWK(crypto.createPrivateKey(value));
-
-      return jwk.kty;
-    })
-  );
-
-  return keys.filter((_, index) => keyTypes[index] !== 'AKP');
-};
-
 const loadOidcValues = async (
   issuer: string,
   configs: LogtoOidcConfigType,
   cimdConfig: CimdConfig,
-  isDevFeaturesEnabled = false
+  // Retained for callers using the previous signature; signing keys are no longer dev-gated.
+  _isDevFeaturesEnabled = false
 ) => {
   const cookieKeys = configs[LogtoOidcConfigKey.CookieKeys].map(({ value }) => value);
   const currentPrivateKey = crypto.createPrivateKey(
@@ -62,15 +47,7 @@ const loadOidcValues = async (
   );
   const currentPrivateJwk = await exportJWK(currentPrivateKey);
 
-  if (!isDevFeaturesEnabled && currentPrivateJwk.kty === 'AKP') {
-    throw new Error(
-      'The current OIDC signing key is ML-DSA, which requires dev features to be enabled.'
-    );
-  }
-
-  const providerPrivateKeyConfigs = isDevFeaturesEnabled
-    ? configs[LogtoOidcConfigKey.PrivateKeys]
-    : await excludeMlDsaKeys(configs[LogtoOidcConfigKey.PrivateKeys]);
+  const providerPrivateKeyConfigs = configs[LogtoOidcConfigKey.PrivateKeys];
   const session = configs[LogtoOidcConfigKey.Session];
   const privateJwks = await Promise.all(
     getOidcProviderPrivateKeys(providerPrivateKeyConfigs).map(async ({ value, status }) => {

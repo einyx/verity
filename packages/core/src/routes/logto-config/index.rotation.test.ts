@@ -27,6 +27,7 @@ const signingKeyRotationAt = 1_777_777_777_000;
 const { exportJWK } = await mockEsmWithActual('#src/utils/jwks.js', () => ({
   exportJWK: jest.fn(async () => ({ kty: 'EC' })),
 }));
+const { isMlDsaSupported } = await import('#src/utils/jwks.js');
 
 await mockEsmWithActual('@logto/cli/lib/commands/database/utils.js', () => ({
   generateOidcCookieKey: jest.fn(),
@@ -187,7 +188,10 @@ describe('configs routes staged rotation', () => {
     expect(rotatePrivateSigningKeys).toHaveBeenCalledWith(newPrivateKey, 60);
   });
 
-  it('rejects ML-DSA-65 rotation with 422 when dev features are disabled', async () => {
+  it('allows ML-DSA-65 rotation when dev features are disabled on a supported runtime', async () => {
+    rotatePrivateSigningKeys.mockResolvedValueOnce([
+      { ...newPrivateKey, status: OidcSigningKeyStatus.Current },
+    ]);
     const stub = Sinon.stub(EnvSet, 'values').value({
       ...EnvSet.values,
       isDevFeaturesEnabled: false,
@@ -198,7 +202,7 @@ describe('configs routes staged rotation', () => {
         routeRequester.post('/configs/oidc/private-keys/rotate').send({
           signingKeyAlgorithm: 'ML-DSA-65',
         })
-      ).resolves.toHaveProperty('status', 422);
+      ).resolves.toHaveProperty('status', isMlDsaSupported() ? 200 : 422);
     } finally {
       stub.restore();
     }

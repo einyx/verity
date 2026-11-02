@@ -118,6 +118,7 @@ function AccountWorkspace({
           setup={<SetupBanner icon={icon} />}
           history={
             <SessionSidebar
+              activeId={state.activeId}
               sessions={state.history}
               search={search}
               isArchived={archived}

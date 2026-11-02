@@ -125,21 +125,25 @@ export default function AiWorkspace({
             <span aria-hidden="true">✧</span> Ask meshX
           </div>
         )}
-        <p className={styles.railLabel}>Explore your console</p>
-        {tasks.map((task) => (
-          <button
-            key={task.rail}
-            type="button"
-            className={styles.railTask}
-            disabled={isLoading}
-            onClick={() => {
-              onPromptSelected(task.prompt);
-            }}
-          >
-            {task.icon}
-            <span>{task.rail}</span>
-          </button>
-        ))}
+        <div className={styles.explore}>
+          <p className={styles.railLabel}>Explore your console</p>
+          {tasks.map((task) => (
+            <button
+              key={task.rail}
+              type="button"
+              className={styles.railTask}
+              disabled={isLoading}
+              onClick={() => {
+                onPromptSelected(task.prompt);
+              }}
+            >
+              <span className={styles.railTaskIcon} aria-hidden="true">
+                {task.icon}
+              </span>
+              <span>{task.rail}</span>
+            </button>
+          ))}
+        </div>
         <div className={styles.railNote}>
           <p>Your console, in conversation.</p>
           <p>Review proposals before allowing changes.</p>

@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
@@ -38,18 +37,14 @@ const startServer = async (before = false) => {
             before &&
             [
               'src/containers/ConsoleContent/index.module.scss',
-              'src/containers/ConsoleContent/Sidebar/index.tsx',
               'src/containers/ConsoleContent/Sidebar/index.module.scss',
             ].includes(file)
           ) {
             return execFileSync(
               'git',
-              ['show', `ab22cb6deaacd3e18351dffeb7af0a76cfd93686:packages/console/${file}`],
+              ['show', `d4fd8be2cef2c6c6a981d22f5a1cc01b275ceb77:packages/console/${file}`],
               { encoding: 'utf8' }
             );
-          }
-          if (before && file === 'tests/browser/fixtures/console-shell.tsx') {
-            return readFileSync(file, 'utf8').replace('<SidebarToggle />', '');
           }
           if (file === 'src/hooks/use-admin-console-tour.ts') {
             return 'export default () => {};';
@@ -67,7 +62,7 @@ const startServer = async (before = false) => {
             return 'export default () => <button type="button">Assistant</button>;';
           }
           if (file === 'src/components/Topbar/TenantSelector/index.tsx') {
-            return 'export default ({isCollapsed}) => <button type="button" aria-label="Current tenant" style={{width:"100%",height:40,border:0,background:"transparent",color:"inherit",textAlign:"left"}}>{isCollapsed ? "S" : "Synthetic workspace ⌄"}</button>;';
+            return 'import styles from "./index.module.scss"; export default ({isCollapsed}) => <div role="button" tabIndex={0} aria-label="Current tenant" className={[styles.currentTenantCard,styles.compact,isCollapsed && styles.collapsed].filter(Boolean).join(" ")}><span className={styles.avatar}>Ad</span><div className={styles.name}>Admin</div><span>Prod</span><span>⌄</span></div>;';
           }
           if (file === 'src/containers/ConsoleContent/Sidebar/OssCloudCard.tsx') {
             return 'export default () => null;';
@@ -146,6 +141,20 @@ for (const theme of ['light', 'dark']) {
     await expect(rail).toHaveCSS('width', '264px');
     await expect(rail.locator('..')).toHaveCSS('border-radius', '24px');
     await expect(page.locator('main').locator('..')).toHaveCSS('border-radius', '16px');
+    await expect(rail.locator('..')).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+    await expect(page.locator('main').locator('..')).toHaveCSS(
+      'border-top-color',
+      'rgba(0, 0, 0, 0)'
+    );
+    const switcher = page.getByRole('button', { name: 'Current tenant' });
+    await expect(switcher).toHaveCSS('border-top-width', '0px');
+    await expect(switcher.locator('..')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(switcher.locator('..')).toHaveCSS('border-top-width', '1px');
+    await switcher.focus();
+    await expect(switcher).toHaveCSS('outline-style', 'solid');
+    await expect(switcher).toHaveCSS('outline-width', '2px');
+    await rail.screenshot({ path: info.outputPath(`rail-${theme}-focus.png`) });
+    await switcher.blur();
     const colors = await rail.evaluate((element) => {
       const secondary = element.querySelector('input');
       return {

@@ -24,6 +24,10 @@ const access = {
   isCurrent: () => true,
   path: (path: string) => `${path}${path.includes('?') ? '&' : '?'}scope=all`,
 };
+afterEach(() => {
+  // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Restore the shared synthetic access fixture even when an assertion fails.
+  Object.assign(access, { tenantId: 'a', scope: 'all', operator: true, canMutate: true });
+});
 jest.mock('../KuboAccess', () => ({ useKuboAccess: () => access }));
 
 jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
@@ -389,11 +393,6 @@ describe('Kubo grouped configuration', () => {
 });
 
 describe('Kubo tenant action boundaries', () => {
-  afterEach(() => {
-    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Restore the synthetic operator fixture used by legacy editor tests.
-    Object.assign(access, { tenantId: 'a', scope: 'all', operator: true, canMutate: true });
-  });
-
   it('keeps read-only detail visible without enabling target actions', () => {
     // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic read-only capability response.
     Object.assign(access, { operator: false, scope: 'tenant', canMutate: false });

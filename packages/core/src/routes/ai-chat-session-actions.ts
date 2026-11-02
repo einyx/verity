@@ -31,10 +31,10 @@ import {
 
 const reviewLinkGuard = z.object({
   id: z.string(),
-  session_id: z.string().nullable(),
-  message_id: z.string().nullable(),
-  original_action_id: z.string(),
-  current_action_id: z.string(),
+  sessionId: z.string().nullable(),
+  messageId: z.string().nullable(),
+  originalActionId: z.string(),
+  currentActionId: z.string(),
 });
 type ReviewLink = z.infer<typeof reviewLinkGuard>;
 type ActionOperation = {
@@ -49,15 +49,16 @@ const readLink = async (
   scope: ChatScope,
   actionId: string
 ) =>
-  connection.maybeOne<ReviewLink>(sql`select id, session_id, message_id, original_action_id, current_action_id
+  connection.maybeOne<ReviewLink>(sql`select id, session_id as "sessionId", message_id as "messageId",
+      original_action_id as "originalActionId", current_action_id as "currentActionId"
     from ai_chat_review_links where ${linkWhere(scope)}
       and (original_action_id = ${actionId} or current_action_id = ${actionId}
         or ${actionId} = any(previous_action_ids))`);
 
 const review = (link: ReviewLink, action: PendingAction, now: string): ChatReview =>
   chatReviewGuard.parse({
-    originalActionId: link.original_action_id,
-    currentActionId: link.current_action_id,
+    originalActionId: link.originalActionId,
+    currentActionId: link.currentActionId,
     tool: action.tool,
     body: action.body,
     expiresAt: new Date(action.expiresAt).toISOString(),
@@ -75,12 +76,12 @@ const review = (link: ReviewLink, action: PendingAction, now: string): ChatRevie
   });
 
 const checkLinkScope = (link: ReviewLink, operation: ActionOperation) => {
-  if (operation.sessionId !== undefined && link.session_id !== operation.sessionId) {
+  if (operation.sessionId !== undefined && link.sessionId !== operation.sessionId) {
     throw new ChatSessionStoreError('not_found');
   }
   if (
     operation.originalActionId !== undefined &&
-    link.original_action_id !== operation.originalActionId
+    link.originalActionId !== operation.originalActionId
   ) {
     throw new ChatSessionStoreError('not_found');
   }
@@ -100,22 +101,22 @@ const lockLinkedAction = async (
     }
     return;
   }
-  if (!initial.session_id || !initial.message_id) {
+  if (!initial.sessionId || !initial.messageId) {
     throw new ChatSessionStoreError('not_found');
   }
   checkLinkScope(initial, operation);
-  const session = await lockTurnSession(connection, scope, initial.session_id);
+  const session = await lockTurnSession(connection, scope, initial.sessionId);
   const link = await readLink(connection, scope, actionId);
-  if (!link?.session_id || !link.message_id) {
+  if (!link?.sessionId || !link.messageId) {
     throw new ChatSessionStoreError('not_found');
   }
   if (session.archived) {
     throw new ChatSessionStoreError('session_archived');
   }
-  if (link.current_action_id !== actionId) {
+  if (link.currentActionId !== actionId) {
     throw new ChatSessionStoreError('review_replaced');
   }
-  return { link, session, sessionId: link.session_id };
+  return { link, session, sessionId: link.sessionId };
 };
 
 export const createSessionActionStore = (pool: DatabasePool) => ({
@@ -124,12 +125,13 @@ export const createSessionActionStore = (pool: DatabasePool) => ({
       await lockTurnSession(connection, scope, sessionId);
       const now = await serverTime(connection);
       const links = await connection.any<ReviewLink>(sql`
-        select id, session_id, message_id, original_action_id, current_action_id
+        select id, session_id as "sessionId", message_id as "messageId",
+          original_action_id as "originalActionId", current_action_id as "currentActionId"
         from ai_chat_review_links where ${turnWhere(scope, sessionId)} and message_id is not null order by id`);
       return Promise.all(
         links.map(async (link) => {
           const action = await createPendingActionStore(connection).findById(
-            link.current_action_id,
+            link.currentActionId,
             scope.tenantId
           );
           if (!action || action.userId !== scope.userId) {
@@ -168,7 +170,7 @@ export const createSessionActionStore = (pool: DatabasePool) => ({
       }
       validateStoredReview(action);
       const bytes = Buffer.byteLength(JSON.stringify(action.body));
-      if (locked.session.stored_bytes + bytes > chatSessionMaxStoredBytes) {
+      if (locked.session.storedBytes + bytes > chatSessionMaxStoredBytes) {
         throw new ChatSessionStoreError('content_limit');
       }
       const replacement: PendingAction = {
@@ -198,7 +200,7 @@ export const createSessionActionStore = (pool: DatabasePool) => ({
       await connection.query(sql`update ai_chat_sessions set stored_bytes = stored_bytes + ${bytes}
       where ${sessionWhere(scope, sessionId)}`);
       await releaseActionLease(connection, lease);
-      return review({ ...locked.link, current_action_id: replacement.id }, replacement, now);
+      return review({ ...locked.link, currentActionId: replacement.id }, replacement, now);
     }),
   withSessionActionOperation: async <T>(
     scope: ChatScope,

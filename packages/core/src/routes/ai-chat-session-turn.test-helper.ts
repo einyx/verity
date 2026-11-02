@@ -157,7 +157,7 @@ export const turnTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 5, message_count: 1 });
+    ).toEqual({ storedBytes: 5, messageCount: 1 });
   });
   it('clearing_sent_composer_does_not_clear_newer_revision', async () => {
     const { turns, id, sessions } = await setup();
@@ -199,7 +199,7 @@ export const turnTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: chatSessionMaxStoredBytes, message_count: 2000 });
+    ).toEqual({ storedBytes: chatSessionMaxStoredBytes, messageCount: 2000 });
     await expect(
       sessions.saveComposer(scope, id, { expectedRevision: 1, text: 'x', attachments: [] })
     ).rejects.toMatchObject({ code: 'content_limit' });
@@ -233,7 +233,7 @@ export const turnTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 5, message_count: 1 });
+    ).toEqual({ storedBytes: 5, messageCount: 1 });
   });
   it('lifecycle_reconciliation_releases_once_and_preserves_composer_deltas', async () => {
     const { turns, sessions, id } = await setup();
@@ -254,7 +254,7 @@ export const turnTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 14, message_count: 1 });
+    ).toEqual({ storedBytes: 14, messageCount: 1 });
     await sessions.update(scope, id, { expectedRevision: 1, archived: false });
     await sessions.update(scope, id, { expectedRevision: 2, archived: true });
     expect(
@@ -276,7 +276,7 @@ export const turnTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 5, message_count: 1 });
+    ).toEqual({ storedBytes: 5, messageCount: 1 });
   });
   it('foreign_and_archived_sessions_cannot_claim_or_mutate_turns', async () => {
     const { turns, sessions, id } = await setup();

@@ -120,7 +120,7 @@ export const createChatTurnStore = (
         const messageId = generateStandardId();
         await connection.query(sql`
         insert into ai_chat_messages (id, tenant_id, user_id, session_id, turn_id, sequence, role, content)
-        values (${messageId}, ${scope.tenantId}, ${scope.userId}, ${sessionId}, ${turnId}, ${session.next_sequence}, 'assistant', ${content})
+        values (${messageId}, ${scope.tenantId}, ${scope.userId}, ${sessionId}, ${turnId}, ${session.nextSequence}, 'assistant', ${content})
       `);
         await connection.query(sql`
         update ai_chat_review_links set message_id = ${messageId} where ${where} and turn_id = ${turnId}
@@ -191,8 +191,8 @@ export const createChatTurnStore = (
           if (session.archived) {
             throw new ChatSessionStoreError('session_archived');
           }
-          if (session.transcript_revision !== input.expectedTranscriptRevision) {
-            throw new ChatSessionStoreError('revision_conflict', session.transcript_revision);
+          if (session.transcriptRevision !== input.expectedTranscriptRevision) {
+            throw new ChatSessionStoreError('revision_conflict', session.transcriptRevision);
           }
           const composer = await connection.one<{ revision: number; bytes: number }>(sql`
             select revision, octet_length(text) + coalesce((select sum(octet_length(a->>'name') + octet_length(a->>'text')) from jsonb_array_elements(attachments) a), 0)::integer as bytes
@@ -202,8 +202,8 @@ export const createChatTurnStore = (
           const content = serializeChatInput(input);
           const delta = Buffer.byteLength(content) + chatContentMaxBytes - clearedBytes;
           if (
-            session.stored_bytes + delta > chatSessionMaxStoredBytes ||
-            session.message_count + 2 > chatSessionMaxMessages
+            session.storedBytes + delta > chatSessionMaxStoredBytes ||
+            session.messageCount + 2 > chatSessionMaxMessages
           ) {
             throw new ChatSessionStoreError('content_limit');
           }
@@ -215,7 +215,7 @@ export const createChatTurnStore = (
           `);
           await connection.query(sql`
             insert into ai_chat_messages (id, tenant_id, user_id, session_id, turn_id, sequence, role, content)
-            values (${generateStandardId()}, ${scope.tenantId}, ${scope.userId}, ${sessionId}, ${turnId}, ${session.next_sequence}, 'user', ${content})
+            values (${generateStandardId()}, ${scope.tenantId}, ${scope.userId}, ${sessionId}, ${turnId}, ${session.nextSequence}, 'user', ${content})
           `);
           await connection.query(sql`
             update ai_chat_sessions set stored_bytes = stored_bytes + ${delta}, message_count = message_count + 2,

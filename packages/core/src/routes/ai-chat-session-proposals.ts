@@ -89,7 +89,7 @@ export const createTurnProposalStore = (
       }
       validateBody(action, sourceArgs);
       const bytes = Buffer.byteLength(JSON.stringify(action.body), 'utf8');
-      if (session.stored_bytes + bytes > chatSessionMaxStoredBytes) {
+      if (session.storedBytes + bytes > chatSessionMaxStoredBytes) {
         throw new ChatSessionStoreError('content_limit');
       }
       await createPendingActionStore(connection).insert(action);

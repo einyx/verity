@@ -47,7 +47,7 @@ export const proposalTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 5 + 32_768 + 13, message_count: 2 });
+    ).toEqual({ storedBytes: 5 + 32_768 + 13, messageCount: 2 });
     expect(
       await pool().oneFirst(
         sql`select reserved_bytes from ai_chat_turns where id = ${claim.turn.id}`

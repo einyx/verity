@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
-import { createPool, type DatabasePool, sql } from '@silverhand/slonik';
+import { createInterceptorsPreset, createPool, type DatabasePool, sql } from '@silverhand/slonik';
 import { z } from 'zod/v3';
 
 /** Synthetic schema/role lifecycle, restricted to this worker's separately owned loopback port. */
@@ -80,6 +80,7 @@ export async function createBrowserDatabase(databaseUrl: string) {
   await migration.default.up(admin);
   const pool = await createPool(databaseUrl, {
     interceptors: [
+      ...createInterceptorsPreset(),
       {
         afterPoolConnection: async (_, connection) => {
           await connection.query(sql`set search_path to ${sql.identifier([schema])}`);

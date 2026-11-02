@@ -99,7 +99,8 @@ export const lockTurnSession = async (
   sessionId: string
 ) => {
   const row = await connection.maybeOne(sql`
-    select archived_at is not null as archived, transcript_revision, next_sequence, stored_bytes, message_count
+    select archived_at is not null as archived, transcript_revision as "transcriptRevision",
+      next_sequence as "nextSequence", stored_bytes as "storedBytes", message_count as "messageCount"
     from ai_chat_sessions where ${sessionWhere(scope, sessionId)} for update
   `);
   if (!row) {
@@ -108,10 +109,10 @@ export const lockTurnSession = async (
   return z
     .object({
       archived: z.boolean(),
-      transcript_revision: z.number(),
-      next_sequence: z.number(),
-      stored_bytes: z.number(),
-      message_count: z.number(),
+      transcriptRevision: z.number(),
+      nextSequence: z.number(),
+      storedBytes: z.number(),
+      messageCount: z.number(),
     })
     .parse(row);
 };

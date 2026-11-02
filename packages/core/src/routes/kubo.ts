@@ -10,6 +10,7 @@ import { requestKubo } from './kubo-transport.js';
 import type { ManagementApiRouter, ManagementApiRouterContext, RouterInitArgs } from './types.js';
 
 const kubeName = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
+const readinessBody = object({ tenantMutationsEnabled: boolean() }).strict();
 const createStackBody = object({
   template: string(),
   tenant: string().regex(kubeName),
@@ -99,14 +100,32 @@ export default function kuboRoutes<T extends ManagementApiRouter>(
   };
   router.get('/kubo/access', async (ctx, next) => {
     const access = await resolveKuboAccess(tenant, ctx);
-    ctx.body = {
-      canViewAll: access.canViewAll,
-      operator: access.operator,
-      tenantScoped: !access.operator,
-      // No Kubo policy-readiness API exists. Never assert that an env flag proves native protection.
-      canMutate: access.operator && !ctx.auth.isReadOnly,
-      tenantMutationsEnabled: false,
-    };
+    const response = await requestKubo(ctx, access, {
+      path: '/api/console/readiness',
+      method: 'GET',
+    });
+    if (!response.ok) {
+      await respond(ctx, response);
+      return next();
+    }
+    try {
+      const text = await readBoundedResponse(response, { maxBytes: 1024 });
+      const readiness = readinessBody.safeParse(safeParseJson(text));
+      if (response.status !== 200 || !readiness.success) {
+        throw new Error('Invalid readiness');
+      }
+      const { tenantMutationsEnabled } = readiness.data;
+      ctx.body = {
+        canViewAll: access.canViewAll,
+        operator: access.operator,
+        tenantScoped: !access.operator,
+        canMutate: !ctx.auth.isReadOnly && (access.operator || tenantMutationsEnabled),
+        tenantMutationsEnabled,
+      };
+    } catch {
+      ctx.status = 502;
+      ctx.body = { code: 'kubo.upstream_error', message: 'Invalid Kubo response.' };
+    }
     return next();
   });
   for (const [path, upstream] of [

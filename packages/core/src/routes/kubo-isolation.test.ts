@@ -158,7 +158,10 @@ describe('signed Kubo caller isolation', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('reports capabilities without advertising policy-enabled tenant mutations', async () => {
+  it('reports an authoritative negative tenant capability', async () => {
+    jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{"tenantMutationsEnabled":false}'));
     const response = await request(createApp())
       .get('/kubo/access')
       .set('Authorization', `Bearer ${await token()}`);
@@ -316,6 +319,9 @@ describe('signed Kubo caller isolation', () => {
   it.each([null, { isSuspended: true }])(
     'does not recognize missing or suspended admin identity %j',
     async (user) => {
+      jest
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(new Response('{"tenantMutationsEnabled":false}'));
       maybeOne.mockImplementation(async (query: { sql: string }) =>
         query.sql.includes('is_suspended') ? user : { userId: 'operator' }
       );

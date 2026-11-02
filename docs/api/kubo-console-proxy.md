@@ -27,17 +27,38 @@ issuer/audience, colliding user ID, development-header bypass or machine token
 cannot establish that provenance. Email-domain privileges do not qualify.
 
 `canViewAll` describes authorization to request `scope=all`; `operator` describes
-the current request. `canMutate` is true only in authorized operator scope and
-without read-only access. It is not permission to purge an assigned Namespace.
-Tenant mutation capability is deliberately **false**: Kubo has no authenticated
-policy-readiness discovery API. Do not enable tenant UI actions from a console
-environment flag or a successful preview. A future readiness contract is needed
-before this endpoint can advertise tenant mutations dynamically. Tenant API
-writes still go through Kubo's authoritative, default-off policy check and return
-503 when protection is unavailable; they are never translated into success.
-Authoritative backend readiness discovery is pending controller integration:
-Task 3 cannot yet satisfy the full tenant creation/action scope. This is not a
-completed end-to-end rollout capability, and this slice invents no readiness API.
+the current request. After authorization, each discovery makes a signed, empty-body
+`GET /api/console/readiness` to Kubo (no query or body inputs). Its exact response
+is `{"tenantMutationsEnabled": boolean}`. Kubo checks runtime opt-in and the same
+fresh policy/binding/type-status verifier used by tenant mutations, including for
+operator discovery: an operator does not bypass this readiness check. Disabled,
+missing, unreadable, stale or invalid protection is a successful `200` negative;
+authentication/scope/configuration errors remain errors, not false capabilities.
+
+The proxy bounds readiness to 1024 bytes and requires status 200 and an exact
+one-boolean object. It constructs the five public fields rather than forwarding
+upstream JSON. `tenantScoped = !operator`; `tenantMutationsEnabled` reports the
+backend gate even for read-only callers; `canMutate = !readOnly && (operator ||
+tenantMutationsEnabled)`. Thus ordinary users and global admins in default scoped
+view require readiness; authorized explicit all-scope operators do not. No caller
+can mutate through read-only access. `canViewAll` stays identity-derived.
+
+Discovery failure is unknown/non-success, never a usable capability response:
+upstream 400/401/403/404 (including an old backend)/409/413/503 are preserved with
+sanitized messages; transport, malformed/oversized/schema-invalid, unexpected
+successful status and unknown upstream failures return 502. Neither backend nor
+proxy caches readiness or uses ETag/304; responses and errors are private/no-store.
+Do not infer readiness from environment flags or preview success.
+
+Task 3 must key capabilities by session/actor, selected tenant and explicit scope;
+clear capability/detail state immediately on switches, without previous-data
+fallback. Loading, unknown, error and read-only disable actions, and target actions
+also require owned detail. Invalidate/refetch after mutation 401/403/503; revalidate
+on focus/reconnect and before a new action flow as appropriate. A positive is only
+an advisory snapshot, not authorization: every mutation rechecks actual protection
+and ownership; removed protection still returns 503 without writes. Operator
+authority and assigned-Namespace purge restrictions are unchanged. UI integration
+and independent combined review are separate; this is not a rollout.
 
 Global economics, capacity, agent archives, demo approval/rejection and airgap
 uploads require explicit operator scope. There is no generic backend-path proxy.

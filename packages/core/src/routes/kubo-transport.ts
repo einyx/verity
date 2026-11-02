@@ -25,6 +25,9 @@ const signingKey = () => {
 /** Only known tenant surfaces may carry a tenant delegation; new control routes default closed. */
 const tenantPathAllowed = (method: string, path: string) => {
   const pathname = decodeURIComponent(new URL(path, 'http://kubo.invalid').pathname);
+  if (method === 'GET' && path === '/api/console/readiness') {
+    return true;
+  }
   if (method === 'GET' && ['/api/stacks', '/api/templates', '/api/template'].includes(pathname)) {
     return true;
   }

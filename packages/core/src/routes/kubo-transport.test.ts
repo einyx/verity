@@ -92,10 +92,25 @@ it.each([
   'https://evil.example/api/stacks',
   '/api/stacks/../unknown',
   '/api/backups',
+  '/api/console/readiness?',
+  '/api/console/readiness?scope=all',
+  '/api/console/%72eadiness',
 ])('refuses unsupported tenant path %s', async (path) => {
   const fetchSpy = jest.spyOn(globalThis, 'fetch');
   await expect(
     requestKubo(context(), { ...access, operator: false }, { path })
+  ).rejects.toMatchObject({ status: 403 });
+  expect(fetchSpy).not.toHaveBeenCalled();
+});
+
+it.each(['POST', 'HEAD', 'PATCH', 'DELETE'])('refuses non-GET readiness %s', async (method) => {
+  const fetchSpy = jest.spyOn(globalThis, 'fetch');
+  await expect(
+    requestKubo(
+      context(),
+      { ...access, operator: false },
+      { path: '/api/console/readiness', method }
+    )
   ).rejects.toMatchObject({ status: 403 });
   expect(fetchSpy).not.toHaveBeenCalled();
 });

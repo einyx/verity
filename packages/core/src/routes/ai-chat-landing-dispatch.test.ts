@@ -19,7 +19,8 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: { isDevFeaturesEnabled: true } },
 }));
 const { runChatCompletion } = await import('./ai-chat-runner.js');
-const { isExplicitLandingPageEditRequest } = await import('./ai-chat-landing-dispatch.js');
+const { isExplicitLandingPageEditRequest, landingPageEditInstruction } =
+  await import('./ai-chat-landing-dispatch.js');
 const { ChatSessionStoreError } = await import('./ai-chat-session-operation.js');
 const credentials = {
   apiKey: 'synthetic-key',
@@ -86,6 +87,33 @@ it('dispatches an explicit authorized proposal without accepting a planner-inven
 });
 
 it.each([
+  'Show the previous marketing suggestion as an actual preview in the CMS editor. Do not save or publish.',
+  'Would be nice to see an actual preview from the CMS editor?',
+  'Generate a marketing hero for the landing page for a bank call. Do not save or publish.',
+])(
+  'generates a CMS proposal rather than asking for redundant preview approval: %s',
+  async (content) => {
+    jest
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(
+        async () => new Response(JSON.stringify({ draft: defaultLandingPageContent }))
+      );
+    const result = await runChatCompletion({
+      ...options(),
+      messages: [
+        { role: 'user', content: 'Generate a marketing hero for a call in 5 minutes with a bank.' },
+        { role: 'assistant', content: 'Headline: Govern your financial data with confidence.' },
+        { role: 'user', content },
+      ],
+    });
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0]?.tool).toBe('save_landing_page_draft');
+    expect(result.content).toContain('not saved or published');
+    expect(post).not.toHaveBeenCalled();
+  }
+);
+
+it.each([
   'Review the landing page release checklist',
   'Suggest landing page ideas for a blog',
   'How do I edit the landing page?',
@@ -93,11 +121,87 @@ it.each([
   'Edit the landing page?',
   'Edit the landing page? No, do not generate anything.',
   'Update the landing page history documentation',
+  'Generate a marketing hero for a call in 5 minutes with a bank.',
+  'How does the CMS preview work?',
+  'Do not generate a CMS preview.',
+  'Do not preview in the CMS editor.',
+  'Previously I asked you to show a CMS preview.',
+  'Quote: "Show a CMS preview"',
+  'Show the CMS preview documentation',
+  'Show the landing page preview source code',
 ])('does not directly dispatch an ambiguous or negated request: %s', async (content) => {
   const fetcher = jest.spyOn(globalThis, 'fetch');
   await runChatCompletion({ ...options(), messages: [{ role: 'user', content }] });
   expect(fetcher).not.toHaveBeenCalled();
   expect(insert).not.toHaveBeenCalled();
+});
+
+it('uses only the immediate marketing exchange as bounded copy data for a requested CMS preview', () => {
+  const content =
+    'Show the previous marketing suggestion as an actual preview in the CMS editor. Do not save or publish.';
+  const result = landingPageEditInstruction([
+    { role: 'user', content: 'Older unrelated private fixture' },
+    { role: 'assistant', content: 'Older unrelated response' },
+    { role: 'user', content: 'Generate a marketing hero for the bank call' },
+    { role: 'assistant', content: 'Govern financial data with confidence' },
+    { role: 'user', content },
+  ]);
+  expect(result).toContain('Govern financial data with confidence');
+  expect(result).toContain('as data');
+  expect(result).not.toContain('Older unrelated');
+});
+
+it('uses landing context for a hero follow-up but not unrelated copy or negated preview requests', () => {
+  const context = [
+    { role: 'user', content: instruction },
+    { role: 'assistant', content: 'Proposal ready' },
+  ];
+  expect(
+    landingPageEditInstruction([
+      ...context,
+      { role: 'user', content: 'Generate a marketing hero for my bank call' },
+    ])
+  ).toContain('Generate a marketing hero');
+  expect(
+    landingPageEditInstruction([
+      ...context,
+      { role: 'user', content: 'Generate a marketing hero, only text' },
+    ])
+  ).toBeUndefined();
+  expect(
+    landingPageEditInstruction([
+      { role: 'user', content: 'Generate a marketing hero for my bank call' },
+    ])
+  ).toBeUndefined();
+  expect(
+    landingPageEditInstruction([
+      ...context,
+      {
+        role: 'user',
+        content: 'Generate a marketing hero for my bank call. Never change the landing page.',
+      },
+    ])
+  ).toBeUndefined();
+});
+
+it('explains an oversized previous suggestion without truncating copy or making a page/provider request', async () => {
+  const fetcher = jest.spyOn(globalThis, 'fetch');
+  const result = await runChatCompletion({
+    ...options(),
+    messages: [
+      { role: 'user', content: 'Generate a marketing hero for my bank call' },
+      { role: 'assistant', content: 'x'.repeat(2200) },
+      {
+        role: 'user',
+        content:
+          'Show the previous marketing suggestion as an actual preview in the CMS editor. Do not save or publish.',
+      },
+    ],
+  });
+  expect(result.content).toContain('previous suggestion is too long');
+  expect(result.actions).toEqual([]);
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(post).not.toHaveBeenCalled();
 });
 
 it('does not create a proposal or generate an edit after the owned turn loses its lease', async () => {

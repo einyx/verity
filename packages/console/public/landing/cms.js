@@ -258,6 +258,9 @@
   // document and nothing else.
   const isPreview =
     new URLSearchParams(location.search).has('cmsPreview') && window.parent !== window;
+  const previewParameters = new URLSearchParams(location.search);
+  const previewNonce = previewParameters.get('cmsNonce');
+  const isReadOnlyPreview = previewParameters.get('cmsReadOnly') === '1';
 
   // The language the page is shown in. A page without one is read as English.
   const pageLanguage = () => document.documentElement.lang || 'en';
@@ -459,14 +462,14 @@
       el.style.translate = `${safeOffset.x}px ${safeOffset.y}px`;
     }
 
-    if (isPreview) {
+    if (isPreview && !isReadOnlyPreview) {
       attachPositionControls();
       attachEditableFields();
     }
     window.LandingElements?.fill(doc);
   };
 
-  if (isPreview && !window.LandingElements) {
+  if (isPreview && !isReadOnlyPreview && !window.LandingElements) {
     let addMenu;
     const closeAddMenu = () => {
       addMenu?.remove();
@@ -570,7 +573,8 @@
 
   // Preview: only the editor's own window may send a draft or receive edits.
   window.addEventListener('message', (event) => {
-    if (event.origin !== location.origin || event.source !== window.parent) {
+    if (event.origin !== location.origin || event.source !== window.parent ||
+        (previewNonce && event.data?.nonce !== previewNonce)) {
       return;
     }
 
@@ -609,6 +613,7 @@
 
   // Text marked for the CMS is editable in place. Links and buttons are not navigated to in preview.
   function attachEditableFields(root = document) {
+    if (isReadOnlyPreview) return;
     for (const el of root.querySelectorAll('[data-cms], [data-cms-copy]')) {
       if (el.dataset.cmsEditAttached === 'true') continue;
       el.dataset.cmsEditAttached = 'true';
@@ -815,6 +820,6 @@
   }
 
   if (isPreview) {
-    window.parent.postMessage({ type: 'meshx-cms-ready' }, location.origin);
+    window.parent.postMessage({ type: 'meshx-cms-ready', ...(previewNonce ? { nonce: previewNonce } : {}) }, location.origin);
   }
 })();

@@ -2,6 +2,10 @@
 // app in demo-chat-app.js, loaded the first time the modal opens. The buttons only open the modal once
 // the published landing page document has the demo chat switched on.
 (() => {
+  // The CMS artifact is render-only: no public chat setup, page fetch, or provider calls.
+  if (window.parent !== window && new URLSearchParams(location.search).has('cmsPreview')) {
+    return;
+  }
   const dialog = document.getElementById('demo-chat');
   const closeButton = document.getElementById('demo-chat-close');
 

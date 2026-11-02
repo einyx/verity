@@ -1,5 +1,5 @@
 import { type LandingPageDocument } from '@logto/schemas';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { draftChanges } from '@/cloud/pages/LandingPageEditor/draft-changes';
 
@@ -8,22 +8,31 @@ import styles from './index.module.scss';
 /** Render only our trusted preview route. Model output is data, never HTML or an iframe URL. */
 function ReadOnlyLandingPreview({
   document,
+  id,
   isExpanded = false,
 }: {
   readonly document: LandingPageDocument;
+  readonly id?: string;
   readonly isExpanded?: boolean;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
+  const nonce = useMemo(
+    () =>
+      Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+        byte.toString(16).padStart(2, '0')
+      ).join(''),
+    []
+  );
   const [section, setSection] = useState(document.sections[0]?.id ?? 'hero');
   const send = useCallback(() => {
     const target = frame.current?.contentWindow;
-    target?.postMessage({ type: 'meshx-cms-draft', doc: document }, window.location.origin);
-    target?.postMessage({ type: 'meshx-cms-locale', code: 'en' }, window.location.origin);
+    target?.postMessage({ type: 'meshx-cms-draft', doc: document, nonce }, window.location.origin);
+    target?.postMessage({ type: 'meshx-cms-locale', code: 'en', nonce }, window.location.origin);
     target?.postMessage(
-      { type: 'meshx-cms-select-section', sectionId: section },
+      { type: 'meshx-cms-select-section', sectionId: section, nonce },
       window.location.origin
     );
-  }, [document, section]);
+  }, [document, section, nonce]);
 
   useEffect(() => {
     send();
@@ -40,7 +49,9 @@ function ReadOnlyLandingPreview({
         typeof event.data === 'object' &&
         event.data !== null &&
         'type' in event.data &&
-        event.data.type === 'meshx-cms-ready'
+        event.data.type === 'meshx-cms-ready' &&
+        'nonce' in event.data &&
+        event.data.nonce === nonce
       ) {
         send();
       }
@@ -49,10 +60,10 @@ function ReadOnlyLandingPreview({
     return () => {
       window.removeEventListener('message', ready);
     };
-  }, [send]);
+  }, [send, nonce]);
 
   return (
-    <div className={styles.artifactViewport} data-expanded={isExpanded}>
+    <div id={id} className={styles.artifactViewport} data-expanded={isExpanded}>
       <label className={styles.artifactSectionPicker}>
         Preview section
         <select
@@ -76,7 +87,7 @@ function ReadOnlyLandingPreview({
         tabIndex={-1}
         aria-hidden="true"
         sandbox="allow-scripts allow-same-origin"
-        src={`${window.location.origin}/console/landing-preview?cmsPreview=1`}
+        src={`${window.location.origin}/console/landing-preview?cmsPreview=1&cmsReadOnly=1&cmsNonce=${nonce}`}
         className={styles.artifactFrame}
         onLoad={send}
       />

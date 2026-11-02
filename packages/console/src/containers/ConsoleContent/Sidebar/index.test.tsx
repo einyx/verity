@@ -5,6 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import { type EnvTestUtils, mockEnv, resetMockEnv } from '@/test-utils/env';
 
+import { SidebarStateProvider, SidebarToggle } from '../SidebarState';
+
 import Sidebar from './index';
 
 jest.mock('@/components/Topbar/TenantSelector', () => ({ __esModule: true, default: () => null }));
@@ -43,7 +45,10 @@ const currentPath = '/admin/infrastructure/new';
 const renderSidebar = () =>
   render(
     <MemoryRouter initialEntries={[currentPath]}>
-      <Sidebar />
+      <SidebarStateProvider>
+        <SidebarToggle />
+        <Sidebar />
+      </SidebarStateProvider>
     </MemoryRouter>
   );
 
@@ -107,7 +112,9 @@ describe('Console sidebar links', () => {
         value={{ currentTenantId: 'customer' } as React.ContextType<typeof TenantsContext>}
       >
         <MemoryRouter initialEntries={['/customer/webhooks']}>
-          <Sidebar />
+          <SidebarStateProvider>
+            <Sidebar />
+          </SidebarStateProvider>
         </MemoryRouter>
       </TenantsContext.Provider>
     );
@@ -148,7 +155,9 @@ describe('Console sidebar links', () => {
   it('reveals the current group and marks a nested route as the current destination', () => {
     render(
       <MemoryRouter initialEntries={['/admin/applications/new']}>
-        <Sidebar />
+        <SidebarStateProvider>
+          <Sidebar />
+        </SidebarStateProvider>
       </MemoryRouter>
     );
     expect(

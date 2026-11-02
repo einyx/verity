@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import Sidebar from '@/containers/ConsoleContent/Sidebar';
+import { SidebarStateProvider } from '@/containers/ConsoleContent/SidebarState';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 
 import AiChat from './index';
@@ -135,7 +136,9 @@ it.each(['admin', 'customer'])(
         value={{ currentTenantId: tenantId } as React.ContextType<typeof TenantsContext>}
       >
         <MemoryRouter initialEntries={[path]}>
-          <Sidebar />
+          <SidebarStateProvider>
+            <Sidebar />
+          </SidebarStateProvider>
           <CurrentRoute />
         </MemoryRouter>
       </TenantsContext.Provider>

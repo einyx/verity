@@ -1,4 +1,3 @@
-/* global document, window, localStorage, location, getComputedStyle, EventSource, innerWidth, innerHeight, addEventListener, requestAnimationFrame */
 /* eslint-disable max-lines -- single-module renderer; splitting it needs files outside this change */
 /* eslint-disable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods -- imperative DOM renderer: element properties, SVG nodes and cached per-element state are updated in place by design */
 
@@ -8,6 +7,18 @@
 
 import { fmtCPU, fmtBytes, fmtUSD, fmtValue, fmtPct, fmtClock } from './format.js';
 import { squarify, splitFree } from './treemap.js';
+
+// Each authorized console context owns a fresh DOM root and renderer lifetime.
+export function mountKshows(root) {
+const document = root.ownerDocument;
+const window = document.defaultView;
+const { localStorage, location } = window;
+const lifecycle = new AbortController();
+const getComputedStyle = window.getComputedStyle.bind(window);
+const addEventListener = (type, listener) => window.addEventListener(type, listener, { signal: lifecycle.signal });
+const requestAnimationFrame = window.requestAnimationFrame.bind(window);
+const setTimeout = window.setTimeout.bind(window);
+const clearTimeout = window.clearTimeout.bind(window);
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -53,7 +64,7 @@ const cards = new Map(); // Node name -> { card, svg, els }
 let renderedMode = ''; // `${dimension}|${metric}` — mode switch = full rebuild
 let hatchSeq = 0;
 
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel) => root.matches(sel) ? root : root.querySelector(sel);
 
 // Cluster-supplied strings (pod/node/namespace names, role labels) are
 // interpolated into innerHTML sinks — escape them, even though today's
@@ -143,32 +154,8 @@ function annotateCosts(node) {
 
 // ---------- data plumbing ----------
 
-async function bootstrap() {
-  // Live updates over Server-Sent Events; the browser reconnects on its own.
-  // A poll of the snapshot covers any gap while the stream is down.
-  const poll = async () => {
-    try {
-      apply(await window.kshowsSnapshot());
-    } catch {
-      /* Keep the last snapshot */
-    }
-    updateStatus();
-  };
-  await poll().catch(() => {});
-  if ('EventSource' in window && window.kshowsStreamUrl) {
-    const source = new EventSource(window.kshowsStreamUrl);
-    source.addEventListener('snapshot', (event) => apply(JSON.parse(event.data)));
-    source.addEventListener('error', () => updateStatus());
-  }
-  setInterval(() => {
-    updateStatus();
-    if (Date.now() - state.lastEventAt > STALE_MS) {
-      poll();
-    }
-  }, 10_000);
-}
-
 function apply(snapshot) {
+  if (lifecycle.signal.aborted) { return; }
   for (const n of snapshot.nodes) {
     annotateCosts(n);
   }
@@ -258,7 +245,7 @@ function render() {
 const priced = (snap) => snap.nodes.some((n) => n.hourlyUSD > 0);
 
 function renderControls(caps) {
-  for (const button of document.querySelectorAll('[data-dim]')) {
+  for (const button of root.querySelectorAll('[data-dim]')) {
     button.setAttribute('aria-pressed', button.dataset.dim === state.dimension);
     if (button.dataset.dim === 'disk') {
       const dead = !caps.disk && !state.snapshot.nodes.some((n) => n.disk.capacityBytes > 0);
@@ -272,7 +259,7 @@ function renderControls(caps) {
         : 'Estimated list price per hour';
     }
   }
-  for (const button of document.querySelectorAll('[data-metric]')) {
+  for (const button of root.querySelectorAll('[data-metric]')) {
     button.setAttribute('aria-pressed', button.dataset.metric === state.metric);
     const inDisk = state.dimension === 'disk';
     if (button.dataset.metric === 'actual') {
@@ -907,7 +894,7 @@ function renderDiskSVG(svg, node, W, H) {
 
 const tooltip = () => $('#tooltip');
 
-document.addEventListener('mousemove', (event) => {
+root.addEventListener('mousemove', (event) => {
   const tile = event.target.closest?.('.tile');
   const tip = tooltip();
   // The markup is detached while the page is unmounted; this listener is global, so it must no-op.
@@ -932,10 +919,10 @@ document.addEventListener('mousemove', (event) => {
   let x = event.clientX + pad;
   let y = event.clientY + pad;
   const r = tip.getBoundingClientRect();
-  if (x + r.width > innerWidth - 8) {
+  if (x + r.width > window.innerWidth - 8) {
     x = event.clientX - r.width - pad;
   }
-  if (y + r.height > innerHeight - 8) {
+  if (y + r.height > window.innerHeight - 8) {
     y = event.clientY - r.height - pad;
   }
   tip.style.left = `${x}px`;
@@ -980,23 +967,23 @@ function tooltipHTML(pod) {
 }
 
 // Legend hover → spotlight one namespace across every node.
-document.addEventListener('mouseover', (event) => {
+root.addEventListener('mouseover', (event) => {
   const chip = event.target.closest?.('.chip');
   if (!chip) {
     return;
   }
   const { ns } = chip.dataset;
-  for (const t of document.querySelectorAll('.tile')) {
+  for (const t of root.querySelectorAll('.tile')) {
     const mine =
       ns === '__other' ? nsSlots.get(t.dataset.ns) >= NS_COLORS.length : t.dataset.ns === ns;
     t.classList.toggle('dimmed', !mine);
   }
 });
-document.addEventListener('mouseout', (event) => {
+root.addEventListener('mouseout', (event) => {
   if (!event.target.closest?.('.chip')) {
     return;
   }
-  for (const t of document.querySelectorAll('.tile')) {
+  for (const t of root.querySelectorAll('.tile')) {
     t.classList.remove('dimmed');
   }
 });
@@ -1103,14 +1090,14 @@ function podTableHTML(node) {
 
 // ---------- controls ----------
 
-for (const button of document.querySelectorAll('[data-dim]')) {
+for (const button of root.querySelectorAll('[data-dim]')) {
   button.addEventListener('click', () => {
     state.dimension = button.dataset.dim;
     localStorage.setItem('kshows.dimension', state.dimension);
     render();
   });
 }
-for (const button of document.querySelectorAll('[data-metric]')) {
+for (const button of root.querySelectorAll('[data-metric]')) {
   button.addEventListener('click', () => {
     state.metric = button.dataset.metric;
     localStorage.setItem('kshows.metric', state.metric);
@@ -1123,7 +1110,7 @@ $('#overlay').addEventListener('click', (event) => {
     closeDrill();
   }
 });
-document.addEventListener('keydown', (event) => {
+root.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && state.drill) {
     closeDrill();
   }
@@ -1133,7 +1120,6 @@ let resizeTimer;
 addEventListener('resize', () => {
   // Suspend geometry transitions for the re-layout, so tiles snap to the new widths instead of
   // sliding across each other. The class is removed once the new layout has been applied.
-  const root = document.querySelector('.kshows');
   root?.classList.add('is-relayout');
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
@@ -1143,9 +1129,9 @@ addEventListener('resize', () => {
   }, 150);
 });
 
-// Not awaited: top-level await is unsupported by the console's es2020 build target, and
-// the module is loaded with `void import(...)`, so nothing waits on this promise.
-void bootstrap();
+// The console's identity/tenant/scope-keyed SWR hook owns polling and error handling.
+return { apply, dispose: () => { lifecycle.abort(); clearTimeout(resizeTimer); root.replaceChildren(); } };
+}
 
 /* eslint-enable max-lines */
 /* eslint-enable @silverhand/fp/no-mutation, @silverhand/fp/no-let, @silverhand/fp/no-mutating-methods */

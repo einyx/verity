@@ -13,6 +13,8 @@ jest.mock('react-safe-lazy', () => ({
 jest.mock('@/components/ConsoleNotFound', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/hooks/use-is-actions-enabled', () => ({ __esModule: true, default: () => false }));
 jest.mock('./routes/tenant-settings', () => ({ useTenantSettings: () => [] }));
+// Route registration does not render authenticated infrastructure content.
+jest.mock('@/pages/Kubo/KuboAccess', () => ({ __esModule: true, default: () => null }));
 
 const wrapper = ({ children }: { readonly children: ReactNode }) => (
   <MemoryRouter>{children}</MemoryRouter>

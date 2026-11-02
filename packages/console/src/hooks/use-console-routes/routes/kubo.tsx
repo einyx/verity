@@ -1,7 +1,8 @@
-import { type RouteObject } from 'react-router-dom';
+import { Outlet, type RouteObject } from 'react-router-dom';
 import { safeLazy } from 'react-safe-lazy';
 
 import InfraShell from '@/pages/Kubo/InfraShell';
+import KuboAccess from '@/pages/Kubo/KuboAccess';
 
 const Kubo = safeLazy(async () => import('@/pages/Kubo'));
 const KuboWizard = safeLazy(async () => import('@/pages/Kubo/KuboWizard'));
@@ -13,6 +14,11 @@ const KuboBundle = safeLazy(async () => import('@/pages/Kubo/Bundle'));
 // Stacks overview and stack creation, backed by the Kubo operator portal (proxied by Logto core).
 export const kubo: RouteObject = {
   path: 'infrastructure',
+  element: (
+    <KuboAccess>
+      <Outlet />
+    </KuboAccess>
+  ),
   children: [
     {
       index: true,

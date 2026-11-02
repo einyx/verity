@@ -1,5 +1,4 @@
 import { Helmet } from 'react-helmet';
-import useSWR from 'swr';
 
 import RequestDataError from '@/components/RequestDataError';
 import Card from '@/ds-components/Card';
@@ -7,9 +6,10 @@ import CardTitle from '@/ds-components/CardTitle';
 import DynamicT from '@/ds-components/DynamicT';
 import Table from '@/ds-components/Table';
 import Tag from '@/ds-components/Tag';
-import { type RequestError } from '@/hooks/use-api';
 
+import { useKuboAccess } from '../KuboAccess';
 import styles from '../index.module.scss';
+import useKuboResource from '../use-kubo-resource';
 
 type AgentStats = {
   total_requests: number;
@@ -46,12 +46,25 @@ function Metric({ value, label }: { readonly value: string | number; readonly la
 }
 
 function Agent() {
-  const stats = useSWR<AgentStats, RequestError>('api/kubo/agentfw/stats', {
-    refreshInterval: 15_000,
-  });
-  const requests = useSWR<AgentRequestList, RequestError>('api/kubo/agentfw/requests?limit=50', {
-    refreshInterval: 15_000,
-  });
+  const { operator, scope } = useKuboAccess();
+  const stats = useKuboResource<AgentStats>(
+    operator ? 'api/kubo/agentfw/stats' : undefined,
+    scope,
+    {
+      refreshInterval: 15_000,
+    }
+  );
+  const requests = useKuboResource<AgentRequestList>(
+    operator ? 'api/kubo/agentfw/requests?limit=50' : undefined,
+    scope,
+    {
+      refreshInterval: 15_000,
+    }
+  );
+
+  if (!operator) {
+    return null;
+  }
 
   if (stats.error) {
     return <RequestDataError error={stats.error} />;

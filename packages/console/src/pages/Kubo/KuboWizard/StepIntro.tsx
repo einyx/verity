@@ -13,8 +13,8 @@ const steps = [
     image: welcomeImage,
   },
   {
-    title: 'Set the tenant',
-    text: 'Enter the tenant ID. Mode is optional.',
+    title: 'Set the namespace',
+    text: 'Enter a namespace slug. Console ownership is assigned by the server.',
     image: organizationImage,
   },
   {

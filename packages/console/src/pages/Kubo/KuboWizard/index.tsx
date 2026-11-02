@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import useSWR from 'swr';
 
 import BarGraphIcon from '@/assets/icons/bar-graph.svg?react';
 import BookIcon from '@/assets/icons/book.svg?react';
@@ -12,8 +11,11 @@ import DocumentIcon from '@/assets/icons/document.svg?react';
 import FormCardLayout from '@/components/FormCard/FormCardLayout';
 import Button from '@/ds-components/Button';
 import Select from '@/ds-components/Select';
-import useApi, { type RequestError } from '@/hooks/use-api';
+import useApi from '@/hooks/use-api';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
+
+import { useKuboMutationAccess } from '../KuboAccess';
+import useKuboResource from '../use-kubo-resource';
 
 import ChoiceItem from './ChoiceItem';
 import SetupRequirement from './SetupRequirement';
@@ -22,13 +24,13 @@ import { readError } from './errors';
 import { type StackOption, stackOptions, templateHighlights, toStep } from './options';
 import wizardStyles from './wizard.module.scss';
 
-// Lowercase RFC-1123 label, as the portal requires for a tenant ID.
+// The API's legacy `tenant` field is a namespace slug, never console ownership.
 const documentationUrl = 'https://docs.meshx.io/';
 
 // What is missing before the Next button enables, shown beside it.
 const continueHints: Record<1 | 2 | 3, string> = {
   1: 'Choose a template to continue.',
-  2: 'Enter a valid tenant ID to continue.',
+  2: 'Enter a valid namespace slug to continue.',
   3: '',
 };
 
@@ -59,13 +61,25 @@ const resourceCards = [
   },
   {
     icon: ConnectionIcon,
-    title: 'Set the tenant',
-    text: 'Use a lowercase tenant ID. Select the sign-in provider for the workspace.',
+    title: 'Set the namespace',
+    text: 'Use a lowercase namespace slug. Console ownership is assigned by the server.',
     action: { label: 'Open docs', href: documentationUrl },
   },
 ] as const;
 
 const tenantPattern = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
+const canCreate = (selected: StackOption | undefined, tenantValid: boolean, canMutate: boolean) =>
+  Boolean(selected?.template) && tenantValid && canMutate;
+const visibleOptions = (operator: boolean) =>
+  stackOptions.filter((option) => operator || ['full', 'lite'].includes(option.template ?? ''));
+const visibleResources = (operator: boolean) =>
+  resourceCards.filter((card) => operator || card.action.href !== '/infrastructure/capacity');
+const canProceed = (
+  step: number,
+  selected: StackOption | undefined,
+  tenantValid: boolean,
+  canMutate: boolean
+) => canMutate && (step === 1 ? Boolean(selected?.available) : tenantValid);
 
 // The template preview endpoint for the review step, or null until a template and tenant are set.
 function previewUrl(
@@ -88,33 +102,41 @@ function previewUrl(
 
 function KuboWizard() {
   const api = useApi();
+  const access = useKuboMutationAccess();
   // Tenant-aware navigate, so the redirect stays under /<tenant>/console instead of the marketing root.
   const { navigate, getTo } = useTenantPathname();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selected, setSelected] = useState<StackOption>();
   const [tenant, setTenant] = useState('');
-  const [mode, setMode] = useState('');
+  const [mode, setMode] = useState('Direct');
   const [provider, setProvider] = useState<'logto' | 'auth0'>('logto');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
 
   const previewKey =
     step === 3 ? previewUrl(selected?.template, tenant, provider, mode) : undefined;
-  const preview = useSWR<{ yaml: string }, RequestError>(previewKey);
+  const preview = useKuboResource<{ yaml: string }>(previewKey, access.scope);
   // Workspace totals for the header stats; the list is the same one the Workspaces page reads.
-  const workspaces = useSWR<Array<{ phase: string }>, RequestError>('api/kubo/stacks');
+  const workspaces = useKuboResource<Array<{ phase: string }>>('api/kubo/stacks', access.scope);
   const workspaceTotal = workspaces.data?.length;
   const workspaceReady = workspaces.data?.filter((stack) => stack.phase === 'Ready').length;
 
   const create = async () => {
-    if (!selected?.template) {
+    if (
+      !selected?.template ||
+      !access.canMutate ||
+      (!access.operator && !['full', 'lite'].includes(selected.template))
+    ) {
       return;
     }
     setSubmitting(true);
     setSubmitError(undefined);
     try {
+      if (!(await access.refresh()) || !access.isCurrent()) {
+        throw new Error('Creation is not currently authorized.');
+      }
       await api
-        .post('api/kubo/stacks', {
+        .post(access.path('api/kubo/stacks'), {
           json: {
             template: selected.template,
             tenant,
@@ -124,8 +146,11 @@ function KuboWizard() {
           },
         })
         .json();
-      navigate('/infrastructure');
+      if (access.isCurrent()) {
+        navigate('/infrastructure');
+      }
     } catch (error: unknown) {
+      await access.onDenied(error);
       setSubmitError(await readError(error));
     } finally {
       setSubmitting(false);
@@ -133,7 +158,7 @@ function KuboWizard() {
   };
 
   const tenantValid = tenantPattern.test(tenant);
-  const canContinue = step === 1 ? Boolean(selected?.available) : tenantValid;
+  const canContinue = canProceed(step, selected, tenantValid, access.canMutate);
 
   return (
     <div className={wizardStyles.page}>
@@ -152,7 +177,7 @@ function KuboWizard() {
         <section className={wizardStyles.callout} aria-label="Getting started">
           <h2 className={wizardStyles.calloutTitle}>Create your first workspace</h2>
           <p className={wizardStyles.calloutText}>
-            Start with Foundation for the full platform. Choose a template, set the tenant, then
+            Start with Foundation for the full platform. Choose a template, set the namespace, then
             review the YAML before anything is applied. Your workspace will appear under Workspaces
             once it’s created.
           </p>
@@ -182,7 +207,7 @@ function KuboWizard() {
               workspace for dashboards or AI integration.
             </p>
             <ul className={wizardStyles.templateGrid}>
-              {stackOptions.map((option) => (
+              {visibleOptions(access.operator).map((option) => (
                 <li key={option.id} className={wizardStyles.templateItem}>
                   {templateHighlights[option.id].recommended && (
                     <span className={wizardStyles.badge}>Recommended</span>
@@ -210,9 +235,10 @@ function KuboWizard() {
         {step === 2 && (
           <div className={wizardStyles.form}>
             <label className={wizardStyles.field}>
-              Tenant ID
+              Namespace slug
               <span className={wizardStyles.hint}>
-                A short, lowercase name for this workspace, such as acme.
+                A short, lowercase namespace name, such as acme. Console ownership is assigned by
+                the server.
               </span>
               <input
                 value={tenant}
@@ -236,7 +262,7 @@ function KuboWizard() {
                 value={provider}
                 options={[
                   { value: 'logto', title: 'Logto (recommended)' },
-                  { value: 'auth0', title: 'Auth0' },
+                  ...(access.operator ? [{ value: 'auth0' as const, title: 'Auth0' }] : []),
                 ]}
                 onChange={(value) => {
                   if (value) {
@@ -245,19 +271,21 @@ function KuboWizard() {
                 }}
               />
             </div>
-            <label className={wizardStyles.field}>
-              Deployment mode (optional)
-              <span className={wizardStyles.hint}>
-                Leave this blank unless your team uses a specific mode.
-              </span>
-              <input
-                value={mode}
-                placeholder="Direct"
-                onChange={(event) => {
-                  setMode(event.target.value.trim());
-                }}
-              />
-            </label>
+            {access.operator && (
+              <label className={wizardStyles.field}>
+                Deployment mode (optional)
+                <span className={wizardStyles.hint}>
+                  Leave this blank unless your team uses a specific mode.
+                </span>
+                <input
+                  value={mode}
+                  placeholder="Direct"
+                  onChange={(event) => {
+                    setMode(event.target.value.trim());
+                  }}
+                />
+              </label>
+            )}
           </div>
         )}
 
@@ -268,7 +296,7 @@ function KuboWizard() {
               <dd>{selected?.title}</dd>
               <dt>Template</dt>
               <dd>{selected?.template}</dd>
-              <dt>Tenant</dt>
+              <dt>Namespace slug</dt>
               <dd>{tenant}</dd>
               <dt>Excluded</dt>
               <dd>{describeExcluded(selected)}</dd>
@@ -308,7 +336,7 @@ function KuboWizard() {
               title="general.create"
               type="primary"
               isLoading={submitting}
-              disabled={!selected?.template || !tenant}
+              disabled={!canCreate(selected, tenantValid, access.canMutate)}
               onClick={() => {
                 void create();
               }}
@@ -319,7 +347,7 @@ function KuboWizard() {
       <section className={wizardStyles.resourcesSection} aria-label="Resources">
         <h2 className={wizardStyles.resourcesTitle}>Resources</h2>
         <div className={wizardStyles.resourceGrid}>
-          {resourceCards.map((card) => (
+          {visibleResources(access.operator).map((card) => (
             <article key={card.title} className={wizardStyles.resourceCard}>
               <div className={wizardStyles.resourceHeader}>
                 <card.icon className={wizardStyles.resourceIcon} aria-hidden="true" />

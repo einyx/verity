@@ -2,7 +2,6 @@ import classNames from 'classnames';
 import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import useSWR from 'swr';
 
 import RequestDataError from '@/components/RequestDataError';
 import Card from '@/ds-components/Card';
@@ -10,9 +9,10 @@ import CardTitle from '@/ds-components/CardTitle';
 import DynamicT from '@/ds-components/DynamicT';
 import Table from '@/ds-components/Table';
 import Tag from '@/ds-components/Tag';
-import { type RequestError } from '@/hooks/use-api';
 
+import { useKuboAccess } from './KuboAccess';
 import styles from './index.module.scss';
+import useKuboResource from './use-kubo-resource';
 
 type KuboStack = {
   namespace: string;
@@ -84,9 +84,16 @@ const phaseOrder = [
 ];
 
 function Kubo() {
-  const stacks = useSWR<KuboStack[], RequestError>('api/kubo/stacks');
-  const economics = useSWR<KuboClusterEconomics, RequestError>('api/kubo/cluster/economics');
-  const demoRequests = useSWR<KuboDemoRequest[], RequestError>('api/kubo/demorequests');
+  const { scope, operator } = useKuboAccess();
+  const stacks = useKuboResource<KuboStack[]>('api/kubo/stacks', scope);
+  const economics = useKuboResource<KuboClusterEconomics>(
+    operator ? 'api/kubo/cluster/economics' : undefined,
+    scope
+  );
+  const demoRequests = useKuboResource<KuboDemoRequest[]>(
+    operator ? 'api/kubo/demorequests' : undefined,
+    scope
+  );
   const [phaseFilter, setPhaseFilter] = useState<string>();
   const [query, setQuery] = useState('');
 
@@ -249,64 +256,68 @@ function Kubo() {
         />
       </Card>
 
-      <Card className={styles.section}>
-        <CardTitle title="infrastructure.cluster_budget" />
-        {economics.error && <RequestDataError error={economics.error} />}
-        <Table
-          rowGroups={[{ key: 'budget', data: budgetRows }]}
-          rowIndexKey="key"
-          columns={[
-            {
-              title: <DynamicT forKey="infrastructure.column.label" />,
-              dataIndex: 'label',
-              render: (row: BudgetRow) => row.label,
-            },
-            {
-              title: <DynamicT forKey="infrastructure.column.value" />,
-              dataIndex: 'value',
-              render: (row: BudgetRow) => row.value,
-            },
-          ]}
-        />
-      </Card>
+      {operator && (
+        <Card className={styles.section}>
+          <CardTitle title="infrastructure.cluster_budget" />
+          {economics.error && <RequestDataError error={economics.error} />}
+          <Table
+            rowGroups={[{ key: 'budget', data: budgetRows }]}
+            rowIndexKey="key"
+            columns={[
+              {
+                title: <DynamicT forKey="infrastructure.column.label" />,
+                dataIndex: 'label',
+                render: (row: BudgetRow) => row.label,
+              },
+              {
+                title: <DynamicT forKey="infrastructure.column.value" />,
+                dataIndex: 'value',
+                render: (row: BudgetRow) => row.value,
+              },
+            ]}
+          />
+        </Card>
+      )}
 
-      <Card className={styles.section}>
-        <CardTitle title="infrastructure.demo_requests" />
-        {demoRequests.error && <RequestDataError error={demoRequests.error} />}
-        <Table
-          rowGroups={[{ key: 'demo', data: demoRequests.data ?? [] }]}
-          rowIndexKey="name"
-          columns={[
-            {
-              title: <DynamicT forKey="infrastructure.column.email" />,
-              dataIndex: 'email',
-              render: (row: KuboDemoRequest) => row.email,
-            },
-            {
-              title: <DynamicT forKey="infrastructure.column.company" />,
-              dataIndex: 'company',
-              render: (row: KuboDemoRequest) => row.company ?? '—',
-            },
-            {
-              title: <DynamicT forKey="infrastructure.column.phase" />,
-              dataIndex: 'phase',
-              render: (row: KuboDemoRequest) => row.phase,
-            },
-            {
-              title: <DynamicT forKey="infrastructure.column.tenant" />,
-              dataIndex: 'tenant',
-              render: (row: KuboDemoRequest) => row.tenant ?? '—',
-            },
-            {
-              title: <DynamicT forKey="infrastructure.column.expires" />,
-              dataIndex: 'expiresAt',
-              render: (row: KuboDemoRequest) =>
-                row.expiresAt ? new Date(row.expiresAt).toLocaleString() : '—',
-            },
-          ]}
-          placeholder={<DynamicT forKey="infrastructure.no_demo_requests" />}
-        />
-      </Card>
+      {operator && (
+        <Card className={styles.section}>
+          <CardTitle title="infrastructure.demo_requests" />
+          {demoRequests.error && <RequestDataError error={demoRequests.error} />}
+          <Table
+            rowGroups={[{ key: 'demo', data: demoRequests.data ?? [] }]}
+            rowIndexKey="name"
+            columns={[
+              {
+                title: <DynamicT forKey="infrastructure.column.email" />,
+                dataIndex: 'email',
+                render: (row: KuboDemoRequest) => row.email,
+              },
+              {
+                title: <DynamicT forKey="infrastructure.column.company" />,
+                dataIndex: 'company',
+                render: (row: KuboDemoRequest) => row.company ?? '—',
+              },
+              {
+                title: <DynamicT forKey="infrastructure.column.phase" />,
+                dataIndex: 'phase',
+                render: (row: KuboDemoRequest) => row.phase,
+              },
+              {
+                title: <DynamicT forKey="infrastructure.column.tenant" />,
+                dataIndex: 'tenant',
+                render: (row: KuboDemoRequest) => row.tenant ?? '—',
+              },
+              {
+                title: <DynamicT forKey="infrastructure.column.expires" />,
+                dataIndex: 'expiresAt',
+                render: (row: KuboDemoRequest) =>
+                  row.expiresAt ? new Date(row.expiresAt).toLocaleString() : '—',
+              },
+            ]}
+            placeholder={<DynamicT forKey="infrastructure.no_demo_requests" />}
+          />
+        </Card>
+      )}
     </div>
   );
 }

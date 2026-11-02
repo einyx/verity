@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type ReactNode, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import useSWR from 'swr';
 
 import type { EnvTestUtils } from '@/test-utils/env';
+
+import useKuboResource from '../use-kubo-resource';
 
 import Stack from '.';
 
@@ -11,9 +12,22 @@ const navigate = jest.fn();
 const deleteRequest = jest.fn();
 const patchResponse = jest.fn();
 const patchRequest = jest.fn(() => ({ json: patchResponse }));
+const access = {
+  scope: 'all',
+  tenantId: 'a',
+  operator: true,
+  canMutate: true,
+  refresh: jest.fn(async () => true),
+  onDenied: jest.fn(async () => {
+    await Promise.resolve();
+  }),
+  isCurrent: () => true,
+  path: (path: string) => `${path}${path.includes('?') ? '&' : '?'}scope=all`,
+};
+jest.mock('../KuboAccess', () => ({ useKuboAccess: () => access }));
 
 jest.mock('@/consts/env', () => jest.requireActual<EnvTestUtils>('@/test-utils/env').mockEnvModule);
-jest.mock('swr', () => ({ __esModule: true, default: jest.fn() }));
+jest.mock('../use-kubo-resource', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('react-helmet', () => ({ Helmet: () => null }));
 jest.mock('@/components/RequestDataError', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/ds-components/Card', () => ({
@@ -129,6 +143,7 @@ const stack = {
 };
 
 type MockStack = Omit<typeof stack, 'componentValues' | 'components'> & {
+  consoleTenantId?: string;
   componentValues?: Record<string, { config?: Record<string, unknown> }>;
   failing?: string[];
   components: Array<{ name: string; phase: string; message?: string }>;
@@ -136,12 +151,12 @@ type MockStack = Omit<typeof stack, 'componentValues' | 'components'> & {
 };
 
 const renderStack = (data: MockStack = stack) => {
-  jest.mocked(useSWR).mockReturnValue({
+  jest.mocked(useKuboResource).mockReturnValue({
     data,
     error: undefined,
     isLoading: false,
-    mutate: jest.fn(),
-  } as unknown as ReturnType<typeof useSWR>);
+    mutate: jest.fn(async () => data),
+  } as unknown as ReturnType<typeof useKuboResource>);
   return render(
     <MemoryRouter>
       <Stack />
@@ -149,14 +164,15 @@ const renderStack = (data: MockStack = stack) => {
   );
 };
 
-const openDeleteModal = () => {
+const openDeleteModal = async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Delete stack' }));
+  await screen.findByPlaceholderText('team-a');
 };
 
-const editBundle = () => {
+const editBundle = async () => {
   fireEvent.click(screen.getByText('Deployment settings'));
   fireEvent.click(screen.getAllByRole('button', { name: 'general.edit' })[0]!);
-  fireEvent.change(screen.getByPlaceholderText('oci://… (empty clears the bundle)'), {
+  fireEvent.change(await screen.findByPlaceholderText('oci://… (empty clears the bundle)'), {
     target: { value: 'oci://registry.example.com/bundle:2' },
   });
 };
@@ -167,9 +183,22 @@ describe('Kubo stack deletion', () => {
     deleteRequest.mockResolvedValue({});
   });
 
+  it('blocks target actions until matching current-tenant ownership is verified', () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Change the synthetic access fixture, not production state.
+    Object.assign(access, { operator: false });
+    renderStack();
+    expect(screen.getByRole('button', { name: 'Delete stack' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'tabs.run_bootstrap' })).toHaveProperty(
+      'disabled',
+      true
+    );
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Restore the synthetic access fixture.
+    Object.assign(access, { operator: true });
+  });
+
   it('requires the exact namespace and deletes without purging by default', async () => {
     renderStack();
-    openDeleteModal();
+    await openDeleteModal();
 
     const confirm = screen.getByRole('button', { name: 'general.delete' });
     expect(confirm).toHaveProperty('disabled', true);
@@ -179,7 +208,9 @@ describe('Kubo stack deletion', () => {
     fireEvent.click(confirm);
 
     await waitFor(() => {
-      expect(deleteRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation?purge=false');
+      expect(deleteRequest).toHaveBeenCalledWith(
+        'api/kubo/stacks/team-a/foundation?purge=false&scope=all'
+      );
     });
     // The tenant-aware navigate prefixes the OSS console segment.
     expect(navigate).toHaveBeenCalledWith('/console/infrastructure', { replace: true });
@@ -188,7 +219,7 @@ describe('Kubo stack deletion', () => {
   it('keeps the modal open and reports a deletion failure', async () => {
     deleteRequest.mockRejectedValue(new Error('Deletion blocked'));
     renderStack();
-    openDeleteModal();
+    await openDeleteModal();
     fireEvent.change(screen.getByPlaceholderText('team-a'), { target: { value: 'team-a' } });
     fireEvent.click(screen.getByRole('button', { name: 'general.delete' }));
 
@@ -197,29 +228,22 @@ describe('Kubo stack deletion', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('resets confirmation and purge state when reopened', () => {
+  it('resets confirmation and purge state when reopened', async () => {
     renderStack();
-    openDeleteModal();
+    await openDeleteModal();
     fireEvent.change(screen.getByPlaceholderText('team-a'), { target: { value: 'team-a' } });
-    fireEvent.click(screen.getByLabelText(/also delete the namespace/i));
     fireEvent.click(screen.getByRole('button', { name: 'general.cancel' }));
-    openDeleteModal();
+    await openDeleteModal();
 
     expect(screen.getByPlaceholderText('team-a')).toHaveProperty('value', '');
-    expect(screen.getByLabelText(/also delete the namespace/i)).toHaveProperty('checked', false);
+    expect(screen.queryByLabelText(/also delete the namespace/i)).toBeNull();
   });
 
-  it('does not delete when the namespace purge warning is cancelled', () => {
-    jest.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not offer namespace purge, even in operator view', async () => {
     renderStack();
-    openDeleteModal();
-    fireEvent.change(screen.getByPlaceholderText('team-a'), { target: { value: 'team-a' } });
-    fireEvent.click(screen.getByLabelText(/also delete the namespace/i));
-    fireEvent.click(screen.getByRole('button', { name: 'general.delete' }));
-
-    expect(window.confirm).toHaveBeenCalledWith(
-      'Deleting namespace "team-a" removes everything in it, not just this stack. Continue?'
-    );
+    await openDeleteModal();
+    expect(screen.queryByLabelText(/also delete the namespace/i)).toBeNull();
+    expect(screen.getByText(/Namespace purge or reassignment requires/)).toBeTruthy();
     expect(deleteRequest).not.toHaveBeenCalled();
   });
 });
@@ -332,10 +356,10 @@ describe('Kubo grouped configuration', () => {
 
   it('saves only the edited field and closes its editor after saving', async () => {
     renderStack();
-    editBundle();
+    await editBundle();
     fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
     await waitFor(() => {
-      expect(patchRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation', {
+      expect(patchRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation?scope=all', {
         json: { bundle: 'oci://registry.example.com/bundle:2' },
       });
       expect(screen.queryByPlaceholderText('oci://… (empty clears the bundle)')).toBeNull();
@@ -345,7 +369,7 @@ describe('Kubo grouped configuration', () => {
   it('keeps the draft and shows a save failure without changing other settings', async () => {
     patchResponse.mockRejectedValue(new Error('Save blocked'));
     renderStack();
-    editBundle();
+    await editBundle();
     fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('Save blocked');
@@ -355,11 +379,63 @@ describe('Kubo grouped configuration', () => {
     );
   });
 
-  it('cancels without making a request', () => {
+  it('cancels without making a request', async () => {
     renderStack();
-    editBundle();
+    await editBundle();
     fireEvent.click(screen.getByRole('button', { name: 'general.cancel' }));
     expect(patchRequest).not.toHaveBeenCalled();
     expect(screen.queryByPlaceholderText('oci://… (empty clears the bundle)')).toBeNull();
+  });
+});
+
+describe('Kubo tenant action boundaries', () => {
+  afterEach(() => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Restore the synthetic operator fixture used by legacy editor tests.
+    Object.assign(access, { tenantId: 'a', scope: 'all', operator: true, canMutate: true });
+  });
+
+  it('keeps read-only detail visible without enabling target actions', () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic read-only capability response.
+    Object.assign(access, { operator: false, scope: 'tenant', canMutate: false });
+    renderStack({ ...stack, consoleTenantId: 'a' });
+    expect(screen.getByRole('button', { name: 'Delete stack' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'tabs.run_bootstrap' })).toHaveProperty(
+      'disabled',
+      true
+    );
+    expect(
+      screen
+        .getAllByRole('button', { name: 'general.edit' })
+        .every((button) => button.hasAttribute('disabled'))
+    ).toBe(true);
+  });
+
+  it('requires matching B ownership after switching tenants and closes A drafts', async () => {
+    const { rerender } = renderStack({ ...stack, consoleTenantId: 'a' });
+    await editBundle();
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Simulate an A-to-B context switch before B detail arrives.
+    Object.assign(access, { tenantId: 'b', operator: false, scope: 'tenant' });
+    rerender(
+      <MemoryRouter>
+        <Stack />
+      </MemoryRouter>
+    );
+    expect(screen.queryByPlaceholderText('oci://… (empty clears the bundle)')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Delete stack' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'tabs.run_bootstrap' })).toHaveProperty(
+      'disabled',
+      true
+    );
+  });
+
+  it('exposes only excludes and boolean feature-flag editors in tenant view', () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.
+    Object.assign(access, { operator: false, scope: 'tenant' });
+    renderStack({ ...stack, consoleTenantId: 'a' });
+    expect(
+      screen
+        .getAllByRole('button', { name: 'general.edit' })
+        .filter((button) => !button.hasAttribute('disabled'))
+    ).toHaveLength(2);
   });
 });

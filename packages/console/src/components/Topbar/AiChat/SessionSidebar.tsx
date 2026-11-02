@@ -4,6 +4,7 @@ import styles from './workspace.module.scss';
 
 export default function SessionSidebar({
   sessions,
+  activeId,
   search,
   isArchived,
   isLoading,
@@ -15,6 +16,7 @@ export default function SessionSidebar({
   onMore,
 }: {
   readonly sessions: ChatSession[];
+  readonly activeId?: string;
   readonly search: string;
   readonly isArchived: boolean;
   readonly isLoading: boolean;
@@ -67,17 +69,22 @@ export default function SessionSidebar({
       </div>
       {isLoading && <p role="status">Loading conversations…</p>}
       {!isLoading && sessions.length === 0 && <p>No conversations yet</p>}
-      <ul>
+      {/* Keyboard users can focus the scroll viewport independently of opening a conversation. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      <ul className={styles.sessionList} tabIndex={0} aria-label="Conversations">
         {sessions.map((session) => (
           <li key={session.id}>
             <button
               type="button"
-              className={styles.railTask}
+              className={styles.sessionRow}
+              aria-current={session.id === activeId ? 'true' : undefined}
               onClick={() => {
                 onOpen(session.id);
               }}
             >
-              <span>{session.title}</span>
+              <span className={styles.sessionTitle} title={session.title}>
+                {session.title}
+              </span>
               <time dateTime={session.updatedAt}>
                 {new Date(session.updatedAt).toLocaleDateString()}
               </time>

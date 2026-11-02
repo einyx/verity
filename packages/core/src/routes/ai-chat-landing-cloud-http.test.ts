@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -7,6 +8,7 @@ import {
   defaultLandingPageContent,
   getCloudApiIndicator,
 } from '@logto/schemas';
+import { createPool, sql } from '@silverhand/slonik';
 import i18next from 'i18next';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import Koa from 'koa';
@@ -49,6 +51,8 @@ const { getLandingPageAiToken } = await import('./ai-chat-landing-page-auth.js')
 const { editLandingPageDraft } = await import('./ai-chat-landing-page.js');
 const { createCloudApiFetch } = await import('#src/libraries/cloud-transport.js');
 const { probeLandingPageEditor } = await import('./ai-chat-landing-page-probe.js');
+const { runChatCompletion } = await import('./ai-chat-runner.js');
+const { createPendingActionStore, hashBody } = await import('./ai-chat-actions.js');
 const { default: koaErrorHandler } = await import('#src/middleware/koa-error-handler.js');
 const { publicKey, privateKey } = await generateKeyPair('RS256');
 const issuer = `${canonical.origin}/oidc`;
@@ -237,3 +241,96 @@ it('can explicitly compare edge challenge metadata and real internal authorizati
   expect(provider).not.toHaveBeenCalled();
   expect(query).not.toHaveBeenCalled();
 });
+
+const databaseUrl = process.env.AI_CHAT_TEST_DATABASE_URL;
+if (databaseUrl) {
+  const url = new URL(databaseUrl);
+  if (
+    url.hostname !== '127.0.0.1' ||
+    url.port !== '52969' ||
+    !url.pathname.endsWith('_ai_chat_test') ||
+    url.username !== 'postgres' ||
+    url.password !== 'local-test-only'
+  ) {
+    throw new Error('Disposable local preview test database required');
+  }
+}
+(databaseUrl ? it : it.skip)(
+  'CMS follow-up crosses real HTTP/JWT and persists only the exact pending review in owned PostgreSQL',
+  async () => {
+    const pool = await createPool(databaseUrl!);
+    try {
+      await pool.connect(async (connection) => {
+        await connection.query(sql`create temporary table tenants (id varchar(21) primary key)`);
+        await connection.query(sql`insert into tenants values (${adminTenantId})`);
+        const ddl = await readFile(
+          new URL('../../../schemas/tables/ai_pending_actions.sql', import.meta.url),
+          'utf8'
+        );
+        await connection.query(
+          sql.raw(
+            ddl.replace(
+              'create table ai_pending_actions',
+              'create temporary table ai_pending_actions'
+            )
+          )
+        );
+        const token = await mint();
+        const before = hashBody(defaultLandingPageContent);
+        const edited = {
+          ...defaultLandingPageContent,
+          sections: defaultLandingPageContent.sections.map((section) =>
+            section.type === 'hero'
+              ? { ...section, headline: ['Govern financial data with confidence'] }
+              : section
+          ),
+        };
+        provider.mockResolvedValue({
+          body: { choices: [{ message: { content: JSON.stringify(edited) } }] },
+        });
+        const outcome = await runChatCompletion({
+          messages: [
+            { role: 'user', content: 'Generate a marketing hero for my bank call.' },
+            { role: 'assistant', content: 'Govern financial data with confidence' },
+            {
+              role: 'user',
+              content: 'Would be nice to see an actual preview from the CMS editor?',
+            },
+          ],
+          credentials: {
+            apiKey: 'synthetic',
+            apiBase: `${canonical.origin}/api`,
+            landingPageApiBase: `${canonical.origin}/api`,
+            getEditorToken: async () =>
+              getLandingPageAiToken(envSet, `Bearer ${token}`, 'same-human'),
+            userId: 'same-human',
+            tenantId: adminTenantId,
+          },
+          propose: createPendingActionStore(connection),
+          assertActive: async () => {
+            /* Active test-owned turn. */
+          },
+        });
+        expect(outcome.actions).toHaveLength(1);
+        const stored = await connection.one(
+          sql`select state, tool, arguments, arguments_hash from ai_pending_actions`
+        );
+        expect(stored).toMatchObject({
+          state: 'pending',
+          tool: 'save_landing_page_draft',
+          arguments: edited,
+          arguments_hash: hashBody(edited),
+        });
+        expect(hashBody(defaultLandingPageContent)).toBe(before);
+        expect(query).not.toHaveBeenCalled();
+        expect(provider).toHaveBeenCalledTimes(1);
+        expect(seen.mock.calls.map(([metadata]) => metadata.path)).toEqual([
+          '/api/landing-page/editor',
+          '/api/landing-page/ai-edit',
+        ]);
+      });
+    } finally {
+      await pool.end();
+    }
+  }
+);

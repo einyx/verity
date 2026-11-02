@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionContext } from './ActionContext';
+import CmsPreviewSuggestion from './CmsPreviewSuggestion';
 import ProposedActionCard, { type ProposedAction } from './ProposedActionCard';
 import styles from './index.module.scss';
 
@@ -98,6 +99,7 @@ function AssistantMessage() {
           />
         );
       })}
+      {actions.length === 0 && <CmsPreviewSuggestion />}
       <MessagePrimitive.Error>
         <p className="demo-chat-error" role="alert">
           {t('inkeep_ai_bot.unavailable')}

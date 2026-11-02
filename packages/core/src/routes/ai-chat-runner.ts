@@ -11,7 +11,7 @@ import {
 import { runToolLoopWithGraph } from './ai-chat-graph.js';
 import {
   dispatchLandingPageEdit,
-  isExplicitLandingPageEditRequest,
+  landingPageEditInstruction,
   recordLandingPageOperation,
 } from './ai-chat-landing-dispatch.js';
 import { proposeLandingPageEdit } from './ai-chat-landing-page-action.js';
@@ -107,8 +107,8 @@ export const runChatCompletion = async ({
   const tools = enabledAskAiTools(EnvSet.values.isDevFeaturesEnabled).filter(
     ({ name }) => name !== editLandingPageTool.name || landingCapability === 'authorized'
   );
-  const latestRequest = messages.filter(({ role }) => role === 'user').at(-1)?.content ?? '';
-  const requestsLandingEdit = isExplicitLandingPageEditRequest(latestRequest);
+  const editInstruction = landingPageEditInstruction(messages);
+  const requestsLandingEdit = editInstruction !== undefined;
   if (requestsLandingEdit) {
     recordLandingPageOperation(landingCapability, credentials.requestId);
   }
@@ -125,7 +125,7 @@ export const runChatCompletion = async ({
     // Same guarded tool and owned proposal store as the model loop; never a page Save/Publish.
     return dispatchLandingPageEdit(
       {
-        instruction: latestRequest,
+        instruction: editInstruction,
         apiBase: credentials.landingPageApiBase,
         getToken: credentials.getEditorToken,
         store: propose,

@@ -59,9 +59,11 @@ it('keeps an expired draft visible and requires a refreshed review before explic
 it('shows a rendered landing-page artifact instead of raw draft JSON', () => {
   render(<ProposedActionCard action={action} onConfirm={jest.fn()} onCancel={jest.fn()} />);
   const frame = screen.getByTitle('Proposed landing page preview');
-  expect(frame.getAttribute('src')).toBe(
-    `${window.location.origin}/console/landing-preview?cmsPreview=1`
-  );
+  const url = new URL(frame.getAttribute('src') ?? '');
+  expect(url.origin + url.pathname).toBe(`${window.location.origin}/console/landing-preview`);
+  expect(url.searchParams.get('cmsPreview')).toBe('1');
+  expect(url.searchParams.get('cmsReadOnly')).toBe('1');
+  expect(url.searchParams.get('cmsNonce')).toMatch(/^[\da-f]{32}$/);
   expect(frame.getAttribute('sandbox')).not.toContain('allow-forms');
   expect(screen.queryByText(/"sections":/)).toBeNull();
   expect(
@@ -103,7 +105,11 @@ it('sends a validated draft only to the trusted preview window and never reacts 
   const post = jest.spyOn(frame.contentWindow, 'postMessage');
   fireEvent.load(frame);
   expect(post).toHaveBeenCalledWith(
-    { type: 'meshx-cms-draft', doc: defaultLandingPageContent },
+    {
+      type: 'meshx-cms-draft',
+      doc: defaultLandingPageContent,
+      nonce: new URL(frame.src).searchParams.get('cmsNonce'),
+    },
     window.location.origin
   );
   post.mockClear();
@@ -116,11 +122,21 @@ it('sends a validated draft only to the trusted preview window and never reacts 
     })
   );
   expect(post).not.toHaveBeenCalled();
+  fireEvent(
+    window,
+    new MessageEvent('message', {
+      origin: window.location.origin,
+      source: frame.contentWindow,
+      data: { type: 'meshx-cms-ready', nonce: 'wrong-preview' },
+    })
+  );
+  expect(post).not.toHaveBeenCalled();
 });
 
-it('keeps the existing proposal card when artifact previews are disabled', () => {
+it('renders the same CMS artifact in production without enabling unrelated development features', () => {
   const flags = jest.requireMock<{ isDevFeaturesEnabled: boolean }>('@/consts/env');
   jest.replaceProperty(flags, 'isDevFeaturesEnabled', false);
   render(<ProposedActionCard action={action} onConfirm={jest.fn()} onCancel={jest.fn()} />);
-  expect(screen.queryByTitle('Proposed landing page preview')).toBeNull();
+  expect(screen.getByTitle('Proposed landing page preview')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Save draft' })).toBeTruthy();
 });

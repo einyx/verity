@@ -1,5 +1,5 @@
 import { landingPageDocumentGuard } from '@logto/schemas';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { type ProposedAction } from './ProposedActionCard';
 import ReadOnlyLandingPreview from './ReadOnlyLandingPreview';
@@ -14,6 +14,7 @@ type Props = {
 };
 
 function LandingPageArtifact({ action, onConfirm, onCancel, onRefresh }: Props) {
+  const previewId = useId();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -47,10 +48,12 @@ function LandingPageArtifact({ action, onConfirm, onCancel, onRefresh }: Props) 
       </p>
       {document.success ? (
         <>
-          <ReadOnlyLandingPreview document={document.data} />
+          <ReadOnlyLandingPreview id={previewId} document={document.data} isExpanded={isExpanded} />
           <button
             type="button"
             className={styles.artifactSecondary}
+            aria-expanded={isExpanded}
+            aria-controls={previewId}
             onClick={() => {
               setIsExpanded((current) => !current);
             }}

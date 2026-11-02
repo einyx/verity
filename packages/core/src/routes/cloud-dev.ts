@@ -1,11 +1,16 @@
-import type { Context, Middleware, Next } from 'koa';
+import type { IncomingMessage } from 'node:http';
+
+import { adminTenantId, defaultTenantId } from '@logto/schemas';
+import { sql } from '@silverhand/slonik';
+import type { Context, Next } from 'koa';
 import proxy from 'koa-proxies';
 
-import { EnvSet, getTenantEndpoint, getTenantLocalhost } from '#src/env-set/index.js';
+import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
 import { isBillingConfigured } from '#src/routes/billing.js';
 
 import { handleCheckoutCreate, handleCheckoutStatus } from './cloud-dev-checkout.js';
 import { routes } from './cloud-dev-data.js';
+import { setInternalProxyHeaders } from './tenant-internal-transport.js';
 
 // Local stand-in for the Cloud API, for running the admin console in cloud mode (`IS_CLOUD`) on a
 // single Logto instance. The console calls these routes on its own origin. They return the same
@@ -49,51 +54,86 @@ const serveDataRoute = (ctx: Context) => {
   return true;
 };
 
-/**
- * Serves the local cloud API routes above, the tenant Management API under `/m/<tenant>`, and the
- * account API under `/a`. Other paths fall through to the normal routes.
- */
+const getManagementTenantId = (ctx: Context) => {
+  const { path } = ctx;
+  if (!/^\/m\/[^/]+\/api(?:\/|$)/.test(path)) {
+    ctx.throw(404, 'Management API route not found');
+  }
+  if (new URL(ctx.url, 'http://internal.invalid').pathname !== path || path.includes('\\')) {
+    ctx.throw(400, 'Invalid management route');
+  }
+  const tenantId = /^\/m\/([^/]+)/.exec(path)?.[1] ?? '';
+  if (!/^[\da-z][\d_a-z-]{0,62}$/.test(tenantId)) {
+    ctx.throw(400, 'Invalid tenant route');
+  }
+  const { isDomainBasedMultiTenancy, isPathBasedMultiTenancy } = EnvSet.values;
+  if (
+    !isDomainBasedMultiTenancy &&
+    !isPathBasedMultiTenancy &&
+    tenantId !== defaultTenantId &&
+    tenantId !== adminTenantId
+  ) {
+    ctx.throw(404, 'Tenant not found');
+  }
+  return tenantId;
+};
+
+/** Serves Cloud stand-ins, internal tenant Management APIs, and the account API alias. */
 export const localCloudRoutes = () => {
-  // The default tenant's Management API is served by this instance on its user endpoint.
-  // Each tenant is served on its own host when the endpoint is domain-based (`http://*.host`), so the
-  // proxy targets the tenant's host. Otherwise every tenant shares the endpoint.
-  // The tenant's local listener is preferred when it has one: the public endpoint uses a certificate
-  // the container does not trust, and the proxy would fail to reach it.
-  // Typed with koa's default Middleware: ReturnType<typeof proxy> resolves to koa-proxies' last overload, which does not match the proxy the call returns.
-  const tenantProxies = new Map<string, Middleware>();
-  const tenantProxyFor = (tenantId: string) => {
-    const existing = tenantProxies.get(tenantId);
-
-    if (existing) {
-      return existing;
+  // Transport is the configured local listener; canonical host/scheme still select the tenant
+  // through the normal routing and authentication middleware. Never contact the public edge.
+  const endpoints = new WeakMap<IncomingMessage, URL>();
+  const tenantProxy = proxy('/m', (_params, ctx) => {
+    const target = EnvSet.values.urlSet.localhostUrl;
+    const endpoint = endpoints.get(ctx.req);
+    if (!endpoint) {
+      return false;
     }
-
-    const target =
-      getTenantLocalhost(tenantId, EnvSet.values) ?? getTenantEndpoint(tenantId, EnvSet.values);
-    const created = proxy('/m', {
+    return {
       target: target.origin,
       changeOrigin: true,
-      rewrite: (path: string) => path.replace(/^\/m\/[^/]+/, ''),
+      rewrite: (path: string) =>
+        `${endpoint.pathname.replace(/\/$/, '')}${path.replace(/^\/m\/[^/]+/, '')}`,
       events: {
-        /**
-         * The request carries the forwarded host of the endpoint it came in on, which is the admin
-         * endpoint for the console. The target would then resolve the admin tenant instead of the
-         * tenant being proxied, so the forwarded host is pointed at the target.
-         */
-        proxyReq: (proxyRequest) => {
-          proxyRequest.setHeader('x-forwarded-host', target.host);
-          proxyRequest.setHeader('x-forwarded-proto', target.protocol.replace(':', ''));
+        error: (_error, _request, response) => {
+          if (response.headersSent) {
+            response.destroy();
+            return;
+          }
+          response.writeHead(503, { 'content-type': 'application/json' });
+          response.end(JSON.stringify({ code: 'tenant_transport_unavailable' }));
+        },
+        proxyReq: (proxyRequest, request) => {
+          const canonical = endpoints.get(request);
+          if (!canonical) {
+            proxyRequest.destroy();
+            return;
+          }
+          setInternalProxyHeaders(proxyRequest, request.headers, canonical);
         },
       },
-    });
-    tenantProxies.set(tenantId, created);
+    };
+  });
 
-    return created;
-  };
-
-  const serveTenantProxy = async (ctx: Context, next: Next, path: string) => {
-    const tenantId = /^\/m\/([^/]+)/.exec(path)?.[1] ?? '';
-    await tenantProxyFor(tenantId)(ctx, next);
+  const serveTenantProxy = async (ctx: Context, next: Next) => {
+    const tenantId = getManagementTenantId(ctx);
+    const pool = await EnvSet.sharedPool;
+    const tenant = await pool.maybeOne(sql`select id from tenants where id = ${tenantId}`);
+    if (!tenant) {
+      ctx.throw(404, 'Tenant not found');
+    }
+    endpoints.set(ctx.req, getTenantEndpoint(tenantId, EnvSet.values));
+    if (typeof ctx.requestId === 'string') {
+      ctx.res.setHeader('Logto-Core-Request-Id', ctx.requestId);
+    }
+    try {
+      await tenantProxy(ctx, next);
+    } catch {
+      // Koa-proxies includes the original URL in abort errors; do not propagate private queries.
+      ctx.throw(503, 'Internal tenant transport unavailable');
+    } finally {
+      endpoints.delete(ctx.req);
+    }
   };
 
   return async (ctx: Context, next: Next) => {
@@ -123,7 +163,7 @@ export const localCloudRoutes = () => {
     }
 
     if (ctx.path.startsWith('/m/')) {
-      return serveTenantProxy(ctx, next, ctx.path);
+      return serveTenantProxy(ctx, next);
     }
 
     // The console reads the current user through `/a`, which maps to the account API.

@@ -1,11 +1,11 @@
 import { getCloudApiIndicator } from '@logto/schemas';
 import { createPool } from '@silverhand/slonik';
-import { createRemoteJWKSet } from 'jose';
 import type { Context, Next } from 'koa';
 import { z } from 'zod/v3';
 
 import { isCloudPluginInstalled, loadCloudPlugin } from '#src/cloud-plugin/index.js';
 import { EnvSet } from '#src/env-set/index.js';
+import { getAdminTenantKey } from '#src/tenants/admin-key-resolver.js';
 
 import { createCloudConsoleHost } from './cloud-console-host.js';
 
@@ -60,7 +60,7 @@ const buildBillingHandler = async () => {
       auth: {
         issuer,
         audience: getCloudApiIndicator(adminOrigin),
-        getKey: createRemoteJWKSet(new URL(`${issuer}/jwks`)),
+        getKey: getAdminTenantKey,
         operators: environment.BILLING_OPERATOR_SUBS.split(',')
           .filter(Boolean)
           .map((sub) => ({ issuer, sub })),
@@ -81,17 +81,34 @@ const buildBillingHandler = async () => {
  * Koa middleware for the billing paths. It runs before the body parsers, because the Stripe
  * signature is checked against the exact bytes Stripe sent, and it answers on the raw response.
  */
+const tryBuildBillingHandler = async () => {
+  // Observe initialization immediately so infrastructure failures cannot become unhandled
+  // rejections before the first billing request. Never expose configuration/database details.
+  try {
+    return await buildBillingHandler();
+  } catch {
+    return false;
+  }
+};
+
 export const billingRoutes = () => {
-  const handler = buildBillingHandler();
+  const handler = tryBuildBillingHandler();
 
   return async (ctx: Context, next: Next) => {
     if (!billingPaths.some((pattern) => pattern.test(ctx.path))) {
       return next();
     }
 
+    if (typeof ctx.requestId === 'string') {
+      ctx.res.setHeader('Logto-Core-Request-Id', ctx.requestId);
+    }
+    const resolved = await handler;
+    if (!resolved) {
+      ctx.status = 503;
+      ctx.body = { code: 'billing_service_unavailable' };
+      return;
+    }
     ctx.respond = false;
-    await (
-      await handler
-    )(ctx.req, ctx.res);
+    await resolved(ctx.req, ctx.res);
   };
 };

@@ -9,6 +9,7 @@ import { redisCache } from '#src/caches/index.js';
 import { EnvSet } from '#src/env-set/index.js';
 
 import Tenant from './Tenant.js';
+import { registerAdminKeyProvider } from './admin-key-resolver.js';
 import { registerTenantLookup } from './tenant-lookup.js';
 import { TenantNotFoundError } from './utils.js';
 import { type WithDefaultTenant } from './with-default-tenant.js';
@@ -328,6 +329,7 @@ class TenantPool {
 }
 
 export const tenantPool = new TenantPool();
+registerAdminKeyProvider(async (tenantId) => tenantPool.get(tenantId));
 
 registerTenantLookup(async (tenantId) => tenantPool.get(tenantId));
 

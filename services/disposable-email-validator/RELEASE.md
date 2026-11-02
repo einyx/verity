@@ -64,3 +64,17 @@ Residual availability tradeoff: pre-auth quota is shared per replica, so a permi
 No prior validator image exists. While consumer config remains absent, rollback removes only the new validator Flux registration/resources through GitOps; do not touch Logto image/policies or delete the Vault key without authorization. If consumer wiring is later activated, roll it back first by removing only the three inactive patch additions, preserving the concurrent release pin, and verify two ready Logto replicas.
 
 Security incident: an overbroad Vault-CR auth-metadata discovery query unexpectedly returned an unrelated existing OIDC credential into tool output. It was not used, copied into source, or repeated in reports. Treat that credential as exposed and rotate through the normal credential-owner process; no unauthorized rotation was attempted. ACS credential files were never opened.
+
+## Self-evaluation
+
+Source and service are verified; the requested end-to-end consumer release is incomplete on a concrete policy conflict.
+
+| Axis | Score | Evidence / improvement |
+| --- | --- | --- |
+| Accuracy | 4/5 | Live canaries and read-only policy hash verify stated deployment boundaries; report distinguishes source-only timeout from deployed behavior. Improve with the final consumer canary after a policy decision. |
+| Completeness | 3/5 | Service is deployed, but Logto env/CA wiring and advance-expiry alert ownership remain uncompleted. Resolve the policy conflict before proceeding. |
+| Clarity | 4/5 | Exact image, commits, tests, and activation blocker are recorded; the long report is operationally dense. Keep the user-facing summary short. |
+| Actionability | 4/5 | Inactive patch and exact two-way policy decision are provided; credential rotation still requires the normal owner workflow. |
+| Conciseness | 3/5 | The report repeats some runbook details to make the handoff self-contained; use the outcome section for a quick read. |
+
+Overall: **3.6/5**. Highest-impact improvements: resolve policy state and complete wiring; rotate the exposed unrelated credential; establish advance-expiry alert ownership. The user would reasonably consider this a partial release rather than a completed fix.

@@ -87,7 +87,7 @@ describe('callLogtoTool', () => {
     expect(result.isError).toBe(true);
     expect(cancel).toHaveBeenCalled();
   });
-  it('sends Foundation stack reads to Kubo without the Logto token', async () => {
+  it('sends Foundation stack reads through the caller-authenticated Management API', async () => {
     const fetchImpl = jest.fn(async () => new Response('[]', { status: 200 }));
 
     await callLogtoTool(
@@ -99,9 +99,8 @@ describe('callLogtoTool', () => {
     );
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [URL, RequestInit];
-    expect(String(url)).toMatch(/\/api\/stacks$/);
-    expect(String(url)).not.toContain(apiBase);
-    expect(init.headers).not.toHaveProperty('authorization');
+    expect(String(url)).toBe(`${apiBase}/kubo/stacks`);
+    expect(init.headers).toHaveProperty('authorization', 'Bearer caller-token');
   });
 
   it('forwards the caller’s own token to the Management API', async () => {

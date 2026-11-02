@@ -21,6 +21,7 @@ import RequestError from '#src/errors/RequestError/index.js';
 import assertThat from '#src/utils/assert-that.js';
 import { devConsole } from '#src/utils/console.js';
 
+import { isVerifiedConsoleIdentity } from './console-identity.js';
 import { type WithAuthContext, type TokenInfo } from './types.js';
 import { extractBearerTokenFromHeaders, getAdminTenantTokenValidationSet } from './utils.js';
 
@@ -78,7 +79,19 @@ export const verifyBearerTokenFromRequest = async (
 
     assertThat(sub, new RequestError({ code: 'auth.jwt_sub_missing', status: 401 }));
 
-    return { sub, clientId, scopes: z.string().parse(scope).split(' '), audience: aud };
+    const verifiedConsoleIdentity = await isVerifiedConsoleIdentity(
+      envSet,
+      extractBearerTokenFromHeaders(request.headers),
+      sub,
+      clientId
+    );
+    return {
+      sub,
+      clientId,
+      scopes: z.string().parse(scope).split(' '),
+      audience: aud,
+      ...(verifiedConsoleIdentity ? { verifiedConsoleIdentity: true as const } : {}),
+    };
   } catch (error: unknown) {
     if (error instanceof RequestError) {
       throw error;
@@ -133,6 +146,7 @@ export default function koaAuth<StateT, ContextT extends IRouterParamContext, Re
       clientId,
       scopes,
       audience: tokenAudience,
+      verifiedConsoleIdentity,
     } = await verifyBearerTokenFromRequest(envSet, ctx.request, audience);
 
     // An organization token for the tenant's admin is authorized by the membership check instead of the
@@ -153,6 +167,7 @@ export default function koaAuth<StateT, ContextT extends IRouterParamContext, Re
       type: sub === clientId ? 'app' : 'user',
       id: sub,
       scopes: new Set(scopes),
+      ...(verifiedConsoleIdentity ? { verifiedConsoleIdentity } : {}),
     };
 
     return next();

@@ -13,6 +13,11 @@ const createApp = () => {
   const app = new Koa();
   const router: ManagementApiRouter = new Router();
 
+  app.use(async (ctx, next) => {
+    ctx.auth = { id: 'test-actor', type: 'user', scopes: new Set(['all']) };
+    return next();
+  });
+
   kuboRoutes(router, new MockTenant());
   app.use(router.routes());
 
@@ -26,8 +31,14 @@ const jsonResponse = (body: unknown, status = 200) =>
   });
 
 describe('Kubo routes', () => {
+  beforeEach(() => {
+    process.env.KUBO_CONSOLE_PROXY_KEY = Buffer.from(
+      'public-unit-test-key-at-least-32-bytes'
+    ).toString('base64');
+  });
   afterEach(() => {
     jest.restoreAllMocks();
+    Reflect.deleteProperty(process.env, 'KUBO_CONSOLE_PROXY_KEY');
   });
 
   it('deletes a stack with server-derived confirmation and the requested purge setting', async () => {
@@ -63,7 +74,7 @@ describe('Kubo routes', () => {
 
     const response = await request(createApp()).delete('/kubo/stacks/team-a/foundation');
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(409);
     expect(response.body).toMatchObject({ code: 'kubo.upstream_error' });
   });
 });

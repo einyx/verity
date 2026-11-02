@@ -19,7 +19,7 @@ export function verifyCloudConsole(bundle) {
   assert.equal(flag('isCloud'), true, 'Cloud build must default to enabled');
   assert.equal(flag('isDevFeaturesEnabled'), true,
     'Production artifact defaults to LegacyAiChat: build with dev_features_enabled=1');
-  assert.match(bundle, /function AiChat\([^)]*\)\{return isDevFeaturesEnabled\?[^}]*AccountAiChat/,
+  assert.match(bundle, /function AiChat\([^)]*\)\{return isDevFeaturesEnabled\?[\w$.]+\(AccountAiChat,/,
     'Enabled production branch must select AccountAiChat');
   assert.match(bundle, /Conversation history/);
   assert.match(bundle, /New chat/);

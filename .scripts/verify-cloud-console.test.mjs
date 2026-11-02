@@ -13,3 +13,8 @@ test('rejects OSS output and unrecognized emitter shapes', () => {
 test('accepts explicit Cloud and rich-workspace defaults without storage access', () => {
   assert.equal(verifyCloudConsole(artifact('1')).defaultAi, 'AccountAiChat');
 });
+test('rejects an inverted selector even with both components and enabled flags', () => {
+  const inverted = artifact('1').replace('jsx(AccountAiChat,p):jsx(LegacyAiChat,p)',
+    'jsx(LegacyAiChat,p):jsx(AccountAiChat,p)');
+  assert.throws(() => verifyCloudConsole(inverted), /Enabled production branch/);
+});

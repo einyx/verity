@@ -23,7 +23,9 @@ import { type EnvSet } from '#src/env-set/index.js';
 import {
   installDeleteAuditFailureFixture,
   nonCascadingTenantTables,
+  readTenantChatCounts,
   readTenantTelemetryCounts,
+  seedTenantChat,
   validateTenantDeletionTestUrl,
 } from './cloud-tenant-deletion.test-utils.js';
 
@@ -213,6 +215,8 @@ describe('tenant deletion fixture boundary', () => {
   });
 
   it('deletes only the target identity tenant, its console membership and restricted role', async () => {
+    await seedTenantChat(pool, targetId);
+    await seedTenantChat(pool, otherId);
     const role = await roleFor(targetId);
     const otherRole = await roleFor(otherId);
     const roleUrl = validateTenantDeletionTestUrl(testUrl ?? '');
@@ -254,6 +258,8 @@ describe('tenant deletion fixture boundary', () => {
       )
     ).toBe(0);
     expect(await readTenantTelemetryCounts(pool, targetId)).toEqual([0, 0, 0, 0]);
+    expect(await readTenantChatCounts(pool, targetId)).toBe(0);
+    expect(await readTenantChatCounts(pool, otherId)).toBe(2);
     expect(await hasTenant(otherId)).toBe(true);
     expect(await hasRole(otherRole)).toBe(true);
     expect(

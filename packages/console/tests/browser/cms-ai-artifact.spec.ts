@@ -28,7 +28,7 @@ test.beforeAll(async () => {
             if (request.url?.startsWith('/console/landing/')) {
               request.url = request.url.replace('/console/landing/', '/landing/');
             }
-            if (request.url === '/artifact') {
+            if (request.url?.split('?')[0] === '/artifact') {
               response.setHeader('Content-Type', 'text/html');
               response.end(
                 await server.transformIndexHtml(
@@ -50,6 +50,40 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await owned.server?.close();
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  for (const width of [320, 1024]) {
+    test(`save controls keep their geometry while saving: ${theme} ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme: theme });
+      await page.route('**/*', async (route) => {
+        const url = new URL(route.request().url());
+        if (url.pathname.startsWith('/api/')) {
+          throw new Error('Owned saving fixture must not call an API');
+        }
+        await (url.origin === owned.origin
+          ? route.continue()
+          : route.fulfill({ status: 204, body: '' }));
+      });
+      await page.goto(`${owned.origin}/artifact?mockSave=1`);
+      const save = page.getByRole('button', { name: 'Save draft', exact: true });
+      const node = await save.elementHandle();
+      const before = await save.boundingBox();
+      const discardBefore = await page.getByRole('button', { name: 'Discard' }).boundingBox();
+      await save.click();
+      const saving = page.getByRole('button', { name: 'Saving draft…', exact: true });
+      await expect(saving).toBeDisabled();
+      await expect(saving).toHaveAttribute('aria-busy', 'true');
+      expect(await saving.evaluate((element, original) => element === original, node)).toBe(true);
+      expect(await saving.boundingBox()).toEqual(before);
+      expect(await page.getByRole('button', { name: 'Discard' }).boundingBox()).toEqual(
+        discardBefore
+      );
+      await expect(page.getByRole('button', { name: 'Discard' })).toBeDisabled();
+      expect(before?.height).toBeGreaterThanOrEqual(24);
+    });
+  }
+}
 
 test('production proposal renders the real branded CMS hero with nonce handshake and no page writes', async ({
   page,

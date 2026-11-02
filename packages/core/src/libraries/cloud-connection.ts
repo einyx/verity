@@ -54,6 +54,37 @@ type MintedAccessToken = { expiresAt: number; accessToken: string };
 /** The cache key of the Cloud API resource, whose value is only known after reading credentials. */
 const cloudResourceCacheKey = '';
 
+/** Opt-in for a co-located Cloud API; public issuers/audiences stay unchanged. */
+const getCloudTransport = (
+  endpoint: string
+): { endpoint: string; headers: Record<string, string> } => {
+  const canonical = new URL(endpoint);
+  const { isCloud, urlSet, cloudUrlSet, adminUrlSet } = EnvSet.values;
+  if (process.env.CLOUD_INTERNAL_TRANSPORT !== 'true') {
+    return { endpoint, headers: {} };
+  }
+  if (
+    !isCloud ||
+    cloudUrlSet.endpoint.origin !== adminUrlSet.endpoint.origin ||
+    canonical.origin !== adminUrlSet.endpoint.origin ||
+    !['localhost', '127.0.0.1', '[::1]'].includes(urlSet.localhostUrl.hostname)
+  ) {
+    throw new Error(
+      'Internal Cloud transport requires co-located Cloud endpoints and a loopback listener'
+    );
+  }
+  return {
+    endpoint: new URL(
+      `${urlSet.localhostUrl.origin}${canonical.pathname}${canonical.search}`
+    ).toString(),
+    headers: {
+      host: canonical.host,
+      'x-forwarded-host': canonical.host,
+      'x-forwarded-proto': canonical.protocol.slice(0, -1),
+    },
+  };
+};
+
 /** The library for connecting to Logto Cloud service. */
 export class CloudConnectionLibrary {
   private client?: Client<typeof router>;
@@ -111,12 +142,13 @@ export class CloudConnectionLibrary {
   public getClient = async (): Promise<Client<typeof router>> => {
     if (!this.client) {
       const { endpoint } = await this.getCloudConnectionData();
+      const transport = getCloudTransport(endpoint);
 
       this.client = new Client<typeof router>({
         // TODO @sijie @darcy remove the 'api' appending in getCloudConnectionData()
-        baseUrl: endpoint.replace('/api', ''),
+        baseUrl: transport.endpoint.replace(/\/api\/?$/, ''),
         headers: async () => {
-          return { Authorization: `Bearer ${await this.getAccessToken()}` };
+          return { ...transport.headers, Authorization: `Bearer ${await this.getAccessToken()}` };
         },
       });
     }
@@ -154,13 +186,16 @@ export class CloudConnectionLibrary {
   ): Promise<MintedAccessToken> => {
     const { tokenEndpoint, appId, appSecret, resource } = await this.getCloudConnectionData();
     const targetResource = resourceKey === cloudResourceCacheKey ? resource : resourceKey;
+    const transport = getCloudTransport(tokenEndpoint);
 
     const text = await ky
-      .post(tokenEndpoint, {
+      .post(transport.endpoint, {
         headers: {
+          ...transport.headers,
           ...formUrlEncodedHeaders,
           Authorization: `Basic ${Buffer.from(`${appId}:${appSecret}`).toString('base64')}`,
         },
+        redirect: 'error',
         body: new URLSearchParams({
           grant_type: 'client_credentials',
           resource: targetResource,

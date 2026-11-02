@@ -18,6 +18,9 @@ await mockEsmWithActual('#src/env-set/index.js', () => ({
 
       return {
         ...values,
+        isCloud: true,
+        cloudUrlSet: { ...values.cloudUrlSet, endpoint: new URL(adminEndpoint) },
+        urlSet: { ...values.urlSet, localhostUrl: new URL('http://127.0.0.1:3001') },
         adminUrlSet: {
           ...values.adminUrlSet,
           endpoint: new URL(adminEndpoint),
@@ -28,6 +31,7 @@ await mockEsmWithActual('#src/env-set/index.js', () => ({
 }));
 
 const { createCloudConnectionLibrary } = await import('./cloud-connection.js');
+const { EnvSet } = await import('#src/env-set/index.js');
 
 const logtoConfigs: LogtoConfigLibrary = {
   ...mockLogtoConfigsLibrary,
@@ -57,6 +61,83 @@ describe('getAccessToken()', () => {
     });
     const cachedToken = await getAccessToken();
     expect(cachedToken).toBe(mockAccessToken);
+  });
+});
+
+describe('deployment-owned internal Cloud transport', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    nock.cleanAll();
+  });
+
+  it('mints tokens and reads subscription quota through loopback with canonical routing', async () => {
+    jest.replaceProperty(process, 'env', { ...process.env, CLOUD_INTERNAL_TRANSPORT: 'true' });
+    nock.cleanAll();
+    const internal = nock('http://127.0.0.1:3001', {
+      reqheaders: { host: 'mock.com', 'x-forwarded-host': 'mock.com', 'x-forwarded-proto': 'http' },
+    })
+      .post('/oidc/token')
+      .reply(200, { access_token: mockAccessToken, expires_in: 3600, token_type: 'Bearer' })
+      .get('/api/tenants/my/subscription')
+      .matchHeader('authorization', `Bearer ${mockAccessToken}`)
+      .reply(200, { quota: { customJwtEnabled: true } });
+    const library = createCloudConnectionLibrary(logtoConfigs);
+    const client = await library.getClient();
+    await expect(client.get('/api/tenants/my/subscription')).resolves.toEqual({
+      quota: { customJwtEnabled: true },
+    });
+    expect(internal.isDone()).toBe(true);
+    const data = await library.getCloudConnectionData();
+    expect(data.tokenEndpoint).toBe(`${adminEndpoint}/oidc/token`);
+  });
+
+  it('does not fall back to the edge when the internal listener fails', async () => {
+    jest.replaceProperty(process, 'env', { ...process.env, CLOUD_INTERNAL_TRANSPORT: 'true' });
+    nock.cleanAll();
+    nock('http://127.0.0.1:3001').post('/oidc/token').reply(503);
+    const edge = nock(adminEndpoint).post('/oidc/token').reply(200, {
+      access_token: mockAccessToken,
+      expires_in: 3600,
+      token_type: 'Bearer',
+    });
+    await expect(createCloudConnectionLibrary(logtoConfigs).getAccessToken()).rejects.toThrow();
+    expect(edge.isDone()).toBe(false);
+  });
+
+  it.each(['external-listener', 'remote-cloud', 'non-cloud'])(
+    'rejects unsafe opt-in: %s',
+    async (mode) => {
+      jest.replaceProperty(process, 'env', { ...process.env, CLOUD_INTERNAL_TRANSPORT: 'true' });
+      const { values } = EnvSet;
+      jest.spyOn(EnvSet, 'values', 'get').mockReturnValue({
+        ...values,
+        isCloud: mode !== 'non-cloud',
+        urlSet: {
+          ...values.urlSet,
+          localhostUrl: new URL(
+            mode === 'external-listener' ? 'http://untrusted.example' : 'http://127.0.0.1:3001'
+          ),
+        },
+        cloudUrlSet: {
+          ...values.cloudUrlSet,
+          endpoint: new URL(mode === 'remote-cloud' ? 'https://remote.example' : adminEndpoint),
+        },
+      } as unknown as GlobalValues);
+      await expect(createCloudConnectionLibrary(logtoConfigs).getAccessToken()).rejects.toThrow(
+        'Internal Cloud transport requires'
+      );
+    }
+  );
+
+  it('does not follow a token endpoint redirect with credentials', async () => {
+    jest.replaceProperty(process, 'env', { ...process.env, CLOUD_INTERNAL_TRANSPORT: 'true' });
+    nock.cleanAll();
+    nock('http://127.0.0.1:3001')
+      .post('/oidc/token')
+      .reply(307, undefined, { location: 'https://untrusted.example/token' });
+    const destination = nock('https://untrusted.example').post('/token').reply(200);
+    await expect(createCloudConnectionLibrary(logtoConfigs).getAccessToken()).rejects.toThrow();
+    expect(destination.isDone()).toBe(false);
   });
 });
 

@@ -24,6 +24,7 @@ const createMockTenant = () => ({
   requestStart: jest.fn<boolean, never[]>(() => true),
   requestEnd: jest.fn(),
   checkHealth: jest.fn(async () => true),
+  checkExistence: jest.fn(async () => true),
   dispose: jest.fn(async () => true),
 });
 
@@ -147,6 +148,34 @@ describe('TenantPool.get', () => {
     // restarted the loss budget at zero.
     expect(tenantCreate).toHaveBeenCalledTimes(14);
   });
+
+  it.each(['missing', 'lookup-error'] as const)(
+    'refuses a cached tenant in the retry-limit fallback: %s',
+    async (condition) => {
+      const created: Array<ReturnType<typeof createMockTenant>> = [];
+      const lookupError = new Error('Authoritative lookup unavailable');
+      tenantCreate.mockImplementation(async () => {
+        const tenant = createMockTenant();
+        tenant.checkHealth.mockResolvedValue(false);
+        if (condition === 'missing') {
+          tenant.checkExistence.mockResolvedValue(false);
+        } else {
+          tenant.checkExistence.mockRejectedValue(lookupError);
+        }
+        // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- Retain test doubles to verify reserved request slots are released.
+        created.push(tenant);
+        return tenant;
+      });
+      const acquisition = tenantPool.get(`tenant-fallback-${condition}`);
+      await (condition === 'missing'
+        ? expect(acquisition).rejects.toThrow(TenantNotFoundError)
+        : expect(acquisition).rejects.toThrow(lookupError));
+      expect(tenantCreate).toHaveBeenCalledTimes(11);
+      const fallback = created.at(-1);
+      expect(fallback?.checkExistence).toHaveBeenCalledTimes(1);
+      expect(fallback?.requestEnd).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it('keeps the rebuild budget when reloads precede a lost slot', async () => {
     tenantCreate.mockImplementation(async () => {

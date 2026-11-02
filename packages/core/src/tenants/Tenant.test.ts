@@ -42,9 +42,11 @@ const adminMiddlewareList = middlewareList.map(
   ([name, middleware]) => [name, middleware, name !== 'check-demo-app'] as const
 );
 
+const tenantExists = jest.fn(async (_tenantId: string) => true);
 mockEsm('./utils.js', () => ({
   getTenantDatabaseDsn: async () => 'postgres://mock.db.url',
   getAdminTenantPrivateSigningKeys: async () => [],
+  tenantExists,
 }));
 
 // eslint-disable-next-line unicorn/consistent-function-scoping
@@ -193,6 +195,31 @@ describe('Tenant request lifecycle and disposal', () => {
 });
 
 describe('Tenant cache health check', () => {
+  it('rejects a cached customer tenant after its authoritative row is deleted', async () => {
+    const tenant = await Tenant.create({
+      id: 'customer-a',
+      redisCache: new RedisCache(),
+      withDefaultTenant,
+    });
+    tenantExists.mockResolvedValueOnce(false);
+    const getSigningState = jest.fn();
+    Sinon.stub(tenant.queries.logtoConfigs, 'getSigningKeyRotationState').value(getSigningState);
+    expect(await tenant.checkHealth()).toBe(false);
+    expect(tenantExists).toHaveBeenCalledWith('customer-a');
+    expect(getSigningState).not.toHaveBeenCalled();
+  });
+
+  it('does not trust a cached customer tenant when the authoritative lookup fails', async () => {
+    const tenant = await Tenant.create({
+      id: 'customer-b',
+      redisCache: new RedisCache(),
+      withDefaultTenant,
+    });
+    const error = new Error('Shared tenant lookup unavailable');
+    tenantExists.mockReset().mockRejectedValueOnce(error).mockResolvedValue(true);
+    await expect(tenant.checkHealth()).rejects.toThrow(error);
+  });
+
   it('uses the qualified rotation-state update query when invalidating cache', async () => {
     const redisCache = new RedisCache();
     const tenant = await Tenant.create({ id: defaultTenantId, redisCache, withDefaultTenant });

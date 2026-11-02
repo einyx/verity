@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Instance Cloud API: development tenant deletion",
+    "version": "1.0.0",
+    "description": "Admin-tenant Cloud API contract, separate from a tenant's Management API. This operation never removes protected system tenants, production tenants, billing resources, Kubo workloads or external storage."
+  },
+  "paths": {
+    "/api/tenants/{tenantId}": {
+      "delete": {
+        "operationId": "DeleteDevelopmentTenant",
+        "summary": "Permanently delete an authorized development identity tenant",
+        "description": "Requires a signed user bearer token from the instance admin issuer, the instance Cloud API audience and manage:tenant:self (or the existing all scope), active console identity, global tenant-access eligibility and manage:tenant on the target. Machine tokens are refused. Admin/default targets are protected even for operators. Target metadata is locked and revalidated; production/unknown tags and unsafe database roles fail closed. Cleanup and a minimal operator audit record are committed in one PostgreSQL transaction. Already cached tenant instances recheck authoritative existence. Existing in-flight requests may finish. This operation is irreversible; an application rollback does not restore deleted data.",
+        "security": [{ "CloudUserBearer": [] }],
+        "parameters": [{
+          "name": "tenantId", "in": "path", "required": true,
+          "schema": { "type": "string", "minLength": 1, "maxLength": 21, "pattern": "^[A-Za-z0-9_-]{1,21}$" }
+        }],
+        "responses": {
+          "204": { "description": "Target identity tenant, console membership and dedicated restricted role removed. No response body." },
+          "400": { "description": "Malformed tenant ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Missing or invalid user bearer token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Insufficient authorization, inactive identity, machine token or protected system target", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Target does not exist", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Production/unknown tag requires billing clearance, or role metadata/capabilities are unsafe", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Deletion could not be confirmed. Database/role dependency failures roll back. A connection failure during commit can leave the outcome unknown: read the tenant state before retrying. Raw database errors are not returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "CloudUserBearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
+    "schemas": {
+      "Error": {
+        "type": "object", "required": ["code"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "data": { "type": "object", "properties": { "reason": { "type": "string" } }, "additionalProperties": true }
+        }
+      }
+    }
+  }
+}

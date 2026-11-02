@@ -53,7 +53,7 @@ export const turnSafetyTests = (
       await pool().one(
         sql`select stored_bytes, message_count from ai_chat_sessions where id = ${id}`
       )
-    ).toEqual({ stored_bytes: 5, message_count: 1 });
+    ).toEqual({ storedBytes: 5, messageCount: 1 });
   });
   it('completion_attaches_only_owned_unexposed_turn_proposals', async () => {
     const { turns, sessions, id } = await setup();

@@ -1,3 +1,7 @@
+import { defaultLandingPageContent } from '@logto/schemas';
+
+import RequestError from '#src/errors/RequestError/index.js';
+
 import { type PendingAction } from './ai-chat-actions.js';
 import type { ChatSessionStore } from './ai-chat-session-store.js';
 import type { ChatTurnStore } from './ai-chat-session-turn-store.js';
@@ -97,6 +101,162 @@ it('legacy_completion_keeps_existing_contract', async () => {
     timeout: { request: 60_000 },
     json: { model: 'gpt-4.1' },
   });
+});
+
+it('does not advertise editing when the backend cannot verify the editor credential', async () => {
+  post.mockResolvedValue(reply('answer'));
+  await runChatCompletion({
+    ...options(),
+    credentials: {
+      ...credentials,
+      getEditorToken: async () => {
+        throw new Error('unavailable');
+      },
+    },
+  });
+  const request = post.mock.calls[0]?.[1] as {
+    json: { tools: Array<{ function: { name: string } }> };
+  };
+  expect(request.json.tools.some(({ function: tool }) => tool.name === 'edit_landing_page')).toBe(
+    false
+  );
+});
+
+it('returns a truthful credential error for a landing request instead of asking the model to guess permissions', async () => {
+  post.mockResolvedValue(reply('I cannot edit'));
+  const insert = jest.fn();
+  const result = await runChatCompletion({
+    ...options(),
+    propose: { insert },
+    messages: [
+      {
+        role: 'user',
+        content:
+          'Review the landing page and suggest an improvement for me to preview. Do not save or publish anything.',
+      },
+    ],
+    credentials: {
+      ...credentials,
+      getEditorToken: async () => {
+        throw new Error('unavailable');
+      },
+    },
+  });
+  expect(result).toMatchObject({ ok: true, actions: [] });
+  expect(result.content).toContain('temporarily unavailable');
+  expect(post).not.toHaveBeenCalled();
+  expect(insert).not.toHaveBeenCalled();
+});
+
+it.each([
+  [401, 'permissions have not been determined'],
+  [403, 'does not authorize'],
+] as const)(
+  'returns distinct safe verification failure %s without model calls or proposals',
+  async (status, detail) => {
+    const insert = jest.fn();
+    const result = await runChatCompletion({
+      ...options(),
+      propose: { insert },
+      messages: [{ role: 'user', content: 'Improve the landing page' }],
+      credentials: {
+        ...credentials,
+        getEditorToken: async () => {
+          throw new RequestError({
+            code: status === 401 ? 'auth.unauthorized' : 'auth.forbidden',
+            status,
+          });
+        },
+      },
+    });
+    expect(result.content).toContain(detail);
+    expect(post).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  }
+);
+
+it('authorized default-tenant editing generates a review but never saves or publishes the page', async () => {
+  const requests = jest.fn();
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    requests({ url: String(url), method: init?.method ?? 'GET' });
+    expect(init?.headers).toMatchObject({ authorization: 'Bearer editor-token' });
+    return new Response(JSON.stringify({ draft: defaultLandingPageContent }));
+  });
+  post
+    .mockResolvedValueOnce({
+      body: {
+        choices: [
+          {
+            message: {
+              content: null,
+              tool_calls: [
+                {
+                  id: 'edit',
+                  function: {
+                    name: 'edit_landing_page',
+                    arguments: JSON.stringify({
+                      instruction: 'Improve the headline for preview only. Do not save or publish.',
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    })
+    .mockResolvedValueOnce(reply('Proposed edit; not saved or published.'));
+  const insert = jest.fn(async (_action: PendingAction) => {
+    /* Test-only proposal sink, not page persistence. */
+  });
+  const result = await runChatCompletion({
+    ...options(),
+    messages: [
+      {
+        role: 'user',
+        content: 'Could you suggest an improvement to the landing page for preview?',
+      },
+    ],
+    credentials: { ...credentials, tenantId: 'default' },
+    propose: { insert },
+  });
+  expect(result.ok).toBe(true);
+  expect(result.actions).toHaveLength(1);
+  expect(insert).toHaveBeenCalledTimes(1);
+  expect(insert.mock.calls[0]?.[0]).toMatchObject({
+    tenantId: 'default',
+    userId: 'user',
+    tool: 'save_landing_page_draft',
+    state: 'pending',
+  });
+  expect(Date.parse(result.actions[0]!.expiresAt) - Date.now()).toBeGreaterThan(29 * 60_000);
+  expect(requests.mock.calls.map(([request]) => request)).toEqual([
+    { url: 'https://cloud.example/api/landing-page/editor', method: 'GET' },
+    { url: 'https://cloud.example/api/landing-page/ai-edit', method: 'POST' },
+  ]);
+  expect(post.mock.calls[0]?.[1].json.tool_choice).toBeUndefined();
+  expect(JSON.stringify(post.mock.calls)).not.toContain('editor-token');
+});
+
+it('rejects a model-invented edit tool call when capability is unavailable', async () => {
+  post
+    .mockResolvedValueOnce(reply(null, ['edit_landing_page']))
+    .mockResolvedValueOnce(reply('Not available'));
+  const insert = jest.fn();
+  const fetcher = jest.spyOn(globalThis, 'fetch');
+  const result = await runChatCompletion({
+    ...options(),
+    propose: { insert },
+    credentials: {
+      ...credentials,
+      getEditorToken: async () => {
+        throw new Error('unavailable');
+      },
+    },
+  });
+  expect(result.actions).toEqual([]);
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(insert).not.toHaveBeenCalled();
 });
 
 it.each(['legacy', 'persistent'] as const)(

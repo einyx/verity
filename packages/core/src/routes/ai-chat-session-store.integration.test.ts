@@ -6,6 +6,7 @@ import { type ChatScope } from '@logto/schemas';
 import { createPool, type DatabasePool, sql } from '@silverhand/slonik';
 
 import { lifecycleTests } from './ai-chat-session-lifecycle.test-helper.js';
+import { createSessionTestPool, sessionLoadTests } from './ai-chat-session-load.test-helper.js';
 import {
   createChatSessionStore,
   ChatSessionStoreError,
@@ -46,21 +47,7 @@ integration('private chat PostgreSQL storage', () => {
     down: (pool: DatabasePool) => Promise<void>;
   };
 
-  const connect = async (role?: string) => {
-    return createPool(databaseUrl!, {
-      interceptors: [
-        {
-          afterPoolConnection: async (_, connection) => {
-            await connection.query(sql`set search_path to ${sql.identifier([schema])}`);
-            if (role) {
-              await connection.query(sql`set role ${sql.identifier([role])}`);
-            }
-            return null;
-          },
-        },
-      ],
-    });
-  };
+  const connect = async (role?: string) => createSessionTestPool(databaseUrl!, schema, role);
 
   beforeAll(async () => {
     admin = await createPool(databaseUrl!);
@@ -339,11 +326,11 @@ integration('private chat PostgreSQL storage', () => {
         sql`select session_id, message_id, turn_id, original_action_id, current_action_id, deleted_session_at is not null as tombstone from ai_chat_review_links where id = 'delete-review'`
       )
     ).toEqual({
-      session_id: null,
-      message_id: null,
-      turn_id: null,
-      original_action_id: 'audit',
-      current_action_id: 'audit',
+      sessionId: null,
+      messageId: null,
+      turnId: null,
+      originalActionId: 'audit',
+      currentActionId: 'audit',
       tombstone: true,
     });
     expect(
@@ -366,6 +353,11 @@ integration('private chat PostgreSQL storage', () => {
   });
 
   lifecycleTests(() => owner, scope);
+  sessionLoadTests(
+    () => owner,
+    () => other,
+    scope
+  );
   turnTests(() => owner, scope);
 
   it('migration_down_up_preserves_existing_actions', async () => {

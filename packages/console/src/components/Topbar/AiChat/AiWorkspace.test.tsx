@@ -16,9 +16,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-it('shows a task rail, calm welcome and functional prompts rather than fake history', () => {
+it('shows one conversation hierarchy, a calm welcome and functional prompts', () => {
   render(<AiWorkspace {...props} />);
-  expect(screen.getByRole('complementary', { name: 'Ask AI tasks' })).toBeTruthy();
+  expect(screen.queryByRole('complementary')).toBeNull();
   expect(screen.getByRole('heading', { name: 'What shall we work on?' })).toBeTruthy();
   expect(screen.queryByText('Chats and tasks')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Review workspace templates' }));
@@ -41,9 +41,58 @@ it('switches to the transcript without remounting or clearing the composer', () 
 });
 
 it('keeps task shortcuts from submitting another request while generation is running', () => {
-  render(<AiWorkspace {...props} hasMessages isLoading />);
-  const button = screen.getByRole('button', { name: 'Investigate sign-ins' });
+  render(<AiWorkspace {...props} isLoading />);
+  const button = screen.getByRole('button', { name: 'Investigate sign-in issues' });
   expect(button).toHaveProperty('disabled', true);
   fireEvent.click(button);
   expect(props.onPromptSelected).not.toHaveBeenCalled();
+});
+
+it('discloses history only on request and preserves the composer through dismissal', () => {
+  render(
+    <AiWorkspace {...props} history={<button type="button">Synthetic conversation</button>} />
+  );
+  const composer = screen.getByRole('textbox', { name: 'Message' });
+  fireEvent.change(composer, { target: { value: 'Unsent synthetic draft' } });
+  expect(screen.queryByRole('dialog', { name: 'Conversation history' })).toBeNull();
+  const trigger = screen.getByRole('button', { name: 'History' });
+  fireEvent.click(trigger);
+  expect(screen.getByRole('dialog', { name: 'Conversation history' })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Synthetic conversation' }), {
+    key: 'Escape',
+    keyCode: 27,
+  });
+  expect(screen.queryByRole('dialog', { name: 'Conversation history' })).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+  expect(screen.getByRole('textbox', { name: 'Message' })).toBe(composer);
+  expect(composer).toHaveProperty('value', 'Unsent synthetic draft');
+});
+
+it('history selection dismisses the temporary view without invoking New chat or closing Ask AI', () => {
+  const onNew = jest.fn();
+  const onSelect = jest.fn();
+  render(
+    <AiWorkspace
+      {...props}
+      history={(dismiss) => (
+        <button
+          type="button"
+          onClick={() => {
+            onSelect('synthetic');
+            dismiss();
+          }}
+        >
+          Synthetic archived conversation
+        </button>
+      )}
+      onNew={onNew}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'History' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Synthetic archived conversation' }));
+  expect(onSelect).toHaveBeenCalledWith('synthetic');
+  expect(onNew).not.toHaveBeenCalled();
+  expect(props.onClose).not.toHaveBeenCalled();
+  expect(screen.queryByRole('dialog', { name: 'Conversation history' })).toBeNull();
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'History' }));
 });

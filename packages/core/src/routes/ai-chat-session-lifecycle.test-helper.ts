@@ -115,7 +115,7 @@ export const lifecycleTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().any(
         sql`select session_id from ai_chat_review_links where id = any(${sql.array(ids, 'text')})`
       )
-    ).toEqual(ids.map(() => ({ session_id: null })));
+    ).toEqual(ids.map(() => ({ sessionId: null })));
   });
 
   it('limits_do_not_prevent_read_or_delete', async () => {
@@ -166,12 +166,12 @@ export const lifecycleTests = (pool: () => DatabasePool, scope: ChatScope) => {
       await pool().one(
         sql`select state, error_code, completed_at is not null as completed from ai_chat_turns where id = ${turnId}`
       )
-    ).toEqual({ state: 'interrupted', error_code: 'lease_expired', completed: true });
+    ).toEqual({ state: 'interrupted', errorCode: 'lease_expired', completed: true });
     expect(
       await pool().one(
         sql`select kind, revision, lease_owner, lease_token from ai_chat_operations where session_id = ${session.id}`
       )
-    ).toEqual({ kind: null, revision: 1, lease_owner: null, lease_token: null });
+    ).toEqual({ kind: null, revision: 1, leaseOwner: null, leaseToken: null });
     expect(await api.messages(scope, session.id)).toEqual({ items: [], nextCursor: null });
     expect(await api.get(scope, session.id)).toMatchObject({ revision: 1, transcriptRevision: 0 });
   });

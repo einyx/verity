@@ -126,6 +126,7 @@ export default function aiChatSessionRoutes<T extends ManagementApiRouter>(
                 token,
                 userId: owner.userId,
                 tenantId: owner.tenantId,
+                requestId: typeof ctx.requestId === 'string' ? ctx.requestId : undefined,
                 apiBase: `${tenant.envSet.endpoint.origin}/api`,
                 landingPageApiBase: `${EnvSet.values.cloudUrlSet.endpoint.origin}/api`,
                 getEditorToken: async () =>

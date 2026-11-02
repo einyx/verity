@@ -20,6 +20,7 @@ import type { AppContentOutletContext } from '../AppContent/types';
 
 import { Skeleton } from './Sidebar';
 import useShellNavigation from './Sidebar/use-shell-navigation';
+import { SidebarStateProvider, SidebarToggle } from './SidebarState';
 import useTenantScopeListener from './hooks';
 import styles from './index.module.scss';
 
@@ -38,35 +39,38 @@ function ConsoleContent() {
   useTenantScopeListener();
 
   return (
-    <div className={classNames(styles.content, theme === Theme.Dark && styles.dark)}>
-      <Suspense fallback={<Skeleton />}>
-        <Sidebar />
-      </Suspense>
-      <div className={styles.workspace}>
-        <Topbar isWorkspace>
-          <nav aria-label="Current page" className={styles.breadcrumb}>
-            {active && (
-              <>
-                <span>{active.section.label}</span>
-                <strong aria-current="page">{active.item.label}</strong>
-              </>
-            )}
-          </nav>
-        </Topbar>
-        <OverlayScrollbar className={styles.overlayScrollbarWrapper}>
-          <div ref={scrollableContent} className={styles.main}>
-            {/* Key by tenant so the banners' per-session dismissal state resets on tenant switch. */}
-            <Fragment key={currentTenantId}>
-              <HostedEmailCapBanner />
-              <ReadOnlyAccessNotification />
-            </Fragment>
-            <OssTenantMfaBanner />
-            <OssLicenseBanner />
-            <Suspense fallback={<DelayedSuspenseFallback />}>{routes}</Suspense>
-          </div>
-        </OverlayScrollbar>
+    <SidebarStateProvider>
+      <div className={classNames(styles.content, theme === Theme.Dark && styles.dark)}>
+        <Suspense fallback={<Skeleton />}>
+          <Sidebar />
+        </Suspense>
+        <div className={styles.workspace}>
+          <Topbar isWorkspace>
+            <SidebarToggle />
+            <nav aria-label="Current page" className={styles.breadcrumb}>
+              {active && (
+                <>
+                  <span>{active.section.label}</span>
+                  <strong aria-current="page">{active.item.label}</strong>
+                </>
+              )}
+            </nav>
+          </Topbar>
+          <OverlayScrollbar className={styles.overlayScrollbarWrapper}>
+            <div ref={scrollableContent} className={styles.main}>
+              {/* Key by tenant so the banners' per-session dismissal state resets on tenant switch. */}
+              <Fragment key={currentTenantId}>
+                <HostedEmailCapBanner />
+                <ReadOnlyAccessNotification />
+              </Fragment>
+              <OssTenantMfaBanner />
+              <OssLicenseBanner />
+              <Suspense fallback={<DelayedSuspenseFallback />}>{routes}</Suspense>
+            </div>
+          </OverlayScrollbar>
+        </div>
       </div>
-    </div>
+    </SidebarStateProvider>
   );
 }
 

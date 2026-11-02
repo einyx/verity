@@ -3,6 +3,31 @@ import ky, { TimeoutError } from 'ky';
 
 import { createSessionApi } from './session-api';
 
+it('uses a fresh separate Cloud credential on explicit Save without replaying the request', async () => {
+  const landingHeaders = jest
+    .fn()
+    .mockResolvedValueOnce({ 'x-landing-page-authorization': 'Bearer fresh-cloud-token' });
+  const fetcher = jest.fn(async (input: RequestInfo | URL) => {
+    const request = new Request(input);
+    expect(request.url).toBe('https://console.test/api/ai-chat/actions/review/confirm');
+    expect(request.method).toBe('POST');
+    expect(request.headers.get('authorization')).toBe('Bearer tenant-token');
+    expect(request.headers.get('x-landing-page-authorization')).toBe('Bearer fresh-cloud-token');
+    return new Response(JSON.stringify({ executed: true }));
+  });
+  const api = createSessionApi(
+    ky.create({
+      prefixUrl: 'https://console.test',
+      fetch: fetcher,
+      headers: { authorization: 'Bearer tenant-token' },
+    }),
+    landingHeaders
+  );
+  await api.confirm('review');
+  expect(landingHeaders).toHaveBeenCalledTimes(1);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
 it('turn requests use the long timeout without automatic transport replay', async () => {
   const fetcher = jest.fn(async (input: RequestInfo | URL) => {
     const request = new Request(input);

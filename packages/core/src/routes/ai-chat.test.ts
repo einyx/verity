@@ -2,6 +2,7 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import request from 'supertest';
 
+import RequestError from '#src/errors/RequestError/index.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
 
 import { type confirmPendingAction as ConfirmPendingAction } from './ai-chat-actions.js';
@@ -95,7 +96,6 @@ const tenant = {
   envSet: { pool: {}, endpoint: new URL('https://logto.example.com') },
 };
 
-/** Builds an app where the caller is `userId`, and `bearer` decides whether a token is sent. */
 const createApp = (userId = 'user-a') => {
   const app = new Koa();
   const router = new Router();
@@ -147,6 +147,72 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+it.each([
+  [undefined, 'authorized', true],
+  [new RequestError({ code: 'auth.unauthorized', status: 401 }), 'authentication_required', false],
+  [new RequestError({ code: 'auth.forbidden', status: 403 }), 'forbidden', false],
+  [new Error('sensitive diagnostic must not escape'), 'unavailable', false],
+])(
+  'exposes only safe verified landing capability metadata: %s',
+  async (failure, state, canEdit) => {
+    if (failure) {
+      getLandingPageAiToken.mockRejectedValue(failure);
+    } else {
+      getLandingPageAiToken.mockResolvedValue('synthetic-cloud-token');
+    }
+    const response = await request(createApp())
+      .get('/ai-chat/landing-page-capabilities')
+      .set(bearer)
+      .set('x-landing-page-authorization', 'Bearer synthetic-cloud-token')
+      .expect(200);
+    expect(response.body).toEqual({ state, canEdit });
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(getLandingPageAiToken).toHaveBeenCalledWith(
+      tenant.envSet,
+      'Bearer synthetic-cloud-token',
+      'user-a'
+    );
+    expect(proposePendingAction).not.toHaveBeenCalled();
+    expect(modelPost).not.toHaveBeenCalled();
+  }
+);
+
+it('does not perform an editor diagnostic read unless capability is authorized', async () => {
+  getLandingPageAiToken.mockRejectedValue(
+    new RequestError({ code: 'auth.forbidden', status: 403 })
+  );
+  const fetcher = jest.spyOn(globalThis, 'fetch');
+  const response = await request(createApp())
+    .get('/ai-chat/landing-page-capabilities?probeEditor=true')
+    .set(bearer)
+    .expect(200);
+  expect(response.body).toEqual({ state: 'forbidden', canEdit: false });
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it('returns only safe metadata for an explicitly requested editor diagnostic', async () => {
+  getLandingPageAiToken.mockResolvedValue('synthetic-cloud-token');
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response('{"privateSyntheticPage":true}', {
+      headers: { 'content-type': 'application/json' },
+    })
+  );
+  const response = await request(createApp())
+    .get('/ai-chat/landing-page-capabilities?probeEditor=true')
+    .set(bearer)
+    .expect(200);
+  expect(response.body).toEqual({
+    state: 'authorized',
+    canEdit: true,
+    editorStatus: 200,
+    editorApplicationJson: true,
+    editorChallenge: false,
+    editorUsesInternalTransport: false,
+  });
+  expect(JSON.stringify(response.body)).not.toContain('privateSyntheticPage');
+  expect(modelPost.mock.calls.length + proposePendingAction.mock.calls.length).toBe(0);
 });
 
 it.each([

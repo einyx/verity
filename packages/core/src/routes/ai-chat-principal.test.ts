@@ -25,8 +25,10 @@ jest.unstable_mockModule('#src/env-set/index.js', () => ({
   EnvSet: { values: { isProduction: true, isUnitTest: true } },
   getTenantEndpoint: jest.fn(),
 }));
-jest.unstable_mockModule('./ai-chat-session-store.js', async () => ({
-  ...(await import('./ai-chat-session-operation.js')),
+// Resolve this dependency before the mocked store is linked by either router.
+const { ChatSessionStoreError } = await import('./ai-chat-session-operation.js');
+jest.unstable_mockModule('./ai-chat-session-store.js', () => ({
+  ChatSessionStoreError,
   createChatSessionStore: () => ({ list: access }),
 }));
 jest.unstable_mockModule('./ai-chat-session-actions.js', () => ({

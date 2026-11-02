@@ -6,6 +6,69 @@
     }
   ],
   "paths": {
+    "/api/ai-chat/landing-page-capabilities": {
+      "get": {
+        "summary": "Get verified landing-page edit capability for the current authenticated human",
+        "description": "Uses the separate Cloud API credential with existing audience, subject and landing-management scope verification. By default no editor request is made. An explicit probeEditor=true additionally performs the authorized editor GET through the configured Cloud transport, cancels its body, and returns only HTTP/transport metadata. comparePublic=true optionally compares the same verified credential against the configured public editor URL, for diagnostics only, never a generation fallback. It never calls an AI provider or writes anything. Current tenant authorization is still required. No page, credential, or subject values are returned.",
+        "parameters": [
+          {
+            "name": "x-landing-page-authorization",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "probeEditor",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "Explicit read-only editor-route diagnostic; only runs for an authorized current human"
+          },
+          {
+            "name": "comparePublic",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "Only with probeEditor=true: metadata-only comparison to the fixed configured public editor URL, using the same authorized human credential"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verified capability or safe credential/service state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["canEdit", "state"],
+                  "properties": {
+                    "canEdit": { "type": "boolean" },
+                    "editorStatus": {
+                      "type": "integer",
+                      "description": "Editor HTTP status, or local re-verification status when editorCredentialRejected=true (no editor request made in that case); zero means no HTTP status due to transport/configuration failure"
+                    },
+                    "editorApplicationJson": { "type": "boolean" },
+                    "editorChallenge": { "type": "boolean" },
+                    "editorUsesInternalTransport": { "type": "boolean" },
+                    "editorTransportFailed": { "type": "boolean" },
+                    "editorCredentialRejected": { "type": "boolean" },
+                    "publicEditorStatus": { "type": "integer" },
+                    "publicEditorApplicationJson": { "type": "boolean" },
+                    "publicEditorChallenge": { "type": "boolean" },
+                    "publicEditorTransportFailed": { "type": "boolean" },
+                    "state": {
+                      "type": "string",
+                      "enum": ["authorized", "authentication_required", "forbidden", "unavailable"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Management API authentication required" },
+          "403": { "description": "Current tenant or human access denied" }
+        }
+      }
+    },
     "/api/ai-chat/sessions/{sessionId}/reviews/{id}/confirm": {
       "post": {
         "summary": "Confirm the latest exposed review of this owned active session",
@@ -47,7 +110,7 @@
     "/api/ai-chat/completions": {
       "post": {
         "summary": "Ask AI chat",
-        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them. Landing-page tools additionally require a Cloud API token for the same user with landing-page editing permission.",
+        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them. Explicit landing-page edit/preview-proposal requests use the existing guarded proposal workflow directly after backend capability verification, rather than asking a model to decide the caller's permissions. General questions and negated edit requests do not trigger direct generation. Landing-page tools additionally require a Cloud API token for the same user with landing-page editing permission. Generating a proposal never saves or publishes the page.",
         "parameters": [
           {
             "name": "x-landing-page-authorization",

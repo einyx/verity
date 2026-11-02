@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next';
 
-import { isDevFeaturesEnabled } from '@/consts/env';
-
 import LandingPageArtifact from './LandingPageArtifact';
 import styles from './index.module.scss';
 import useReviewExpiry from './use-review-expiry';
@@ -34,8 +32,8 @@ function ProposedActionCard({ action, onConfirm, onCancel, onRefresh }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const expired = useReviewExpiry(action.expiresAt);
 
-  // Landing-page artifact previews are being developed alongside the editor's review workflow.
-  if (isDevFeaturesEnabled && action.tool === 'save_landing_page_draft') {
+  // This is the same validated CMS renderer in production, not a development-only text diff.
+  if (action.tool === 'save_landing_page_draft') {
     return (
       <LandingPageArtifact
         action={action}

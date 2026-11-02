@@ -231,8 +231,10 @@ test('a committed creation with a lost response preserves both drafts until expl
   await input.fill('Original unbound browser draft');
   await expect(page.getByText(/Your draft is preserved/u)).toBeVisible();
   await page.getByRole('button', { name: 'Retry loading', exact: true }).click();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
   const history = page.getByRole('navigation', { name: 'Conversation history' });
   await expect(history.locator('ul button')).toHaveCount(1);
+  // Selecting a conversation closes the temporary history dialog.
   await history.locator('ul button').first().click();
   await expect(input).toHaveValue('');
   await page.clock.install();
@@ -243,7 +245,8 @@ test('a committed creation with a lost response preserves both drafts until expl
     mimeType: 'text/plain',
     buffer: Buffer.from('Newer unsent file'),
   });
-  await history.getByRole('button', { name: 'New chat', exact: true }).click();
+  // History is already closed by the selection above; New chat now lives in the toolbar.
+  await page.getByRole('button', { name: 'New chat', exact: true }).click();
   await expect(
     page.getByText(/original unsaved draft and the newer conversation draft are both preserved/u)
   ).toBeVisible();
@@ -309,14 +312,12 @@ for (const width of [390, 768, 1440]) {
     if (!firstId) {
       throw new Error('Missing first tab');
     }
-    if (width < 801) {
-      await page.getByRole('button', { name: 'History', exact: true }).click();
-    }
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    const history = page.getByRole('navigation', { name: 'Conversation history' });
+    await expect(history).toBeVisible();
+    await page.getByRole('button', { name: 'Close history', exact: true }).click();
     await page.getByRole('button', { name: 'New chat', exact: true }).click();
     await expect(page.getByRole('tab')).toHaveCount(2);
-    if (await page.getByRole('button', { name: 'Close history' }).isVisible()) {
-      await page.getByRole('button', { name: 'Close history' }).click();
-    }
     await input.fill(`Second draft ${width}`);
     await expect(page.getByText('Saved', { exact: true })).toBeVisible();
     await page.locator('input[type="file"]').setInputFiles({
@@ -373,12 +374,12 @@ for (const width of [390, 768, 1440]) {
       await another
         .getByRole('button', { name: 'admin_console.inkeep_ai_bot.ask_ai_label', exact: true })
         .click();
-      if (width < 801) {
-        /* New context uses the desktop viewport. */
-      }
-      await expect(another.getByRole('navigation', { name: 'Conversation history' })).toBeVisible();
-      await another
-        .getByRole('navigation', { name: 'Conversation history' })
+      /* The history dialog is width-independent; the new context uses the desktop viewport. */
+      await another.getByRole('button', { name: 'History', exact: true }).click();
+      const anotherHistory = another.getByRole('navigation', { name: 'Conversation history' });
+      await expect(anotherHistory).toBeVisible();
+      // Selecting closes the dialog, so the composer becomes reachable again below.
+      await anotherHistory
         .getByRole('button', { name: new RegExp(`Second draft ${width}`, 'u') })
         .click();
       await expect(
@@ -422,6 +423,7 @@ test('two devices preserve conflicting drafts; archive, restore and delete are e
   try {
     const other = await second.newPage();
     await open(other);
+    await other.getByRole('button', { name: 'History', exact: true }).click();
     await other
       .getByRole('navigation', { name: 'Conversation history' })
       .getByRole('button', { name: /Conflict seed/u })
@@ -445,7 +447,10 @@ test('two devices preserve conflicting drafts; archive, restore and delete are e
     await page
       .getByRole('button', { name: 'admin_console.inkeep_ai_bot.send', exact: true })
       .click();
-    await expect(page.getByRole('button', { name: 'Archive', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: 'Conversation actions' }).click();
+    const menu = page.getByRole('menu', { name: 'Conversation actions' });
+    await expect(menu.getByRole('menuitem', { name: 'Archive', exact: true })).toBeDisabled();
+    await page.keyboard.press('Escape');
     const confirm = page.getByRole('button', {
       name: 'admin_console.inkeep_ai_bot.action_confirm',
       exact: true,
@@ -468,24 +473,31 @@ test('two devices preserve conflicting drafts; archive, restore and delete are e
       page.getByText('admin_console.inkeep_ai_bot.action_done', { exact: true })
     ).toBeVisible();
     await expect(confirm).toHaveCount(0);
-    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await page.getByRole('button', { name: 'Conversation actions' }).click();
+    await page.getByRole('menuitem', { name: 'Archive', exact: true }).click();
     await expect(page.getByRole('tab')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Archived', exact: true }).click();
-    await page
-      .getByRole('navigation', { name: 'Conversation history' })
-      .getByRole('button', { name: /Conflict seed/u })
-      .click();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    const history = page.getByRole('navigation', { name: 'Conversation history' });
+    await history.getByRole('button', { name: 'Archived', exact: true }).click();
+    await history.getByRole('button', { name: /Conflict seed/u }).click();
     await expect(page.getByText('Archived conversation · restore to continue')).toBeVisible();
-    await page.getByRole('button', { name: 'Restore', exact: true }).click();
+    await page.getByRole('button', { name: 'Conversation actions' }).click();
+    await page.getByRole('menuitem', { name: 'Restore', exact: true }).click();
     await expect(page.getByRole('textbox', { name: inputName })).toBeVisible();
-    await page.getByRole('button', { name: 'Delete conversation', exact: true }).click();
-    await expect(page.getByRole('tab')).toHaveCount(1);
-    await expect(page.getByRole('alert').filter({ hasText: 'Action audit records' })).toContainText(
+    await page.getByRole('button', { name: 'Conversation actions' }).click();
+    await page.getByRole('menuitem', { name: 'Delete conversation…', exact: true }).click();
+    const confirmDialog = page.getByRole('alertdialog');
+    await expect(confirmDialog).toBeVisible();
+    // Opening the confirmation must not execute anything: the conversation stays open as a tab.
+    await expect(page.getByRole('tab', { includeHidden: true })).toHaveCount(1);
+    await expect(confirmDialog.filter({ hasText: 'Action audit records' })).toContainText(
       'including action arguments and results, are retained separately'
     );
-    await page.getByRole('button', { name: 'Delete conversation history', exact: true }).click();
+    await confirmDialog
+      .getByRole('button', { name: 'Delete conversation history', exact: true })
+      .click();
     await expect(page.getByRole('tab')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'New chat', exact: true })).toBeFocused({
+    await expect(page.getByRole('button', { name: 'History', exact: true })).toBeFocused({
       timeout: 2000,
     });
   } finally {

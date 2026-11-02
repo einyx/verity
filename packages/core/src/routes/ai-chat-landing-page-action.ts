@@ -1,10 +1,12 @@
-import RequestError from '#src/errors/RequestError/index.js';
-
 import {
   proposeAndRecordAction,
   type PendingActionStore,
   type ProposedActionView,
 } from './ai-chat-actions.js';
+import {
+  landingPageCapabilityFailure,
+  landingPageCapabilityMessage,
+} from './ai-chat-landing-page-capability.js';
 import { editLandingPageDraft, saveLandingPageDraftTool } from './ai-chat-landing-page.js';
 import { ChatSessionStoreError } from './ai-chat-session-operation.js';
 
@@ -64,19 +66,19 @@ export const proposeLandingPageEdit = async ({
       throw error;
     }
     await assertActive();
-    if (error instanceof RequestError && error.status === 401) {
-      return {
-        response: JSON.stringify({
-          error: 'landing_page_authentication_failed',
-          message:
-            'The editor credential is missing or invalid. No draft was changed. Refresh the session and retry; do not infer missing editing rights.',
-        }),
-      };
-    }
+    const capability = landingPageCapabilityFailure(error);
     return {
       response: JSON.stringify({
-        error: 'landing_page_edit_failed',
-        message: error instanceof Error ? error.message : 'Landing page edit failed.',
+        error:
+          capability === 'authentication_required'
+            ? 'landing_page_authentication_failed'
+            : capability === 'forbidden'
+              ? 'landing_page_forbidden'
+              : 'landing_page_edit_failed',
+        message:
+          capability === 'unavailable'
+            ? 'Landing-page editing is temporarily unavailable. The page was not saved or published. Do not infer missing editing rights.'
+            : landingPageCapabilityMessage(capability),
       }),
     };
   }

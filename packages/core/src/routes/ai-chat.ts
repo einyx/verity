@@ -2,6 +2,7 @@ import { extractBearerToken } from '@logto/mcp-portal';
 import { array, object, string, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
+import { createCloudApiFetch } from '#src/libraries/cloud-transport.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 
 import {
@@ -11,6 +12,8 @@ import {
   type ConfirmResult,
 } from './ai-chat-actions.js';
 import { getLandingPageAiToken } from './ai-chat-landing-page-auth.js';
+import { resolveLandingPageCapability } from './ai-chat-landing-page-capability.js';
+import { probeLandingPageEditor } from './ai-chat-landing-page-probe.js';
 import { saveLandingPageDraftTool } from './ai-chat-landing-page.js';
 import { runChatCompletion } from './ai-chat-runner.js';
 import { createSessionActionStore } from './ai-chat-session-actions.js';
@@ -65,6 +68,22 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
   const editorToken = async (ctx: ManagementApiRouterContext) =>
     getLandingPageAiToken(tenant.envSet, ctx.get('x-landing-page-authorization'), ctx.auth.id);
 
+  // Metadata only: this uses the exact same verifier as proposal generation and explicit Save.
+  router.get('/ai-chat/landing-page-capabilities', requireChatUser, async (ctx, next) => {
+    const state = await resolveLandingPageCapability(async () => editorToken(ctx));
+    ctx.set('Cache-Control', 'no-store');
+    const probe =
+      state === 'authorized' && ctx.query.probeEditor === 'true'
+        ? await probeLandingPageEditor(
+            landingPageApiBase(),
+            async () => editorToken(ctx),
+            ctx.query.comparePublic === 'true'
+          )
+        : {};
+    ctx.body = { canEdit: state === 'authorized', state, ...probe };
+    return next();
+  });
+
   router.post(
     '/ai-chat/completions',
     koaGuard({
@@ -99,6 +118,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
           getEditorToken: async () => editorToken(ctx),
           userId: ctx.auth.id,
           tenantId: tenant.id,
+          requestId: typeof ctx.requestId === 'string' ? ctx.requestId : undefined,
         },
         propose: createPendingActionStore(tenant.envSet.pool),
         assertActive: async () => {
@@ -197,7 +217,13 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
               const actionToken =
                 logtoTool.name === saveLandingPageDraftTool.name ? await editorToken(ctx) : token;
               await assertActive();
-              const outcome = await sendLogtoRequest(logtoTool, built.url, body, actionToken);
+              const outcome = await sendLogtoRequest(
+                logtoTool,
+                built.url,
+                body,
+                actionToken,
+                logtoTool.name === saveLandingPageDraftTool.name ? createCloudApiFetch() : fetch
+              );
               await assertActive();
               return outcome;
             },

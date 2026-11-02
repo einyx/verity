@@ -68,10 +68,10 @@ export const reconcileOperation = async (
       ) limit 1 for update
   `);
   const operation = z
-    .object({ kind: z.string().nullable(), turn_id: z.string().nullable(), active: z.boolean() })
+    .object({ kind: z.string().nullable(), turnId: z.string().nullable(), active: z.boolean() })
     .parse(
       await connection.one(sql`
-    select kind, turn_id, lease_expires_at is null or lease_expires_at > coalesce(${now ?? null}::timestamptz, clock_timestamp()) as active
+    select kind, turn_id as "turnId", lease_expires_at is null or lease_expires_at > coalesce(${now ?? null}::timestamptz, clock_timestamp()) as active
     from ai_chat_operations where ${where} for update
   `)
     );
@@ -79,13 +79,13 @@ export const reconcileOperation = async (
     throw new ChatSessionStoreError('session_busy');
   }
   if (operation.kind !== null) {
-    await releaseTurnReservation(connection, scope, id, operation.turn_id ?? undefined);
-    await cancelTurnProposals(connection, scope, id, operation.turn_id ?? undefined);
+    await releaseTurnReservation(connection, scope, id, operation.turnId ?? undefined);
+    await cancelTurnProposals(connection, scope, id, operation.turnId ?? undefined);
     await connection.query(sql`
       update ai_chat_turns set state = 'interrupted', error_code = 'lease_expired',
         updated_at = now(), completed_at = now()
       where tenant_id = ${scope.tenantId} and user_id = ${scope.userId}
-        and session_id = ${id} and id = ${operation.turn_id} and state = 'running'
+         and session_id = ${id} and id = ${operation.turnId} and state = 'running'
     `);
     await connection.query(sql`
       update ai_chat_operations set revision = revision + 1, kind = null, turn_id = null,

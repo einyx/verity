@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
+import Modal from 'react-modal';
 
 import CloseIcon from '@/assets/icons/close.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
@@ -58,6 +59,8 @@ export default function AiWorkspace({
   title,
   panelId,
   panelLabelId,
+  onNew,
+  isActionsOpen = false,
 }: {
   readonly hasMessages: boolean;
   readonly isLoading: boolean;
@@ -66,93 +69,41 @@ export default function AiWorkspace({
   readonly setup: ReactNode;
   readonly onPromptSelected: (prompt: string) => void;
   readonly onClose: () => void;
-  readonly history?: ReactNode;
+  readonly history?: ReactNode | ((dismiss: () => void) => ReactNode);
   readonly tabs?: ReactNode;
   readonly title?: ReactNode;
   readonly panelId?: string;
   readonly panelLabelId?: string;
+  readonly onNew?: () => void;
+  readonly isActionsOpen?: boolean;
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyTrigger = useRef<HTMLButtonElement>(null);
-  const historyRail = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const rail = historyRail.current;
-    if (!rail || !historyOpen) {
-      return;
-    }
-    const dismiss = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        setHistoryOpen(false);
-        historyTrigger.current?.focus();
-      }
-    };
-    rail.addEventListener('keydown', dismiss);
-    rail.querySelector<HTMLButtonElement>('button')?.focus();
-    return () => {
-      rail.removeEventListener('keydown', dismiss);
-    };
-  }, [historyOpen]);
+  const dismissHistory = () => {
+    setHistoryOpen(false);
+  };
   return (
     <div className={styles.workspace} data-has-messages={hasMessages}>
-      <aside
-        ref={historyRail}
-        id="chat-history"
-        className={styles.rail}
-        data-open={historyOpen}
-        aria-label={history ? 'Ask AI history' : 'Ask AI tasks'}
+      <section
+        data-ai-workspace-main
+        className={styles.main}
+        aria-label="Ask meshX conversation"
+        aria-hidden={historyOpen || isActionsOpen || undefined}
+        inert={historyOpen || isActionsOpen}
       >
-        <div className={styles.brand}>
-          <MeshMark />
-          <span>meshX</span>
-          <span className={styles.aiLabel}>AI workspace</span>
-        </div>
-        {history}
-        {historyOpen && (
-          <button
-            type="button"
-            className={styles.close}
-            onClick={() => {
-              setHistoryOpen(false);
-              historyTrigger.current?.focus();
-            }}
-          >
-            Close history
-          </button>
-        )}
-        {!history && (
-          <div className={styles.currentSession}>
-            <span aria-hidden="true">✧</span> Ask meshX
-          </div>
-        )}
-        <p className={styles.railLabel}>Explore your console</p>
-        {tasks.map((task) => (
-          <button
-            key={task.rail}
-            type="button"
-            className={styles.railTask}
-            disabled={isLoading}
-            onClick={() => {
-              onPromptSelected(task.prompt);
-            }}
-          >
-            {task.icon}
-            <span>{task.rail}</span>
-          </button>
-        ))}
-        <div className={styles.railNote}>
-          <p>Your console, in conversation.</p>
-          <p>Review proposals before allowing changes.</p>
-        </div>
-        <div className={styles.setup}>{setup}</div>
-      </aside>
-      <section className={styles.main} aria-label="Ask meshX conversation">
         <header className={styles.header}>
+          <span className={styles.workspaceTitle}>Ask meshX</span>
+          {onNew && (
+            <button type="button" className={styles.close} onClick={onNew}>
+              New chat
+            </button>
+          )}
           {history && (
             <button
               ref={historyTrigger}
               type="button"
-              className={styles.historyToggle}
+              className={styles.close}
+              aria-haspopup="dialog"
               aria-expanded={historyOpen}
               aria-controls="chat-history"
               onClick={() => {
@@ -162,7 +113,7 @@ export default function AiWorkspace({
               History
             </button>
           )}
-          <span>Ask meshX</span>
+          {title}
           <button
             type="button"
             className={styles.close}
@@ -175,7 +126,30 @@ export default function AiWorkspace({
           </button>
         </header>
         {tabs}
-        {title}
+        <Modal
+          shouldCloseOnOverlayClick
+          isOpen={historyOpen}
+          contentLabel="Conversation history"
+          id="chat-history"
+          ariaHideApp={false}
+          className={styles.historyDialog}
+          overlayClassName={styles.historyOverlay}
+          onAfterClose={() => {
+            historyTrigger.current?.focus();
+          }}
+          onRequestClose={(event) => {
+            event.stopPropagation();
+            dismissHistory();
+          }}
+        >
+          <div className={styles.historyHeading}>
+            <h2>Conversation history</h2>
+            <button type="button" className={styles.close} onClick={dismissHistory}>
+              Close history
+            </button>
+          </div>
+          {typeof history === 'function' ? history(dismissHistory) : history}
+        </Modal>
         <div
           className={styles.body}
           id={panelId}
@@ -218,6 +192,7 @@ export default function AiWorkspace({
           <p className={styles.disclaimer}>
             AI can make mistakes. Review changes before confirming.
           </p>
+          <div className={styles.setup}>{setup}</div>
         </div>
       </section>
     </div>

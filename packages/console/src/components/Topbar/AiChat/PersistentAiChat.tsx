@@ -41,7 +41,7 @@ const focusWorkspace = () => {
   const dialog = document.querySelector('[role="dialog"]');
   const tab = dialog?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
   const history = dialog?.querySelector<HTMLButtonElement>('[aria-controls="chat-history"]');
-  const newChat = dialog?.querySelector<HTMLButtonElement>('nav button');
+  const newChat = dialog?.querySelector<HTMLButtonElement>('header button');
   (tab ?? (history?.getClientRects().length ? history : newChat))?.focus();
 };
 
@@ -63,6 +63,7 @@ function AccountWorkspace({
   const [visible, setVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [archived, setArchived] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [threadHost, setThreadHost] = useState<HTMLDivElement>();
   const threadRef = useCallback<RefCallback<HTMLDivElement>>((element) => {
     setThreadHost(element ?? undefined);
@@ -115,9 +116,11 @@ function AccountWorkspace({
           panelLabelId={state.activeId ? `chat-tab-${state.activeId}` : undefined}
           hasMessages={Boolean(active?.messages.length)}
           isLoading={Boolean(active?.running)}
+          isActionsOpen={actionsOpen}
           setup={<SetupBanner icon={icon} />}
-          history={
+          history={(dismissHistory) => (
             <SessionSidebar
+              activeId={state.activeId}
               sessions={state.history}
               search={search}
               isArchived={archived}
@@ -125,24 +128,15 @@ function AccountWorkspace({
               nextCursor={state.nextCursor}
               onSearch={setSearch}
               onArchived={setArchived}
-              onNew={() => {
-                setArchived(false);
-                setSearch('');
-                void (async () => {
-                  const id = await controller.newSession();
-                  if (id) {
-                    await controller.flush(id);
-                  }
-                })();
-              }}
               onOpen={(id) => {
                 void controller.openSession(id);
+                dismissHistory();
               }}
               onMore={() => {
                 void controller.list(archived, search, true);
               }}
             />
-          }
+          )}
           tabs={
             <SessionTabs
               openSessions={state.openIds.flatMap((id) => {
@@ -174,6 +168,7 @@ function AccountWorkspace({
                 key={active.session.id}
                 session={active.session}
                 isBusy={active.running || Boolean(active.operation)}
+                onOpenChange={setActionsOpen}
                 onChange={(input) => {
                   void (async () => {
                     await controller.change(active.session.id, input);
@@ -219,6 +214,16 @@ function AccountWorkspace({
               {thread}
             </section>
           }
+          onNew={() => {
+            setArchived(false);
+            setSearch('');
+            void (async () => {
+              const id = await controller.newSession();
+              if (id) {
+                await controller.flush(id);
+              }
+            })();
+          }}
           onClose={close}
           onPromptSelected={(prompt) => {
             controller.setText(prompt);

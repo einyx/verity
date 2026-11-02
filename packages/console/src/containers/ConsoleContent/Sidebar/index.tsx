@@ -15,9 +15,10 @@ import TenantSelector from '@/components/Topbar/TenantSelector';
 import { isCloud } from '@/consts/env';
 import OverlayScrollbar from '@/ds-components/OverlayScrollbar';
 import useAdminConsoleTour from '@/hooks/use-admin-console-tour';
-import { isNarrowViewport } from '@/hooks/use-narrow-viewport';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
 import useTheme from '@/hooks/use-theme';
+
+import { SidebarToggle, useSidebarState } from '../SidebarState';
 
 import OssCloudCard from './OssCloudCard';
 import Item from './components/Item';
@@ -31,25 +32,8 @@ const minWidth = 200;
 const maxWidth = 480;
 // Keep existing saved widths; only a fresh rail adopts the HIG default.
 const storageKey = 'console-sidebar-width-v2';
-const collapsedStorageKey = 'console-sidebar-collapsed';
 
 const clampWidth = (value: number) => Math.min(maxWidth, Math.max(minWidth, Math.round(value)));
-
-const readStoredCollapsed = () => {
-  try {
-    return window.localStorage.getItem(collapsedStorageKey) === 'true';
-  } catch {
-    return false;
-  }
-};
-
-const storeCollapsed = (value: boolean) => {
-  try {
-    window.localStorage.setItem(collapsedStorageKey, String(value));
-  } catch {
-    // Storage can be unavailable. The collapsed state still works for this view.
-  }
-};
 
 const readStoredWidth = () => {
   try {
@@ -93,19 +77,11 @@ function Sidebar() {
     .filter(({ items }) => items.length > 0);
   const [width, setWidth] = useState(readStoredWidth);
   const widthRef = useRef(width);
-  // On a small device the sidebar starts collapsed: the expanded one covers the content.
-  const [isCollapsed, setIsCollapsed] = useState(() => isNarrowViewport() || readStoredCollapsed());
+  const { isCollapsed, expand } = useSidebarState();
   // Animate only the collapse and expand toggle. Dragging should follow the pointer without lag.
   const [isDragging, setIsDragging] = useState(false);
   // The expanded width is kept while collapsed, so expanding restores it.
   const displayWidth = isCollapsed ? collapsedWidth : width;
-
-  const toggleCollapsed = useCallback(() => {
-    setIsCollapsed((previous) => {
-      storeCollapsed(!previous);
-      return !previous;
-    });
-  }, []);
 
   useEffect(() => {
     if (activeSection) {
@@ -117,8 +93,7 @@ function Sidebar() {
     const handleShortcut = (event: globalThis.KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setIsCollapsed(false);
-        storeCollapsed(false);
+        expand();
         setShouldFocusSearch(true);
       }
     };
@@ -126,7 +101,7 @@ function Sidebar() {
     return () => {
       window.removeEventListener('keydown', handleShortcut);
     };
-  }, []);
+  }, [expand]);
 
   useEffect(() => {
     if (!isCollapsed && shouldFocusSearch) {
@@ -177,6 +152,7 @@ function Sidebar() {
 
   return (
     <aside
+      id="console-sidebar"
       aria-label="Console navigation"
       className={classNames(styles.sidebar, !isCollapsed && styles.sidebarExpanded)}
       style={{ width: displayWidth, transition: isDragging ? 'none' : undefined }}
@@ -186,17 +162,7 @@ function Sidebar() {
       </div>
       <OverlayScrollbar className={styles.menu} options={{ scrollbars: { visibility: 'hidden' } }}>
         <div className={classNames(styles.menuContent, isCollapsed && styles.menuContentCollapsed)}>
-          <div className={classNames(styles.toggleRow, isCollapsed && styles.toggleRowCollapsed)}>
-            <button
-              type="button"
-              className={styles.toggle}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={!isCollapsed}
-              onClick={toggleCollapsed}
-            >
-              {isCollapsed ? '›' : '‹'}
-            </button>
-          </div>
+          {!isCollapsed && <SidebarToggle isOverlay />}
           <div className={styles.search} hidden={isCollapsed}>
             <input
               ref={searchRef}

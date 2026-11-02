@@ -4,39 +4,35 @@ import styles from './workspace.module.scss';
 
 export default function SessionSidebar({
   sessions,
+  activeId,
   search,
   isArchived,
   isLoading,
   nextCursor,
   onSearch,
   onArchived,
-  onNew,
   onOpen,
   onMore,
 }: {
   readonly sessions: ChatSession[];
+  readonly activeId?: string;
   readonly search: string;
   readonly isArchived: boolean;
   readonly isLoading: boolean;
   readonly nextCursor?: SessionPage<ChatSession>['nextCursor'];
   readonly onSearch: (value: string) => void;
   readonly onArchived: (value: boolean) => void;
-  readonly onNew: () => void;
   readonly onOpen: (id: string) => void;
   readonly onMore?: () => void;
 }) {
   return (
     <nav className={styles.history} aria-label="Conversation history">
-      <button type="button" className={styles.close} onClick={onNew}>
-        New chat
-      </button>
       <label className={styles.railLabel} htmlFor="chat-history-search">
-        Search titles · 120 characters
+        Search conversation titles (120 characters)
       </label>
       <input
         id="chat-history-search"
         type="search"
-        aria-label="Search conversation titles (120 characters)"
         value={search}
         onChange={(event) => {
           const { value } = event.currentTarget;
@@ -67,17 +63,22 @@ export default function SessionSidebar({
       </div>
       {isLoading && <p role="status">Loading conversations…</p>}
       {!isLoading && sessions.length === 0 && <p>No conversations yet</p>}
-      <ul>
+      {/* Keyboard users can focus the scroll viewport independently of opening a conversation. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      <ul className={styles.sessionList} tabIndex={0} aria-label="Conversations">
         {sessions.map((session) => (
           <li key={session.id}>
             <button
               type="button"
-              className={styles.railTask}
+              className={styles.sessionRow}
+              aria-current={session.id === activeId ? 'true' : undefined}
               onClick={() => {
                 onOpen(session.id);
               }}
             >
-              <span>{session.title}</span>
+              <span className={styles.sessionTitle} title={session.title}>
+                {session.title}
+              </span>
               <time dateTime={session.updatedAt}>
                 {new Date(session.updatedAt).toLocaleDateString()}
               </time>

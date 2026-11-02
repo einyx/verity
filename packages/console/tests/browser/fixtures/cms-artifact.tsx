@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import ProposedActionCard from '../../../src/components/Topbar/AiChat/ProposedActionCard';
+import themeStyles from '../../../src/contexts/AppThemeProvider/index.module.scss';
 
 await i18next.init({ lng: 'en', resources: {} });
 const document = {
@@ -23,6 +24,10 @@ const root = window.document.querySelector('#root');
 if (!root) {
   throw new Error('Missing owned artifact fixture root');
 }
+root.setAttribute(
+  'class',
+  themeStyles[window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'] ?? ''
+);
 function Fixture() {
   const [status, setStatus] = useState<'pending' | 'running'>('pending');
   return (

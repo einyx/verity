@@ -7,6 +7,7 @@ import react from '@vitejs/plugin-react';
 import { createServer, type ViteDevServer } from 'vite';
 
 const owned: { server?: ViteDevServer; origin?: string } = {};
+const waitForFonts = async () => window.document.fonts.ready;
 test.beforeAll(async () => {
   owned.server = await createServer({
     configFile: false,
@@ -66,7 +67,12 @@ for (const theme of ['light', 'dark'] as const) {
           : route.fulfill({ status: 204, body: '' }));
       });
       await page.goto(`${owned.origin}/artifact?mockSave=1`);
+      await page.evaluate(waitForFonts);
       const save = page.getByRole('button', { name: 'Save draft', exact: true });
+      await expect(save).toHaveCSS(
+        'background-color',
+        theme === 'dark' ? 'rgb(250, 249, 247)' : 'rgb(27, 25, 25)'
+      );
       const node = await save.elementHandle();
       const before = await save.boundingBox();
       const discardBefore = await page.getByRole('button', { name: 'Discard' }).boundingBox();

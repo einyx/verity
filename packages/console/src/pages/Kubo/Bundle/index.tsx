@@ -11,6 +11,7 @@ import TextInput from '@/ds-components/TextInput';
 import useApi from '@/hooks/use-api';
 import getStartedStyles from '@/pages/GetStarted/index.module.scss';
 
+import { useKuboMutationAccess } from '../KuboAccess';
 import styles from '../index.module.scss';
 
 // Air-gapped bundle upload, as a three-step wizard. Its layout follows the get-started page: a
@@ -52,6 +53,7 @@ const toStep = (value: number): 1 | 2 | 3 => {
 
 function Bundle() {
   const api = useApi();
+  const access = useKuboMutationAccess();
   const fileInput = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState('');
@@ -64,15 +66,18 @@ function Bundle() {
   const canContinue = step === 1 ? Boolean(file) : step === 2 ? nameValid : false;
 
   const upload = async () => {
-    if (!file || !nameValid) {
+    if (!file || !nameValid || !access.operator || !access.canMutate) {
       return;
     }
     setUploading(true);
     setMessage(undefined);
     setFailed(false);
     try {
+      if (!(await access.refresh()) || !access.isCurrent()) {
+        throw new Error('Upload is not currently authorized.');
+      }
       const result = await api
-        .post(`api/kubo/airgap/bundle?name=${encodeURIComponent(name)}`, {
+        .post(access.path(`api/kubo/airgap/bundle?name=${encodeURIComponent(name)}`), {
           body: file,
           headers: { 'content-type': 'application/x-tar' },
           timeout: false,
@@ -80,12 +85,17 @@ function Bundle() {
         .json<{ message: string }>();
       setMessage(result.message || 'Bundle uploaded.');
     } catch (error: unknown) {
+      await access.onDenied(error);
       setFailed(true);
       setMessage(error instanceof Error ? error.message : 'Upload failed.');
     } finally {
       setUploading(false);
     }
   };
+
+  if (!access.operator) {
+    return null;
+  }
 
   return (
     <div className={getStartedStyles.container}>
@@ -243,7 +253,7 @@ function Bundle() {
               title="infrastructure.upload"
               type="primary"
               isLoading={uploading}
-              disabled={!file || !nameValid}
+              disabled={!file || !nameValid || !access.canMutate}
               onClick={() => {
                 void upload();
               }}

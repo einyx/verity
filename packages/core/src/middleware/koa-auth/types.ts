@@ -15,6 +15,8 @@ type Auth = {
   sessionUid?: string;
   /** Set by `koaReadOnlyAccess` for a read-only Management API request. */
   isReadOnly?: boolean;
+  /** Original bearer reverified with only admin keys, issuer and console audience. Never a dev bypass. */
+  verifiedConsoleIdentity?: true;
 };
 
 export type WithAuthContext<ContextT extends IRouterParamContext = IRouterParamContext> =
@@ -28,4 +30,5 @@ export type TokenInfo = {
   scopes: string[];
   /** The audience(s) the token was issued for. */
   audience?: string | string[];
+  verifiedConsoleIdentity?: true;
 };

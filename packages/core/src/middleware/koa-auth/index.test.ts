@@ -14,6 +14,9 @@ import type { WithAuthContext } from './index.js';
 const { jest } = import.meta;
 const { mockEsmWithActual, mockEsm } = createMockUtils(jest);
 
+// Provenance uses real signatures in kubo-isolation.test; these legacy tests mock jwtVerify.
+mockEsm('./console-identity.js', () => ({ isVerifiedConsoleIdentity: async () => false }));
+
 await mockEsmWithActual('./utils.js', () => ({
   getAdminTenantTokenValidationSet: jest.fn().mockResolvedValue({ keys: [], issuer: [] }),
 }));

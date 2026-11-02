@@ -1,9 +1,8 @@
 /* eslint-disable @silverhand/fp/no-mutating-methods, id-length, react/boolean-prop-naming, react/no-array-index-key, no-restricted-syntax, complexity, no-alert, max-params, max-lines, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-unnecessary-condition -- The existing Kubo stack editor predates these lint limits; keep this deletion change scoped until the editor is split up. */
 import { type AdminConsoleKey } from '@logto/phrases';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useParams } from 'react-router-dom';
-import useSWR from 'swr';
 
 import RequestDataError from '@/components/RequestDataError';
 import Button from '@/ds-components/Button';
@@ -16,8 +15,11 @@ import Select from '@/ds-components/Select';
 import Table from '@/ds-components/Table';
 import Tag from '@/ds-components/Tag';
 import TextInput from '@/ds-components/TextInput';
-import useApi, { type RequestError } from '@/hooks/use-api';
+import useApi from '@/hooks/use-api';
 import useTenantPathname from '@/hooks/use-tenant-pathname';
+
+import { useKuboAccess } from '../KuboAccess';
+import useKuboResource from '../use-kubo-resource';
 
 import styles from './index.module.scss';
 
@@ -32,6 +34,7 @@ type KuboComponent = {
 };
 
 type KuboStackDetail = {
+  consoleTenantId?: string;
   namespace: string;
   name: string;
   mode: string;
@@ -49,7 +52,7 @@ type KuboStackDetail = {
   componentValues?: Record<string, { config?: Record<string, unknown> }>;
   exclude?: string[] | undefined;
   operators?: Record<string, boolean> | undefined;
-  featureFlags?: Record<string, string> | undefined;
+  featureFlags?: Record<string, string | boolean> | undefined;
   imageTags?: Record<string, string> | undefined;
   chartVersions?: Record<string, string> | undefined;
   conditions?: KuboCondition[] | undefined;
@@ -64,10 +67,10 @@ const formatUsd = (value?: number) => (value === undefined ? '—' : `$${value.t
 const formatGiB = (bytes?: number) =>
   bytes === undefined ? '—' : `${(bytes / 1024 ** 3).toFixed(1)} GiB`;
 
-const toRows = (values?: Record<string, string> | undefined): KeyValueRow[] =>
+const toRows = (values?: Record<string, string | boolean> | undefined): KeyValueRow[] =>
   Object.entries(values ?? {})
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => ({ key, value }));
+    .map(([key, value]) => ({ key, value: String(value) }));
 
 const toMap = (rows: KeyValueRow[]) =>
   Object.fromEntries(
@@ -113,6 +116,7 @@ function Section({
   error,
   view,
   editor,
+  disabled,
 }: {
   readonly title: AdminConsoleKey;
   readonly editing: boolean;
@@ -123,6 +127,7 @@ function Section({
   readonly error?: string;
   readonly view: React.ReactNode;
   readonly editor: React.ReactNode;
+  readonly disabled: boolean;
 }) {
   const id = useId();
   return (
@@ -138,6 +143,7 @@ function Section({
             title="general.edit"
             type="outline"
             size="small"
+            disabled={disabled}
             onClick={onEdit}
           />
         )}
@@ -151,7 +157,13 @@ function Section({
       {editing && (
         <div className={styles.actions}>
           <Button title="general.cancel" type="outline" onClick={onCancel} />
-          <Button title="general.save" type="primary" isLoading={saving} onClick={onSave} />
+          <Button
+            title="general.save"
+            type="primary"
+            disabled={disabled}
+            isLoading={saving}
+            onClick={onSave}
+          />
         </div>
       )}
     </section>
@@ -162,15 +174,18 @@ function Section({
 function KeyValueEditor({
   rows,
   onChange,
+  booleanOnly = false,
 }: {
   readonly rows: KeyValueRow[];
   readonly onChange: (rows: KeyValueRow[]) => void;
+  readonly booleanOnly?: boolean;
 }) {
   return (
     <div className={styles.kvEditor}>
       {rows.map((row, index) => (
         <div key={index} className={styles.kvRow}>
           <TextInput
+            aria-label="Name"
             value={row.key}
             placeholder="Name"
             onChange={(event) => {
@@ -181,17 +196,35 @@ function KeyValueEditor({
               );
             }}
           />
-          <TextInput
-            value={row.value}
-            placeholder="Value"
-            onChange={(event) => {
-              onChange(
-                rows.map((r, i) =>
-                  i === index ? { ...r, value: (event.target as HTMLInputElement).value } : r
-                )
-              );
-            }}
-          />
+          {booleanOnly ? (
+            <select
+              aria-label="Value"
+              value={row.value}
+              onChange={(event) => {
+                onChange(
+                  rows.map((entry, i) =>
+                    i === index ? { ...entry, value: event.target.value } : entry
+                  )
+                );
+              }}
+            >
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          ) : (
+            <TextInput
+              aria-label="Value"
+              value={row.value}
+              placeholder="Value"
+              onChange={(event) => {
+                onChange(
+                  rows.map((r, i) =>
+                    i === index ? { ...r, value: (event.target as HTMLInputElement).value } : r
+                  )
+                );
+              }}
+            />
+          )}
           <Button
             title="general.delete"
             type="text"
@@ -206,8 +239,9 @@ function KeyValueEditor({
         title="general.add"
         type="text"
         size="small"
+        disabled={booleanOnly && rows.length >= 128}
         onClick={() => {
-          onChange([...rows, { key: '', value: '' }]);
+          onChange([...rows, { key: '', value: booleanOnly ? 'false' : '' }]);
         }}
       />
     </div>
@@ -246,24 +280,59 @@ function TableViewport({
   );
 }
 
-function Stack() {
+function StackContent() {
   const { namespace = '', name = '' } = useParams();
   // Tenant-aware navigate, so the redirect stays under /<tenant>/console instead of the marketing root.
   const { navigate } = useTenantPathname();
   const api = useApi();
-  const { data, error, isLoading, mutate } = useSWR<KuboStackDetail, RequestError>(
-    namespace && name ? `api/kubo/stacks/${namespace}/${name}` : null
+  const access = useKuboAccess();
+  const mounted = useRef(true);
+  useEffect(() => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Pending target-action flows must stop after this route unmounts.
+    mounted.current = true;
+    return () => {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Invalidate the old target even if identity/tenant/scope stay unchanged.
+      mounted.current = false;
+    };
+  }, []);
+  const { data, error, isLoading, mutate } = useKuboResource<KuboStackDetail>(
+    namespace && name
+      ? `api/kubo/stacks/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`
+      : undefined,
+    access.scope
   );
+  const owns = (detail: KuboStackDetail | undefined) =>
+    Boolean(
+      detail &&
+      detail.namespace === namespace &&
+      detail.name === name &&
+      (access.operator || detail.consoleTenantId === access.tenantId)
+    );
+  const canAct = access.canMutate && !error && !isLoading && owns(data);
+  const targetPath = `api/kubo/stacks/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+  const authorize = async () => {
+    if (
+      !mounted.current ||
+      !canAct ||
+      !(await access.refresh()) ||
+      !access.isCurrent() ||
+      !owns(await mutate()) ||
+      !access.isCurrent() ||
+      !mounted.current
+    ) {
+      throw new Error('Current workspace ownership and mutation access are required.');
+    }
+  };
   const [bootstrapping, setBootstrapping] = useState(false);
   const [bootstrapJob, setBootstrapJob] = useState<string>();
   const [bootstrapError, setBootstrapError] = useState<string>();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [purgeNamespace, setPurgeNamespace] = useState(false);
   const [deleteError, setDeleteError] = useState<string>();
 
   const patch = async (body: Record<string, unknown>) => {
-    await api.patch(`api/kubo/stacks/${namespace}/${name}`, { json: body }).json();
+    await authorize();
+    await api.patch(access.path(targetPath), { json: body }).json();
     await mutate();
   };
 
@@ -273,10 +342,22 @@ function Stack() {
   const [sectionError, setSectionError] = useState<Record<string, string | undefined>>({});
   const [draft, setDraft] = useState<unknown>();
 
-  const start = (field: string, initial: unknown) => {
-    setEditing(field);
-    setDraft(initial);
-    setSectionError((previous) => ({ ...previous, [field]: undefined }));
+  const start = async (field: string, initial: unknown) => {
+    if (!canAct || (!access.operator && !['exclude', 'featureFlags'].includes(field))) {
+      return;
+    }
+    try {
+      await authorize();
+      setEditing(field);
+      setDraft(initial);
+      setSectionError((previous) => ({ ...previous, [field]: undefined }));
+    } catch (error_: unknown) {
+      await access.onDenied(error_);
+      setSectionError((previous) => ({
+        ...previous,
+        [field]: error_ instanceof Error ? error_.message : 'Access unavailable',
+      }));
+    }
   };
 
   const cancel = () => {
@@ -287,9 +368,37 @@ function Stack() {
     setSaving(true);
     setSectionError((previous) => ({ ...previous, [field]: undefined }));
     try {
+      if (!access.operator) {
+        if (
+          field === 'exclude' &&
+          (!Array.isArray(value) ||
+            value.some(
+              (item) =>
+                !(data?.components ?? []).some((component) => component.name === item) &&
+                !data?.exclude?.includes(String(item))
+            ))
+        ) {
+          throw new Error('Only existing components may be excluded.');
+        }
+        if (field === 'featureFlags') {
+          const entries = Object.entries(value as Record<string, unknown>);
+          if (
+            entries.length > 128 ||
+            entries.some(
+              ([key, entry]) =>
+                !/^[a-z][\d_a-z]{0,63}$/.test(key) || !['true', 'false'].includes(String(entry))
+            )
+          ) {
+            throw new Error('Use up to 128 boolean feature flags with lowercase names.');
+          }
+        } else if (field !== 'exclude') {
+          throw new Error('This setting requires operator view.');
+        }
+      }
       await patch({ [field]: value });
       setEditing(undefined);
     } catch (error_: unknown) {
+      await access.onDenied(error_);
       setSectionError((previous) => ({
         ...previous,
         [field]: error_ instanceof Error ? error_.message : 'Save failed',
@@ -300,6 +409,9 @@ function Stack() {
   };
 
   const runBootstrap = async () => {
+    if (!canAct) {
+      return;
+    }
     // Bootstrap re-runs the workspace's initial setup jobs, so confirm before starting it.
     if (!window.confirm(`Run bootstrap for ${name}?`)) {
       return;
@@ -307,11 +419,11 @@ function Stack() {
     setBootstrapping(true);
     setBootstrapError(undefined);
     try {
-      const result = await api
-        .post(`api/kubo/stacks/${namespace}/${name}/bootstrap`)
-        .json<{ job: string }>();
+      await authorize();
+      const result = await api.post(access.path(`${targetPath}/bootstrap`)).json<{ job: string }>();
       setBootstrapJob(result.job);
     } catch (error_: unknown) {
+      await access.onDenied(error_);
       setBootstrapError(error_ instanceof Error ? error_.message : 'Bootstrap failed');
     } finally {
       setBootstrapping(false);
@@ -320,26 +432,20 @@ function Stack() {
 
   const closeDelete = () => {
     setIsDeleteOpen(false);
-    setPurgeNamespace(false);
     setDeleteError(undefined);
   };
 
   const deleteStack = async () => {
-    if (
-      purgeNamespace &&
-      !window.confirm(
-        `Deleting namespace "${namespace}" removes everything in it, not just this stack. Continue?`
-      )
-    ) {
-      return;
-    }
-
     setIsDeleting(true);
     setDeleteError(undefined);
     try {
-      await api.delete(`api/kubo/stacks/${namespace}/${name}?purge=${String(purgeNamespace)}`);
-      navigate('/infrastructure', { replace: true });
+      await authorize();
+      await api.delete(access.path(`${targetPath}?purge=false`));
+      if (access.isCurrent() && mounted.current) {
+        navigate('/infrastructure', { replace: true });
+      }
     } catch (error_: unknown) {
+      await access.onDenied(error_);
       setDeleteError(error_ instanceof Error ? error_.message : 'Delete failed');
     } finally {
       setIsDeleting(false);
@@ -360,9 +466,10 @@ function Stack() {
     value: () => unknown
   ) => ({
     title,
+    disabled: !canAct || (!access.operator && !['exclude', 'featureFlags'].includes(field)),
     editing: isEditing(field),
     onEdit: () => {
-      start(field, initial);
+      void start(field, initial);
     },
     onCancel: cancel,
     onSave: () => {
@@ -397,6 +504,7 @@ function Stack() {
               title="tabs.run_bootstrap"
               type="primary"
               isLoading={bootstrapping}
+              disabled={!canAct}
               onClick={runBootstrap}
             />
           )}
@@ -462,8 +570,13 @@ function Stack() {
               {bootstrapError}
             </p>
           )}
+          {deleteError && (
+            <p role="alert" className={styles.error}>
+              {deleteError}
+            </p>
+          )}
 
-          {isDeleteOpen && (
+          {isDeleteOpen && canAct && (
             <DeleteConfirmModal
               isOpen
               isLoading={isDeleting}
@@ -478,12 +591,10 @@ function Stack() {
                 Deleting this stack uninstalls its releases. Type <strong>{namespace}</strong> to
                 confirm.
               </p>
-              <Checkbox
-                label="Also delete the namespace (removes everything in it)"
-                checked={purgeNamespace}
-                onChange={setPurgeNamespace}
-              />
-              {deleteError && <p className={styles.error}>{deleteError}</p>}
+              <p>
+                Namespace purge or reassignment requires a separately approved maintenance
+                procedure.
+              </p>
             </DeleteConfirmModal>
           )}
 
@@ -687,6 +798,7 @@ function Stack() {
                 'infrastructure.feature_flags',
                 <KeyValueTable rows={toRows(data.featureFlags)} />,
                 <KeyValueEditor
+                  booleanOnly={!access.operator}
                   rows={(draft as KeyValueRow[]) ?? []}
                   onChange={(rows) => {
                     setDraft(rows);
@@ -740,8 +852,18 @@ function Stack() {
             <Button
               title={<DangerousRaw>Delete stack</DangerousRaw>}
               type="outlineDanger"
-              onClick={() => {
-                setIsDeleteOpen(true);
+              disabled={!canAct}
+              onClick={async () => {
+                if (!canAct) {
+                  return;
+                }
+                try {
+                  await authorize();
+                  setIsDeleteOpen(true);
+                } catch (error_: unknown) {
+                  await access.onDenied(error_);
+                  setDeleteError(error_ instanceof Error ? error_.message : 'Access unavailable');
+                }
               }}
             />
           </section>
@@ -749,6 +871,12 @@ function Stack() {
       )}
     </div>
   );
+}
+
+function Stack() {
+  const { namespace, name } = useParams();
+  const access = useKuboAccess();
+  return <StackContent key={`${access.tenantId}:${access.scope}:${namespace}:${name}`} />;
 }
 
 export default Stack;

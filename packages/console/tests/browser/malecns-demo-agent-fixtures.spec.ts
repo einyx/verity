@@ -57,16 +57,17 @@ const routePage = async (route: Route) => {
     if (!file.startsWith(landingRoot)) {
       return route.abort();
     }
-    try {
-      const body = await readFile(file);
-      await route.fulfill({
-        status: 200,
-        contentType: contentTypes[path.extname(file)] ?? 'application/octet-stream',
-        body,
-      });
-    } catch {
+    const body = await readFile(file).catch(() => {
+      // Missing assets get a 404; fulfillment failures must not trigger another response.
+    });
+    if (!body) {
       return route.fulfill({ status: 404, body: 'not found' });
     }
+    return route.fulfill({
+      status: 200,
+      contentType: contentTypes[path.extname(file)] ?? 'application/octet-stream',
+      body,
+    });
   }
   return route.abort();
 };

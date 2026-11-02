@@ -1,63 +1,64 @@
 import { Theme } from '@logto/schemas';
 import { useEffect, useRef } from 'react';
 
-import useApi from '@/hooks/use-api';
+import RequestDataError from '@/components/RequestDataError';
 import useTheme from '@/hooks/use-theme';
 
-// The original kshows page, run unchanged (see ./kshows). Its script attaches its
-// listeners and starts polling when it loads, so the markup must stay the same DOM
-// node for the life of the page: it is created once and moved in and out on mount.
+import { useKuboAccess } from '../KuboAccess';
+import useKuboResource from '../use-kubo-resource';
+
+import { mountKshows } from './kshows/app.js';
 import markup from './kshows/markup.html?raw';
 import style from './kshows/style.css?inline';
 import tokens from './kshows/tokens.css?inline';
 
-type KshowsWindow = Window & {
-  kshowsSnapshot?: () => Promise<unknown>;
-  kshowsStreamUrl?: string;
-};
-
-/* eslint-disable @silverhand/fp/no-mutation, @silverhand/fp/no-let -- the original kshows script is imperative DOM code: it owns this node and the window hook. */
-const host = document.createElement('div');
-host.className = 'kshows';
-host.innerHTML = markup;
-
-let booted = false;
-/* eslint-enable @silverhand/fp/no-mutation, @silverhand/fp/no-let */
-
 function Capacity() {
-  const api = useApi();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { operator, scope } = useKuboAccess();
+  const snapshot = useKuboResource<unknown>(operator ? 'api/kubo/kshows' : undefined, scope, {
+    refreshInterval: 10_000,
+  });
+  const container = useRef<HTMLDivElement>(null);
+  const renderer = useRef<((data: unknown) => void) | undefined>(undefined);
   const theme = useTheme();
   useEffect(() => {
-    // eslint-disable-next-line @silverhand/fp/no-mutation -- the original kshows script reads the theme from the host node's dataset.
-    host.dataset.theme = theme === Theme.Dark ? 'dark' : 'light';
-  }, [theme]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
+    const host = container.current;
+    if (!host || !operator) {
       return;
     }
-    const kshowsWindow: KshowsWindow = window;
-    /* eslint-disable-next-line @silverhand/fp/no-mutation -- the original script reads its data source from window. */
-    kshowsWindow.kshowsSnapshot = async () => api.get('api/kubo/kshows').json();
-    container.append(host);
-
-    if (!booted) {
-      /* eslint-disable-next-line @silverhand/fp/no-mutation */
-      booted = true;
-      void import('./kshows/app.js');
-    }
-
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Trusted static markup owned by this context's imperative renderer.
+    host.innerHTML = markup;
+    const mounted = mountKshows(host);
+    // eslint-disable-next-line @silverhand/fp/no-mutation -- Renderer handle is local to this mounted authorized root.
+    renderer.current = mounted.apply;
     return () => {
-      host.remove();
+      mounted.dispose();
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- Drop the old root's renderer before another context can mount.
+      renderer.current = undefined;
     };
-  }, [api]);
+  }, [operator, snapshot.error]);
+  useEffect(() => {
+    if (snapshot.data && !snapshot.error) {
+      renderer.current?.(snapshot.data);
+    }
+  }, [snapshot.data, snapshot.error]);
+  useEffect(() => {
+    const host = container.current;
+    if (host) {
+      // eslint-disable-next-line @silverhand/fp/no-mutation -- The renderer uses a DOM theme attribute.
+      host.dataset.theme = theme === Theme.Dark ? 'dark' : 'light';
+    }
+  }, [theme, operator, snapshot.error]);
 
+  if (!operator) {
+    return null;
+  }
+  if (snapshot.error) {
+    return <RequestDataError error={snapshot.error} />;
+  }
   return (
     <>
       <style>{tokens + style}</style>
-      <div ref={containerRef} />
+      <div ref={container} className="kshows" role="region" aria-label="Cluster capacity" />
     </>
   );
 }

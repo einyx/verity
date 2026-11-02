@@ -1,7 +1,6 @@
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { readBoundedResponse } from './bounded-response.js';
-import { kuboPortalUrl } from './kubo-portal-url.js';
 import { toolResultFor } from './mcp-logto-response.js';
 
 // Tools for managing this Logto tenant over MCP. Each tool is one Management API call, made with
@@ -20,8 +19,6 @@ type ToolProperty = {
 export type LogtoMcpTool = {
   name: string;
   description: string;
-  /** Which service the path belongs to. Default is the Logto Management API; `kubo` is the Kubo portal. */
-  service?: 'kubo';
   /** The Management API path. `{name}` segments are filled from the tool arguments. */
   path: string;
   /** Defaults to GET. Write tools use POST and send the body built by `body`. */
@@ -56,8 +53,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
     name: 'list_foundation_stacks',
     description:
       'List the Foundation stacks (workspaces) created through Kubo, with their phase and readiness. These are not organizations.',
-    service: 'kubo',
-    path: '/api/stacks',
+    path: '/kubo/stacks',
     properties: {},
   },
   {
@@ -247,7 +243,7 @@ export const callLogtoTool = async (
   apiBase: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<CallToolResult> => {
-  const built = buildLogtoToolUrl(tool, args, tool.service === 'kubo' ? kuboPortalUrl() : apiBase);
+  const built = buildLogtoToolUrl(tool, args, apiBase);
 
   if ('error' in built) {
     return { content: [{ type: 'text', text: built.error }], isError: true };
@@ -267,20 +263,20 @@ export const sendLogtoRequest = async (
   token: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<CallToolResult> => {
-  // The Logto token is for the Management API only. Kubo gets no Logto credentials.
-  // A service that cannot be reached (for example Kubo outside the cluster) becomes a tool error the
-  // model can report, instead of failing the whole chat request.
+  // Every tool uses the caller-authenticated Management API, including its Kubo proxy.
+  // Unreachable upstreams become tool errors rather than failing the whole chat request.
   try {
     const signal = AbortSignal.timeout(10_000);
     const response = await fetchImpl(url, {
       method: tool.method ?? 'GET',
       headers: {
         accept: 'application/json',
-        ...(tool.service === 'kubo' ? {} : { authorization: `Bearer ${token}` }),
+        authorization: `Bearer ${token}`,
         ...(requestBody ? { 'content-type': 'application/json' } : {}),
       },
       ...(requestBody ? { body: JSON.stringify(requestBody) } : {}),
       signal,
+      redirect: 'error',
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -295,7 +291,7 @@ export const sendLogtoRequest = async (
       content: [
         {
           type: 'text',
-          text: `${tool.service === 'kubo' ? 'Kubo' : 'Logto'} is not reachable from this server.`,
+          text: 'Logto is not reachable from this server.',
         },
       ],
       isError: true,

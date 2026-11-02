@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Tenant mutation regressions reuse the existing stack editor's component fixtures rather than duplicating those mocks. */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type ReactNode, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -22,7 +23,7 @@ const access = {
     await Promise.resolve();
   }),
   isCurrent: () => true,
-  path: (path: string) => `${path}${path.includes('?') ? '&' : '?'}scope=all`,
+  path: (path: string): string => `${path}${path.includes('?') ? '&' : '?'}scope=${access.scope}`,
 };
 afterEach(() => {
   // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Restore the shared synthetic access fixture even when an assertion fails.
@@ -148,6 +149,7 @@ const stack = {
 
 type MockStack = Omit<typeof stack, 'componentValues' | 'components'> & {
   consoleTenantId?: string;
+  featureFlags?: Record<string, string | boolean>;
   componentValues?: Record<string, { config?: Record<string, unknown> }>;
   failing?: string[];
   components: Array<{ name: string; phase: string; message?: string }>;
@@ -393,6 +395,10 @@ describe('Kubo grouped configuration', () => {
 });
 
 describe('Kubo tenant action boundaries', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    patchResponse.mockResolvedValue({});
+  });
   it('keeps read-only detail visible without enabling target actions', () => {
     // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic read-only capability response.
     Object.assign(access, { operator: false, scope: 'tenant', canMutate: false });
@@ -437,4 +443,44 @@ describe('Kubo tenant action boundaries', () => {
         .filter((button) => !button.hasAttribute('disabled'))
     ).toHaveLength(2);
   });
+
+  it('saves tenant feature flags as booleans without sending privileged fields', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.
+    Object.assign(access, { operator: false, scope: 'tenant' });
+    renderStack({ ...stack, consoleTenantId: 'a', featureFlags: { sample: false } });
+    fireEvent.click(screen.getByText('Version and feature overrides'));
+    fireEvent.click(
+      screen
+        .getAllByRole('button', { name: 'general.edit' })
+        .filter((button) => !button.hasAttribute('disabled'))[1]!
+    );
+    const value = await screen.findByRole('combobox', { name: 'Value' });
+    expect(value).toHaveProperty('value', 'false');
+    fireEvent.change(value, { target: { value: 'true' } });
+    fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
+    await waitFor(() => {
+      expect(patchRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation?scope=tenant', {
+        json: { featureFlags: { sample: true } },
+      });
+    });
+  });
+
+  it('rejects unknown component excludes without sending a patch', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.
+    Object.assign(access, { operator: false, scope: 'tenant' });
+    renderStack({ ...stack, consoleTenantId: 'a', components: [{ name: 'api', phase: 'Ready' }] });
+    fireEvent.click(screen.getByText('Deployment settings'));
+    fireEvent.click(
+      screen
+        .getAllByRole('button', { name: 'general.edit' })
+        .find((button) => !button.hasAttribute('disabled'))!
+    );
+    fireEvent.change(await screen.findByPlaceholderText('comma, separated, names'), {
+      target: { value: 'foreign-component' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
+    expect(await screen.findByText('Only existing components may be excluded.')).toBeTruthy();
+    expect(patchRequest).not.toHaveBeenCalled();
+  });
 });
+/* eslint-enable max-lines */

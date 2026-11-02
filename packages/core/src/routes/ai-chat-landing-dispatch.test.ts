@@ -172,9 +172,12 @@ it('logs only safe operation metadata, not the prompt, page, subject, credential
 });
 
 it('reports a downstream editor denial truthfully without a planner, proposal, Save or Publish', async () => {
-  const fetcher = jest
-    .spyOn(globalThis, 'fetch')
-    .mockResolvedValue(new Response('', { status: 403 }));
+  const fetcher = jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response(JSON.stringify({ code: 'auth.forbidden' }), {
+      status: 403,
+      headers: { 'content-type': 'application/json' },
+    })
+  );
   const result = await runChatCompletion(options());
   expect(result.actions).toEqual([]);
   expect(result.content).toContain('does not authorize');

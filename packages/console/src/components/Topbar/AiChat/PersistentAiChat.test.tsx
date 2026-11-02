@@ -36,10 +36,23 @@ it('opening never creates fake history; first edit persists once and navigation 
     confirm: jest.fn(),
     cancel: jest.fn(),
   } satisfies SessionApi;
-  render(<PersistentAiChat api={api} scope={{ tenantId: 'tenant', userId: 'owner' }} />);
+  const app = document.createElement('div');
+  app.setAttribute('id', 'app');
+  document.body.append(app);
+  render(<PersistentAiChat api={api} scope={{ tenantId: 'tenant', userId: 'owner' }} />, {
+    container: app,
+  });
   fireEvent.click(screen.getByRole('button', { name: 'admin_console.inkeep_ai_bot.ask_ai_label' }));
   expect(await screen.findByRole('dialog')).toBeTruthy();
   expect(api.create).not.toHaveBeenCalled();
+  expect(screen.queryByRole('complementary')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'History' }));
+  expect(screen.getByRole('searchbox')).toBeTruthy();
+  expect(api.create).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Close history' }));
+  expect(
+    screen.getByRole('region', { name: 'Ask meshX conversation' }).getAttribute('aria-hidden')
+  ).toBeNull();
   expect(screen.getByText(/saved to your account/)).toBeTruthy();
   fireEvent.change(
     screen.getByRole('textbox', { name: 'admin_console.inkeep_ai_bot.chat_placeholder' }),
@@ -49,6 +62,20 @@ it('opening never creates fake history; first edit persists once and navigation 
     expect(api.saveComposer).toHaveBeenCalledTimes(1);
   });
   expect(api.create).toHaveBeenCalledTimes(1);
+  const composer = screen.getByRole('textbox', {
+    name: 'admin_console.inkeep_ai_bot.chat_placeholder',
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Conversation actions' }));
+  expect(api.confirm).not.toHaveBeenCalled();
+  fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Rename…' }), {
+    key: 'Escape',
+    keyCode: 27,
+  });
+  expect(
+    screen.getByRole('textbox', { name: 'admin_console.inkeep_ai_bot.chat_placeholder' })
+  ).toBe(composer);
+  expect(composer).toHaveProperty('value', 'Private draft');
+  expect(api.saveComposer).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button', { name: 'Close Ask AI' }));
   expect(api.confirm).not.toHaveBeenCalled();
   expect(api.cancel).not.toHaveBeenCalled();
@@ -61,6 +88,7 @@ it('identity changes clear private title searches and local workspace presentati
   } satisfies SessionApi;
   const view = render(<PersistentAiChat api={api} scope={{ tenantId: 'tenant', userId: 'one' }} />);
   fireEvent.click(screen.getByRole('button', { name: 'admin_console.inkeep_ai_bot.ask_ai_label' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'History' }));
   fireEvent.change(await screen.findByRole('searchbox'), {
     target: { value: 'Private account title' },
   });
@@ -69,5 +97,6 @@ it('identity changes clear private title searches and local workspace presentati
   if (!screen.queryByRole('dialog')) {
     fireEvent.click(open);
   }
+  fireEvent.click(await screen.findByRole('button', { name: 'History' }));
   expect(await screen.findByRole('searchbox')).toHaveProperty('value', '');
 });

@@ -22,3 +22,17 @@ it('tab_close_does_not_archive_or_delete and keyboard selection moves focus', ()
   fireEvent.click(screen.getByRole('button', { name: 'Close First tab' }));
   expect(close).toHaveBeenCalledWith('one');
 });
+
+it('names running and draft-attention indicators without changing tab navigation', () => {
+  render(
+    <SessionTabs
+      openSessions={[{ id: 'one', title: 'Synthetic review', running: true, attention: true }]}
+      activeId="one"
+      onSelect={jest.fn()}
+      onClose={jest.fn()}
+    />
+  );
+  expect(screen.getByRole('img', { name: 'Running' })).toBeTruthy();
+  expect(screen.getByRole('img', { name: 'Draft needs attention' })).toBeTruthy();
+  expect(screen.getByRole('tab', { selected: true })).toBeTruthy();
+});

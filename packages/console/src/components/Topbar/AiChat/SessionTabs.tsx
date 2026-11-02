@@ -59,8 +59,18 @@ export default function SessionTabs({
             }}
           >
             {session.title}
-            {session.running && <span aria-label="Running"> ···</span>}
-            {session.attention && <span aria-label="Draft needs attention"> !</span>}
+            {session.running && (
+              <span role="img" aria-label="Running">
+                {' '}
+                ···
+              </span>
+            )}
+            {session.attention && (
+              <span role="img" aria-label="Draft needs attention">
+                {' '}
+                !
+              </span>
+            )}
           </button>
           <button
             type="button"

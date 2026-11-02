@@ -14,7 +14,6 @@ it('history_has_only_real_sessions and title-only search limits are visible', ()
       isLoading={false}
       onSearch={onSearch}
       onArchived={jest.fn()}
-      onNew={jest.fn()}
       onOpen={onOpen}
     />
   );
@@ -49,7 +48,6 @@ it('keeps a synthetic long title accessible and its date beneath a current conve
       isLoading={false}
       onSearch={jest.fn()}
       onArchived={jest.fn()}
-      onNew={jest.fn()}
       onOpen={onOpen}
     />
   );

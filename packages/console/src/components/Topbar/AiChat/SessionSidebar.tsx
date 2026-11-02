@@ -11,7 +11,6 @@ export default function SessionSidebar({
   nextCursor,
   onSearch,
   onArchived,
-  onNew,
   onOpen,
   onMore,
 }: {
@@ -23,22 +22,17 @@ export default function SessionSidebar({
   readonly nextCursor?: SessionPage<ChatSession>['nextCursor'];
   readonly onSearch: (value: string) => void;
   readonly onArchived: (value: boolean) => void;
-  readonly onNew: () => void;
   readonly onOpen: (id: string) => void;
   readonly onMore?: () => void;
 }) {
   return (
     <nav className={styles.history} aria-label="Conversation history">
-      <button type="button" className={styles.close} onClick={onNew}>
-        New chat
-      </button>
       <label className={styles.railLabel} htmlFor="chat-history-search">
-        Search titles · 120 characters
+        Search conversation titles (120 characters)
       </label>
       <input
         id="chat-history-search"
         type="search"
-        aria-label="Search conversation titles (120 characters)"
         value={search}
         onChange={(event) => {
           const { value } = event.currentTarget;

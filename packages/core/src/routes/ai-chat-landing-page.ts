@@ -2,6 +2,8 @@ import { landingPageDocumentGuard } from '@logto/schemas';
 import { object, string } from 'zod/v3';
 
 import RequestError from '#src/errors/RequestError/index.js';
+import { createCloudApiFetch } from '#src/libraries/cloud-transport.js';
+import { safeParseJson } from '#src/utils/json.js';
 
 import { readBoundedResponse } from './bounded-response.js';
 import { type LogtoMcpTool, enabledLogtoMcpTools } from './mcp-logto-tools.js';
@@ -36,6 +38,29 @@ export const pendingActionTools = (isDevFeaturesEnabled: boolean): readonly Logt
   saveLandingPageDraftTool,
 ];
 
+const readEditorAuthError = async (response: Response, signal: AbortSignal) => {
+  if (
+    ![401, 403].includes(response.status) ||
+    response.headers.get('cf-mitigated') === 'challenge' ||
+    !response.headers.get('content-type')?.includes('application/json')
+  ) {
+    return;
+  }
+  const error = object({ code: string() }).safeParse(
+    safeParseJson(await readBoundedResponse(response, { maxBytes: 8192, signal }))
+  );
+  if (
+    error.success &&
+    ((response.status === 401 && error.data.code.startsWith('auth.')) ||
+      (response.status === 403 && error.data.code === 'auth.forbidden'))
+  ) {
+    return new RequestError({
+      code: response.status === 401 ? 'auth.unauthorized' : 'auth.forbidden',
+      status: response.status,
+    });
+  }
+};
+
 export const editLandingPageDraft = async ({
   instruction,
   apiBase,
@@ -54,10 +79,11 @@ export const editLandingPageDraft = async ({
   const parsedInstruction = string().trim().min(1).max(2000).parse(instruction);
   const base = apiBase.endsWith('/') ? apiBase : `${apiBase}/`;
   const headers = { authorization: `Bearer ${token}` };
+  const cloudFetch = createCloudApiFetch(fetchImpl);
   const request = async (path: string, init?: RequestInit) => {
     await assertActive();
     const signal = AbortSignal.timeout(60_000);
-    const response = await fetchImpl(new URL(path, base), {
+    const response = await cloudFetch(new URL(path, base), {
       ...init,
       headers: { ...headers, ...init?.headers },
       signal,
@@ -65,14 +91,12 @@ export const editLandingPageDraft = async ({
 
     await assertActive();
     if (!response.ok) {
-      await response.body?.cancel();
-      if (response.status === 401 || response.status === 403) {
-        throw new RequestError({
-          code: response.status === 401 ? 'auth.unauthorized' : 'auth.forbidden',
-          status: response.status,
-        });
+      const authError = await readEditorAuthError(response, signal);
+      if (authError) {
+        throw authError;
       }
-      throw new Error(`Landing page editor request failed (${response.status})`);
+      await response.body?.cancel();
+      throw new Error('Landing page editor service unavailable');
     }
 
     const body: unknown = JSON.parse(

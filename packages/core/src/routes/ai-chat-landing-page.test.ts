@@ -9,6 +9,49 @@ import {
 const { jest } = import.meta;
 
 describe('editLandingPageDraft', () => {
+  it('does not mislabel a public-edge HTML challenge as a user permission denial', async () => {
+    await expect(
+      editLandingPageDraft({
+        instruction: 'Improve the title',
+        apiBase: 'https://console.example.com/api',
+        token: 'synthetic',
+        fetchImpl: async () =>
+          new Response('<html>Challenge</html>', {
+            status: 403,
+            headers: {
+              'content-type': 'text/html',
+              'cf-mitigated': 'challenge',
+              server: 'cloudflare',
+            },
+          }),
+      })
+    ).rejects.toThrow('service unavailable');
+  });
+
+  it.each([
+    [401, 'text/html', undefined, 'not-json'],
+    [403, 'application/json', 'challenge', JSON.stringify({ code: 'auth.forbidden' })],
+    [403, 'application/json', undefined, JSON.stringify({ code: 'edge.blocked' })],
+  ] as const)(
+    'does not treat an untrusted/non-auth error response as permission evidence: %s %s',
+    async (status, contentType, challenge, body) => {
+      await expect(
+        editLandingPageDraft({
+          instruction: 'Improve the title',
+          apiBase: 'https://console.example.com/api',
+          token: 'synthetic',
+          fetchImpl: async () =>
+            new Response(body, {
+              status,
+              headers: {
+                'content-type': contentType,
+                ...(challenge ? { 'cf-mitigated': challenge } : {}),
+              },
+            }),
+        })
+      ).rejects.toThrow('service unavailable');
+    }
+  );
   it('cancels oversized editor JSON before parsing the document', async () => {
     const cancel = jest.fn();
     const chunks = [
@@ -83,7 +126,12 @@ describe('editLandingPageDraft', () => {
   it('stops when the caller cannot read the editor draft', async () => {
     const fetchImpl = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
-      .mockResolvedValue(new Response('', { status: 403 }));
+      .mockResolvedValue(
+        new Response(JSON.stringify({ code: 'auth.forbidden' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
 
     await expect(
       editLandingPageDraft({

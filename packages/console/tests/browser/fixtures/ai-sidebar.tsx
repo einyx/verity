@@ -5,6 +5,7 @@ import '../../../src/scss/normalized.scss';
 
 import AiWorkspace from '../../../src/components/Topbar/AiChat/AiWorkspace';
 import SessionSidebar from '../../../src/components/Topbar/AiChat/SessionSidebar';
+import SessionTabs from '../../../src/components/Topbar/AiChat/SessionTabs';
 import theme from '../../../src/contexts/AppThemeProvider/index.module.scss';
 
 const parameters = new URLSearchParams(location.search);
@@ -36,6 +37,14 @@ function Fixture() {
         composer={null}
         thread={null}
         setup={null}
+        tabs={
+          <SessionTabs
+            openSessions={sessions.slice(1, 3)}
+            activeId={activeId}
+            onSelect={setActiveId}
+            onClose={() => null}
+          />
+        }
         history={
           <SessionSidebar
             sessions={parameters.has('empty') ? [] : sessions}

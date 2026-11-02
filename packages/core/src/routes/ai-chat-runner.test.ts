@@ -214,8 +214,7 @@ it('authorized default-tenant editing generates a review but never saves or publ
     messages: [
       {
         role: 'user',
-        content:
-          'Review the landing page and suggest an improvement for me to preview. Do not save or publish anything.',
+        content: 'Could you suggest an improvement to the landing page for preview?',
       },
     ],
     credentials: { ...credentials, tenantId: 'default' },

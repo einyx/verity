@@ -9,6 +9,11 @@ import {
   type ProposedActionView,
 } from './ai-chat-actions.js';
 import { runToolLoopWithGraph } from './ai-chat-graph.js';
+import {
+  dispatchLandingPageEdit,
+  isExplicitLandingPageEditRequest,
+  recordLandingPageOperation,
+} from './ai-chat-landing-dispatch.js';
 import { proposeLandingPageEdit } from './ai-chat-landing-page-action.js';
 import {
   landingPageCapabilityMessage,
@@ -51,6 +56,7 @@ export type ChatCredentials = {
   getEditorToken: () => Promise<string>;
   userId: string;
   tenantId: string;
+  requestId?: string;
 };
 
 const responseGuard = z.object({
@@ -102,15 +108,10 @@ export const runChatCompletion = async ({
     ({ name }) => name !== editLandingPageTool.name || landingCapability === 'authorized'
   );
   const latestRequest = messages.filter(({ role }) => role === 'user').at(-1)?.content ?? '';
-  // Short-circuit only an explicit page-edit request, not general landing-page questions.
-  // This never forces a model tool call or creates a proposal by keyword matching.
-  const requestsLandingEdit =
-    /^\s*(?:please\s+)?(?:edit|improve|change|update|rewrite|redesign)\s+(?:the\s+)?landing[\s-]*page\b/i.test(
-      latestRequest
-    ) ||
-    /^\s*(?:please\s+)?review\s+(?:the\s+)?landing[\s-]*page\s+and\s+suggest\b/i.test(
-      latestRequest
-    );
+  const requestsLandingEdit = isExplicitLandingPageEditRequest(latestRequest);
+  if (requestsLandingEdit) {
+    recordLandingPageOperation(landingCapability, credentials.requestId);
+  }
   if (requestsLandingEdit && landingCapability !== 'authorized') {
     return {
       ok: true as const,
@@ -120,6 +121,23 @@ export const runChatCompletion = async ({
   }
   const prompt = `${buildSystemPrompt(tools)}\n\nVerified landing-page capability: ${landingCapability}. ${landingPageCapabilityMessage(landingCapability)}`;
   const actions = new Map<string, ProposedActionView>();
+  if (requestsLandingEdit && landingCapability === 'authorized') {
+    // Same guarded tool and owned proposal store as the model loop; never a page Save/Publish.
+    return dispatchLandingPageEdit(
+      {
+        instruction: latestRequest,
+        apiBase: credentials.landingPageApiBase,
+        getToken: credentials.getEditorToken,
+        store: propose,
+        actions,
+        userId: credentials.userId,
+        tenantId: credentials.tenantId,
+        now: () => new Date(),
+        assertActive,
+      },
+      credentials.requestId
+    );
+  }
   const callModel = async (conversation: ModelMessage[]): Promise<ModelReply | undefined> => {
     await assertActive();
     const limit = new AbortController();

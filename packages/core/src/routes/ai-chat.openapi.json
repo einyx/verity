@@ -83,7 +83,7 @@
     "/api/ai-chat/completions": {
       "post": {
         "summary": "Ask AI chat",
-        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them. Landing-page tools additionally require a Cloud API token for the same user with landing-page editing permission.",
+        "description": "Send the conversation to the assistant. The assistant may read this tenant with the caller's token, and may propose writes. Proposed writes are returned in `actions` and run only after the user confirms them. Explicit landing-page edit/preview-proposal requests use the existing guarded proposal workflow directly after backend capability verification, rather than asking a model to decide the caller's permissions. General questions and negated edit requests do not trigger direct generation. Landing-page tools additionally require a Cloud API token for the same user with landing-page editing permission. Generating a proposal never saves or publishes the page.",
         "parameters": [
           {
             "name": "x-landing-page-authorization",

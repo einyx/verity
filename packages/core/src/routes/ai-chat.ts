@@ -108,6 +108,7 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
           getEditorToken: async () => editorToken(ctx),
           userId: ctx.auth.id,
           tenantId: tenant.id,
+          requestId: typeof ctx.requestId === 'string' ? ctx.requestId : undefined,
         },
         propose: createPendingActionStore(tenant.envSet.pool),
         assertActive: async () => {

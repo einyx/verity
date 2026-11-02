@@ -395,16 +395,7 @@ function StackContent() {
           throw new Error('This setting requires operator view.');
         }
       }
-      const patchValue =
-        !access.operator && field === 'featureFlags'
-          ? Object.fromEntries(
-              Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
-                key,
-                String(entry) === 'true',
-              ])
-            )
-          : value;
-      await patch({ [field]: patchValue });
+      await patch({ [field]: value });
       setEditing(undefined);
     } catch (error_: unknown) {
       await access.onDenied(error_);

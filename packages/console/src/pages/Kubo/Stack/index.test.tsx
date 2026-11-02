@@ -8,6 +8,7 @@ import type { EnvTestUtils } from '@/test-utils/env';
 import useKuboResource from '../use-kubo-resource';
 
 import Stack from '.';
+import tenantFeatureFlagPatches from './tenant-feature-flag-patches.json';
 
 const navigate = jest.fn();
 const deleteRequest = jest.fn();
@@ -444,26 +445,34 @@ describe('Kubo tenant action boundaries', () => {
     ).toHaveLength(2);
   });
 
-  it('saves tenant feature flags as booleans without sending privileged fields', async () => {
-    // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.
-    Object.assign(access, { operator: false, scope: 'tenant' });
-    renderStack({ ...stack, consoleTenantId: 'a', featureFlags: { sample: false } });
-    fireEvent.click(screen.getByText('Version and feature overrides'));
-    fireEvent.click(
-      screen
-        .getAllByRole('button', { name: 'general.edit' })
-        .filter((button) => !button.hasAttribute('disabled'))[1]!
-    );
-    const value = await screen.findByRole('combobox', { name: 'Value' });
-    expect(value).toHaveProperty('value', 'false');
-    fireEvent.change(value, { target: { value: 'true' } });
-    fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
-    await waitFor(() => {
-      expect(patchRequest).toHaveBeenCalledWith('api/kubo/stacks/team-a/foundation?scope=tenant', {
-        json: { featureFlags: { sample: true } },
+  it.each(['true', 'false'] as const)(
+    'saves tenant feature flag %s using the accepted string wire format',
+    async (selectedValue) => {
+      // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.
+      Object.assign(access, { operator: false, scope: 'tenant' });
+      const initialValue = selectedValue === 'true' ? 'false' : 'true';
+      renderStack({ ...stack, consoleTenantId: 'a', featureFlags: { sample: initialValue } });
+      fireEvent.click(screen.getByText('Version and feature overrides'));
+      fireEvent.click(
+        screen
+          .getAllByRole('button', { name: 'general.edit' })
+          .filter((button) => !button.hasAttribute('disabled'))[1]!
+      );
+      const value = await screen.findByRole('combobox', { name: 'Value' });
+      expect(value).toHaveProperty('value', initialValue);
+      fireEvent.change(value, { target: { value: selectedValue } });
+      fireEvent.click(screen.getByRole('button', { name: 'general.save' }));
+      await waitFor(() => {
+        expect(patchRequest).toHaveBeenCalledWith(
+          'api/kubo/stacks/team-a/foundation?scope=tenant',
+          {
+            // The same fixture is exercised by the actual core PATCH route, not just this mocked response.
+            json: tenantFeatureFlagPatches[selectedValue],
+          }
+        );
       });
-    });
-  });
+    }
+  );
 
   it('rejects unknown component excludes without sending a patch', async () => {
     // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic ordinary tenant capability response.

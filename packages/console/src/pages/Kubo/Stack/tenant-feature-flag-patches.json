@@ -1,0 +1,4 @@
+{
+  "true": { "featureFlags": { "sample": "true" } },
+  "false": { "featureFlags": { "sample": "false" } }
+}

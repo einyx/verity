@@ -14,6 +14,10 @@
   min-height: 0;
   color: var(--shell-ink);
   background: var(--shell-content);
+  margin: 8px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 4%);
 }
 
 .content.dark {
@@ -32,6 +36,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  background: var(--shell-rail);
 }
 
 .breadcrumb {
@@ -55,6 +60,74 @@
 .overlayScrollbarWrapper {
   flex-grow: 1;
   min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--shell-divider);
+  border-radius: 16px;
+  margin: 0 8px 8px;
+  background: var(--shell-content);
+}
+
+.sidebarToggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--shell-secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--shell-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ff301a;
+    outline-offset: 2px;
+  }
+}
+
+.headingToggle {
+  margin-inline-end: 0;
+}
+
+.overlayToggle {
+  display: none;
+}
+
+:global(html.isNarrow) {
+  .content {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .overlayScrollbarWrapper {
+    margin: 0;
+    border-inline: none;
+    border-bottom: none;
+    border-radius: 0;
+  }
+
+  .sidebarToggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .workspace > header > .breadcrumb {
+    flex-basis: auto;
+    padding-bottom: 0;
+  }
+
+  .overlayToggle {
+    display: grid;
+    align-self: flex-end;
+    margin-bottom: 8px;
+  }
 }
 
 .main {

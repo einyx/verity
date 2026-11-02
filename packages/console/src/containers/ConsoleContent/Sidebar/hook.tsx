@@ -205,7 +205,7 @@ export const useSidebarMenuItems = (): {
   // The admin tenant is the instance's own console, not a Foundation workspace. Its sidebar leaves out
   // the Foundation and authorization sections and the items that do not apply to it.
   const isAdminTenant = currentTenantId === adminTenantId;
-  const adminHiddenItems = new Set(['get_started', 'webhooks', 'customize_jwt', 'organizations']);
+  const adminHiddenItems = new Set(['get_started', 'customize_jwt', 'organizations']);
   const adminHiddenSections = new Set(['infrastructure', 'authorization']);
   const enabledSections = allSections
     .filter((section) => !section.isHidden)

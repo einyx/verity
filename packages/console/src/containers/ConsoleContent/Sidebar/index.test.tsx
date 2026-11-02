@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { createContext, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { TenantsContext } from '@/contexts/TenantsProvider';
 import { type EnvTestUtils, mockEnv, resetMockEnv } from '@/test-utils/env';
 
 import Sidebar from './index';
@@ -81,6 +82,40 @@ describe('Console sidebar links', () => {
     expect(screen.queryByRole('searchbox')).toBeNull();
     fireEvent.keyDown(window, { key: 'K', metaKey: true, shiftKey: true });
     expect(document.activeElement).toBe(screen.getByRole('searchbox'));
+  });
+
+  it('shows admin webhooks at the tenant-scoped route without restoring hidden navigation', () => {
+    mockEnv({ isCloud: true, isProduction: true, isDevFeaturesEnabled: false });
+    renderSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'admin_console.tab_sections.developer' }));
+    expect(
+      screen.getByRole('link', { name: 'admin_console.tabs.webhooks' }).getAttribute('href')
+    ).toBe('/admin/webhooks');
+    expect(screen.queryByRole('link', { name: 'admin_console.tabs.get_started' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'admin_console.tabs.customize_jwt' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'admin_console.tab_sections.infrastructure' })
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'admin_console.tab_sections.authorization' })
+    ).toBeNull();
+  });
+
+  it('preserves customer tenant webhook navigation and developer items', () => {
+    render(
+      <TenantsContext.Provider
+        value={{ currentTenantId: 'customer' } as React.ContextType<typeof TenantsContext>}
+      >
+        <MemoryRouter initialEntries={['/customer/webhooks']}>
+          <Sidebar />
+        </MemoryRouter>
+      </TenantsContext.Provider>
+    );
+    expect(
+      screen.getByRole('link', { name: 'admin_console.tabs.webhooks' }).getAttribute('href')
+    ).toBe('/customer/webhooks');
+    expect(screen.getByRole('link', { name: 'admin_console.tabs.customize_jwt' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'admin_console.tabs.get_started' })).toBeTruthy();
   });
 
   it('preserves keyboard resizing and collapsed width across remounts', () => {

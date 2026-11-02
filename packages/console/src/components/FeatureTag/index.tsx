@@ -105,7 +105,7 @@ function FeatureTag(props: Props) {
 
 export default FeatureTag;
 
-export const addOnLabels = {
+const addOnLabels = {
   addOn: 'Add-on',
   addOnBundle: 'Add-on (bundle)',
 } as const;

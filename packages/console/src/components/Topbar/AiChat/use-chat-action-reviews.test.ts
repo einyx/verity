@@ -19,7 +19,7 @@ const deferred = () => {
   return { promise, release };
 };
 const options = () => ({
-  confirm: jest.fn(async (_id: string) => ({})),
+  confirm: jest.fn(async (_id: string): Promise<unknown> => ({})),
   cancel: jest.fn(async (_id: string): Promise<unknown> => ({})),
   refresh: jest.fn(async (_action: ProposedAction) => ({
     ...action,
@@ -101,4 +101,110 @@ it('confirms the latest ID after repeated refreshes and ignores stale callbacks'
   });
   expect(api.confirm).toHaveBeenCalledWith('newest');
   expect(api.refreshEditor).toHaveBeenCalledTimes(1);
+});
+
+it('no_confirmation_before_reviews_load and confirmed_unknown_outcome_never_offers_save', () => {
+  const api = options();
+  const review = {
+    originalActionId: 'original',
+    currentActionId: 'fresh',
+    tool: action.tool,
+    body: {},
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    state: 'confirmed' as const,
+    isError: null,
+  };
+  const { result, rerender } = renderHook(
+    ({ hydrated }) => useChatActionReviews({ ...api, hydrated, reviews: [review] }),
+    { initialProps: { hydrated: false } }
+  );
+  act(() => {
+    result.current.onConfirm(action);
+  });
+  expect(api.confirm).not.toHaveBeenCalled();
+  rerender({ hydrated: true });
+  act(() => {
+    result.current.onConfirm({ ...action, id: 'fresh' }, 'original');
+  });
+  expect(api.confirm).not.toHaveBeenCalled();
+  expect(result.current.statuses.original?.status).toBe('running');
+});
+
+it('revalidation_does_not_unlock_local_operation', async () => {
+  const request = deferred();
+  const api = options();
+  api.confirm.mockImplementation(async () => request.promise);
+  const review = {
+    originalActionId: 'original',
+    currentActionId: 'original',
+    tool: action.tool,
+    body: {},
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    state: 'pending' as const,
+    isError: null,
+  };
+  const { result, rerender } = renderHook(
+    ({ reviews }) => useChatActionReviews({ ...api, hydrated: true, reviews }),
+    { initialProps: { reviews: [review] } }
+  );
+  act(() => {
+    result.current.onConfirm(action);
+  });
+  rerender({ reviews: [{ ...review }] });
+  act(() => {
+    result.current.onCancel('original');
+  });
+  expect(api.cancel).not.toHaveBeenCalled();
+  expect(result.current.statuses.original?.operation).toBe('confirm');
+  await act(async () => {
+    request.release({});
+  });
+});
+
+it('read-only authoritative reviews keep terminal labels and never run writes', () => {
+  const api = options();
+  const review = {
+    originalActionId: 'original',
+    currentActionId: 'original',
+    tool: action.tool,
+    body: {},
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    state: 'pending' as const,
+    isError: null,
+  };
+  const { result } = renderHook(() =>
+    useChatActionReviews({ ...api, reviews: [review], hydrated: true, disabled: true })
+  );
+  act(() => {
+    result.current.onConfirm(action);
+  });
+  expect(api.confirm).not.toHaveBeenCalled();
+  expect(result.current.statuses.original?.status).toBe('pending');
+});
+
+it('a freshly revalidated pending review recovers from a rejected operation without automatic confirmation', async () => {
+  const api = options();
+  api.confirm.mockRejectedValueOnce(new Error('session_busy'));
+  const review = {
+    originalActionId: 'original',
+    currentActionId: 'original',
+    tool: action.tool,
+    body: {},
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    state: 'pending' as const,
+    isError: null,
+  };
+  const { result, rerender } = renderHook(
+    ({ reviews }) => useChatActionReviews({ ...api, reviews, hydrated: true }),
+    { initialProps: { reviews: [review] } }
+  );
+  act(() => {
+    result.current.onConfirm(action);
+  });
+  await waitFor(() => {
+    expect(result.current.statuses.original?.message).toBe('Could not save');
+  });
+  rerender({ reviews: [{ ...review }] });
+  expect(result.current.statuses.original?.status).toBe('pending');
+  expect(api.confirm).toHaveBeenCalledTimes(1);
 });

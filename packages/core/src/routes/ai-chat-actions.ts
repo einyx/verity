@@ -15,7 +15,7 @@ import { type LogtoMcpTool } from './mcp-logto-tools.js';
 
 export const pendingActionTtlMs = 5 * 60 * 1000;
 // A full landing-page preview needs human review time; other write confirmations remain short-lived.
-const landingDraftReviewTtlMs = 30 * 60 * 1000;
+export const landingDraftReviewTtlMs = 30 * 60 * 1000;
 
 type PendingActionState = 'pending' | 'confirmed' | 'executed' | 'cancelled' | 'expired';
 
@@ -33,7 +33,8 @@ export type PendingAction = {
 };
 
 export type PendingActionStore = {
-  insert: (action: PendingAction) => Promise<void>;
+  /** Original sourceArgs is transient registry-validation input, never persisted by the action store. */
+  insert: (action: PendingAction, sourceArgs?: Record<string, unknown>) => Promise<void>;
   findById: (id: string, tenantId: string) => Promise<PendingAction | undefined>;
   /** Moves a pending, unexpired action of this user to `confirmed`. Only one caller can win. */
   claim: (
@@ -88,7 +89,7 @@ export const proposePendingAction = async ({
   now,
   newId = generateStandardId,
 }: {
-  store: PendingActionStore;
+  store: Pick<PendingActionStore, 'insert'>;
   tool: string;
   args: Record<string, unknown>;
   userId: string;
@@ -129,7 +130,7 @@ export const proposePendingAction = async ({
     ),
   };
 
-  await store.insert(action);
+  await store.insert(action, args);
 
   return { ok: true, action };
 };
@@ -148,7 +149,7 @@ export const proposeAndRecordAction = async ({
   actions,
   note,
 }: {
-  store: PendingActionStore;
+  store: Pick<PendingActionStore, 'insert'>;
   tool: string;
   args: Record<string, unknown>;
   userId: string;

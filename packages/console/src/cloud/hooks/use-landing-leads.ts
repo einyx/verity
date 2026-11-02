@@ -1,9 +1,12 @@
 import { useLogto } from '@logto/react';
+import { type landingLeadRecordGuard, landingLeadsResponseGuard } from '@logto/schemas';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { z } from 'zod/v3';
 
 import { cloudApi } from '@/consts';
+
+import { useLeadResearch } from './lead-research';
 
 // Read-only access to the landing demo chat's leads (dev feature, admin tenant only). A transcript is
 // loaded only when a lead is opened, so the list never pulls whole conversations.
@@ -39,32 +42,7 @@ export const buildLeadsQuery = (query: LandingLeadQuery): string => {
   return `${leadsBase}?${[...filters, `limit=${pageSize}`, `offset=${offset}`].join('&')}`;
 };
 
-const landingLeadGuard = z.object({
-  id: z.string(),
-  sessionId: z.string(),
-  lead: z
-    .object({
-      firstName: z.string(),
-      lastName: z.string(),
-      email: z.string(),
-      company: z.string(),
-      role: z.string().optional(),
-      industry: z.string().optional(),
-      interests: z.array(z.string()).optional(),
-      decision: z.string().optional(),
-      contactMethod: z.string().optional(),
-      contactDetail: z.string().optional(),
-    })
-    .passthrough(),
-  emailStatus: z.string(),
-  status: z.string(),
-  notes: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  companyProfile: z.record(z.unknown()).nullable().optional(),
-  createdAt: z.union([z.string(), z.number()]),
-});
-
-export type LandingLead = z.infer<typeof landingLeadGuard>;
+export type LandingLead = z.infer<typeof landingLeadRecordGuard>;
 
 type LeadsListing = { leads: LandingLead[]; totalCount: number; bookingUrl?: string | undefined };
 const assistResultGuard = z.object({
@@ -82,12 +60,6 @@ export type LandingLeadEmailDraft = {
   idempotencyKey: string;
 };
 export type LandingLeadEmailAcceptance = { status: 'accepted'; requestId: string };
-
-const leadsResponseGuard = z.object({
-  leads: z.array(landingLeadGuard),
-  totalCount: z.number().int().nonnegative(),
-  bookingUrl: z.string().nullable().optional(),
-});
 
 const countGuard = z.number().int().nonnegative();
 const leadStatsGuard = z
@@ -124,6 +96,8 @@ const transcriptResponseGuard = z.object({
 
 export type LandingLeadTranscript = z.infer<typeof transcriptResponseGuard>['messages'];
 
+export type { LandingLeadResearch, LeadResearchProvider } from './lead-research';
+
 const request = async (
   token: string | undefined,
   path: string,
@@ -157,11 +131,13 @@ export const useLandingLeads = (query: LandingLeadQuery = defaultLeadQuery) => {
 
   const getToken = useCallback(async () => getAccessToken(cloudApi.indicator), [getAccessToken]);
 
+  const researchLead = useLeadResearch(getToken, request);
+
   const { data, error, isLoading, isValidating, mutate } = useSWR<LeadsListing, Error>(
     isAuthenticated ? key : undefined,
     async (requestKey: string): Promise<LeadsListing> => {
       const token = await getToken();
-      const body = leadsResponseGuard.parse(
+      const body = landingLeadsResponseGuard.parse(
         await request(token, requestKey.slice(leadsBase.length))
       );
       return {
@@ -323,6 +299,7 @@ export const useLandingLeads = (query: LandingLeadQuery = defaultLeadQuery) => {
     updateLead,
     loadAssist,
     sendFollowUp,
+    researchLead,
     loadBriefPdf,
     loadSlides,
   };

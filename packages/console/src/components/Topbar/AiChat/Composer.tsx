@@ -19,6 +19,7 @@ type Props = {
   readonly attachments: Attachment[];
   readonly attachmentError?: string;
   readonly isLoading: boolean;
+  readonly isEditableWhileLoading?: boolean;
   readonly hasContent: boolean;
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;
@@ -32,6 +33,7 @@ function Composer({
   attachments,
   attachmentError,
   isLoading,
+  isEditableWhileLoading = false,
   hasContent,
   onChange,
   onSubmit,
@@ -89,7 +91,7 @@ function Composer({
         value={value}
         placeholder={t('inkeep_ai_bot.chat_placeholder')}
         aria-label={t('inkeep_ai_bot.chat_placeholder')}
-        disabled={isLoading}
+        disabled={isLoading && !isEditableWhileLoading}
         onKeyDown={handleKeyDown}
         onChange={(event) => {
           onChange(event.currentTarget.value);
@@ -101,7 +103,7 @@ function Composer({
           type="button"
           className={styles.attachButton}
           aria-label={t('inkeep_ai_bot.attach_file')}
-          disabled={isLoading}
+          disabled={isLoading && !isEditableWhileLoading}
           onClick={() => {
             fileInputRef.current?.click();
           }}

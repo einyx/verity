@@ -40,7 +40,10 @@ const props = (): LeadDetailsProps => ({
 
 it('opens a reviewable email draft only for a stored consenting email contact', () => {
   const onSendEmail = jest.fn();
-  const eligible = { ...lead, lead: { ...lead.lead, consent: true, contactMethod: 'email' } };
+  const eligible: LandingLead = {
+    ...lead,
+    lead: { ...lead.lead, consent: true, contactMethod: 'email' },
+  };
   const { rerender } = render(
     <LeadDetails {...props()} lead={eligible} onSendEmail={onSendEmail} />
   );

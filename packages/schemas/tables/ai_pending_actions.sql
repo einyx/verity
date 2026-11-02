@@ -15,6 +15,7 @@ create table ai_pending_actions (
   expires_at timestamptz not null,
   updated_at timestamptz not null default now(),
   primary key (id),
+  constraint ai_pending_actions_chat_owner unique (tenant_id, user_id, id),
   constraint ai_pending_actions_state_check check (
     state in ('pending', 'confirmed', 'executed', 'cancelled', 'expired')
   )

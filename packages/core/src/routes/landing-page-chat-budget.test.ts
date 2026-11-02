@@ -33,7 +33,15 @@ const readMaxTokens = (body: unknown): number | undefined => {
 };
 const maybeOne = jest.fn<Promise<unknown>, [{ sql: string; values: unknown[] }]>();
 mockEsm('#src/env-set/index.js', () => ({ EnvSet: { sharedPool: Promise.resolve({ maybeOne }) } }));
-mockEsm('node:dns/promises', () => ({ lookup: async () => [{ address: '203.0.113.8' }] }));
+const fetchPage = jest.fn(
+  async (url: string) =>
+    new Response(url.endsWith('robots.txt') ? '' : '<p>We serve businesses</p>')
+);
+// The public website now uses pinned Got sockets, not global fetch. Stub only that transport;
+// keep the real profile, bounded readers, budget assessment and model-response path.
+await mockEsmWithActual('./landing-page-company-transport.js', () => ({
+  createCompanyPageFetch: () => fetchPage,
+}));
 /** The company profile the chat store persists for a lead. */
 type SavedProfile = {
   readonly summary?: string;
@@ -106,7 +114,8 @@ it('uses tenant-bound explicit company/decision and persists a guarded budget al
   expect(String(budgetCall?.[1]?.body)).toContain('Example Company');
   expect(String(budgetCall?.[1]?.body)).toContain('Show SSO');
   expect(modelCalls).toHaveLength(3);
-  expect(fetchMock.mock.calls.filter(([, init]) => init?.method !== 'POST')).toHaveLength(9);
+  expect(fetchPage).toHaveBeenCalledTimes(9);
+  expect(fetchMock.mock.calls.every(([, init]) => init?.method === 'POST')).toBe(true);
   expect(saveLeadConversationInsight).toHaveBeenCalledTimes(1);
   expect(postLeadToSlack).toHaveBeenCalledTimes(1);
 });

@@ -1,5 +1,7 @@
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import { projectModelToolResult } from './mcp-model-projections.js';
+
 /** A tool result carrying one text part. */
 const textResult = (text: string, isError: boolean): CallToolResult => ({
   content: [{ type: 'text', text }],
@@ -36,34 +38,27 @@ const mergeTotalCount = (body: string, totalCount: number): string | undefined =
  */
 export const toolResultFor = (
   tool: {
-    readonly project?: (body: unknown) => unknown;
+    readonly name: string;
   },
   response: Response,
   body: string
 ): CallToolResult => {
   if (!response.ok) {
-    return textResult(body, true);
+    return textResult(`The request failed (HTTP ${response.status}).`, true);
   }
 
-  if (tool.project) {
-    // A projection that cannot read the body returns a tool error, not the raw response.
-    try {
-      return textResult(JSON.stringify(tool.project(JSON.parse(body))), false);
-    } catch {
-      return textResult('The response could not be read.', true);
-    }
+  // Projection is mandatory, even for legacy tools and writes. No raw-body fallback exists.
+  try {
+    const projected = JSON.stringify(projectModelToolResult(tool.name, JSON.parse(body)));
+    const totalCountHeader = response.headers.get('x-total-count');
+    const totalCount = totalCountHeader === null ? Number.NaN : Number(totalCountHeader);
+    return textResult(
+      Number.isSafeInteger(totalCount) && totalCount >= 0
+        ? (mergeTotalCount(projected, totalCount) ?? projected)
+        : projected,
+      false
+    );
+  } catch {
+    return textResult('The response could not be read.', true);
   }
-
-  const totalCountHeader = response.headers.get('x-total-count');
-  const totalCount = totalCountHeader === null ? Number.NaN : Number(totalCountHeader);
-
-  if (Number.isInteger(totalCount) && totalCount >= 0) {
-    const merged = mergeTotalCount(body, totalCount);
-
-    if (merged) {
-      return textResult(merged, false);
-    }
-  }
-
-  return textResult(body, false);
 };

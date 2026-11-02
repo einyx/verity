@@ -1,0 +1,144 @@
+{
+  "tags": [
+    {
+      "name": "Ai chat sessions",
+      "description": "Private, tenant- and user-owned Ask AI history, unsent drafts and synchronous model turns. Proposed writes are not executed here."
+    }
+  ],
+  "paths": {
+    "/api/ai-chat/sessions/{id}/reviews": {
+      "get": {
+        "summary": "Read authoritative latest review chains",
+        "description": "Only exposed reviews of this authenticated owner; server-time expiry and sanitized outcome only. No execution or replay.",
+        "responses": {
+          "200": { "description": "ChatReview array" },
+          "404": { "description": "not_found" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{id}/reviews/{originalActionId}/refresh": {
+      "post": {
+        "summary": "Replace a pending or expired review with its exact validated stored body",
+        "description": "Strict body contains expectedActionId only. Original, expected/latest ID, owner and session must match. Never executes; TTL is five minutes or thirty minutes for landing drafts.",
+        "responses": {
+          "200": { "description": "Replacement ChatReview" },
+          "404": { "description": "not_found" },
+          "409": {
+            "description": "review_replaced, revision_conflict, session_busy or session_archived"
+          },
+          "413": { "description": "content_limit" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{id}/turns": {
+      "get": {
+        "summary": "Discover the latest turn after a browser reload",
+        "description": "Owner-scoped, reconciled status only. Returns an object with turn=null when no turn exists. Discovers requestId without browser transcript storage and never reruns work.",
+        "responses": {
+          "200": { "description": "Object containing turn: public ChatTurn or null" },
+          "404": { "description": "not_found" }
+        }
+      },
+      "post": {
+        "summary": "Run an idempotent authenticated conversation turn",
+        "description": "Accepts only requestId (UUID), expectedTranscriptRevision, composerRevision, text and attachments. History is reconstructed on the server. Synchronous execution; matching retries return the running or terminal turn and never replay work. Missing model configuration rejects before claim. Review links become visible only with completed assistant messages.",
+        "responses": {
+          "200": {
+            "description": "Public running or terminal ChatTurn, without lease credentials."
+          },
+          "404": { "description": "not_found" },
+          "409": { "description": "revision_conflict, session_busy or session_archived" },
+          "413": { "description": "content_limit" },
+          "503": { "description": "ai_chat_not_configured or ai_chat_unavailable" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{id}/turns/{requestId}": {
+      "get": {
+        "summary": "Reconnect to an existing turn without rerunning it",
+        "description": "Owner-scoped status only. Expired running turns are interrupted, never resumed. Read messages separately for completed content and reviews.",
+        "responses": {
+          "200": { "description": "Public ChatTurn" },
+          "404": { "description": "not_found" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions": {
+      "post": {
+        "summary": "Create a private chat session",
+        "description": "Idempotent by requestId for the authenticated owner. Initializes an empty composer and operation row. No model configuration is required.",
+        "responses": {
+          "201": { "description": "Created session, or original session for a retried requestId." },
+          "413": { "description": "Session capacity reached (content_limit)." }
+        }
+      },
+      "get": {
+        "summary": "List private chat sessions",
+        "description": "30 sessions descending by (updatedAt,id). archived defaults to false. search is a literal, case-insensitive title substring, not a wildcard expression. cursor is canonical base64url JSON [updatedAt,id].",
+        "responses": { "200": { "description": "Session page with nullable nextCursor." } }
+      }
+    },
+    "/api/ai-chat/sessions/{id}": {
+      "get": {
+        "summary": "Get an owned chat session",
+        "responses": {
+          "200": { "description": "Session metadata and independent transcript revision." },
+          "404": { "description": "Unknown session or different owner (not_found)." }
+        }
+      },
+      "patch": {
+        "summary": "Rename, archive or restore a session",
+        "description": "expectedRevision is the metadata revision. Archived sessions accept only explicit restore, without a simultaneous title change. Archive conflicts with active operations and unresolved confirmed actions. Expired unconfirmed operations are fenced and interrupted, never replayed.",
+        "responses": {
+          "200": {
+            "description": "Updated metadata with incremented revision; transcript and composer revisions are unchanged."
+          },
+          "404": { "description": "not_found" },
+          "409": {
+            "description": "revision_conflict (with currentRevision), session_archived or session_busy."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an owned session and its content",
+        "description": "Requires expectedRevision in the query, not the body. Atomically cancels pending reviews and deletes session content. Executed audit records are preserved and links become content-free tombstones. Unresolved confirmed actions or active operations conflict. Capacity limits never block deletion.",
+        "responses": {
+          "204": { "description": "Deleted; no response body." },
+          "404": { "description": "not_found" },
+          "409": { "description": "revision_conflict (with currentRevision) or session_busy." }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{id}/messages": {
+      "get": {
+        "summary": "Read an owned session's message history",
+        "description": "50 messages per page, fetched descending by sequence and returned chronologically. cursor is canonical base64url JSON [sequence]. Reviews are server-derived, without raw execution results.",
+        "responses": {
+          "200": { "description": "Message page with nullable nextCursor." },
+          "404": { "description": "not_found" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{id}/composer": {
+      "get": {
+        "summary": "Read an owned unsent draft",
+        "responses": {
+          "200": { "description": "Composer including its independent revision." },
+          "404": { "description": "not_found" }
+        }
+      },
+      "put": {
+        "summary": "Save an owned unsent draft",
+        "description": "Compare-and-swap using the composer expectedRevision, independent of metadata and transcript revisions. Stores exact text and accepted text attachments. Conflict or quota rejection preserves the previous draft. Archived sessions are read-only. This does not send a message or execute an action.",
+        "responses": {
+          "200": { "description": "Composer with incremented revision." },
+          "404": { "description": "not_found" },
+          "409": { "description": "revision_conflict (with currentRevision) or session_archived." },
+          "413": {
+            "description": "Session stored-byte quota exceeded (content_limit). Input validation errors use existing guard conventions."
+          }
+        }
+      }
+    }
+  }
+}

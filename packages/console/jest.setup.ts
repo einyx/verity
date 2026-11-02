@@ -14,8 +14,16 @@ void i18next.use(initReactI18next).init({
 });
 
 /* eslint-disable @silverhand/fp/no-mutation */
-// @ts-expect-error monkey-patch for `crypto`
-crypto.subtle = webcrypto.subtle;
+const cryptoApis: Partial<Crypto> = crypto;
+if (!cryptoApis.subtle) {
+  Reflect.defineProperty(crypto, 'subtle', { value: webcrypto.subtle, configurable: true });
+}
+if (!cryptoApis.randomUUID) {
+  Reflect.defineProperty(crypto, 'randomUUID', {
+    value: webcrypto.randomUUID.bind(webcrypto),
+    configurable: true,
+  });
+}
 // The Node and DOM `TextEncoder`/`TextDecoder` types no longer line up, so the globals are filled
 // through the constructors' own types.
 /* eslint-disable no-restricted-syntax -- The Node and DOM types for these constructors no longer match, and the assignment is the point of the polyfill. */
@@ -30,4 +38,10 @@ global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder;
 /* eslint-disable @silverhand/fp/no-mutation, @typescript-eslint/no-unsafe-assignment -- Test-only global override so signals share one realm; `runInThisContext` is typed `any` by Node. */
 global.AbortController = runInThisContext('AbortController');
 global.AbortSignal = runInThisContext('AbortSignal');
+global.TransformStream = runInThisContext('TransformStream');
+global.ReadableStream = runInThisContext('ReadableStream');
+global.WritableStream = runInThisContext('WritableStream');
+global.Request = runInThisContext('Request');
+global.Response = runInThisContext('Response');
+global.Headers = runInThisContext('Headers');
 /* eslint-enable @silverhand/fp/no-mutation, @typescript-eslint/no-unsafe-assignment */

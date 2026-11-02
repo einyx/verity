@@ -2,7 +2,7 @@ import i18next from 'i18next';
 import { createRoot } from 'react-dom/client';
 import { initReactI18next } from 'react-i18next';
 
-import AiChat from '../../../src/components/Topbar/AiChat';
+import AiChat from '../../../src/components/Topbar/AiChat/LegacyAiChat';
 import theme from '../../../src/contexts/AppThemeProvider/index.module.scss';
 
 await i18next.use(initReactI18next).init({

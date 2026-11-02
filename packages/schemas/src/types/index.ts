@@ -42,3 +42,4 @@ export * from './authentication-context.js';
 export * from './landing-page.js';
 export * from './landing-page-defaults.js';
 export * from './landing-lead-synthetic.js';
+export * from './landing-lead.js';

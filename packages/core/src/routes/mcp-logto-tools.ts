@@ -1,5 +1,6 @@
 import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import { readBoundedResponse } from './bounded-response.js';
 import { kuboPortalUrl } from './kubo-portal-url.js';
 import { toolResultFor } from './mcp-logto-response.js';
 
@@ -29,11 +30,6 @@ export type LogtoMcpTool = {
   required?: string[];
   /** Builds the JSON body of a POST tool from its arguments. Only the fields it names are sent. */
   body?: (args: Record<string, unknown>) => Record<string, unknown>;
-  /**
-   * Keeps only the fields the model may see from a successful response. Use it for settings that
-   * hold values we do not want to pass to the model, such as provider configuration.
-   */
-  project?: (body: unknown) => unknown;
   /** A read tool that is only offered while dev features are enabled. */
   devFeature?: boolean;
 };
@@ -53,30 +49,6 @@ const descriptionProperty: ToolProperty = {
 };
 
 const applicationTypes = ['SPA', 'Traditional', 'Native', 'MachineToMachine'] as const;
-
-const signInExperienceFields = new Set([
-  'color',
-  'branding',
-  'hideLogtoBranding',
-  'languageInfo',
-  'termsOfUseUrl',
-  'privacyPolicyUrl',
-  'agreeToTermsPolicy',
-  'signIn',
-  'signUp',
-  'signInMode',
-]);
-
-/** Keeps the allowlisted sign-in fields and drops everything else, so unlisted settings never reach the model. */
-const pickSignInExperience = (body: unknown): unknown => {
-  if (typeof body !== 'object' || body === null) {
-    return body;
-  }
-
-  return Object.fromEntries(
-    Object.entries(body).filter(([key]) => signInExperienceFields.has(key))
-  );
-};
 
 export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
@@ -117,7 +89,7 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
   {
     name: 'get_audit_logs',
     description:
-      'List the audit logs of this tenant, newest first: sign-ins, token exchanges, profile changes, and admin actions, each with its payload.',
+      'List audit event IDs, keys, times, outcome and user/application IDs, newest first. Sensitive payloads and diagnostics are excluded.',
     path: '/logs',
     properties: pagingProperties,
   },
@@ -136,7 +108,6 @@ export const logtoMcpTools: readonly LogtoMcpTool[] = [
       'Get the sign-in experience of this tenant: sign-in and sign-up methods, sign-in mode, branding, language and terms links.',
     path: '/sign-in-exp',
     properties: {},
-    project: pickSignInExperience,
   },
   {
     name: 'list_organizations',
@@ -300,6 +271,7 @@ export const sendLogtoRequest = async (
   // A service that cannot be reached (for example Kubo outside the cluster) becomes a tool error the
   // model can report, instead of failing the whole chat request.
   try {
+    const signal = AbortSignal.timeout(10_000);
     const response = await fetchImpl(url, {
       method: tool.method ?? 'GET',
       headers: {
@@ -308,9 +280,13 @@ export const sendLogtoRequest = async (
         ...(requestBody ? { 'content-type': 'application/json' } : {}),
       },
       ...(requestBody ? { body: JSON.stringify(requestBody) } : {}),
-      signal: AbortSignal.timeout(10_000),
+      signal,
     });
-    const body = await response.text();
+    if (!response.ok) {
+      await response.body?.cancel();
+      return toolResultFor(tool, response, '');
+    }
+    const body = await readBoundedResponse(response, { maxBytes: 1_000_000, signal });
 
     return toolResultFor(tool, response, body);
   } catch {

@@ -83,6 +83,8 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   yaml@>=2.0.0 <2.8.3: ^2.8.3
 
+packageExtensionsChecksum: sha256-Xf1/zW2SYptEneadvCzgog7yQU2kPkrt6iB2HkJ79aM=
+
 importers:
 
   .:
@@ -4786,7 +4788,7 @@ importers:
         version: 1.0.5(supports-color@10.2.2)
       '@web/test-runner':
         specifier: ^1.0.0
-        version: 1.0.0(supports-color@10.2.2)(yauzl@2.10.0)
+        version: 1.0.0(supports-color@10.2.2)
       '@web/test-runner-playwright':
         specifier: ^1.0.0
         version: 1.0.0(supports-color@10.2.2)
@@ -5105,7 +5107,7 @@ importers:
         version: 1.0.0
       jest-puppeteer:
         specifier: ^11.0.0
-        version: 11.0.0(debug@4.4.3(supports-color@10.2.2))(puppeteer@25.15.0(yauzl@2.10.0))(supports-color@10.2.2)(typescript@5.9.3)
+        version: 11.0.0(puppeteer@25.15.0(yauzl@2.10.0))(supports-color@10.2.2)(typescript@5.9.3)
       jose:
         specifier: ^6.2.3
         version: 6.2.13
@@ -17938,7 +17940,7 @@ snapshots:
     dependencies:
       '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
+      ajv-formats: 3.0.1
       content-type: 1.0.5
       cors: 2.8.6
       cross-spawn: 7.0.6
@@ -17962,7 +17964,7 @@ snapshots:
     dependencies:
       '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
+      ajv-formats: 3.0.1
       content-type: 1.0.5
       cors: 2.8.6
       cross-spawn: 7.0.6
@@ -20865,7 +20867,7 @@ snapshots:
       '@types/parse5': 6.0.3
       parse5: 6.0.1
 
-  '@web/test-runner-chrome@1.0.1(supports-color@10.2.2)(yauzl@2.10.0)':
+  '@web/test-runner-chrome@1.0.1(supports-color@10.2.2)':
     dependencies:
       '@web/test-runner-core': 1.0.0(supports-color@10.2.2)
       '@web/test-runner-coverage-v8': 1.0.0(supports-color@10.2.2)
@@ -20992,12 +20994,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@web/test-runner@1.0.0(supports-color@10.2.2)(yauzl@2.10.0)':
+  '@web/test-runner@1.0.0(supports-color@10.2.2)':
     dependencies:
       '@web/browser-logs': 1.0.0
       '@web/config-loader': 1.0.0
       '@web/dev-server': 1.0.0(supports-color@10.2.2)
-      '@web/test-runner-chrome': 1.0.1(supports-color@10.2.2)(yauzl@2.10.0)
+      '@web/test-runner-chrome': 1.0.1(supports-color@10.2.2)
       '@web/test-runner-commands': 1.0.1(supports-color@10.2.2)
       '@web/test-runner-core': 1.0.0(supports-color@10.2.2)
       '@web/test-runner-mocha': 1.0.0(supports-color@10.2.2)
@@ -21104,12 +21106,12 @@ snapshots:
     optionalDependencies:
       ajv: 8.20.0
 
-  ajv-formats@2.1.1(ajv@8.20.0):
-    optionalDependencies:
+  ajv-formats@2.1.1:
+    dependencies:
       ajv: 8.20.0
 
-  ajv-formats@3.0.1(ajv@8.20.0):
-    optionalDependencies:
+  ajv-formats@3.0.1:
+    dependencies:
       ajv: 8.20.0
 
   ajv@6.15.0:
@@ -24900,7 +24902,7 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-dev-server@11.0.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2):
+  jest-dev-server@11.0.0(supports-color@10.2.2):
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
@@ -24908,7 +24910,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 11.0.0
       tree-kill: 1.2.2
-      wait-on: 8.0.5(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      wait-on: 8.0.5(supports-color@10.2.2)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -24956,12 +24958,12 @@ snapshots:
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
-  jest-environment-puppeteer@11.0.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3):
+  jest-environment-puppeteer@11.0.0(supports-color@10.2.2)(typescript@5.9.3):
     dependencies:
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.9.3)
       deepmerge: 4.3.1
-      jest-dev-server: 11.0.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      jest-dev-server: 11.0.0(supports-color@10.2.2)
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -25022,10 +25024,10 @@ snapshots:
     optionalDependencies:
       jest-resolve: 29.7.0
 
-  jest-puppeteer@11.0.0(debug@4.4.3(supports-color@10.2.2))(puppeteer@25.15.0(yauzl@2.10.0))(supports-color@10.2.2)(typescript@5.9.3):
+  jest-puppeteer@11.0.0(puppeteer@25.15.0(yauzl@2.10.0))(supports-color@10.2.2)(typescript@5.9.3):
     dependencies:
       expect-puppeteer: 11.0.0
-      jest-environment-puppeteer: 11.0.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)
+      jest-environment-puppeteer: 11.0.0(supports-color@10.2.2)(typescript@5.9.3)
       puppeteer: 25.15.0(yauzl@2.10.0)
     transitivePeerDependencies:
       - debug
@@ -25544,6 +25546,7 @@ snapshots:
 
   koa-proxies@0.12.6(debug@4.4.3(supports-color@5.5.0))(koa@3.2.1):
     dependencies:
+      '@types/koa': 3.0.3
       http-proxy: 1.18.1(debug@4.4.3(supports-color@5.5.0))
       koa: 3.2.1
       path-match: 1.2.4
@@ -26897,7 +26900,7 @@ snapshots:
   openapi-schema-validator@12.1.3:
     dependencies:
       ajv: 8.20.0
-      ajv-formats: 2.1.1(ajv@8.20.0)
+      ajv-formats: 2.1.1
       lodash.merge: 4.6.2
       openapi-types: 12.1.3
 
@@ -29636,7 +29639,7 @@ snapshots:
     dependencies:
       xml-name-validator: 4.0.0
 
-  wait-on@8.0.5(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2):
+  wait-on@8.0.5(supports-color@10.2.2):
     dependencies:
       axios: 1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       joi: 18.3.0

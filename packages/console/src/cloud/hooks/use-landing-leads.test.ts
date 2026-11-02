@@ -109,6 +109,34 @@ describe('buildLeadsQuery', () => {
 });
 
 describe('useLandingLeads', () => {
+  it('keeps the entire CRM page when a valid lead declines surname and company', async () => {
+    const minimal = {
+      id: 'minimal',
+      sessionId: 'session-minimal',
+      lead: { firstName: 'Ada', email: 'ada@example.com', consent: true },
+      status: 'qualified',
+      emailStatus: 'sent',
+      notes: 'Keep CRM notes',
+      tags: ['Priority'],
+      createdAt: 123,
+    };
+    const complete = {
+      ...minimal,
+      id: 'complete',
+      sessionId: 'session-complete',
+      lead: { ...minimal.lead, lastName: 'Lovelace', company: 'Analytical' },
+    };
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ leads: [minimal, complete], totalCount: 2 }),
+    });
+    const { result } = renderHook(() => useLandingLeads(), { wrapper });
+    await waitFor(() => {
+      expect(result.current.leads).toEqual([minimal, complete]);
+    });
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.totalCount).toBe(2);
+  });
   it('submits the reviewed message with the same Cloud token and encoded session ID', async () => {
     const { result } = renderHook(() => useLandingLeads(), { wrapper });
     await waitFor(() => {

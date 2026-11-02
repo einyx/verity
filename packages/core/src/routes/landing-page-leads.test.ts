@@ -1,10 +1,14 @@
 /* eslint-disable @silverhand/fp/no-mutation -- The in-memory tables are the test's fake database, so they are reassigned per test and read back by the assertions. */
 /* eslint-disable max-lines -- Shared route authorization and isolated fake database cover analytics and both export paths. */
+import { landingLeadsResponseGuard } from '@logto/schemas';
+import type { CommonQueryMethods } from '@silverhand/slonik';
 import Koa from 'koa';
 import request from 'supertest';
 
 import { type BriefInput } from './landing-page-brief.js';
 import { parseBudgetAssessment } from './landing-page-budget.js';
+import { parseDemoLead } from './landing-page-chat-guard.js';
+import { recordLandingLead } from './landing-page-chat-store.js';
 import type { DailyLeadCount, LeadStageBucket } from './landing-page-lead-stats.js';
 import { signLeadFileQuery } from './landing-page-signed.js';
 
@@ -134,6 +138,10 @@ const createApp = () => {
 };
 
 const get = (path: string) => request(createApp()).get(path).set('Authorization', 'Bearer test');
+const research = (provider = 'claude') =>
+  request(createApp())
+    .post(`/api/landing-leads/session-2/research/${provider}`)
+    .set('Authorization', 'Bearer test');
 const patch = (path: string, body: Record<string, unknown>) =>
   request(createApp()).patch(path).set('Authorization', 'Bearer test').send(body);
 
@@ -179,6 +187,104 @@ beforeEach(() => {
 });
 
 describe('landing leads routes', () => {
+  it('round-trips a consented first-name-only lead through producer, JSONB storage, listing and the Console contract', async () => {
+    const visitor = { firstName: 'Ada', email: 'ada@example.com', consent: true };
+    const parsed = parseDemoLead(visitor);
+    if (!parsed) {
+      throw new Error('Valid optional-field lead rejected');
+    }
+    const queries: Array<{ values: readonly unknown[] }> = [];
+    await recordLandingLead(
+      {
+        query: async (query: { values: readonly unknown[] }) => {
+          // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- Record the exact emitted JSONB write.
+          queries.push(query);
+        },
+      } as unknown as CommonQueryMethods,
+      { sessionId: 'minimal-session', lead: parsed, emailStatus: 'sent' }
+    );
+    const stored: unknown = JSON.parse(String(queries[0]?.values[3]));
+    expect(stored).toEqual(visitor);
+    state.leads = [
+      { ...lead(1), lead: stored, notes: 'CRM preserved', tags: ['Priority'] },
+      lead(2),
+    ];
+    const response = await get('/api/landing-leads').expect(200);
+    const listing = landingLeadsResponseGuard.parse(response.body);
+    expect(listing.totalCount).toBe(2);
+    expect(listing.leads.find(({ id }) => id === 'lead-1')).toMatchObject({
+      lead: visitor,
+      notes: 'CRM preserved',
+      tags: ['Priority'],
+    });
+    expect(listing.leads.find(({ id }) => id === 'lead-1')?.lead).not.toHaveProperty('lastName');
+    expect(listing.leads.find(({ id }) => id === 'lead-1')?.lead).not.toHaveProperty('company');
+  });
+  describe('explicit advisory research', () => {
+    it('requires a scoped administrator before querying or researching', async () => {
+      auth.scopes = ['read:users'];
+      const unscoped = await research();
+      expect(unscoped.status).toBe(403);
+      expect(state.exportQueries).toEqual([]);
+      auth.scopes = ['manage:landing:page'];
+      auth.token = { sub: 'machine', clientId: 'machine' };
+      const machine = await research();
+      expect(machine.status).toBe(403);
+      expect(state.exportQueries).toEqual([]);
+    });
+
+    it('keeps the prototype disabled without dev features and rejects unknown providers', async () => {
+      env.isDevFeaturesEnabled = false;
+      const disabled = await research();
+      expect(disabled.status).toBe(404);
+      env.isDevFeaturesEnabled = true;
+      const unknown = await research('unknown');
+      expect(unknown.status).toBe(400);
+      expect(state.exportQueries).toEqual([]);
+    });
+
+    it('returns 404 for an absent selected lead without invoking a provider', async () => {
+      state.exportRow = undefined;
+      const missing = await research();
+      expect(missing.status).toBe(404);
+      expect(state.exportQueries[0]?.values).toEqual(['admin', 'session-2']);
+    });
+
+    it('returns an unsent draft without lead writes or private contact fields', async () => {
+      const originalUrl = process.env.CLAUDE_LEAD_RESEARCH_URL;
+      const originalToken = process.env.CLAUDE_LEAD_RESEARCH_TOKEN;
+      process.env.CLAUDE_LEAD_RESEARCH_URL = 'https://research.example.invalid/research';
+      process.env.CLAUDE_LEAD_RESEARCH_TOKEN = 'synthetic-local-test-token';
+      state.exportRow = { lead: { firstName: 'Ada', email: 'private@example.invalid' } };
+      const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ findings: [], draft: 'Unsent draft' }), {
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+      try {
+        const response = await research();
+        expect(response.status).toBe(200);
+        expect(response.headers['cache-control']).toBe('no-store');
+        expect(response.body).toEqual({ findings: [], draft: 'Unsent draft' });
+        expect(fetch.mock.calls[0]?.[1]?.body).not.toContain('private@example.invalid');
+        expect(state.exportQueries).toHaveLength(1);
+        expect(state.exportQueries[0]?.sql).not.toMatch(/\b(insert|update|delete)\b/i);
+      } finally {
+        fetch.mockRestore();
+        if (originalUrl === undefined) {
+          Reflect.deleteProperty(process.env, 'CLAUDE_LEAD_RESEARCH_URL');
+        } else {
+          process.env.CLAUDE_LEAD_RESEARCH_URL = originalUrl;
+        }
+        if (originalToken === undefined) {
+          Reflect.deleteProperty(process.env, 'CLAUDE_LEAD_RESEARCH_TOKEN');
+        } else {
+          process.env.CLAUDE_LEAD_RESEARCH_TOKEN = originalToken;
+        }
+      }
+    });
+  });
+
   it('shares selected admin-tenant export context across direct and signed downloads without writes', async () => {
     state.exportRow = {
       lead: {

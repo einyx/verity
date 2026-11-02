@@ -19,6 +19,7 @@ import {
   parseLeadAssistResult,
 } from './landing-page-lead-assist.js';
 import { mountLeadFollowUpRoute } from './landing-page-lead-follow-up-route.js';
+import { requestLeadResearch } from './landing-page-lead-research.js';
 import {
   completeWeeks,
   toWeekBuckets,
@@ -326,6 +327,30 @@ export const landingPageLeadRoutes = (envSet: EnvSet) => {
     assertThat(session, new RequestError({ code: 'entity.not_found', status: 404 }));
     ctx.body = { messages: session.messages };
 
+    return next();
+  });
+
+  // Explicit advisory research only: no lead writes, email or follow-up dispatch.
+  router.post('/api/landing-leads/:sessionId/research/:provider', async (ctx, next) => {
+    await authenticateAdmin(ctx);
+    assertThat(
+      EnvSet.values.isDevFeaturesEnabled,
+      new RequestError({ code: 'entity.not_found', status: 404 })
+    );
+    const { provider } = ctx.params;
+    assertThat(
+      provider === 'autoclaw' || provider === 'claude',
+      new RequestError({ code: 'request.invalid_input', status: 400 })
+    );
+    const sessionId = typeof ctx.params.sessionId === 'string' ? ctx.params.sessionId : '';
+    const pool = await EnvSet.sharedPool;
+    const row = await pool.maybeOne<{ lead: Record<string, unknown> }>(sql`
+      select lead from landing_leads
+      where tenant_id = ${adminTenantId} and session_id = ${sessionId}
+    `);
+    assertThat(row, new RequestError({ code: 'entity.not_found', status: 404 }));
+    ctx.body = await requestLeadResearch(provider, row.lead);
+    ctx.set('cache-control', 'no-store');
     return next();
   });
 

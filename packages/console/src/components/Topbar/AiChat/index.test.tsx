@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type * as ReactTypes from 'react';
 
-import AiChat from './index';
+import AiChat from './LegacyAiChat';
 
 jest.mock('@/components/LandingChat/demo-chat.css', () => ({}));
 

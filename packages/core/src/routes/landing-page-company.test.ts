@@ -76,6 +76,70 @@ describe('profileCompany', () => {
     now: () => new Date('2026-10-24T00:00:00.000Z'),
   };
 
+  it('enforces one aggregate budget including robots across all concurrent pages', async () => {
+    const summarize = jest.fn(async () => 'unused');
+    const profile = await profileCompany('rep@example.test', {
+      summarize,
+      fetchPage: async () => new Response('x'.repeat(100_001)),
+    });
+    // Each body is under 200 KB, but nine bodies exceed the shared 800 KB run budget.
+    expect(profile).toBeUndefined();
+    expect(summarize).not.toHaveBeenCalled();
+  });
+
+  it('cancels every stalled page on caller abort and never summarizes a partial cancelled run', async () => {
+    const abort = new AbortController();
+    const cancelled = jest.fn();
+    const summarize = jest.fn(async () => 'unused');
+    const entered = jest.fn();
+    const profile = profileCompany('rep@example.test', {
+      signal: abort.signal,
+      summarize,
+      fetchPage: async (url) => {
+        if (url.endsWith('robots.txt')) {
+          return new Response('');
+        }
+        entered();
+        if (entered.mock.calls.length === 8) {
+          abort.abort();
+        }
+        return new Response(new ReadableStream({ cancel: cancelled }));
+      },
+    });
+    expect(await profile).toBeUndefined();
+    expect(cancelled).toHaveBeenCalledTimes(8);
+    expect(summarize).not.toHaveBeenCalled();
+  });
+
+  it('cancels oversized chunked pages before buffering/decoding them', async () => {
+    const cancelled = jest.fn();
+    const summarize = jest.fn(async () => 'must not summarize oversized data');
+    const result = await profileCompany('rep@example.test', {
+      summarize,
+      fetchPage: async (url) => {
+        const chunks = [new TextEncoder().encode('é'.repeat(100_001)), new Uint8Array(1)];
+        return url.endsWith('robots.txt')
+          ? new Response('')
+          : new Response(
+              new ReadableStream({
+                pull(controller) {
+                  const chunk = chunks.shift();
+                  if (chunk) {
+                    controller.enqueue(chunk);
+                  } else {
+                    controller.close();
+                  }
+                },
+                cancel: cancelled,
+              })
+            );
+      },
+    });
+    expect(result).toBeUndefined();
+    expect(summarize).not.toHaveBeenCalled();
+    expect(cancelled).toHaveBeenCalled();
+  });
+
   it('keeps the original profile when no budget callback is supplied', async () => {
     expect(await profileCompany('rep@example.test', options)).toMatchObject({
       summary: 'Original company summary',

@@ -3,12 +3,14 @@ import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
 import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ActionContext } from './Conversation';
+import { ActionContext } from './ActionContext';
 import ProposedActionCard, { type ProposedAction } from './ProposedActionCard';
 import styles from './index.module.scss';
 
 // Metadata comes from the chat response, so each entry is checked before it is rendered as an action.
-const isActionList = (value: unknown): value is Array<Omit<ProposedAction, 'status'>> =>
+const isActionList = (
+  value: unknown
+): value is Array<Omit<ProposedAction, 'status'> & Partial<Pick<ProposedAction, 'status'>>> =>
   Array.isArray(value) &&
   value.every(
     (item: unknown) =>
@@ -72,9 +74,13 @@ function AssistantMessage() {
         const action: ProposedAction = {
           ...original,
           ...state?.replacement,
-          status: state?.status ?? 'pending',
+          status:
+            actionContext?.isHydrated === false
+              ? 'running'
+              : (state?.status ?? original.status ?? 'pending'),
           message: state?.message,
-          operation: state?.operation,
+          operation:
+            state?.operation ?? (actionContext?.canOperate === false ? 'confirm' : undefined),
         };
         return (
           <ProposedActionCard

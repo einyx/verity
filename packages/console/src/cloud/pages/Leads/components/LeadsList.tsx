@@ -77,7 +77,9 @@ function LeadQueue({
                   </strong>
                   <span className={styles.stage}>{lead.status.replace('_', ' ')}</span>
                 </span>
-                <span className={styles.rowContext}>{lead.lead.company}</span>
+                <span className={styles.rowContext}>
+                  {lead.lead.company ?? 'Company not provided'}
+                </span>
                 <span className={styles.rowContext}>{lead.lead.email}</span>
                 {lead.tags && lead.tags.length > 0 && (
                   <span className={styles.rowContext}>Tags: {lead.tags.join(', ')}</span>

@@ -1,7 +1,8 @@
-import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
-
+import { createResponseBudget, readBoundedResponse } from './bounded-response.js';
 import { budgetAssessmentGuard, type BudgetAssessment } from './landing-page-budget.js';
+import { createCompanyPageFetch, type CompanyPageFetch } from './landing-page-company-transport.js';
+
+export { resolvesToPublicAddress } from './landing-page-company-transport.js';
 
 // Company research for a sales lead. It reads only the company's own public site, on the domain of the
 // visitor's work email: the homepage, about, product, pricing, customers and careers pages. It never reads people-search or social sites,
@@ -69,63 +70,6 @@ export const companyDomainFromEmail = (email: string): string | undefined => {
   return domain;
 };
 
-const isPrivateNetwork = (first: number, second: number) =>
-  first === 0 ||
-  first === 10 ||
-  first === 127 ||
-  (first === 169 && second === 254) ||
-  (first === 172 && second >= 16 && second <= 31) ||
-  (first === 192 && second === 168);
-
-// Carrier-grade NAT space, which is not public either.
-const isSharedNetwork = (first: number, second: number) =>
-  first === 100 && second >= 64 && second <= 127;
-
-const isPrivateRange = (first: number, second: number) =>
-  isPrivateNetwork(first, second) || isSharedNetwork(first, second);
-
-const isPrivateIPv4 = (address: string) => {
-  const [first = -1, second = -1] = address.split('.').map(Number);
-
-  return isPrivateRange(first, second) || first >= 224;
-};
-
-const isPrivateAddress = (address: string) => {
-  if (isIP(address) === 4) {
-    return isPrivateIPv4(address);
-  }
-
-  const lower = address.toLowerCase();
-  const mapped = /^:{2}f{4}:((?:\d+\.){3}\d+)$/.exec(lower);
-
-  if (mapped?.[1]) {
-    return isPrivateIPv4(mapped[1]);
-  }
-
-  return (
-    lower === '::' ||
-    lower === '::1' ||
-    lower.startsWith('fc') ||
-    lower.startsWith('fd') ||
-    lower.startsWith('fe8') ||
-    lower.startsWith('fe9') ||
-    lower.startsWith('fea') ||
-    lower.startsWith('feb') ||
-    lower.startsWith('ff')
-  );
-};
-
-/** True only when every address the domain resolves to is public. */
-export const resolvesToPublicAddress = async (domain: string): Promise<boolean> => {
-  try {
-    const addresses = await lookup(domain, { all: true });
-
-    return addresses.length > 0 && addresses.every(({ address }) => !isPrivateAddress(address));
-  } catch {
-    return false;
-  }
-};
-
 /** Whether robots.txt lets a generic crawler read the site root. Missing or unreadable means allowed. */
 export const robotsAllowsRoot = (robots?: string): boolean => {
   if (!robots) {
@@ -170,44 +114,45 @@ export const htmlToText = (html: string): string =>
     .trim()
     .slice(0, maxTextChars);
 
-type Fetch = (url: string, init: { redirect: 'manual'; signal: AbortSignal }) => Promise<Response>;
-
 /** Reads one page, or undefined when it cannot be read. Never throws, so one bad page cannot stop research. */
-const readPage = async (fetchPage: Fetch, url: string): Promise<string | undefined> => {
+const readPage = async (
+  fetchPage: CompanyPageFetch,
+  url: string,
+  runSignal: AbortSignal,
+  consume: (bytes: number) => void
+): Promise<string | undefined> => {
+  const signal = AbortSignal.any([runSignal, AbortSignal.timeout(pageTimeoutMs)]);
   try {
-    return await fetchText(fetchPage, url);
+    signal.throwIfAborted();
+    const response = await fetchPage(url, { redirect: 'manual', signal });
+    if (!response.ok) {
+      await response.body?.cancel();
+      return undefined;
+    }
+    return await readBoundedResponse(response, { maxBytes: maxPageBytes, signal, consume });
   } catch {
     return undefined;
   }
 };
 
-const fetchText = async (fetchPage: Fetch, url: string): Promise<string | undefined> => {
-  const response = await fetchPage(url, {
-    redirect: 'manual',
-    signal: AbortSignal.timeout(pageTimeoutMs),
-  });
-
-  if (!response.ok) {
-    return undefined;
-  }
-
-  const body = await response.text();
-
-  return body.slice(0, maxPageBytes);
-};
-
 /** Reads the company's public pages. Returns undefined when the site cannot be read safely. */
 const readCompanySite = async (
   domain: string,
-  fetchPage: Fetch
+  fetchPage: CompanyPageFetch,
+  signal?: AbortSignal
 ): Promise<
   { text: string; sources: string[]; pages: Array<{ url: string; text: string }> } | undefined
 > => {
-  if (!(await resolvesToPublicAddress(domain))) {
-    return undefined;
-  }
-
-  const robots = await readPage(fetchPage, `https://${domain}/robots.txt`);
+  const budget = new AbortController();
+  const runSignal = AbortSignal.any([
+    budget.signal,
+    AbortSignal.timeout(15_000),
+    ...(signal ? [signal] : []),
+  ]);
+  const consume = createResponseBudget(800_000, () => {
+    budget.abort();
+  });
+  const robots = await readPage(fetchPage, `https://${domain}/robots.txt`, runSignal, consume);
 
   if (!robotsAllowsRoot(robots)) {
     return undefined;
@@ -216,11 +161,14 @@ const readCompanySite = async (
   const pages = await Promise.all(
     pagePaths.map(async (path) => {
       const url = `https://${domain}${path}`;
-      const html = await readPage(fetchPage, url);
+      const html = await readPage(fetchPage, url, runSignal, consume);
 
       return html ? { url, text: htmlToText(html) } : undefined;
     })
   );
+  if (runSignal.aborted) {
+    return undefined;
+  }
   const found = pages.filter((page) => page !== undefined);
   const text = found
     .map((page) => page.text)
@@ -272,7 +220,9 @@ export const summarizeCompanyText = async (
 export const profileCompany = async (
   email: string,
   options: {
-    fetchPage: Fetch;
+    /** Optional synthetic transport for offline tests. Production uses pinned public-only sockets. */
+    fetchPage?: CompanyPageFetch;
+    signal?: AbortSignal;
     summarize: (text: string) => Promise<string>;
     /** Optional internal advisory; reuses only the already safely fetched official pages. */
     assessBudget?: (sources: Array<{ url: string; text: string }>) => Promise<unknown>;
@@ -285,7 +235,11 @@ export const profileCompany = async (
     return undefined;
   }
 
-  const site = await readCompanySite(domain, options.fetchPage);
+  const site = await readCompanySite(
+    domain,
+    options.fetchPage ?? createCompanyPageFetch(),
+    options.signal
+  );
 
   if (!site) {
     return undefined;

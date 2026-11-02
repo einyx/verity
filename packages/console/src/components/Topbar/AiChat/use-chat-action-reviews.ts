@@ -1,14 +1,20 @@
+import { type ChatReview } from '@logto/schemas';
 import { useRef, useState } from 'react';
 
 import { type ProposedAction } from './ProposedActionCard';
 import { confirmChatAction } from './confirm-action';
+import { reviewAction } from './session-review';
 
 type Operation = 'confirm' | 'cancel' | 'refresh';
 type ReviewState = Pick<ProposedAction, 'status' | 'message'> & {
   replacement?: ProposedAction;
   operation?: Operation;
+  authority?: ChatReview[];
 };
 type Options = {
+  reviews?: ChatReview[];
+  hydrated?: boolean;
+  disabled?: boolean;
   confirm: (id: string) => Promise<unknown>;
   cancel: (id: string) => Promise<unknown>;
   refresh: (action: ProposedAction) => Promise<ProposedAction>;
@@ -21,14 +27,52 @@ export default function useChatActionReviews(options: Options) {
   const current = useRef<Record<string, ReviewState | undefined>>({});
   const operations = useRef(new Map<string, symbol>());
   const [statuses, setStatuses] = useState(current.current);
+  const authoritative = Object.fromEntries(
+    (options.reviews ?? []).map((review) => [
+      review.originalActionId,
+      {
+        status: reviewAction(review).status,
+        replacement: reviewAction(review),
+      },
+    ])
+  );
+  const merged: Record<string, ReviewState | undefined> = Object.fromEntries(
+    [...new Set([...Object.keys(authoritative), ...Object.keys(statuses)])].map((key) => {
+      const state = authoritative[key];
+      const local = statuses[key];
+      if (
+        state &&
+        !local?.operation &&
+        (state.status !== 'pending' ||
+          local?.replacement?.id !== state.replacement.id ||
+          (local.status === 'failed' && local.authority !== options.reviews))
+      ) {
+        // Server terminal/replacement state beats stale cached pending, never an in-flight lock.
+        return [key, { ...local, ...state }];
+      }
+      return [key, local ?? state];
+    })
+  );
   const update = (key: string, state: ReviewState) => {
     // eslint-disable-next-line @silverhand/fp/no-mutation -- Ref is the synchronous operation gate between renders.
     current.current = { ...current.current, [key]: state };
     setStatuses(current.current);
   };
   const begin = (key: string, id: string, operation: Operation) => {
-    const state = current.current[key];
+    const state = merged[key];
+    const review = options.reviews?.find((item) => item.originalActionId === key);
     if (
+      options.hydrated === false ||
+      options.disabled === true ||
+      (options.reviews !== undefined && !review) ||
+      (review
+        ? review.currentActionId !== id ||
+          review.state === 'confirmed' ||
+          review.state === 'executed' ||
+          review.state === 'cancelled' ||
+          (operation === 'confirm' &&
+            (review.state === 'expired' || Date.parse(review.expiresAt) <= Date.now()))
+        : false) ||
       operations.current.has(key) ||
       (state?.replacement?.id ?? key) !== id ||
       state?.status === 'done' ||
@@ -42,6 +86,7 @@ export default function useChatActionReviews(options: Options) {
       ...state,
       status: operation === 'confirm' ? 'running' : (state?.status ?? 'pending'),
       operation,
+      authority: options.reviews,
       message: undefined,
     });
     return token;
@@ -49,7 +94,7 @@ export default function useChatActionReviews(options: Options) {
   const finish = (key: string, id: string, token: symbol, state: ReviewState) => {
     if (
       operations.current.get(key) !== token ||
-      (current.current[key]?.replacement?.id ?? key) !== id
+      (current.current[key]?.replacement?.id ?? merged[key]?.replacement?.id ?? key) !== id
     ) {
       return;
     }
@@ -58,7 +103,9 @@ export default function useChatActionReviews(options: Options) {
   };
 
   return {
-    statuses,
+    isHydrated: options.hydrated !== false,
+    canOperate: options.hydrated !== false && !options.disabled,
+    statuses: merged,
     onConfirm: (action: Pick<ProposedAction, 'id' | 'tool'>, key = action.id) => {
       const token = begin(key, action.id, 'confirm');
       if (!token) {

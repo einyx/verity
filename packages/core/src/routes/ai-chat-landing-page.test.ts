@@ -9,6 +9,38 @@ import {
 const { jest } = import.meta;
 
 describe('editLandingPageDraft', () => {
+  it('cancels oversized editor JSON before parsing the document', async () => {
+    const cancel = jest.fn();
+    const chunks = [
+      new TextEncoder().encode(
+        JSON.stringify({ draft: defaultLandingPageContent, padding: 'x'.repeat(2_000_000) })
+      ),
+      new Uint8Array(1),
+    ];
+    await expect(
+      editLandingPageDraft({
+        instruction: 'Improve the title',
+        apiBase: 'https://cloud.example/api',
+        token: 'synthetic',
+        fetchImpl: async () =>
+          new Response(
+            new ReadableStream({
+              pull(controller) {
+                // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- Consume a finite synthetic byte stream.
+                const chunk = chunks.shift();
+                if (chunk) {
+                  controller.enqueue(chunk);
+                } else {
+                  controller.close();
+                }
+              },
+              cancel,
+            })
+          ),
+      })
+    ).rejects.toThrow();
+    expect(cancel).toHaveBeenCalled();
+  });
   it('reads the authorized draft and asks the editor AI for a validated edit', async () => {
     const edited = {
       ...defaultLandingPageContent,

@@ -1,6 +1,7 @@
 import { landingPageDocumentGuard } from '@logto/schemas';
 import { object, string } from 'zod/v3';
 
+import { readBoundedResponse } from './bounded-response.js';
 import { type LogtoMcpTool, enabledLogtoMcpTools } from './mcp-logto-tools.js';
 
 export const editLandingPageTool: LogtoMcpTool = {
@@ -38,27 +39,39 @@ export const editLandingPageDraft = async ({
   apiBase,
   token,
   fetchImpl = fetch,
+  assertActive = async () => {
+    /* Legacy edits have no persisted lease. */
+  },
 }: {
   instruction: string;
   apiBase: string;
   token: string;
   fetchImpl?: typeof fetch;
+  assertActive?: () => Promise<void>;
 }) => {
   const parsedInstruction = string().trim().min(1).max(2000).parse(instruction);
   const base = apiBase.endsWith('/') ? apiBase : `${apiBase}/`;
   const headers = { authorization: `Bearer ${token}` };
   const request = async (path: string, init?: RequestInit) => {
+    await assertActive();
+    const signal = AbortSignal.timeout(60_000);
     const response = await fetchImpl(new URL(path, base), {
       ...init,
       headers: { ...headers, ...init?.headers },
-      signal: AbortSignal.timeout(60_000),
+      signal,
     });
 
+    await assertActive();
     if (!response.ok) {
+      await response.body?.cancel();
       throw new Error(`Landing page editor request failed (${response.status})`);
     }
 
-    return response.json();
+    const body: unknown = JSON.parse(
+      await readBoundedResponse(response, { maxBytes: 2_000_000, signal })
+    );
+    await assertActive();
+    return body;
   };
 
   const { draft } = object({ draft: landingPageDocumentGuard }).parse(

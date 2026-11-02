@@ -1,4 +1,7 @@
-import { z } from 'zod/v3';
+import { demoLeadGuard } from '@logto/schemas';
+import { type z } from 'zod/v3';
+
+export { demoContactMethods } from '@logto/schemas';
 
 // Guards for the public landing-page demo chat. The chat is anonymous, so everything here is enforced
 // on the server: the published on/off switch, size and turn caps, rate limits, and the lead schema that
@@ -34,39 +37,6 @@ export const isDemoChatEnabled = (published?: unknown): boolean => {
  * The lead the chat may submit. Required fields are the same as the static form. The consent must be
  * `true`, and any unknown key is rejected so the model cannot add data the team never asked for.
  */
-/** The ways a visitor can ask to be contacted, offered as the last question in the chat. */
-export const demoContactMethods = ['email', 'whatsapp', 'phone', 'linkedin'] as const;
-
-const demoLeadGuard = z
-  .object({
-    firstName: z.string().trim().min(1).max(80),
-    // A last name is welcome but not required: visitors who give only a first name can still submit.
-    lastName: z.string().trim().min(1).max(80).optional(),
-    email: z.string().trim().email().max(254),
-    // A company is welcome but not required: a visitor who would rather not say still gets a demo.
-    company: z.string().trim().min(1).max(120).optional(),
-    role: z.string().trim().max(120).optional(),
-    industry: z.string().trim().max(80).optional(),
-    interests: z.array(z.string().trim().max(60)).max(10).optional(),
-    decision: z.string().trim().max(200).optional(),
-    /** How the visitor wants to be contacted. Email uses the work email above. */
-    contactMethod: z.enum(demoContactMethods).optional(),
-    /** The phone number or LinkedIn profile, when the method is not email. */
-    contactDetail: z.string().trim().max(200).optional(),
-    consent: z.literal(true),
-  })
-  .strict()
-  .superRefine((lead, context) => {
-    // A phone, WhatsApp or LinkedIn request is useless without the number or profile to reach them on.
-    if (lead.contactMethod && lead.contactMethod !== 'email' && !lead.contactDetail) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['contactDetail'],
-        message: 'A contact method other than email needs a number or profile link.',
-      });
-    }
-  });
-
 export type DemoLead = z.infer<typeof demoLeadGuard>;
 
 /** Parses a lead proposed by the model. Returns undefined when it does not match the schema. */

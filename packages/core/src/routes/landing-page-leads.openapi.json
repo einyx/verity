@@ -6,6 +6,30 @@
     }
   ],
   "paths": {
+    "/api/landing-leads/{sessionId}/research/{provider}": {
+      "post": {
+        "summary": "Research a lead and return an unsent draft",
+        "description": "Dev-feature-only, authenticated landing-page administrator operation. Sends minimal stored profile fields to an explicitly configured bridge. Does not persist research, update CRM fields or send messages.",
+        "tags": ["Dev feature"],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["autoclaw", "claude"] }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Source-backed findings and unsent outreach draft." },
+          "400": { "description": "Invalid provider." },
+          "403": { "description": "Administrator permission required." },
+          "404": { "description": "Lead missing or dev features disabled." },
+          "501": { "description": "Bridge not configured." },
+          "502": { "description": "Bridge failed or returned invalid or oversized data." }
+        }
+      }
+    },
     "/api/landing-leads/{sessionId}/follow-up": {
       "post": {
         "summary": "Send a reviewed lead follow-up email",

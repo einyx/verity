@@ -920,7 +920,6 @@ export const createProductionChatDeps = (): LandingPageChatDeps => ({
 
     // The company profile and the conversation insight are independent: one failing does not stop the other.
     const profile = await profileCompany(email, {
-      fetchPage: async (url, init) => fetch(url, init),
       summarize: async (text) => summarizeCompanyText(text, modelOptions),
       ...(lead.success
         ? {

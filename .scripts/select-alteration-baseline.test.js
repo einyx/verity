@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -9,6 +9,19 @@ import { fileURLToPath } from "node:url";
 const script = fileURLToPath(
   new URL("./select-alteration-baseline.js", import.meta.url),
 );
+
+test("chat sessions remain pending after the released connector alteration", () => {
+  const files = readdirSync(new URL("../packages/schemas/alterations/", import.meta.url));
+  const timestamp = (suffix) => {
+    const matches = files.filter((file) => file.endsWith(suffix));
+    assert.equal(matches.length, 1);
+    return Number(matches[0].split("-")[1]);
+  };
+  assert.ok(
+    timestamp("-ai-chat-sessions.ts") > timestamp("-tenant-scoped-connector-id.ts"),
+    "The CLI selects only timestamps above the deployed connector migration watermark",
+  );
+});
 const fixture = (context, version = "1.2.3") => {
   const cwd = mkdtempSync(path.join(os.tmpdir(), "alteration-baseline-"));
   context.after(() => rmSync(cwd, { recursive: true, force: true }));

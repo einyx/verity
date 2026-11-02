@@ -57,6 +57,36 @@ describe('buildLogtoToolUrl', () => {
 });
 
 describe('callLogtoTool', () => {
+  it('cancels an oversized tool response before model projection', async () => {
+    const cancel = jest.fn();
+    const chunks = [
+      new TextEncoder().encode(JSON.stringify({ id: 'safe', padding: 'x'.repeat(1_000_000) })),
+      new Uint8Array(1),
+    ];
+    const result = await callLogtoTool(
+      tool('get_user'),
+      { id: 'safe' },
+      'token',
+      apiBase,
+      async () =>
+        new Response(
+          new ReadableStream({
+            pull(controller) {
+              // eslint-disable-next-line @silverhand/fp/no-mutating-methods -- Consume a finite synthetic byte stream.
+              const chunk = chunks.shift();
+              if (chunk) {
+                controller.enqueue(chunk);
+              } else {
+                controller.close();
+              }
+            },
+            cancel,
+          })
+        )
+    );
+    expect(result.isError).toBe(true);
+    expect(cancel).toHaveBeenCalled();
+  });
   it('sends Foundation stack reads to Kubo without the Logto token', async () => {
     const fetchImpl = jest.fn(async () => new Response('[]', { status: 200 }));
 
@@ -112,7 +142,7 @@ describe('callLogtoTool', () => {
     expect(body.totalCount).toBe(9);
   });
 
-  it('keeps the raw body when there is no total-count header', async () => {
+  it('keeps safe projected fields when there is no total-count header', async () => {
     const fetchImpl = jest.fn(async () => new Response('{"id":"app-1"}', { status: 200 }));
 
     const result = await callLogtoTool(
@@ -126,7 +156,7 @@ describe('callLogtoTool', () => {
     expect(result).toEqual({ content: [{ type: 'text', text: '{"id":"app-1"}' }], isError: false });
   });
 
-  it('reports a refused call as an error result with the Management API body', async () => {
+  it('reports a refused call without the Management API body', async () => {
     const fetchImpl = jest.fn(async () => new Response('{"message":"forbidden"}', { status: 403 }));
 
     const result = await callLogtoTool(
@@ -138,7 +168,7 @@ describe('callLogtoTool', () => {
     );
 
     expect(result).toEqual({
-      content: [{ type: 'text', text: '{"message":"forbidden"}' }],
+      content: [{ type: 'text', text: 'The request failed (HTTP 403).' }],
       isError: true,
     });
   });

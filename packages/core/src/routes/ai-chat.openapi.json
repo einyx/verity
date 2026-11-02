@@ -6,6 +6,44 @@
     }
   ],
   "paths": {
+    "/api/ai-chat/sessions/{sessionId}/reviews/{id}/confirm": {
+      "post": {
+        "summary": "Confirm the latest exposed review of this owned active session",
+        "description": "No client body. Session-first operation claim commits before execution with current caller credentials. Unknown confirmed outcomes remain blocked, never replayed. Returns only executed and sanitized isError, not raw tool results.",
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Execution completed with sanitized outcome" },
+          "400": { "description": "unknown_tool" },
+          "401": { "description": "missing_bearer_token" },
+          "404": {
+            "description": "not_found (including same-owner other-session, hidden or deleted links)"
+          },
+          "409": {
+            "description": "session_archived, session_busy, review_replaced, revision_conflict or not_pending"
+          },
+          "410": { "description": "expired" }
+        }
+      }
+    },
+    "/api/ai-chat/sessions/{sessionId}/reviews/{id}/cancel": {
+      "post": {
+        "summary": "Cancel the latest exposed review of this owned active session",
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Cancelled" },
+          "404": { "description": "not_found or not pending" },
+          "409": {
+            "description": "session_archived, session_busy, review_replaced or revision_conflict"
+          }
+        }
+      }
+    },
     "/api/ai-chat/completions": {
       "post": {
         "summary": "Ask AI chat",
@@ -107,7 +145,7 @@
     "/api/ai-chat/actions/{id}/confirm": {
       "post": {
         "summary": "Confirm a pending action",
-        "description": "Run a pending action once, with the body stored when it was proposed. The caller's bearer token is used for Management API calls. Saving a landing-page draft instead requires the same user's Cloud API token, revalidated at confirmation time.",
+        "description": "Run a pending action once, with the body stored when it was proposed. Linked session actions additionally require an active owned session, exposed latest review and shared approval lease; hidden and deleted links cannot execute. The caller's bearer token is used for Management API calls. Saving a landing-page draft instead requires the same user's Cloud API token, revalidated at confirmation time.",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
           {
@@ -134,7 +172,7 @@
           "401": { "description": "No bearer token was sent." },
           "404": { "description": "No such action for this user." },
           "409": {
-            "description": "The action was already run or cancelled, or its body was changed."
+            "description": "The action was already run or cancelled, its body was changed, or its linked session is archived/busy or review was replaced."
           },
           "410": { "description": "The action expired before it was confirmed." }
         }
@@ -149,7 +187,10 @@
         ],
         "responses": {
           "200": { "description": "The action was cancelled." },
-          "404": { "description": "No pending action with this id for this user." }
+          "404": { "description": "No pending action with this id for this user." },
+          "409": {
+            "description": "Linked session is archived/busy, review replaced or invalid body."
+          }
         }
       }
     }

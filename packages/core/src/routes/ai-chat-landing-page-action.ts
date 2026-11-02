@@ -6,6 +6,7 @@ import {
   type ProposedActionView,
 } from './ai-chat-actions.js';
 import { editLandingPageDraft, saveLandingPageDraftTool } from './ai-chat-landing-page.js';
+import { ChatSessionStoreError } from './ai-chat-session-operation.js';
 
 export const proposeLandingPageEdit = async ({
   instruction,
@@ -17,23 +18,35 @@ export const proposeLandingPageEdit = async ({
   userId,
   tenantId,
   now,
+  assertActive = async () => {
+    /* Legacy proposals have no persisted lease. */
+  },
 }: {
   instruction: string;
   apiBase: string;
   token?: string;
   getToken?: () => Promise<string>;
-  store: PendingActionStore;
+  store: Pick<PendingActionStore, 'insert'>;
   actions: Map<string, ProposedActionView>;
   userId: string;
   tenantId: string;
   now: Date | (() => Date);
+  assertActive?: () => Promise<void>;
 }): Promise<{ response: string }> => {
   try {
+    await assertActive();
     const editorToken = getToken ? await getToken() : token;
+    await assertActive();
     if (!editorToken) {
       return { response: JSON.stringify({ error: 'missing_bearer_token' }) };
     }
-    const draft = await editLandingPageDraft({ instruction, apiBase, token: editorToken });
+    const draft = await editLandingPageDraft({
+      instruction,
+      apiBase,
+      token: editorToken,
+      assertActive,
+    });
+    await assertActive();
     const response = await proposeAndRecordAction({
       store,
       tool: saveLandingPageDraftTool.name,
@@ -47,6 +60,10 @@ export const proposeLandingPageEdit = async ({
 
     return { response };
   } catch (error) {
+    if (error instanceof ChatSessionStoreError) {
+      throw error;
+    }
+    await assertActive();
     if (error instanceof RequestError && error.status === 401) {
       return {
         response: JSON.stringify({

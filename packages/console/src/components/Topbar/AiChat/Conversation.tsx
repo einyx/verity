@@ -4,13 +4,14 @@ import {
   useLocalRuntime,
   type ChatModelAdapter,
 } from '@assistant-ui/react';
-import { createContext, type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSWRConfig } from 'swr';
 
 import { landingPageEditorKey } from '@/cloud/hooks/use-landing-page';
 import useApi from '@/hooks/use-api';
 
+import { ActionContext } from './ActionContext';
 import { type ProposedAction } from './ProposedActionCard';
 import { refreshDraftReview } from './refresh-draft-review';
 import useChatActionReviews from './use-chat-action-reviews';
@@ -24,12 +25,6 @@ type ChatResponse = {
 export type ConversationApi = {
   readonly send: (text: string) => void;
 };
-
-type ActionContextValue = ReturnType<typeof useChatActionReviews>;
-
-// Proposed actions ride on the assistant message's metadata, which is read-only. Their live status is
-// kept here, so confirming or cancelling one doesn't rewrite the transcript.
-export const ActionContext = createContext<ActionContextValue | undefined>(undefined);
 
 /** Joins the text parts of a message. Non-text parts are not sent to the chat API. */
 const textOf = (content: ReadonlyArray<{ readonly type: string }>) =>

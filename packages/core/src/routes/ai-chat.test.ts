@@ -7,6 +7,7 @@ import type TenantContext from '#src/tenants/TenantContext.js';
 import { type confirmPendingAction as ConfirmPendingAction } from './ai-chat-actions.js';
 import { type proposeLandingPageEdit as ProposeLandingPageEdit } from './ai-chat-landing-page-action.js';
 import { type runToolLoop as RunToolLoop } from './ai-chat-loop.js';
+import { ChatSessionStoreError } from './ai-chat-session-operation.js';
 import { type ManagementApiRouter } from './types.js';
 
 const { jest } = import.meta;
@@ -30,12 +31,25 @@ const getLandingPageAiToken = jest.fn();
 const proposeLandingPageEdit = jest.fn();
 const runToolLoopWithGraph = jest.fn();
 const modelPost = jest.fn();
+const sessionOperation = jest.fn();
+jest.unstable_mockModule('./ai-chat-session-actions.js', () => ({
+  createSessionActionStore: () => ({ withSessionActionOperation: sessionOperation }),
+}));
 
 jest.unstable_mockModule('./ai-chat-landing-page-auth.js', () => ({ getLandingPageAiToken }));
 jest.unstable_mockModule('./ai-chat-landing-page-action.js', () => ({ proposeLandingPageEdit }));
 jest.unstable_mockModule('./ai-chat-graph.js', () => ({ runToolLoopWithGraph }));
 jest.unstable_mockModule('got', () => ({
-  got: { post: modelPost },
+  got: {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async -- Preserve Got's augmented promise interface.
+    post: (...args: unknown[]) =>
+      // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Synthetic Got request interface.
+      Object.assign(modelPost(...args) as Promise<unknown>, {
+        on: () => {
+          /* No download in this route fixture. */
+        },
+      }),
+  },
   HTTPError: class extends Error {},
 }));
 
@@ -88,7 +102,7 @@ const createApp = (userId = 'user-a') => {
 
   app.use(async (ctx, next) => {
     // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- Koa context is mutable by design; this sets the auth the route reads.
-    Object.assign(ctx, { auth: { id: userId } });
+    Object.assign(ctx, { auth: { type: 'user', id: userId } });
     await next();
   });
 
@@ -106,6 +120,19 @@ beforeEach(() => {
   // eslint-disable-next-line @silverhand/fp/no-mutation -- Restore the mocked environment between cases.
   envValues.isProduction = false;
   confirmPendingAction.mockReset();
+  sessionOperation
+    .mockReset()
+    .mockImplementation(
+      async (
+        _scope,
+        _id,
+        _operation,
+        execute: (store: unknown, assertActive: () => Promise<void>) => Promise<unknown>
+      ) =>
+        execute({ cancel: cancelPendingAction }, async () => {
+          /* Unlinked action test. */
+        })
+    );
   cancelPendingAction.mockReset();
   proposePendingAction.mockReset();
   getLandingPageAiToken.mockReset();
@@ -120,6 +147,27 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+it.each([
+  ['confirm', '/ai-chat/actions'],
+  ['cancel', '/ai-chat/actions'],
+  ['confirm', '/ai-chat/sessions/session/reviews'],
+  ['cancel', '/ai-chat/sessions/session/reviews'],
+])('guards %s on %s before calling action machinery', async (kind, prefix) => {
+  sessionOperation.mockRejectedValueOnce(new ChatSessionStoreError('session_archived'));
+  await request(createApp())
+    .post(`${prefix}/action/${kind}`)
+    .set(bearer)
+    .expect(409, { error: 'session_archived' });
+  expect(confirmPendingAction).not.toHaveBeenCalled();
+  expect(cancelPendingAction).not.toHaveBeenCalled();
+  expect(sessionOperation).toHaveBeenLastCalledWith(
+    { tenantId: 'tenant-1', userId: 'user-a' },
+    'action',
+    { kind, sessionId: prefix.includes('sessions') ? 'session' : undefined },
+    expect.any(Function)
+  );
 });
 
 it('uses the same-user Cloud credential and Cloud origin for landing-page proposals', async () => {

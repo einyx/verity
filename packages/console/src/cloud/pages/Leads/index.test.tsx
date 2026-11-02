@@ -97,6 +97,7 @@ const listing = {
   updateLead: jest.fn(),
   loadAssist: jest.fn(),
   sendFollowUp: jest.fn(),
+  researchLead: jest.fn(),
 };
 const defaultQuery = { page: 1, pageSize: 20 };
 
@@ -137,6 +138,17 @@ const renderQueue = async () => {
   render(<Leads />);
   return within(await screen.findByRole('region', { name: 'Sales queue' }));
 };
+
+it('displays and opens a first-name-only lead without inventing identity or hiding CRM actions', async () => {
+  const minimal = { ...leads[0]!, lead: { firstName: 'Ada', email: 'ada@example.com' } };
+  jest.mocked(useLandingLeads).mockReturnValue({ ...listing, leads: [minimal], totalCount: 1 });
+  const queue = await renderQueue();
+  const row = queue.getByRole('button', { name: /Ada.*Company not provided/ });
+  fireEvent.click(row);
+  expect(await screen.findByText('Ada, Company not provided')).toBeTruthy();
+  expect(screen.queryByText(/undefined/)).toBeNull();
+  expect(screen.getByRole('button', { name: /meeting brief/ })).toHaveProperty('disabled', false);
+});
 
 const deferred = <T,>() => {
   const resolve = jest.fn<void, [T]>();

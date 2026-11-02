@@ -4,6 +4,7 @@ import { isDevFeaturesEnabled } from '@/consts/env';
 
 import LandingPageArtifact from './LandingPageArtifact';
 import styles from './index.module.scss';
+import useReviewExpiry from './use-review-expiry';
 
 /** A write the assistant proposed. It only runs when the user confirms it here. */
 export type ProposedAction = {
@@ -31,6 +32,7 @@ const formatValue = (value: unknown) => (typeof value === 'string' ? value : JSO
  */
 function ProposedActionCard({ action, onConfirm, onCancel, onRefresh }: Props) {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const expired = useReviewExpiry(action.expiresAt);
 
   // Landing-page artifact previews are being developed alongside the editor's review workflow.
   if (isDevFeaturesEnabled && action.tool === 'save_landing_page_draft') {
@@ -74,7 +76,8 @@ function ProposedActionCard({ action, onConfirm, onCancel, onRefresh }: Props) {
           </div>
         ))}
       </div>
-      {action.status === 'pending' && (
+      {expired && action.status === 'pending' && <p>Review expired</p>}
+      {action.status === 'pending' && !expired && (
         <div className={styles.actionButtons}>
           <button
             type="button"

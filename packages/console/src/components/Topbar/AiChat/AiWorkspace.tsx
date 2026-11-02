@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import CloseIcon from '@/assets/icons/close.svg?react';
 import CubeIcon from '@/assets/icons/cube.svg?react';
@@ -53,6 +53,11 @@ export default function AiWorkspace({
   setup,
   onPromptSelected,
   onClose,
+  history,
+  tabs,
+  title,
+  panelId,
+  panelLabelId,
 }: {
   readonly hasMessages: boolean;
   readonly isLoading: boolean;
@@ -61,18 +66,65 @@ export default function AiWorkspace({
   readonly setup: ReactNode;
   readonly onPromptSelected: (prompt: string) => void;
   readonly onClose: () => void;
+  readonly history?: ReactNode;
+  readonly tabs?: ReactNode;
+  readonly title?: ReactNode;
+  readonly panelId?: string;
+  readonly panelLabelId?: string;
 }) {
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyTrigger = useRef<HTMLButtonElement>(null);
+  const historyRail = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const rail = historyRail.current;
+    if (!rail || !historyOpen) {
+      return;
+    }
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setHistoryOpen(false);
+        historyTrigger.current?.focus();
+      }
+    };
+    rail.addEventListener('keydown', dismiss);
+    rail.querySelector<HTMLButtonElement>('button')?.focus();
+    return () => {
+      rail.removeEventListener('keydown', dismiss);
+    };
+  }, [historyOpen]);
   return (
     <div className={styles.workspace} data-has-messages={hasMessages}>
-      <aside className={styles.rail} aria-label="Ask AI tasks">
+      <aside
+        ref={historyRail}
+        id="chat-history"
+        className={styles.rail}
+        data-open={historyOpen}
+        aria-label={history ? 'Ask AI history' : 'Ask AI tasks'}
+      >
         <div className={styles.brand}>
           <MeshMark />
           <span>meshX</span>
           <span className={styles.aiLabel}>AI workspace</span>
         </div>
-        <div className={styles.currentSession}>
-          <span aria-hidden="true">✧</span> Ask meshX
-        </div>
+        {history}
+        {historyOpen && (
+          <button
+            type="button"
+            className={styles.close}
+            onClick={() => {
+              setHistoryOpen(false);
+              historyTrigger.current?.focus();
+            }}
+          >
+            Close history
+          </button>
+        )}
+        {!history && (
+          <div className={styles.currentSession}>
+            <span aria-hidden="true">✧</span> Ask meshX
+          </div>
+        )}
         <p className={styles.railLabel}>Explore your console</p>
         {tasks.map((task) => (
           <button
@@ -96,6 +148,20 @@ export default function AiWorkspace({
       </aside>
       <section className={styles.main} aria-label="Ask meshX conversation">
         <header className={styles.header}>
+          {history && (
+            <button
+              ref={historyTrigger}
+              type="button"
+              className={styles.historyToggle}
+              aria-expanded={historyOpen}
+              aria-controls="chat-history"
+              onClick={() => {
+                setHistoryOpen((open) => !open);
+              }}
+            >
+              History
+            </button>
+          )}
           <span>Ask meshX</span>
           <button
             type="button"
@@ -108,7 +174,14 @@ export default function AiWorkspace({
             <kbd>Esc</kbd>
           </button>
         </header>
-        <div className={styles.body}>
+        {tabs}
+        {title}
+        <div
+          className={styles.body}
+          id={panelId}
+          role={panelId ? 'tabpanel' : undefined}
+          aria-labelledby={panelLabelId}
+        >
           <div className={styles.welcome} hidden={hasMessages}>
             <h1>
               <MeshMark />

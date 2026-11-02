@@ -20,6 +20,7 @@ import { accountApiPrefix } from './account/constants.js';
 import accountRoutes from './account/index.js';
 import accountCentersRoutes from './account-center/index.js';
 import adminUserRoutes from './admin-user/index.js';
+import aiChatSessionRoutes from './ai-chat-sessions.js';
 import aiChatRoutes from './ai-chat.js';
 import applicationRoutes from './applications/application.js';
 import authnRoutes from './authn.js';
@@ -105,6 +106,7 @@ const createRouters = (tenant: TenantContext) => {
   roleScopeRoutes(managementRouter, tenant);
   dashboardRoutes(managementRouter, tenant);
   aiChatRoutes(managementRouter, tenant);
+  aiChatSessionRoutes(managementRouter, tenant);
   kuboRoutes(managementRouter, tenant);
   mcpPortalRoutes(managementRouter, tenant);
   mcpPortalOauthStart(managementRouter, tenant);

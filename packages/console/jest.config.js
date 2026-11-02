@@ -30,7 +30,7 @@ const config = {
     '^@logto/shared/(.*)$': '<rootDir>/../shared/lib/$1',
     '\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
   },
-  transformIgnorePatterns: ['node_modules/(?!(.*(nanoid|jose|ky|@logto|@silverhand|@preact))/)'],
+  transformIgnorePatterns: ['node_modules/(?!(.*(nanoid|jose|ky|@logto|@silverhand|@preact|@assistant-ui|assistant-stream|assistant-cloud|safe-content-frame|zustand|@radix-ui))/)'],
 };
 
 export default config;

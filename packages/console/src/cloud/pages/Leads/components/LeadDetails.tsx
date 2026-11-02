@@ -153,7 +153,7 @@ function LeadDetails({
         title={<DangerousRaw>Lead details</DangerousRaw>}
         subtitle={
           <DangerousRaw>
-            {`${lead.lead.firstName} ${lead.lead.lastName}, ${lead.lead.company}`}
+            {`${[lead.lead.firstName, lead.lead.lastName].filter(Boolean).join(' ')}, ${lead.lead.company ?? 'Company not provided'}`}
           </DangerousRaw>
         }
       />

@@ -11,9 +11,11 @@ import {
   useLandingLeadStats,
 } from '@/cloud/hooks/use-landing-leads';
 import useManageLandingPageGuard from '@/cloud/hooks/use-manage-landing-page-guard';
+import { isDevFeaturesEnabled } from '@/consts/env';
 import StatTile from '@/ds-components/StatTile';
 import useApi from '@/hooks/use-api';
 
+import LeadResearchDraft from './LeadResearchDraft';
 import LeadDetails, {
   type KuboDemoRequest,
   type LeadProfile,
@@ -100,6 +102,7 @@ function LeadsContent() {
     updateLead,
     loadAssist,
     sendFollowUp,
+    researchLead,
   } = useLandingLeads({
     page,
     pageSize: 20,
@@ -434,7 +437,7 @@ function LeadsContent() {
                         window.open(
                           bookingLinkFor(
                             bookingUrl,
-                            `${opened.lead.firstName} ${opened.lead.lastName}`,
+                            [opened.lead.firstName, opened.lead.lastName].filter(Boolean).join(' '),
                             opened.lead.email
                           ),
                           '_blank',
@@ -444,6 +447,9 @@ function LeadsContent() {
                     : undefined
                 }
               />
+              {isDevFeaturesEnabled && (
+                <LeadResearchDraft key={opened.sessionId} lead={opened} onResearch={researchLead} />
+              )}
             </section>
           ) : (
             <p className={styles.muted}>Select a lead to see its details.</p>

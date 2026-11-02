@@ -1,0 +1,47 @@
+.section {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  margin-top: 12px;
+}
+
+.notice {
+  color: var(--color-error);
+}
+
+.researchField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+
+  textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+    font: inherit;
+    resize: vertical;
+  }
+}
+
+.researchFindings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}

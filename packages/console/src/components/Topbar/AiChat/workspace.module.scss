@@ -11,6 +11,7 @@
 }
 
 .modal {
+  position: relative;
   width: min(1440px, 100%);
   height: calc(100dvh - 32px);
   min-height: 0;
@@ -163,6 +164,128 @@
   min-height: 0;
 }
 
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  input {
+    min-width: 0;
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    color: inherit;
+    padding: 8px;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  time {
+    margin-inline-start: auto;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+  }
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+
+  button {
+    min-height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-layer-1);
+    color: inherit;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 16px 12px;
+}
+
+.tab {
+  display: flex;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  button {
+    min-height: 44px;
+    max-width: 220px;
+    overflow: hidden;
+    padding: 8px 12px;
+    border: none;
+    background: var(--color-layer-1);
+    color: var(--color-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &[aria-selected='true'] {
+      background: var(--color-layer-2);
+      box-shadow: inset 0 -2px var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -3px;
+    }
+  }
+}
+
+.lifecycle {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-height: 25dvh;
+  overflow-y: auto;
+  padding: 4px 24px 12px;
+  font-size: 12px;
+
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  input {
+    min-width: 0;
+    width: 160px;
+  }
+
+  button,
+  input {
+    min-height: 36px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-layer-1);
+    color: inherit;
+    padding: 4px 8px;
+  }
+}
+
+.deleteWarning {
+  flex-basis: 100%;
+}
+
+.historyToggle {
+  display: none;
+}
+
 .header {
   display: flex;
   flex: none;
@@ -215,6 +338,8 @@
   justify-content: center;
   gap: 24px;
   min-height: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   overflow-y: auto;
   padding: 32px clamp(24px, 5vw, 72px) 24px;
 }
@@ -252,10 +377,12 @@
 
 .composer {
   width: min(680px, 100%);
+  min-width: 0;
   flex: none;
   margin-inline: auto;
 
   :global(.demo-chat-form) {
+    box-sizing: border-box;
     width: 100%;
     margin: 0;
     padding: 18px 20px 12px;
@@ -284,6 +411,9 @@
   }
 
   :global(.demo-chat-send) {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
     min-height: 36px;
     background: var(--color-primary);
     color: var(--color-on-primary, #fff);
@@ -292,6 +422,16 @@
       background: var(--color-layer-2);
       color: var(--color-text-secondary);
     }
+  }
+
+  :global(.demo-chat-toolbar) {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  :global(.demo-chat-hint) {
+    min-width: 0;
+    flex: 1;
   }
 }
 
@@ -342,6 +482,19 @@
   }
 }
 
+.sessionTranscript {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.sessionThread {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
 .workspace[data-has-messages='true'] .body {
   justify-content: flex-start;
   gap: 16px;
@@ -374,6 +527,27 @@
 
   .rail {
     display: none;
+
+    &[data-open='true'] {
+      position: absolute;
+      inset: 0 auto 0 0;
+      z-index: 2;
+      display: flex;
+      width: min(320px, 90%);
+      border-inline-end: 1px solid var(--color-border);
+      box-shadow: 12px 0 32px rgba(0, 0, 0, 16%);
+    }
+  }
+
+  .historyToggle {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-layer-1);
+    color: inherit;
   }
 
   .body {

@@ -92,7 +92,7 @@ describe('editLandingPageDraft', () => {
         token: 'caller-token',
         fetchImpl,
       })
-    ).rejects.toThrow('Landing page editor request failed (403)');
+    ).rejects.toMatchObject({ status: 403, code: 'auth.forbidden' });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 

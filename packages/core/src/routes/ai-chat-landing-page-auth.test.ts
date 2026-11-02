@@ -39,6 +39,13 @@ it('does not fall back to the tenant Management API token', async () => {
   expect(verifyBearerTokenFromRequest).not.toHaveBeenCalled();
 });
 
+it('classifies malformed credentials as authentication failures before verifying claims', async () => {
+  await expect(getLandingPageAiToken(envSet, 'not-a-bearer-token', 'user-a')).rejects.toMatchObject(
+    { status: 401 }
+  );
+  expect(verifyBearerTokenFromRequest).not.toHaveBeenCalled();
+});
+
 it.each([
   { sub: 'other-user', clientId: 'console', scopes: [CloudScope.ManageLandingPage] },
   { sub: 'console', clientId: 'console', scopes: [CloudScope.ManageLandingPage] },

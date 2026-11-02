@@ -1,6 +1,8 @@
 import { landingPageDocumentGuard } from '@logto/schemas';
 import { object, string } from 'zod/v3';
 
+import RequestError from '#src/errors/RequestError/index.js';
+
 import { readBoundedResponse } from './bounded-response.js';
 import { type LogtoMcpTool, enabledLogtoMcpTools } from './mcp-logto-tools.js';
 
@@ -64,6 +66,12 @@ export const editLandingPageDraft = async ({
     await assertActive();
     if (!response.ok) {
       await response.body?.cancel();
+      if (response.status === 401 || response.status === 403) {
+        throw new RequestError({
+          code: response.status === 401 ? 'auth.unauthorized' : 'auth.forbidden',
+          status: response.status,
+        });
+      }
       throw new Error(`Landing page editor request failed (${response.status})`);
     }
 

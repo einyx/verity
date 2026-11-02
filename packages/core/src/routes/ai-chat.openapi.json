@@ -6,6 +6,42 @@
     }
   ],
   "paths": {
+    "/api/ai-chat/landing-page-capabilities": {
+      "get": {
+        "summary": "Get verified landing-page edit capability for the current authenticated human",
+        "description": "Uses the separate Cloud API credential with existing audience, subject and landing-management scope verification. Does not read page content, call an AI provider, or write anything. Current tenant authorization is still required. No credential or subject values are returned.",
+        "parameters": [
+          {
+            "name": "x-landing-page-authorization",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verified capability or safe credential/service state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["canEdit", "state"],
+                  "properties": {
+                    "canEdit": { "type": "boolean" },
+                    "state": {
+                      "type": "string",
+                      "enum": ["authorized", "authentication_required", "forbidden", "unavailable"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Management API authentication required" },
+          "403": { "description": "Current tenant or human access denied" }
+        }
+      }
+    },
     "/api/ai-chat/sessions/{sessionId}/reviews/{id}/confirm": {
       "post": {
         "summary": "Confirm the latest exposed review of this owned active session",

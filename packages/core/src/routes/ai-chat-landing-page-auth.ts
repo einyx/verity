@@ -13,6 +13,13 @@ export const getLandingPageAiToken = async (
   userId: string
 ) => {
   assertThat(authorization, new RequestError({ code: 'auth.unauthorized', status: 401 }));
+  const token = (() => {
+    try {
+      return extractBearerToken(authorization);
+    } catch {
+      throw new RequestError({ code: 'auth.unauthorized', status: 401 });
+    }
+  })();
   const { sub, clientId, scopes } = await verifyBearerTokenFromRequest(
     envSet,
     { headers: { authorization } },
@@ -26,5 +33,5 @@ export const getLandingPageAiToken = async (
     new RequestError({ code: 'auth.forbidden', status: 403 })
   );
 
-  return extractBearerToken(authorization);
+  return token;
 };

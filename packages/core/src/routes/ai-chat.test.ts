@@ -2,6 +2,7 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import request from 'supertest';
 
+import RequestError from '#src/errors/RequestError/index.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
 
 import { type confirmPendingAction as ConfirmPendingAction } from './ai-chat-actions.js';
@@ -148,6 +149,36 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
 });
+
+it.each([
+  [undefined, 'authorized', true],
+  [new RequestError({ code: 'auth.unauthorized', status: 401 }), 'authentication_required', false],
+  [new RequestError({ code: 'auth.forbidden', status: 403 }), 'forbidden', false],
+  [new Error('sensitive diagnostic must not escape'), 'unavailable', false],
+])(
+  'exposes only safe verified landing capability metadata: %s',
+  async (failure, state, canEdit) => {
+    if (failure) {
+      getLandingPageAiToken.mockRejectedValue(failure);
+    } else {
+      getLandingPageAiToken.mockResolvedValue('synthetic-cloud-token');
+    }
+    const response = await request(createApp())
+      .get('/ai-chat/landing-page-capabilities')
+      .set(bearer)
+      .set('x-landing-page-authorization', 'Bearer synthetic-cloud-token')
+      .expect(200);
+    expect(response.body).toEqual({ state, canEdit });
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(getLandingPageAiToken).toHaveBeenCalledWith(
+      tenant.envSet,
+      'Bearer synthetic-cloud-token',
+      'user-a'
+    );
+    expect(proposePendingAction).not.toHaveBeenCalled();
+    expect(modelPost).not.toHaveBeenCalled();
+  }
+);
 
 it.each([
   ['confirm', '/ai-chat/actions'],

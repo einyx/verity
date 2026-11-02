@@ -11,6 +11,7 @@ import {
   type ConfirmResult,
 } from './ai-chat-actions.js';
 import { getLandingPageAiToken } from './ai-chat-landing-page-auth.js';
+import { resolveLandingPageCapability } from './ai-chat-landing-page-capability.js';
 import { saveLandingPageDraftTool } from './ai-chat-landing-page.js';
 import { runChatCompletion } from './ai-chat-runner.js';
 import { createSessionActionStore } from './ai-chat-session-actions.js';
@@ -64,6 +65,14 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
   const apiBase = () => `${tenant.envSet.endpoint.origin}/api`;
   const editorToken = async (ctx: ManagementApiRouterContext) =>
     getLandingPageAiToken(tenant.envSet, ctx.get('x-landing-page-authorization'), ctx.auth.id);
+
+  // Metadata only: this uses the exact same verifier as proposal generation and explicit Save.
+  router.get('/ai-chat/landing-page-capabilities', requireChatUser, async (ctx, next) => {
+    const state = await resolveLandingPageCapability(async () => editorToken(ctx));
+    ctx.set('Cache-Control', 'no-store');
+    ctx.body = { canEdit: state === 'authorized', state };
+    return next();
+  });
 
   router.post(
     '/ai-chat/completions',

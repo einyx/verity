@@ -41,6 +41,26 @@ registries have explicit empty inventories and do not grant entitlements.
 
 ## Local development
 
+### Private production release gate
+
+Use the private release recipe from the repository root, with `DOCKER_CONTEXT`
+matching the buildx builder and `BUILDX` pointing to the buildx executable:
+
+```sh
+sh scripts/release/build-cloud-image.sh meshxcloudacr.azurecr.io/kubo/logto:SOURCE_TAG \
+  --builder build-server --platform linux/amd64 \
+  --secret id=cloud_github_token,env=GH_TOKEN
+```
+
+This explicitly builds with `is_cloud=1` and `dev_features_enabled=1`, then checks
+the emitted console JavaScript from the loaded image. It fails if the default
+AI branch is LegacyAiChat, even if the rich components remain bundled. No browser
+storage override is read. OSS defaults are unchanged. The recipe never pushes;
+only upload after this gate, synthetic UI checks and independent review pass,
+and after confirming anonymous registry pull is disabled and `/v2/` returns 401.
+
+Regression checks: `node --test .scripts/verify-cloud-console.test.mjs`.
+
 From the public workspace root, with `packages/cloud` absent:
 
 ```sh

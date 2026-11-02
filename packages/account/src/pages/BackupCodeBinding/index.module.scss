@@ -10,14 +10,12 @@
 
 .backupCodes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   padding: _.unit(4);
   font: var(--font-label-2);
   text-align: center;
   border-radius: var(--radius);
-  background-color: var(--color-bg-light);
-  color: var(--color-type-primary);
   row-gap: _.unit(2);
+  @include _.backup-code-panel;
 }
 
 .actions {

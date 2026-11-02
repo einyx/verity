@@ -2,6 +2,29 @@
   @return #{$factor * 4}px;
 }
 
+// Keep recovery-code surfaces and text in the same theme, even with custom page colors.
+@mixin backup-code-panel {
+  background-color: var(--color-backup-code-background);
+  color: var(--color-backup-code-foreground);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9em), 1fr));
+  overflow-wrap: anywhere;
+
+  span::selection {
+    background-color: var(--color-backup-code-foreground);
+    color: var(--color-backup-code-background);
+  }
+
+  @media (forced-colors: active) {
+    background-color: Canvas;
+    color: CanvasText;
+
+    span::selection {
+      background-color: Highlight;
+      color: HighlightText;
+    }
+  }
+}
+
 @mixin flex-column($align-items: center, $justify-content: center) {
   display: flex;
   flex-direction: column;

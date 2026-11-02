@@ -17,6 +17,12 @@ export class TenantNotFoundError extends Error {
   name = 'TenantNotFoundError';
 }
 
+/** Shared metadata is authoritative even when a replica still has a cached tenant. */
+export const tenantExists = async (tenantId: string): Promise<boolean> => {
+  const pool = await EnvSet.sharedPool;
+  return pool.oneFirst<boolean>(sql`select exists(select 1 from tenants where id = ${tenantId})`);
+};
+
 const { table: logtoConfigsTable, fields: logtoConfigFields } = convertToIdentifiers(LogtoConfigs);
 
 /**

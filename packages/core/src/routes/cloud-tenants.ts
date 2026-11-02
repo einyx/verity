@@ -27,6 +27,7 @@ import {
 import { provisionTenant } from '#src/tenants/provision.js';
 import assertThat from '#src/utils/assert-that.js';
 
+import { mountCloudTenantDeletionRoute } from './cloud-tenant-deletion.js';
 import { mountCloudTenantSettingsRoutes, type TenantRow } from './cloud-tenant-settings.js';
 
 // Cloud tenant API: list, read and create tenants on this instance. Served on the admin tenant's `/api`
@@ -216,6 +217,9 @@ export const cloudTenantRoutes = (envSet: EnvSet) => {
     router,
     async (ctx) => authenticate(ctx, CloudScope.ManageTenantSelf),
     toTenantResponse
+  );
+  mountCloudTenantDeletionRoute(router, async (ctx) =>
+    authenticate(ctx, CloudScope.ManageTenantSelf)
   );
 
   // Members of a tenant are the users in its organization in the admin tenant. A caller sees the list only

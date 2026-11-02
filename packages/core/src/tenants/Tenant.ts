@@ -48,7 +48,7 @@ import {
   isTenantHealthy,
   syncSigningKeyRotationStateCache,
 } from './signing-key-rotation-state.js';
-import { getTenantDatabaseDsn } from './utils.js';
+import { getTenantDatabaseDsn, tenantExists } from './utils.js';
 import { type WithDefaultTenant } from './with-default-tenant.js';
 
 const consoleLog = new ConsoleLog('tenant');
@@ -400,7 +400,18 @@ export default class Tenant implements TenantContext {
     await syncSigningKeyRotationStateCache(this.wellKnownCache, signingKeyRotationState);
   }
 
+  /** Mandatory lifecycle validation, including acquisition fallback paths. */
+  public async checkExistence() {
+    // A deleted customer tenant must stop serving on every replica, including
+    // when Redis still contains public configuration from before deletion.
+    // The protected system tenants cannot be deleted through the tenant API.
+    return this.id === adminTenantId || this.id === defaultTenantId || tenantExists(this.id);
+  }
+
   public async checkHealth() {
+    if (!(await this.checkExistence())) {
+      return false;
+    }
     const signingKeyRotationState = await getSigningKeyRotationState({
       wellKnownCache: this.wellKnownCache,
       queries: this.queries.logtoConfigs,

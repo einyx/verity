@@ -257,14 +257,25 @@ class TenantPool {
       return this.getAfterAttemptLimit(cacheKey, tenantId, customDomain, lostSlots + 1);
     }
 
-    consoleLog.warn(
-      'Tenant acquire retry limit reached; serving cached tenant without a health check:',
-      tenantId,
-      'Custom domain:',
-      customDomain
-    );
-
-    return tenant;
+    try {
+      // The fallback may tolerate stale signing state, never a missing tenant
+      // or a failed authoritative lookup. Keep the request slot owned until
+      // mandatory existence validation finishes.
+      if (!(await tenant.checkExistence())) {
+        this.deleteCachedTenant(cacheKey, tenantPromise);
+        throw new TenantNotFoundError(`Cannot find valid tenant credentials for ID ${tenantId}`);
+      }
+      consoleLog.warn(
+        'Tenant acquire retry limit reached; using cached signing state after existence validation:',
+        tenantId,
+        'Custom domain:',
+        customDomain
+      );
+      return tenant;
+    } catch (error: unknown) {
+      tenant.requestEnd();
+      throw error;
+    }
   }
 
   private getOrCreateTenant(

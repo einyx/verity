@@ -51,4 +51,14 @@ describe('cloud tenant routes', () => {
       .send({ name: 'Acme', tag: 'development' });
     expect(response.status).toBe(401);
   });
+
+  it('refuses deleting a tenant without a bearer token before database access', async () => {
+    const response = await request(createApp()).delete('/api/tenants/some-tenant');
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects a malformed tenant deletion target before database access', async () => {
+    const response = await request(createApp()).delete('/api/tenants/not.valid');
+    expect(response.status).toBe(400);
+  });
 });

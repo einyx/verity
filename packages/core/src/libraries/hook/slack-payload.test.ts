@@ -11,6 +11,7 @@ import {
 import { generateHookTestPayload } from './utils.js';
 
 const url = 'https://hooks.slack.com/services/T_TEST/B_TEST/TEST_ONLY_SECRET';
+const { jest } = import.meta;
 
 const format = (input: Record<string, unknown>, isTest = false) =>
   buildWebhookRequestBody(url, input as HookEventPayload, { isTest });
@@ -274,6 +275,129 @@ describe('business Slack summaries', () => {
     expect(
       format(registeredContext('PATCH', '/users/:userId/is-suspended', { isSuspended: true })).text
     ).toContain('User suspended');
+  });
+});
+
+const securityContextFixture = () => ({
+  hookId: 'security-hook',
+  event: 'PostSignIn',
+  createdAt: '2026-11-01T23:26:45.785Z',
+  userId: 'user-123',
+  user: { id: 'user-123', name: 'Alice', primaryEmail: 'alice@example.com' },
+  application: { id: 'app-123', name: 'Foundation' },
+  userAgent:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 IP=203.0.113.23',
+  userIp: '203.0.113.23',
+  ip: '2001:db8::42',
+  sessionId: 'PRIVATE_SESSION',
+  accessToken: 'PRIVATE_TOKEN',
+  data: { password: 'PRIVATE_PASSWORD' },
+});
+
+describe('opt-in security summaries', () => {
+  beforeEach(() => {
+    jest.replaceProperty(process, 'env', {
+      ...process.env,
+      NODE_ENV: 'production',
+      DEV_FEATURES_ENABLED: '1',
+      SLACK_SECURITY_NOTIFICATION_HOOK_IDS: ' security-hook, other-hook ',
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('adds email, stable IDs, event and parsed browser/OS without request secrets or IPs', () => {
+    const body = format(securityContextFixture());
+    const serialized = JSON.stringify(body);
+    for (const expected of [
+      'alice@example.com',
+      'User ID: user-123',
+      'Application ID: app-123',
+      'Event: PostSignIn',
+      'Webhook ID: security-hook',
+      '2026-11-01T23:26:45.785Z',
+    ]) {
+      expect(serialized).toContain(expected);
+    }
+    expect(serialized).toMatch(/Chrome \/ (?:macOS|Mac OS)/);
+    expect(serialized).not.toMatch(/203\.0\.113\.23|2001:db8::42|Mozilla|PRIVATE_/);
+    expect(body).toMatchObject({ unfurl_links: false, unfurl_media: false });
+  });
+
+  it('does not opt in other hooks or wildcard/prefix matches', () => {
+    for (const hookId of ['other-notification', 'security-hook-extra', '']) {
+      expect(JSON.stringify(format({ ...securityContextFixture(), hookId }))).not.toContain(
+        'alice@example.com'
+      );
+    }
+    process.env.SLACK_SECURITY_NOTIFICATION_HOOK_IDS = '*';
+    expect(JSON.stringify(format(securityContextFixture()))).not.toContain('alice@example.com');
+  });
+
+  it('does not expose security details when the development feature gate is disabled', () => {
+    process.env.DEV_FEATURES_ENABLED = '0';
+    expect(JSON.stringify(format(securityContextFixture()))).not.toContain('alice@example.com');
+  });
+
+  it('removes IP literals even when embedded in permitted display fields', () => {
+    const serialized = JSON.stringify(
+      format({
+        ...securityContextFixture(),
+        user: { name: 'Alice 203.0.113.23', primaryEmail: 'alice@example.com' },
+        application: { name: 'Foundation [2001:db8::42] [::ffff:203.0.113.23] [fe80::1%en0]' },
+      })
+    );
+    expect(serialized).toContain('Alice');
+    expect(serialized).toContain('Foundation');
+    expect(serialized).not.toMatch(/203\.0\.113\.23|2001:db8::42|::ffff|fe80::1/);
+  });
+
+  it('does not turn an affected entity into an actor or expose unprovenanced data', () => {
+    const body = format({
+      hookId: 'security-hook',
+      event: 'User.Deleted',
+      params: { userId: 'target-user' },
+      user: { primaryEmail: 'PRIVATE_EMAIL' },
+      data: { id: 'PRIVATE_ID', primaryEmail: 'PRIVATE_OTHER_EMAIL' },
+    });
+    expect(body.text).toContain('Affected user: target-user');
+    expect(body.text).toContain('Actor: Not provided');
+    expect(JSON.stringify(body)).not.toContain('PRIVATE_');
+  });
+
+  it.each([
+    'Alice IP:2001:db8::42',
+    'Foundation address:fe80::1%en0',
+    'IPv6 address 2001:db8::42:',
+    'Foundation IPv4:203.0.113.23',
+  ])('redacts IP literals adjacent to punctuation: %s', (name) => {
+    const result = JSON.stringify(
+      format({
+        ...securityContextFixture(),
+        user: { name },
+      })
+    );
+    expect(result).not.toMatch(/2001:db8::42|fe80::1|203\.0\.113\.23/);
+  });
+
+  it('keeps generic webhook bodies unchanged even for opted-in IDs', () => {
+    // Deliberately partial event context exercises the receiver-boundary contract.
+    const payload = securityContextFixture() as unknown as HookEventPayload;
+    expect(buildWebhookRequestBody('https://example.com/webhook', payload)).toBe(payload);
+  });
+
+  it('retains bounded plain-text rendering and safe unknown-device fallbacks', () => {
+    const body = format({
+      ...securityContextFixture(),
+      user: { id: 'user-123', primaryEmail: '<!channel>' + 'x'.repeat(5000) },
+      userAgent: '203.0.113.23 PRIVATE_SESSION',
+    });
+    expect(String(body.text).length).toBeLessThan(4000);
+    expect(body.text).not.toContain('<!channel>');
+    expect(JSON.stringify(body)).not.toMatch(/203\.0\.113\.23|PRIVATE_SESSION/);
+    expect(body).toHaveProperty('blocks.1.text.type', 'plain_text');
   });
 });
 

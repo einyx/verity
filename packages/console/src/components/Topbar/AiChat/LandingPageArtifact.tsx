@@ -64,16 +64,22 @@ function LandingPageArtifact({ action, onConfirm, onCancel, onRefresh }: Props) 
       ) : (
         <p role="alert">Preview unavailable: this proposal is not a valid landing-page draft.</p>
       )}
-      {action.status === 'pending' && (
+      {['pending', 'running'].includes(action.status) && (
         <div className={styles.actionButtons}>
           {document.success && (
             <button
               type="button"
-              className={styles.actionConfirm}
+              className={`${styles.actionConfirm} ${styles.artifactSave}`}
+              aria-busy={action.status === 'running'}
               disabled={expired || busy}
               onClick={onConfirm}
             >
-              Save draft
+              <span aria-hidden="true" className={styles.artifactSaveSizer}>
+                Saving draft…
+              </span>
+              <span className={styles.artifactSaveLabel}>
+                {action.status === 'running' ? 'Saving draft…' : 'Save draft'}
+              </span>
             </button>
           )}
           <button type="button" className={styles.actionCancel} disabled={busy} onClick={onCancel}>

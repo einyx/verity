@@ -18,6 +18,46 @@ const action: ProposedAction = {
   status: 'pending',
 };
 
+it('keeps the same save and discard controls mounted and disabled while saving', () => {
+  const confirm = jest.fn();
+  const cancel = jest.fn();
+  const { rerender } = render(
+    <ProposedActionCard action={action} onConfirm={confirm} onCancel={cancel} />
+  );
+  const save = screen.getByRole('button', { name: 'Save draft' });
+  const discard = screen.getByRole('button', { name: 'Discard' });
+  rerender(
+    <ProposedActionCard
+      action={{ ...action, status: 'running' }}
+      onConfirm={confirm}
+      onCancel={cancel}
+    />
+  );
+  expect(screen.getByRole('button', { name: 'Saving draft…' })).toBe(save);
+  expect(save).toHaveProperty('disabled', true);
+  expect(save.getAttribute('aria-busy')).toBe('true');
+  expect(screen.getByRole('button', { name: 'Discard' })).toBe(discard);
+  expect(discard).toHaveProperty('disabled', true);
+  fireEvent.click(save);
+  fireEvent.click(discard);
+  expect(confirm).not.toHaveBeenCalled();
+  expect(cancel).not.toHaveBeenCalled();
+});
+
+it.each(['done', 'failed', 'cancelled'] as const)(
+  'does not offer another save after a %s result',
+  (status) => {
+    render(
+      <ProposedActionCard
+        action={{ ...action, status }}
+        onConfirm={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+    expect(screen.queryByRole('button', { name: /Save draft|Saving draft/ })).toBeNull();
+  }
+);
+
 it('keeps an expired draft visible and requires a refreshed review before explicit saving', async () => {
   const confirm = jest.fn();
   const refresh = jest.fn();

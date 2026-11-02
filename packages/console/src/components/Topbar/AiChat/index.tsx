@@ -13,7 +13,7 @@ import useLandingPageAiHeaders from './use-landing-page-ai-headers';
 type Props = ComponentProps<typeof LegacyAiChat>;
 
 function AccountAiChat(props: Props) {
-  const { isAuthenticated, isLoading, getIdTokenClaims } = useLogto();
+  const { isAuthenticated, getIdTokenClaims } = useLogto();
   const { currentTenantId } = useContext(TenantsContext);
   const [principal, setPrincipal] = useState<string>();
   const api = useApi({ hideErrorToast: true });
@@ -22,7 +22,9 @@ function AccountAiChat(props: Props) {
   useEffect(() => {
     const lifetime = new AbortController();
     setPrincipal(undefined);
-    if (isAuthenticated && !isLoading) {
+    // SDK methods (including this claims read and tenant token reads) toggle
+    // isLoading. It is operation state, not an account identity boundary.
+    if (isAuthenticated) {
       void (async () => {
         try {
           const claims = await getIdTokenClaims();
@@ -37,13 +39,13 @@ function AccountAiChat(props: Props) {
     return () => {
       lifetime.abort();
     };
-  }, [isAuthenticated, isLoading, getIdTokenClaims]);
+  }, [isAuthenticated, getIdTokenClaims]);
   const scope = useMemo(
     () =>
-      isAuthenticated && !isLoading && principal && currentTenantId
+      isAuthenticated && principal && currentTenantId
         ? { tenantId: currentTenantId, userId: principal }
         : undefined,
-    [isAuthenticated, isLoading, principal, currentTenantId]
+    [isAuthenticated, principal, currentTenantId]
   );
   return <PersistentAiChat {...props} scope={scope} api={sessionApi} />;
 }

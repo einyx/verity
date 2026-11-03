@@ -15,6 +15,14 @@ export {
   parseCredentialKey,
 } from './credential-crypto.js';
 export { createOrganizationLookup, type OrganizationLookup } from './organizations.js';
+export { grantedOrganizations, visibleUpstream } from './grants.js';
+export {
+  type McpClient,
+  portalConnectCommands,
+  type PortalHomeData,
+  portalHomeData,
+  type PortalHomeServer,
+} from './home.js';
 export { createPortalServer } from './portal.js';
 export {
   DuplicatePortalError,

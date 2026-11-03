@@ -7,6 +7,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { type AuditEvent } from './audit.js';
+import { visibleUpstream } from './grants.js';
 import { type Upstream, type UpstreamStore } from './registry.js';
 import { type UpstreamPool } from './upstream-pool.js';
 
@@ -83,11 +84,8 @@ export const createPortalServer = (
     }
   };
 
-  // A server with no organization list is open to everyone the portal admits. Otherwise the caller
-  // must belong to one of the listed organizations, and the server is hidden from everyone else.
-  const canSee = (upstream: Upstream) =>
-    upstream.organizationIds.length === 0 ||
-    upstream.organizationIds.some((id) => organizationIds.includes(id));
+  // The shared grant rule, bound to this caller's organizations.
+  const canSee = (upstream: Upstream) => visibleUpstream(upstream, organizationIds);
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     const upstreams = await deps.registry.listForPortal(portalId);

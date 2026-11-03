@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createContext, useState, type ReactNode } from 'react';
+import { createContext, useState } from 'react';
 import { SWRConfig } from 'swr';
 
 import { TenantsContext } from '@/contexts/TenantsProvider';
@@ -25,29 +25,6 @@ jest.mock('@/contexts/TenantsProvider', () => ({
 jest.mock('@/components/RequestDataError', () => ({
   __esModule: true,
   default: () => <p role="alert">Discovery failed</p>,
-}));
-jest.mock('@/ds-components/Checkbox', () => ({
-  __esModule: true,
-  default: ({
-    label,
-    checked,
-    onChange,
-  }: {
-    label: ReactNode;
-    checked: boolean;
-    onChange: (value: boolean) => void;
-  }) => (
-    <label>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => {
-          onChange(event.target.checked);
-        }}
-      />
-      {label}
-    </label>
-  ),
 }));
 
 function MutationFlow() {
@@ -116,7 +93,7 @@ beforeEach(() => {
   claims.mockClear();
 });
 
-it('normal users cannot activate all scope; unknown capabilities disable mutations', async () => {
+it('keeps normal users in tenant scope; unknown capabilities disable mutations', async () => {
   const response: { resolve?: (value: ReturnType<typeof capabilities>) => void } = {};
   get.mockReturnValue({
     json: async () =>
@@ -150,23 +127,24 @@ it('read-only capabilities never enable mutations', async () => {
   expect(screen.getByRole('button', { name: 'Create' })).toHaveProperty('disabled', true);
 });
 
-it('requires explicit verified operator scope and resets selection on tenant changes', async () => {
+it('derives the scope from the verified server role and rediscovers it per tenant', async () => {
+  const role: { operator: boolean } = { operator: true };
   get.mockImplementation((path: string) => ({
-    json: async () => capabilities(path.endsWith('scope=all'), true, true),
+    json: async () => capabilities(path.endsWith('scope=all'), role.operator, role.operator),
   }));
   const { switchTenant } = setup();
-  fireEvent.click(await screen.findByRole('checkbox'));
   await waitFor(() => {
     expect(screen.getByText('all')).toBeTruthy();
   });
   expect(get).toHaveBeenCalledWith('api/kubo/access?scope=all');
+  // eslint-disable-next-line @silverhand/fp/no-mutating-assign -- The fixture role drops to a plain tenant.
+  Object.assign(role, { operator: false });
   switchTenant('b');
-  expect(screen.queryByText('all')).toBeNull();
-  expect(screen.getByText('tenant')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Create' })).toHaveProperty('disabled', true);
   await waitFor(() => {
-    expect(screen.getByRole('checkbox')).toHaveProperty('checked', false);
+    expect(screen.getByText('tenant')).toBeTruthy();
   });
+  expect(screen.queryByText('all')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Create' })).toHaveProperty('disabled', true);
 });
 
 it.each([401, 403, 503])(
@@ -198,7 +176,6 @@ it('ignores a late operator capability response after a tenant switch', async ()
         : capabilities(false, true, true),
   }));
   const { switchTenant } = setup();
-  fireEvent.click(await screen.findByRole('checkbox'));
   await waitFor(() => {
     expect(pending.resolve).toBeDefined();
   });

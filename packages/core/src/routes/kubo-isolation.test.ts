@@ -101,22 +101,20 @@ describe('signed Kubo caller isolation', () => {
     expect((await jwtVerify(proof, proofKey)).payload.operator).toBe(true);
   });
 
-  it.each([
-    '/kubo/cluster/economics',
-    '/kubo/kshows',
-    '/kubo/agentfw/sessions',
-    '/kubo/demorequests',
-  ])('rejects scoped aggregate %s', async (path) => {
-    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
-    expect(
-      (
-        await request(createApp())
-          .get(path)
-          .set('Authorization', `Bearer ${await token()}`)
-      ).status
-    ).toBe(403);
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
+  it.each(['/kubo/cluster/economics', '/kubo/agentfw/sessions', '/kubo/demorequests'])(
+    'rejects scoped aggregate %s',
+    async (path) => {
+      const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
+      expect(
+        (
+          await request(createApp())
+            .get(path)
+            .set('Authorization', `Bearer ${await token()}`)
+        ).status
+      ).toBe(403);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    }
+  );
 
   it.each([401, 403, 404, 409, 503])(
     'preserves upstream %s without leaking diagnostics',

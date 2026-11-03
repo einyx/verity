@@ -160,6 +160,8 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
                       : { workerNodes: 0, memoryCapacityBytes: 0, cpuCapacityMilli: 0 };
     await route.fulfill({ json: data });
   });
+  // The capacity map polls on a timer, so the clock is installed before it mounts.
+  await page.clock.install();
   await page.goto(`${owned.get('current')?.origin}/__kubo-fixture`);
   await expect(page.getByRole('link', { name: 'secret-a', exact: true })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /operator view/ })).toHaveCount(0);
@@ -170,12 +172,13 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   await page.getByRole('link', { name: '/agent', exact: true }).click();
   await expect(page.getByText('infrastructure.agent_title', { exact: false })).toHaveCount(0);
   await page.getByRole('link', { name: '/capacity', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Cluster capacity' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Cluster capacity' })).toHaveCount(1);
+  await expect(
+    page.getByRole('button', { name: 'Node fixture-node — open detail view' })
+  ).toBeVisible();
   await page.getByRole('link', { name: '/bundle', exact: true }).click();
   await expect(page.getByText('Upload an offline bundle')).toHaveCount(0);
-  expect(requests.some((url) => /economics|agentfw|kshows|demorequests|airgap/.test(url))).toBe(
-    false
-  );
+  expect(requests.some((url) => /economics|agentfw|demorequests|airgap/.test(url))).toBe(false);
   await page.getByRole('link', { name: '/new', exact: true }).click();
   await expect(page.getByText('V1 demo', { exact: true })).toHaveCount(0);
   await page
@@ -199,9 +202,6 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   });
   readiness.set('enabled', true);
   await page.getByLabel('Fixture actor').selectOption('operator');
-  await page.getByRole('checkbox', { name: /operator view/ }).focus();
-  await page.keyboard.press('Space');
-  await expect(page.getByRole('checkbox', { name: /operator view/ })).toBeChecked();
   await page.getByRole('link', { name: 'overview', exact: true }).click();
   await expect(page.getByRole('link', { name: 'system-stack', exact: true })).toBeVisible();
   await page.getByRole('link', { name: '/agent', exact: true }).click();
@@ -214,25 +214,22 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   ).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('operator-capacity.png'), fullPage: true });
   await page.getByLabel('Fixture actor').selectOption('ordinary');
-  await expect(page.getByRole('region', { name: 'Cluster capacity' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Cluster capacity' })).toHaveCount(1);
   await expect(page.getByRole('checkbox', { name: /operator view/ })).toHaveCount(0);
-  await page.clock.install();
   const capacityCalls = requests.filter((url) => url.includes('/kshows')).length;
   await page.clock.fastForward(20_000);
-  expect(requests.filter((url) => url.includes('/kshows'))).toHaveLength(capacityCalls);
+  expect(requests.filter((url) => url.includes('/kshows')).length).toBeGreaterThan(capacityCalls);
   await page.getByLabel('Fixture actor').selectOption('operator');
-  await page.getByRole('checkbox', { name: /operator view/ }).check();
   await page.getByRole('link', { name: '/bundle', exact: true }).click();
   await expect(page.getByText('Upload an offline bundle')).toBeVisible();
   await page.getByRole('link', { name: '/stacks/team/product', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Delete stack', exact: true })).toBeEnabled();
   await page.getByLabel('Fixture tenant').selectOption('a');
-  await expect(page.getByRole('checkbox', { name: /operator view/ })).not.toBeChecked();
   await page.getByLabel('Fixture actor').selectOption('readonly');
   await expect(page.getByRole('button', { name: 'Delete stack', exact: true })).toBeDisabled();
   expect(
     requests
-      .filter((url) => /economics|agentfw|kshows|demorequests/.test(url))
+      .filter((url) => /economics|agentfw|demorequests/.test(url))
       .every((url) => url.includes('scope=all'))
   ).toBe(true);
   expect(failures).toEqual([]);

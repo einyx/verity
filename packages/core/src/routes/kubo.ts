@@ -133,16 +133,22 @@ export default function kuboRoutes<T extends ManagementApiRouter>(
     ['templates', '/api/templates'],
     ['cluster/economics', '/api/cluster/economics'],
     ['demorequests', '/api/demorequests'],
-    ['kshows', '/api/kshows/snapshot'],
   ] as const) {
     router.get(`/kubo/${path}`, async (ctx, next) => {
       await forward(ctx, upstream);
-      if (path === 'kshows' && ctx.status === 200) {
-        ctx.body = await priceKuboCapacity(ctx.body);
-      }
       return next();
     });
   }
+  // The capacity map is a cluster-wide read every tenant may see. Per-node pricing stays
+  // operator-only: a price list is commercial data, not capacity.
+  router.get('/kubo/kshows', async (ctx, next) => {
+    const access = await resolveKuboAccess(tenant, ctx);
+    await respond(ctx, await requestKubo(ctx, access, { path: '/api/kshows/snapshot' }));
+    if (access.operator && ctx.status === 200) {
+      ctx.body = await priceKuboCapacity(ctx.body);
+    }
+    return next();
+  });
   for (const view of ['products', 'stats', 'sessions', 'requests'] as const) {
     router.get(`/kubo/agentfw/${view}`, async (ctx, next) => {
       const query = new URLSearchParams(ctx.querystring);

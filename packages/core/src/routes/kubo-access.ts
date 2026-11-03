@@ -16,6 +16,26 @@ export type KuboAccess = {
   canViewAll: boolean;
 };
 
+/**
+ * Local development only: `KUBO_DEV_ALL_SCOPE=1` (set by docker-compose.dev.yml) lets a verified
+ * user of the admin tenant view every workspace without a global operator role. Never set in
+ * production deployments.
+ */
+const devAllScopeEnabled = (tenantId: string) =>
+  process.env.KUBO_DEV_ALL_SCOPE === '1' && tenantId === adminTenantId;
+
+const isActiveAdminOperator = async (actorId: string) => {
+  const pool = await EnvSet.sharedPool;
+  const user = await pool.maybeOne<{ isSuspended: boolean }>(sql`
+    select is_suspended as "isSuspended" from users
+    where tenant_id = ${adminTenantId} and id = ${actorId}
+  `);
+  if (user?.isSuspended !== false) {
+    return false;
+  }
+  return isAdminTenantOperator(pool, actorId);
+};
+
 export const resolveKuboAccess = async (
   tenant: TenantContext,
   ctx: ManagementApiRouterContext
@@ -31,17 +51,7 @@ export const resolveKuboAccess = async (
   const canViewAll = Boolean(
     canCheck &&
     (ctx.query.scope === 'all' || discover) &&
-    (await (async () => {
-      const pool = await EnvSet.sharedPool;
-      const user = await pool.maybeOne<{ isSuspended: boolean }>(sql`
-      select is_suspended as "isSuspended" from users
-      where tenant_id = ${adminTenantId} and id = ${ctx.auth.id}
-    `);
-      if (user?.isSuspended !== false) {
-        return false;
-      }
-      return isAdminTenantOperator(pool, ctx.auth.id);
-    })())
+    (devAllScopeEnabled(tenant.id) || (await isActiveAdminOperator(ctx.auth.id)))
   );
   assertThat(
     ctx.query.scope !== 'all' || canViewAll,

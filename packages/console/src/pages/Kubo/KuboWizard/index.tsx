@@ -72,8 +72,6 @@ const canCreate = (selected: StackOption | undefined, tenantValid: boolean, canM
   Boolean(selected?.template) && tenantValid && canMutate;
 const visibleOptions = (operator: boolean) =>
   stackOptions.filter((option) => operator || ['full', 'lite'].includes(option.template ?? ''));
-const visibleResources = (operator: boolean) =>
-  resourceCards.filter((card) => operator || card.action.href !== '/infrastructure/capacity');
 const canProceed = (
   step: number,
   selected: StackOption | undefined,
@@ -347,7 +345,7 @@ function KuboWizard() {
       <section className={wizardStyles.resourcesSection} aria-label="Resources">
         <h2 className={wizardStyles.resourcesTitle}>Resources</h2>
         <div className={wizardStyles.resourceGrid}>
-          {visibleResources(access.operator).map((card) => (
+          {resourceCards.map((card) => (
             <article key={card.title} className={wizardStyles.resourceCard}>
               <div className={wizardStyles.resourceHeader}>
                 <card.icon className={wizardStyles.resourceIcon} aria-hidden="true" />

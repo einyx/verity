@@ -70,14 +70,21 @@ const resourceCards = [
 const tenantPattern = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
 const canCreate = (selected: StackOption | undefined, tenantValid: boolean, canMutate: boolean) =>
   Boolean(selected?.template) && tenantValid && canMutate;
-const visibleOptions = (operator: boolean) =>
-  stackOptions.filter((option) => operator || ['full', 'lite'].includes(option.template ?? ''));
+const needsOperator = (selected: StackOption | undefined, operator: boolean) =>
+  selected?.template === 'v1' && !operator;
 const canProceed = (
   step: number,
   selected: StackOption | undefined,
   tenantValid: boolean,
-  canMutate: boolean
-) => canMutate && (step === 1 ? Boolean(selected?.available) : tenantValid);
+  access: { canMutate: boolean; operator: boolean }
+) =>
+  access.canMutate &&
+  !needsOperator(selected, access.operator) &&
+  (step === 1 ? Boolean(selected?.available) : tenantValid);
+
+function OperatorRequirement({ isRequired }: { readonly isRequired: boolean }) {
+  return isRequired ? <p role="note">An infrastructure operator must launch the V1 demo.</p> : null;
+}
 
 // The template preview endpoint for the review step, or null until a template and tenant are set.
 function previewUrl(
@@ -156,7 +163,8 @@ function KuboWizard() {
   };
 
   const tenantValid = tenantPattern.test(tenant);
-  const canContinue = canProceed(step, selected, tenantValid, access.canMutate);
+  const requiresOperator = needsOperator(selected, access.operator);
+  const canContinue = canProceed(step, selected, tenantValid, access);
 
   return (
     <div className={wizardStyles.page}>
@@ -205,7 +213,7 @@ function KuboWizard() {
               workspace for dashboards or AI integration.
             </p>
             <ul className={wizardStyles.templateGrid}>
-              {visibleOptions(access.operator).map((option) => (
+              {stackOptions.map((option) => (
                 <li key={option.id} className={wizardStyles.templateItem}>
                   {templateHighlights[option.id].recommended && (
                     <span className={wizardStyles.badge}>Recommended</span>
@@ -227,6 +235,7 @@ function KuboWizard() {
                 </li>
               ))}
             </ul>
+            <OperatorRequirement isRequired={requiresOperator} />
           </>
         )}
 

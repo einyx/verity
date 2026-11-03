@@ -180,7 +180,10 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   await expect(page.getByText('Upload an offline bundle')).toHaveCount(0);
   expect(requests.some((url) => /economics|agentfw|demorequests|airgap/.test(url))).toBe(false);
   await page.getByRole('link', { name: '/new', exact: true }).click();
-  await expect(page.getByText('V1 demo', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('V1 demo', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /V1 demo/ }).click();
+  await expect(page.getByText('An infrastructure operator must launch the V1 demo.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /general.next/ })).toBeDisabled();
   await page
     .getByRole('button', { name: /Foundation/ })
     .first()

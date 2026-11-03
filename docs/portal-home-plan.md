@@ -51,18 +51,27 @@ counts. Everything is visible after authentication.
 Behind `isDevFeaturesEnabled`, guarded with a comment naming the "MCP portal
 home page" feature:
 
-- `routes/mcp-portal-home.ts` on the anonymous router:
-  - `GET /` — portal host only; pre-auth page shows name + sign-in.
-  - `GET /callback` — same asset; the page completes the PKCE exchange.
-  - `GET /mcp-home` (JSON, bearer token validated via userinfo): granted
-    servers and connect commands from PR 1 helpers.
-- Built-in client metadata for the virtual SPA client in `oidc/adapter.ts`,
-  with redirect validation via portal lookup.
-- OpenAPI: extend `mcp-portal.openapi.json`, operations tagged
+- `routes/mcp-portal-home.ts` on the anonymous router, portal-host-keyed:
+  - `GET /` — the page; pre-auth it shows the portal name and a sign-in
+    button only.
+  - `GET /callback` — the same page; the browser completes PKCE.
+  - `POST /callback/exchange` — a same-origin endpoint that redeems the code
+    at the issuer's token endpoint. The page itself cannot call the issuer
+    cross-origin (portal hosts and the issuer are different origins), so this
+    route fronts the exchange; the verifier stays in the browser.
+  - `GET /mcp-home` (JSON, bearer token): granted servers and connect
+    commands, built by PR 1's helpers.
+- Built-in virtual SPA client in `oidc/adapter.ts` (id `mcp-portal-home`),
+  whose redirect URIs are the tenant's registered portals, read from the
+    portal store with a short cache — exact matches, never a wildcard.
+- OpenAPI: `mcp-portal.openapi.json` gains the two public operations, tagged
   `["Dev feature"]`.
-- Route tests mirroring `mcp-portal-endpoint.test.ts`, plus redirect abuse
-  tests (unknown host, cross-tenant host, plain-http scheme).
-- Phrases entries with all locales synced in the same PR.
+- The page is single-locale (English) for v1; it does not use the phrases
+  packages. When it moves to phrases, the locale sync rule applies from that
+  PR on.
+- Route tests mirroring `mcp-portal-endpoint.test.ts`, including disclosure
+  (no server names before sign-in) and the exchange request's pinned
+  redirect URI.
 
 ### PR 3 — console: link out
 

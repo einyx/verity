@@ -14,6 +14,7 @@ import { type RequestError } from '@/hooks/use-api';
 import pageLayout from '@/scss/page-layout.module.scss';
 
 import { AddPortalModal, BaseDomainForm } from './PortalForms';
+import PortalHosting from './PortalHosting';
 import ServerIcon from './ServerIcon';
 import styles from './index.module.scss';
 import {
@@ -164,10 +165,15 @@ function PortalList({ onOpen }: { readonly onOpen: (portal: Portal) => void }) {
             },
           },
           {
-            title: 'Description',
+            title: settings?.managed ? 'Hosting' : 'Description',
             dataIndex: 'createdAt',
             colSpan: 6,
-            render: () => <span className={styles.muted}>--</span>,
+            render: (portal) =>
+              settings?.managed ? (
+                <PortalHosting portalId={portal.id} />
+              ) : (
+                <span className={styles.muted}>--</span>
+              ),
           },
           {
             title: 'Actions',
@@ -196,16 +202,23 @@ function PortalList({ onOpen }: { readonly onOpen: (portal: Portal) => void }) {
       <div className={styles.baseDomainNote}>
         {settings?.baseDomain ? (
           <>
-            Portals are created under <strong>{settings.baseDomain}</strong>.{' '}
-            <button
-              type="button"
-              className={styles.remove}
-              onClick={() => {
-                setIsBaseDomainOpen(true);
-              }}
-            >
-              Change base domain
-            </button>
+            Portals are created under <strong>{settings.baseDomain}</strong>.
+            {settings.managed ? (
+              <>
+                {' '}
+                Addresses end in {settings.hostnameSuffix}; DNS and HTTPS are managed automatically.
+              </>
+            ) : (
+              <button
+                type="button"
+                className={styles.remove}
+                onClick={() => {
+                  setIsBaseDomainOpen(true);
+                }}
+              >
+                Change base domain
+              </button>
+            )}
           </>
         ) : (
           <span className={styles.muted}>No base domain set yet.</span>
@@ -215,6 +228,8 @@ function PortalList({ onOpen }: { readonly onOpen: (portal: Portal) => void }) {
       {isAddOpen && (
         <AddPortalModal
           baseDomain={settings?.baseDomain}
+          hostnameSuffix={settings?.hostnameSuffix}
+          isManaged={settings?.managed}
           onClose={() => {
             setIsAddOpen(false);
           }}

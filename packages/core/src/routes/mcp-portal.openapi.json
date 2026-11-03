@@ -61,7 +61,25 @@
       },
       "post": {
         "summary": "Create an MCP portal",
-        "description": "Create an MCP portal.",
+        "description": "Create an MCP portal. When deployment-managed hosting is enabled, subdomain is optional and an address ending in -mcp is generated if omitted. Legacy hosting still requires subdomain and uses the tenant's configured base domain.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+                  "subdomain": {
+                    "type": "string",
+                    "description": "A single DNS label; required unless managed hosting is enabled."
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "The request succeeded."
@@ -78,10 +96,22 @@
     "/api/mcp-portal/settings": {
       "get": {
         "summary": "Get MCP portal settings",
-        "description": "Return the MCP portal settings for this tenant.",
+        "description": "Return the MCP portal settings for this tenant. Deployment-managed hosting overrides tenant domain settings.",
         "responses": {
           "200": {
-            "description": "The request succeeded."
+            "description": "The request succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "baseDomain": { "type": "string" },
+                    "managed": { "type": "boolean", "x-logto-dev-feature": true },
+                    "hostnameSuffix": { "type": "string", "x-logto-dev-feature": true }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "The request is invalid."
@@ -93,7 +123,7 @@
       },
       "put": {
         "summary": "Update MCP portal settings",
-        "description": "Replace the MCP portal settings for this tenant.",
+        "description": "Replace the MCP portal settings for this tenant. Returns 400 when the deployment manages portal hosting.",
         "responses": {
           "200": {
             "description": "The request succeeded."
@@ -104,6 +134,34 @@
           "404": {
             "description": "The resource was not found."
           }
+        }
+      }
+    },
+    "/api/mcp-portal/portals/{portalId}/hosting": {
+      "get": {
+        "tags": ["Dev feature"],
+        "summary": "Check managed portal HTTPS readiness",
+        "description": "Checks HTTPS discovery for a portal owned by this tenant, only under the deployment-managed domain. No redirects are followed. Ready describes hosting, not organization grants or upstream availability.",
+        "parameters": [
+          { "name": "portalId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hosting status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": { "type": "string", "enum": ["ready", "pending", "unmanaged"] }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid portal id." },
+          "404": { "description": "Portal not found or managed hosting is disabled." }
         }
       }
     },

@@ -5,6 +5,11 @@ import koaGuard from '#src/middleware/koa-guard.js';
 import { clearCustomDomainCache } from '#src/utils/tenant.js';
 
 import {
+  managedPortalHosting,
+  managedPortalHostname,
+  portalHostingStatus,
+} from './mcp-portal-hostnames.js';
+import {
   audit,
   invalidPortal,
   notFound,
@@ -19,7 +24,7 @@ const subdomainPattern = /^[\da-z](?:[\da-z-]{0,61}[\da-z])?$/;
 
 const createPortalBody = object({
   name: string().min(1).max(100),
-  subdomain: string().regex(subdomainPattern),
+  subdomain: string().regex(subdomainPattern).optional(),
 }).strict();
 
 const updateSettingsBody = object({
@@ -44,7 +49,7 @@ export const registerPortalRoutes = <T extends ManagementApiRouter>(
   // The base domain is set from the console. A portal's hostname is <subdomain>.<base domain>.
   router.get('/mcp-portal/settings', async (ctx, next) => {
     const { settings } = await load();
-    ctx.body = await settings.get();
+    ctx.body = managedPortalHosting() ?? (await settings.get());
     return next();
   });
 
@@ -52,6 +57,14 @@ export const registerPortalRoutes = <T extends ManagementApiRouter>(
     '/mcp-portal/settings',
     koaGuard({ body: updateSettingsBody, status: [200, 400] }),
     async (ctx, next) => {
+      if (managedPortalHosting()) {
+        ctx.status = 400;
+        ctx.body = {
+          code: 'mcp_portal.managed_domain',
+          message: 'Portal hosting is managed by the deployment',
+        };
+        return next();
+      }
       const { settings } = await load();
       ctx.body = await settings.setBaseDomain(ctx.guard.body.baseDomain);
       audit({ action: 'portal.settings', sub: ctx.auth.id, outcome: 'ok' });
@@ -64,7 +77,8 @@ export const registerPortalRoutes = <T extends ManagementApiRouter>(
     koaGuard({ body: createPortalBody, status: [201, 400, 409] }),
     async (ctx, next) => {
       const { portals, settings } = await load();
-      const { baseDomain } = await settings.get();
+      const hosting = managedPortalHosting();
+      const { baseDomain } = hosting ?? (await settings.get());
 
       if (!baseDomain) {
         ctx.status = 400;
@@ -72,9 +86,12 @@ export const registerPortalRoutes = <T extends ManagementApiRouter>(
         return next();
       }
 
-      const hostname = `${ctx.guard.body.subdomain}.${baseDomain}`;
+      const { name, subdomain } = ctx.guard.body;
+      const hostname = hosting
+        ? managedPortalHostname(baseDomain, name, subdomain)
+        : subdomain && `${subdomain}.${baseDomain}`;
 
-      if (!hostnamePattern.test(hostname)) {
+      if (!hostname || !hostnamePattern.test(hostname)) {
         ctx.status = 400;
         ctx.body = { code: 'mcp_portal.invalid_hostname', message: 'The hostname is not valid' };
         return next();
@@ -96,6 +113,28 @@ export const registerPortalRoutes = <T extends ManagementApiRouter>(
       return next();
     }
   );
+
+  router.get('/mcp-portal/portals/:portalId/hosting', async (ctx, next) => {
+    // Managed MCP portal readiness is part of the managed-hosting dev feature.
+    const hosting = managedPortalHosting();
+    if (!hosting) {
+      return next();
+    }
+    const { portalId } = ctx.params;
+    if (!portalId || !portalIdPattern.test(portalId)) {
+      invalidPortal(ctx);
+      return next();
+    }
+    const { portals } = await load();
+    const portal = await portals.findById(portalId);
+    if (!portal) {
+      notFound(ctx, 'Portal not found');
+      return next();
+    }
+    ctx.set('Cache-Control', 'private, no-store');
+    ctx.body = await portalHostingStatus(portal.hostname, hosting.baseDomain);
+    return next();
+  });
 
   router.delete('/mcp-portal/portals/:portalId', async (ctx, next) => {
     const { portalId } = ctx.params;

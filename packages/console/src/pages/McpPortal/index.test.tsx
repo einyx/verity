@@ -9,6 +9,7 @@ import McpPortal from '.';
  * check what the page sends and renders for each connection state, portal, and server.
  */
 jest.mock('swr', () => ({ __esModule: true, default: jest.fn() }));
+jest.mock('@/consts/env', () => ({ isDevFeaturesEnabled: true }));
 jest.mock('@/components/PageMeta', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/components/RequestDataError', () => ({ __esModule: true, default: () => null }));
 let mockPortalId: string | undefined;
@@ -165,10 +166,14 @@ const mockState = ({
   portals = [],
   upstreams = [],
   organizations = [],
+  isManaged = false,
+  hostingStatus,
 }: {
   portals?: Portal[];
   upstreams?: Upstream[];
   organizations?: Array<{ id: string; name: string }>;
+  isManaged?: boolean;
+  hostingStatus?: 'ready' | 'pending';
 }) => {
   jest.mocked(useSWR).mockImplementation(((key: string | undefined) => {
     if (key === portalsKey) {
@@ -177,7 +182,9 @@ const mockState = ({
 
     if (key === settingsKey) {
       return {
-        data: { baseDomain: 'mcp.meshx.foundation' },
+        data: isManaged
+          ? { baseDomain: 'meshx.foundation', managed: true, hostnameSuffix: '-mcp' }
+          : { baseDomain: 'mcp.meshx.foundation' },
         error: undefined,
         isLoading: false,
         mutate: jest.fn(),
@@ -195,6 +202,15 @@ const mockState = ({
 
     if (key?.endsWith('/upstreams')) {
       return { data: { upstreams }, error: undefined, isLoading: false, mutate: upstreamsMutate };
+    }
+
+    if (key?.endsWith('/hosting')) {
+      return {
+        data: hostingStatus && { status: hostingStatus },
+        error: undefined,
+        isLoading: false,
+        mutate: jest.fn(),
+      };
     }
 
     return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
@@ -277,6 +293,31 @@ describe('McpPortal', () => {
       });
     });
     expect(portalsMutate).toHaveBeenCalled();
+  });
+
+  it('creates a managed portal with just a name and no tenant domain controls', async () => {
+    mockState({ isManaged: true });
+    const { container } = render(<McpPortal />);
+    expect(screen.queryByText('Change base domain')).toBeNull();
+    fireEvent.click(screen.getByText('Add server portal'));
+    fillForm(container, { Engineering: 'Engineering' });
+    expect(
+      screen.getByPlaceholderText('Generated automatically from the name').hasAttribute('required')
+    ).toBe(false);
+    fireEvent.submit(screen.getByText('Create portal').closest('form') as HTMLElement);
+    await waitFor(() => {
+      expect(post).toHaveBeenCalledWith(portalsKey, { json: { name: 'Engineering' } });
+    });
+  });
+
+  it('does not show a managed portal as ready until HTTPS verification succeeds', () => {
+    mockState({ portals: [portal], isManaged: true, hostingStatus: 'pending' });
+    const { rerender } = render(<McpPortal />);
+    expect(screen.getByText('Checking HTTPS…')).toBeTruthy();
+    expect(screen.queryByText('Ready')).toBeNull();
+    mockState({ portals: [portal], isManaged: true, hostingStatus: 'ready' });
+    rerender(<McpPortal />);
+    expect(screen.getByText('Ready')).toBeTruthy();
   });
 
   it('opens a portal to see its servers', () => {

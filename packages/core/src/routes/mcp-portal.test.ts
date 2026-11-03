@@ -2,6 +2,7 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import request from 'supertest';
 
+import { EnvSet } from '#src/env-set/index.js';
 import { type WithAuthContext } from '#src/middleware/koa-auth/types.js';
 
 import { type McpPortalStores, registerMcpPortalRoutes } from './mcp-portal.js';
@@ -71,6 +72,71 @@ const createApp = (overrides: Partial<McpPortalStores> = {}) => {
 };
 
 describe('mcp-portal admin routes', () => {
+  describe('deployment-managed hostnames', () => {
+    const originalFlag = EnvSet.values.isDevFeaturesEnabled;
+    const originalDomain = process.env.MCP_PORTAL_MANAGED_DOMAIN;
+
+    beforeEach(() => {
+      Reflect.set(EnvSet.values, 'isDevFeaturesEnabled', true);
+      Reflect.set(process.env, 'MCP_PORTAL_MANAGED_DOMAIN', 'meshx.foundation');
+    });
+    afterEach(() => {
+      Reflect.set(EnvSet.values, 'isDevFeaturesEnabled', originalFlag);
+      if (originalDomain === undefined) {
+        Reflect.deleteProperty(process.env, 'MCP_PORTAL_MANAGED_DOMAIN');
+      } else {
+        Reflect.set(process.env, 'MCP_PORTAL_MANAGED_DOMAIN', originalDomain);
+      }
+    });
+
+    it('generates an address without a subdomain, ignoring legacy tenant settings', async () => {
+      const { callback, stores } = createApp();
+      const response = await request(callback)
+        .post('/mcp-portal/portals')
+        .send({ name: 'Engineering' });
+      expect(response.status).toBe(201);
+      expect(stores.portals.add).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Engineering' })
+      );
+      expect(response.body.hostname).toMatch(/^engineering-[\da-f]{8}-mcp\.meshx\.foundation$/);
+    });
+
+    it('places explicit labels in the managed namespace', async () => {
+      const { callback, stores } = createApp();
+      const response = await request(callback)
+        .post('/mcp-portal/portals')
+        .send({ name: 'Console', subdomain: 'console' });
+      expect(response.status).toBe(201);
+      expect(stores.portals.add).toHaveBeenCalledWith({
+        name: 'Console',
+        hostname: 'console-mcp.meshx.foundation',
+      });
+    });
+
+    it('reports the deployment settings and refuses a tenant override', async () => {
+      const { callback, stores } = createApp();
+      const response = await request(callback).get('/mcp-portal/settings');
+      expect(response.body).toEqual({
+        baseDomain: 'meshx.foundation',
+        hostnameSuffix: '-mcp',
+        managed: true,
+      });
+      const update = await request(callback)
+        .put('/mcp-portal/settings')
+        .send({ baseDomain: 'evil.example' });
+      expect(update.status).toBe(400);
+      expect(stores.settings.setBaseDomain).not.toHaveBeenCalled();
+    });
+
+    it('does not probe a portal absent from the tenant-scoped store', async () => {
+      const { callback } = createApp();
+      const response = await request(callback).get(
+        '/mcp-portal/portals/00000000-0000-4000-8000-000000000000/hosting'
+      );
+      expect(response.status).toBe(404);
+    });
+  });
+
   it('lists portals from the database', async () => {
     const { callback, stores } = createApp();
 

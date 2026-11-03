@@ -55,6 +55,37 @@ type MintedAccessToken = { expiresAt: number; accessToken: string };
 /** The cache key of the Cloud API resource, whose value is only known after reading credentials. */
 const cloudResourceCacheKey = '';
 
+/** Opt-in for a co-located Cloud API; public issuers/audiences stay unchanged. */
+const getCloudTransport = (
+  endpoint: string
+): { endpoint: string; headers: Record<string, string> } => {
+  const canonical = new URL(endpoint);
+  const { isCloud, urlSet, cloudUrlSet, adminUrlSet } = EnvSet.values;
+  if (process.env.CLOUD_INTERNAL_TRANSPORT !== 'true') {
+    return { endpoint, headers: {} };
+  }
+  if (
+    !isCloud ||
+    cloudUrlSet.endpoint.origin !== adminUrlSet.endpoint.origin ||
+    canonical.origin !== adminUrlSet.endpoint.origin ||
+    !['localhost', '127.0.0.1', '[::1]'].includes(urlSet.localhostUrl.hostname)
+  ) {
+    throw new Error(
+      'Internal Cloud transport requires co-located Cloud endpoints and a loopback listener'
+    );
+  }
+  return {
+    endpoint: new URL(
+      `${urlSet.localhostUrl.origin}${canonical.pathname}${canonical.search}`
+    ).toString(),
+    headers: {
+      host: canonical.host,
+      'x-forwarded-host': canonical.host,
+      'x-forwarded-proto': canonical.protocol.slice(0, -1),
+    },
+  };
+};
+
 /** The library for connecting to Logto Cloud service. */
 export class CloudConnectionLibrary {
   private client?: Client<typeof router>;

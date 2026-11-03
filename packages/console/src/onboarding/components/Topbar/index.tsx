@@ -1,4 +1,4 @@
-import prysmWordmark from '@/assets/images/prysm-wordmark.svg';
+import PrysmWordmark from '@/assets/images/prysm-wordmark.svg';
 
 import styles from './index.module.scss';
 
@@ -7,7 +7,7 @@ function Topbar() {
   return (
     <div className={styles.topbar}>
       <div className={styles.brand}>
-        <img className={styles.wordmark} src={prysmWordmark} alt="Prysm" />
+        <PrysmWordmark className={styles.wordmark} aria-label="Prysm" />
       </div>
     </div>
   );

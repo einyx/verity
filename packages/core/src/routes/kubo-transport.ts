@@ -28,7 +28,12 @@ const tenantPathAllowed = (method: string, path: string) => {
   if (method === 'GET' && path === '/api/console/readiness') {
     return true;
   }
-  if (method === 'GET' && ['/api/stacks', '/api/templates', '/api/template'].includes(pathname)) {
+  // The capacity map is a cluster-wide read, not a tenant-scoped one: it shows the shared
+  // nodes and the workloads placed on them, so every tenant may read it.
+  if (
+    method === 'GET' &&
+    ['/api/stacks', '/api/templates', '/api/template', '/api/kshows/snapshot'].includes(pathname)
+  ) {
     return true;
   }
   if (method === 'POST' && pathname === '/api/stacks') {

@@ -13,7 +13,6 @@ import {
 
 import RequestDataError from '@/components/RequestDataError';
 import { TenantsContext } from '@/contexts/TenantsProvider';
-import Checkbox from '@/ds-components/Checkbox';
 
 import useKuboResource, {
   KuboSessionContext,
@@ -95,9 +94,13 @@ export const useKuboMutationAccess = () => {
 
 function AccessView({ children }: { readonly children: ReactNode }) {
   const { tenantId } = useContext(KuboSessionContext);
-  const [scope, setScope] = useState<KuboScope>('tenant');
   const [denial, setDenial] = useState<number>();
   const discovery = useKuboResource<Capabilities>('api/kubo/access', 'tenant');
+  const canViewAll =
+    !discovery.error && validCapabilities(discovery.data, 'tenant') && discovery.data?.canViewAll;
+  // The server decides who may see every workspace; the console follows that decision
+  // instead of asking an operator to flip a scope switch by hand.
+  const scope: KuboScope = canViewAll ? 'all' : 'tenant';
   const selected = useKuboResource<Capabilities>(
     scope === 'all' ? 'api/kubo/access' : undefined,
     'all'
@@ -105,8 +108,6 @@ function AccessView({ children }: { readonly children: ReactNode }) {
   const access = scope === 'all' ? selected : discovery;
   const { mutate } = access;
   const verified = !access.error && validCapabilities(access.data, scope);
-  const canViewAll =
-    !discovery.error && validCapabilities(discovery.data, 'tenant') && discovery.data?.canViewAll;
   const operator = Boolean(verified && scope === 'all' && canViewAll);
   const canMutate = Boolean(verified && access.data?.canMutate && (scope === 'tenant' || operator));
   const active = useRef(true);
@@ -173,18 +174,12 @@ function AccessView({ children }: { readonly children: ReactNode }) {
     [scope, tenantId, canMutate, operator, refresh, onDenied, isCurrent]
   );
 
+  // A denied all-scope request must not render operator data. A pending one still renders
+  // the tenant surface while the operator capability settles.
+  const denied = scope === 'all' && Boolean(access.error);
+
   return (
     <>
-      {canViewAll && (
-        <Checkbox
-          label="All workspaces (operator view)"
-          checked={scope === 'all'}
-          onChange={(checked) => {
-            setDenial(undefined);
-            setScope(checked ? 'all' : 'tenant');
-          }}
-        />
-      )}
       {access.error && <RequestDataError error={access.error} />}
       {denial && (
         <p role="alert">
@@ -192,7 +187,7 @@ function AccessView({ children }: { readonly children: ReactNode }) {
         </p>
       )}
       <KuboAccessContext.Provider value={context}>
-        <div key={`${scope}:${operator}`}>{scope === 'tenant' || operator ? children : null}</div>
+        <div key={`${scope}:${operator}`}>{denied ? null : children}</div>
       </KuboAccessContext.Provider>
     </>
   );

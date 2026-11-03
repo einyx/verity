@@ -13,8 +13,9 @@ import style from './kshows/style.css?inline';
 import tokens from './kshows/tokens.css?inline';
 
 function Capacity() {
-  const { operator, scope } = useKuboAccess();
-  const snapshot = useKuboResource<unknown>(operator ? 'api/kubo/kshows' : undefined, scope, {
+  const { scope } = useKuboAccess();
+  // The capacity map describes the shared cluster, so every tenant may read it.
+  const snapshot = useKuboResource<unknown>('api/kubo/kshows', scope, {
     refreshInterval: 10_000,
   });
   const container = useRef<HTMLDivElement>(null);
@@ -22,7 +23,7 @@ function Capacity() {
   const theme = useTheme();
   useEffect(() => {
     const host = container.current;
-    if (!host || !operator) {
+    if (!host) {
       return;
     }
     // eslint-disable-next-line @silverhand/fp/no-mutation -- Trusted static markup owned by this context's imperative renderer.
@@ -35,7 +36,7 @@ function Capacity() {
       // eslint-disable-next-line @silverhand/fp/no-mutation -- Drop the old root's renderer before another context can mount.
       renderer.current = undefined;
     };
-  }, [operator, snapshot.error]);
+  }, [snapshot.error]);
   useEffect(() => {
     if (snapshot.data && !snapshot.error) {
       renderer.current?.(snapshot.data);
@@ -47,11 +48,8 @@ function Capacity() {
       // eslint-disable-next-line @silverhand/fp/no-mutation -- The renderer uses a DOM theme attribute.
       host.dataset.theme = theme === Theme.Dark ? 'dark' : 'light';
     }
-  }, [theme, operator, snapshot.error]);
+  }, [theme, snapshot.error]);
 
-  if (!operator) {
-    return null;
-  }
   if (snapshot.error) {
     return <RequestDataError error={snapshot.error} />;
   }

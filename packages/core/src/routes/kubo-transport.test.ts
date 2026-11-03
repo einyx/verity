@@ -103,6 +103,12 @@ it.each([
   expect(fetchSpy).not.toHaveBeenCalled();
 });
 
+it('permits the cluster capacity snapshot for a tenant scope', async () => {
+  const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
+  await requestKubo(context(), { ...access, operator: false }, { path: '/api/kshows/snapshot' });
+  expect(fetchSpy).toHaveBeenCalled();
+});
+
 it.each(['POST', 'HEAD', 'PATCH', 'DELETE'])('refuses non-GET readiness %s', async (method) => {
   const fetchSpy = jest.spyOn(globalThis, 'fetch');
   await expect(

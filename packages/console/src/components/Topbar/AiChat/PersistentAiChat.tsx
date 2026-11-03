@@ -199,7 +199,7 @@ function AccountWorkspace({
                 search={search}
                 isArchived={archived}
               />
-              <SessionDraft controller={controller} sessionId={state.activeId} />
+              <SessionDraft key={state.activeId ?? 'new'} controller={controller} sessionId={state.activeId} />
             </>
           }
           thread={

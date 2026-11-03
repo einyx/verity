@@ -19,6 +19,13 @@ export const chatModelTimeoutMs = 60_000;
 export const chatReviewTtlMs = 5 * 60_000;
 export const chatLandingReviewTtlMs = 30 * 60_000;
 
+/** Conservative routing aid, not authorization. The dedicated review route has no write tools. */
+export const isLandingPageReviewRequest = (text: string) =>
+  /landing[\s-]*page/i.test(text) &&
+  /\b(review|preview|suggest|critique|inspect)\b|\b(do not|don't|never)\s+(save|publish|change|edit)/i.test(
+    text
+  );
+
 /** Trusted server context, deliberately absent from every public input guard. */
 export type ChatScope = { tenantId: string; userId: string };
 

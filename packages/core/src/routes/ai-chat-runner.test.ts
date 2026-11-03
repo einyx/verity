@@ -99,6 +99,26 @@ it('legacy_completion_keeps_existing_contract', async () => {
   });
 });
 
+it('never invokes a model or inserts proposals for a read-only landing request on the chat route', async () => {
+  post.mockResolvedValue(reply('answer'));
+  const insert = jest.fn();
+  const result = await runChatCompletion({
+    ...options(),
+    messages: [{ role: 'user', content: 'Review the landing page and suggest an improvement for me to preview. Do not save or publish anything.' }],
+    propose: { insert },
+  });
+  expect(result).toMatchObject({ ok: true, actions: [] });
+  expect(post).not.toHaveBeenCalled();
+  expect(insert).not.toHaveBeenCalled();
+});
+
+it('does not advertise landing editing when the verified editor credential is unavailable', async () => {
+  post.mockResolvedValue(reply('answer'));
+  await runChatCompletion({ ...options(), credentials: { ...credentials, getEditorToken: async () => { throw new Error('unavailable'); } } });
+  const request = post.mock.calls[0]?.[1] as { json: { tools: Array<{ function: { name: string } }> } };
+  expect(request.json.tools.some((tool) => tool.function.name === 'edit_landing_page')).toBe(false);
+});
+
 it.each(['legacy', 'persistent'] as const)(
   '%s model→tool→model loop excludes credentials and sensitive user/log fields',
   async (path) => {

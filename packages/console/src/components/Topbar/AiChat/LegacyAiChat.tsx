@@ -1,4 +1,4 @@
-import { Theme } from '@logto/schemas';
+import { Theme, isLandingPageReviewRequest } from '@logto/schemas';
 import classNames from 'classnames';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ import Thread from './Thread';
 import { readAttachments } from './attachments';
 import styles from './index.module.scss';
 import workspaceStyles from './workspace.module.scss';
+import useTransientLandingReview from './use-transient-landing-review';
 
 type Props = {
   readonly className?: string;
@@ -42,6 +43,7 @@ function LegacyAiChat({ className, isCompact = false, isSidebar = false }: Props
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentError, setAttachmentError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
+  const review = useTransientLandingReview();
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
   const appElement = document.querySelector<HTMLElement>('#app');
 
@@ -78,6 +80,10 @@ function LegacyAiChat({ className, isCompact = false, isSidebar = false }: Props
 
   const sendMessage = () => {
     const typed = input.trim();
+    if (isLandingPageReviewRequest(typed)) {
+      void review.review(typed);
+      return;
+    }
 
     if ((!typed && attachments.length === 0) || isLoading || !conversation) {
       return;
@@ -100,11 +106,12 @@ function LegacyAiChat({ className, isCompact = false, isSidebar = false }: Props
   };
 
   const composer = (
+    <>
     <Composer
       value={input}
       attachments={attachments}
       attachmentError={attachmentError}
-      isLoading={isLoading}
+      isLoading={isLoading || review.busy}
       hasContent={hasContent}
       onChange={setInput}
       onSubmit={sendMessage}
@@ -115,6 +122,8 @@ function LegacyAiChat({ className, isCompact = false, isSidebar = false }: Props
         setAttachments((current) => current.filter((item) => item.id !== id));
       }}
     />
+    {review.panel}
+    </>
   );
 
   return (

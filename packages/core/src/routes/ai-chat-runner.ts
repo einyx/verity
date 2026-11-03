@@ -1,4 +1,5 @@
 import { got, HTTPError } from 'got';
+import { isLandingPageReviewRequest } from '@logto/schemas';
 import { z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
@@ -91,7 +92,25 @@ export const runChatCompletion = async ({
   propose: Pick<PendingActionStore, 'insert'>;
   assertActive: () => Promise<void>;
 }) => {
-  const tools = enabledAskAiTools(EnvSet.values.isDevFeaturesEnabled);
+  await assertActive();
+  const latestRequest = messages.filter(({ role }) => role === 'user').at(-1)?.content ?? '';
+  // A read-only request must never reach the model's mutation/proposal tool loop. The console
+  // uses the dedicated transient review endpoint; direct/old clients get a safe explanation.
+  if (isLandingPageReviewRequest(latestRequest)) {
+    return {
+      ok: true as const,
+      content: 'Use the read-only landing-page review in Ask AI to preview a suggestion. No page or Save proposal was saved or published.',
+      actions: [],
+    };
+  }
+  const canManageLandingPage = await credentials.getEditorToken().then(
+    () => true,
+    () => false
+  );
+  await assertActive();
+  const tools = enabledAskAiTools(EnvSet.values.isDevFeaturesEnabled).filter(
+    ({ name }) => name !== editLandingPageTool.name || canManageLandingPage
+  );
   const prompt = buildSystemPrompt(tools);
   const actions = new Map<string, ProposedActionView>();
   const callModel = async (conversation: ModelMessage[]): Promise<ModelReply | undefined> => {

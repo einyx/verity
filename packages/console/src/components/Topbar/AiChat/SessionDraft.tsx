@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { isLandingPageReviewRequest } from '@logto/schemas';
 
 import Composer from './Composer';
 import { readAttachments } from './attachments';
 import { type SessionController } from './session-controller';
 import useSessionComposer from './use-session-composer';
+import useTransientLandingReview from './use-transient-landing-review';
 
 export default function SessionDraft({
   controller,
@@ -13,6 +15,7 @@ export default function SessionDraft({
   readonly sessionId?: string;
 }) {
   const composer = useSessionComposer(controller, sessionId);
+  const review = useTransientLandingReview();
   const [attachmentError, setAttachmentError] = useState<{ sessionId?: string; message: string }>();
   const record = controller.getSnapshot().records[sessionId ?? ''];
   if (sessionId && !record) {
@@ -36,12 +39,16 @@ export default function SessionDraft({
             attachmentError={
               attachmentError?.sessionId === sessionId ? attachmentError?.message : undefined
             }
-            isLoading={Boolean(record?.running) || Boolean(record?.operation)}
+            isLoading={review.busy || Boolean(record?.running) || Boolean(record?.operation)}
             hasContent={
               Boolean(composer.draft.text.trim()) || composer.draft.attachments.length > 0
             }
             onChange={composer.setText}
             onSubmit={() => {
+              if (isLandingPageReviewRequest(composer.draft.text)) {
+                void review.review(composer.draft.text);
+                return;
+              }
               void controller.send();
             }}
             onFilesSelected={(files) => {
@@ -58,6 +65,8 @@ export default function SessionDraft({
             }}
             onRemoveAttachment={composer.removeAttachment}
           />
+          <button type="button" disabled={review.busy} onClick={() => { void review.review(composer.draft.text || 'Review the landing page and suggest one improvement to preview. Do not save or publish.'); }}>Review landing page · no save</button>
+          {review.panel}
           <p role="status">
             {
               {

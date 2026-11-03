@@ -1,7 +1,9 @@
 import { extractBearerToken } from '@logto/mcp-portal';
+import { landingPageDocumentGuard } from '@logto/schemas';
 import { array, object, string, z } from 'zod/v3';
 
 import { EnvSet } from '#src/env-set/index.js';
+import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 
 import {
@@ -11,6 +13,7 @@ import {
   type ConfirmResult,
 } from './ai-chat-actions.js';
 import { getLandingPageAiToken } from './ai-chat-landing-page-auth.js';
+import { reviewLandingPage } from './ai-chat-landing-review.js';
 import { saveLandingPageDraftTool } from './ai-chat-landing-page.js';
 import { runChatCompletion } from './ai-chat-runner.js';
 import { createSessionActionStore } from './ai-chat-session-actions.js';
@@ -64,6 +67,54 @@ export default function aiChatRoutes<T extends ManagementApiRouter>(
   const apiBase = () => `${tenant.envSet.endpoint.origin}/api`;
   const editorToken = async (ctx: ManagementApiRouterContext) =>
     getLandingPageAiToken(tenant.envSet, ctx.get('x-landing-page-authorization'), ctx.auth.id);
+
+  // Auth is checked by the backend, never inferred from the model or current tenant's name.
+  router.get('/ai-chat/landing-page-capabilities', requireChatUser, async (ctx, next) => {
+    ctx.set('Cache-Control', 'no-store');
+    try {
+      await editorToken(ctx);
+      ctx.body = { canReview: true, canEdit: true, state: 'authorized' };
+    } catch (error) {
+      const status = error instanceof RequestError ? error.status : 503;
+      ctx.body = {
+        canReview: false,
+        canEdit: false,
+        state: status === 401 ? 'authentication_required' : status === 403 ? 'forbidden' : 'unavailable',
+      };
+    }
+    return next();
+  });
+
+  // Separate execution boundary: no chat history, pending action store, Save or Publish executor.
+  router.use('/ai-chat/landing-page-review', requireChatUser);
+  router.post(
+    '/ai-chat/landing-page-review',
+    koaGuard({
+      body: object({ instruction: string().trim().min(1).max(2000) }).strict(),
+      response: z.union([
+        object({ draft: landingPageDocumentGuard, expiresAt: string() }),
+        object({ error: string() }),
+      ]),
+      status: [200, 401, 403, 503],
+    }),
+    async (ctx, next) => {
+      ctx.set('Cache-Control', 'no-store');
+      try {
+        ctx.body = await reviewLandingPage({
+          instruction: ctx.guard.body.instruction,
+          apiBase: landingPageApiBase(),
+          getToken: async () => editorToken(ctx),
+        });
+      } catch (error) {
+        const status = error instanceof RequestError ? error.status : 503;
+        ctx.status = status === 401 || status === 403 ? status : 503;
+        ctx.body = {
+          error: status === 401 ? 'landing_page_authentication_required' : status === 403 ? 'landing_page_forbidden' : 'landing_page_review_unavailable',
+        };
+      }
+      return next();
+    }
+  );
 
   router.post(
     '/ai-chat/completions',

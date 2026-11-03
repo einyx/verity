@@ -61,11 +61,14 @@ export const localCloudRoutes = () => {
       return existing;
     }
 
+    // Koa-proxies' types target @types/koa v2 while core targets v3; the middleware shape is
+    // runtime-compatible, so the type is adapted at this boundary.
+    // eslint-disable-next-line no-restricted-syntax -- koa-proxies' v2-era types cannot express the v3 middleware; runtime shape is identical
     const created = proxy('/m', {
       target: getTenantEndpoint(tenantId, EnvSet.values).origin,
       changeOrigin: true,
       rewrite: (path: string) => path.replace(/^\/m\/[^/]+/, ''),
-    });
+    }) as unknown as Middleware;
     tenantProxies.set(tenantId, created);
 
     return created;

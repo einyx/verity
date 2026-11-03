@@ -31,7 +31,11 @@ export default function koaSpaProxy<StateT, ContextT extends IRouterParamContext
 
   const distributionPath = path.join('node_modules/@logto', packagePath, 'dist');
 
-  const spaProxy: Middleware = EnvSet.values.isProduction
+  // Koa-proxies ships types compiled against @types/koa v2 while core targets v3, and the union
+  // with serveStatic's generic default no longer widens to the parameterized Middleware. Both
+  // branches satisfy koa's middleware signature at runtime, so the type is adapted here, once.
+  // eslint-disable-next-line no-restricted-syntax -- koa-proxies' v2-era types cannot express the v3 middleware; runtime shape is identical
+  const spaProxy: Middleware = (EnvSet.values.isProduction
     ? serveStatic(distributionPath)
     : proxy('*', {
         target: `http://localhost:${port}`,
@@ -46,7 +50,7 @@ export default function koaSpaProxy<StateT, ContextT extends IRouterParamContext
         rewrite: (requestPath) => {
           return '/' + path.join(prefix, requestPath);
         },
-      });
+      })) as unknown as Middleware;
 
   return async (ctx, next) => {
     const requestPath = ctx.request.path;

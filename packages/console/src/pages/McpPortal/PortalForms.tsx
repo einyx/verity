@@ -64,9 +64,13 @@ export function BaseDomainForm({
 // Creates a portal from a name and a subdomain. The hostname is <subdomain>.<base domain>.
 function CreatePortalForm({
   baseDomain,
+  hostnameSuffix = '',
+  isManaged = false,
   onCreated,
 }: {
   readonly baseDomain?: string;
+  readonly hostnameSuffix?: string;
+  readonly isManaged?: boolean;
   readonly onCreated: () => Promise<void>;
 }) {
   const api = useApi();
@@ -81,7 +85,12 @@ function CreatePortalForm({
     setFormError(undefined);
 
     try {
-      await api.post(portalsKey, { json: { name, subdomain: subdomain.toLowerCase() } });
+      await api.post(portalsKey, {
+        json: {
+          name,
+          ...(subdomain ? { subdomain: subdomain.toLowerCase() } : {}),
+        },
+      });
       setName('');
       setSubdomain('');
       await onCreated();
@@ -107,17 +116,25 @@ function CreatePortalForm({
           />
         </label>
         <label className={styles.field}>
-          <span>Subdomain</span>
+          <span>{isManaged ? 'Address label (optional)' : 'Subdomain'}</span>
           <input
-            required
+            required={!isManaged}
             value={subdomain}
-            placeholder="eng"
+            placeholder={isManaged ? 'Generated automatically from the name' : 'eng'}
             onChange={(event) => {
               setSubdomain(event.target.value);
             }}
           />
-          <span className={styles.muted}>.{baseDomain}</span>
+          <span className={styles.muted}>
+            {hostnameSuffix}.{baseDomain}
+          </span>
         </label>
+        {isManaged && (
+          <p className={styles.muted}>
+            DNS, HTTPS and routing are managed automatically. The portal is ready once its HTTPS
+            check passes.
+          </p>
+        )}
         <button type="submit" className={styles.submit} disabled={isSaving}>
           {isSaving ? 'Creating…' : 'Create portal'}
         </button>
@@ -134,11 +151,15 @@ function CreatePortalForm({
 // The "Add server portal" dialog. A base domain is set here first, if the tenant has none yet.
 export function AddPortalModal({
   baseDomain,
+  hostnameSuffix,
+  isManaged,
   onClose,
   onCreated,
   onBaseDomainSaved,
 }: {
   readonly baseDomain?: string;
+  readonly hostnameSuffix?: string;
+  readonly isManaged?: boolean;
   readonly onClose: () => void;
   readonly onCreated: () => Promise<void>;
   readonly onBaseDomainSaved: () => Promise<void>;
@@ -148,6 +169,8 @@ export function AddPortalModal({
       {baseDomain ? (
         <CreatePortalForm
           baseDomain={baseDomain}
+          hostnameSuffix={hostnameSuffix}
+          isManaged={isManaged}
           onCreated={async () => {
             await onCreated();
             onClose();

@@ -41,6 +41,9 @@ export const settingsKey = 'api/mcp-portal/settings';
 /** The domain portal hostnames are created under. Unset until an admin sets it. */
 export type PortalSettings = {
   baseDomain?: string;
+  /** Deployment-managed hosting; tenant domain settings cannot override it. */
+  managed?: boolean;
+  hostnameSuffix?: string;
 };
 export const listKeyFor = (portalId: string) =>
   `${portalsKey}/${encodeURIComponent(portalId)}/upstreams`;

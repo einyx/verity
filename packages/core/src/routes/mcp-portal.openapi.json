@@ -3,9 +3,46 @@
     {
       "name": "Mcp portal",
       "description": "MCP portals, the upstream MCP servers they expose, and their credentials."
+    },
+    {
+      "name": "Dev feature",
+      "description": "In-development MCP portal endpoints. Only served while dev features are enabled."
     }
   ],
   "paths": {
+    "/mcp-home": {
+      "get": {
+        "tags": ["Dev feature"],
+        "summary": "Read one portal's home data",
+        "description": "On a portal host: the servers the caller's organizations can use, and the connect commands for the portal. Requires a bearer token from the tenant's OIDC issuer carrying the organizations scope.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "401": {
+            "description": "No bearer token was provided."
+          },
+          "403": {
+            "description": "The caller's organizations are not granted to the portal."
+          }
+        }
+      }
+    },
+    "/callback/exchange": {
+      "post": {
+        "tags": ["Dev feature"],
+        "summary": "Exchange a portal home sign-in code",
+        "description": "On a portal host: redeem an authorization code for the portal home page's tokens. The redirect URI is pinned to the caller's portal host.",
+        "responses": {
+          "200": {
+            "description": "The request succeeded."
+          },
+          "400": {
+            "description": "The code or verifier is missing, or the issuer refused the code."
+          }
+        }
+      }
+    },
     "/api/mcp-portal/portals": {
       "get": {
         "summary": "List MCP portals",

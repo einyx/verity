@@ -20,11 +20,11 @@ import { accountApiPrefix } from './account/constants.js';
 import accountRoutes from './account/index.js';
 import accountCentersRoutes from './account-center/index.js';
 import adminUserRoutes from './admin-user/index.js';
+import aiChatRoutes from './ai-chat.js';
 import applicationRoutes from './applications/application.js';
 import authnRoutes from './authn.js';
 import captchaProviderRoutes from './captcha-provider/index.js';
 import cimdRoutes from './cimd.js';
-import aiChatRoutes from './ai-chat.js';
 import connectorRoutes from './connector/index.js';
 import customPhraseRoutes from './custom-phrase.js';
 import customProfileFieldsRoutes from './custom-profile-fields.js';
@@ -37,10 +37,11 @@ import interactionRoutes from './interaction/index.js';
 import kuboRoutes from './kubo.js';
 import logRoutes from './log.js';
 import logtoConfigRoutes from './logto-config/index.js';
-import mcpPortalEndpointRoutes from './mcp-portal-endpoint.js';
 import mcpLogtoRoutes from './mcp-logto.js';
-import mcpPortalRoutes from './mcp-portal.js';
+import mcpPortalEndpointRoutes from './mcp-portal-endpoint.js';
+import mcpPortalHomeRoutes from './mcp-portal-home.js';
 import { mcpPortalOauthCallback, mcpPortalOauthStart } from './mcp-portal-oauth.js';
+import mcpPortalRoutes from './mcp-portal.js';
 import oneTimeTokenRoutes from './one-time-tokens.js';
 import organizationRoutes from './organization/index.js';
 import publicWellKnownRoutes from './public-wellknown.js';
@@ -163,6 +164,7 @@ const createRouters = (tenant: TenantContext) => {
  */
 export const initMcpRouter = (tenant: TenantContext): AnonymousRouter => {
   const router: AnonymousRouter = new Router();
+  mcpPortalHomeRoutes(router, tenant);
   mcpPortalEndpointRoutes(router, tenant);
   mcpLogtoRoutes(router, tenant);
 

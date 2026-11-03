@@ -1,15 +1,13 @@
-import { randomUUID } from 'node:crypto';
 import { text } from 'node:stream/consumers';
 
 import {
   AuthError,
-  type Caller,
   createAudit,
   createOrganizationLookup,
   createPortalServer,
   createVerifier,
   extractBearerToken,
-  type Portal,
+  grantedOrganizations,
 } from '@logto/mcp-portal';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
@@ -69,54 +67,6 @@ const verifiedCaller = async (token: string, hostname: string, issuer: string) =
 
     throw error;
   }
-};
-
-/** The caller's organizations that are granted to the portal. Undefined means the caller is refused. */
-const grantedOrganizations = async (
-  portal: Portal,
-  token: string,
-  caller: Caller,
-  lookup: (accessToken: string) => Promise<string[]>
-): Promise<string[] | undefined> => {
-  if (portal.organizationIds.length === 0) {
-    audit({
-      action: 'portal.access',
-      sub: caller.sub,
-      portal: portal.id,
-      outcome: 'denied',
-      reason: 'no_grants',
-    });
-    return undefined;
-  }
-
-  const organizationIds = await lookup(token).catch((error: unknown) => {
-    process.stderr.write(
-      `mcp_portal_error ${randomUUID()} organization lookup: ${String(error)}\n`
-    );
-  });
-
-  if (!organizationIds) {
-    audit({
-      action: 'portal.access',
-      sub: caller.sub,
-      portal: portal.id,
-      outcome: 'error',
-      reason: 'lookup_failed',
-    });
-    return undefined;
-  }
-
-  const granted = organizationIds.filter((id) => portal.organizationIds.includes(id));
-
-  audit({
-    action: 'portal.access',
-    sub: caller.sub,
-    portal: portal.id,
-    outcome: granted.length > 0 ? 'ok' : 'denied',
-    ...(granted.length > 0 ? {} : { reason: 'not_in_granted_organization' }),
-  });
-
-  return granted.length > 0 ? granted : undefined;
 };
 
 /** Parses a JSON request body. Undefined means the body was not valid JSON. */
@@ -189,12 +139,16 @@ export const registerMcpPortalEndpoint = <T extends AnonymousRouter>(
       return;
     }
 
-    const granted = await grantedOrganizations(
+    const granted = await grantedOrganizations({
       portal,
       token,
       caller,
-      organizationLookupFor(issuer())
-    );
+      lookup: organizationLookupFor(issuer()),
+      audit,
+      logError: (line: string) => {
+        process.stderr.write(`${line}\n`);
+      },
+    });
 
     if (!granted) {
       ctx.status = 403;

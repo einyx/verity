@@ -14,6 +14,8 @@ import snakecaseKeys from 'snakecase-keys';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { getTenantUrls } from '#src/env-set/utils.js';
+import { mcpPortalHomeClientId } from '#src/routes/mcp-portal-home.js';
+import { storesFor } from '#src/routes/mcp-portal-shared.js';
 import type Queries from '#src/tenants/Queries.js';
 
 import { appLevelAccessControlMetadataKey } from './application-access-control.js';
@@ -93,6 +95,43 @@ const buildAccountCenterClientMetadata = (envSet: EnvSet): AllClientMetadata => 
     redirect_uris: urlStrings,
     post_logout_redirect_uris: urlStrings,
     alwaysIssueRefreshToken: true,
+  };
+};
+
+// One redirect-uri list per tenant, so new portals admit sign-ins without a restart. Portals are
+// read from the database at most once per TTL; the home page is a dev feature.
+const portalRedirectCache = new Map<string, { expiresAt: number; uris: string[] }>();
+
+const portalHomeRedirectTtlMs = 60_000;
+
+export const buildMcpPortalHomeClientMetadata = async (
+  envSet: EnvSet
+): Promise<AllClientMetadata> => {
+  const cached = portalRedirectCache.get(envSet.tenantId);
+  const now = Date.now();
+  const uris =
+    cached && cached.expiresAt > now
+      ? cached.uris
+      : await (async () => {
+          const { portals } = storesFor(envSet.pool);
+          // A tenant whose portal tables do not exist yet (the alteration has not run) serves no
+          // redirect URIs rather than failing every client lookup.
+          const list = await portals.list().catch(() => []);
+          const fresh = list.map(({ hostname }) => `https://${hostname}/callback`);
+
+          portalRedirectCache.set(envSet.tenantId, {
+            expiresAt: now + portalHomeRedirectTtlMs,
+            uris: fresh,
+          });
+
+          return fresh;
+        })();
+
+  return {
+    ...getConstantClientMetadata(envSet, ApplicationType.SPA),
+    client_id: mcpPortalHomeClientId,
+    client_name: 'MCP Portal Home',
+    redirect_uris: uris,
   };
 };
 
@@ -178,7 +217,11 @@ export default function postgresAdapter(
     return {
       upsert: reject,
       find: async (id) => {
-        // The demo clients are a dev feature, so they are only served when dev features are enabled.
+        // The demo clients and the MCP portal home page are dev features, so their virtual clients
+        // are only served when dev features are enabled.
+        if (id === mcpPortalHomeClientId && EnvSet.values.isDevFeaturesEnabled) {
+          return buildMcpPortalHomeClientMetadata(envSet);
+        }
         if (id === demoAppApplicationId && EnvSet.values.isDevFeaturesEnabled) {
           return buildDemoAppClientMetadata(envSet);
         }

@@ -40,6 +40,7 @@ import logRoutes from './log.js';
 import logtoConfigRoutes from './logto-config/index.js';
 import mcpLogtoRoutes from './mcp-logto.js';
 import mcpPortalEndpointRoutes from './mcp-portal-endpoint.js';
+import mcpPortalHomeRoutes from './mcp-portal-home.js';
 import { mcpPortalOauthCallback, mcpPortalOauthStart } from './mcp-portal-oauth.js';
 import mcpPortalRoutes from './mcp-portal.js';
 import oneTimeTokenRoutes from './one-time-tokens.js';
@@ -165,6 +166,7 @@ const createRouters = (tenant: TenantContext) => {
  */
 export const initMcpRouter = (tenant: TenantContext): AnonymousRouter => {
   const router: AnonymousRouter = new Router();
+  mcpPortalHomeRoutes(router, tenant);
   mcpPortalEndpointRoutes(router, tenant);
   mcpLogtoRoutes(router, tenant);
 

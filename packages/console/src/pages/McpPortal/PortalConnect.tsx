@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import FormCard from '@/components/FormCard';
+import { isDevFeaturesEnabled } from '@/consts/env';
 import Button from '@/ds-components/Button';
 import DangerousRaw from '@/ds-components/DangerousRaw';
 
@@ -79,6 +80,16 @@ function PortalConnect({ portal }: { readonly portal: Portal }) {
           }}
         />
       </div>
+
+      {isDevFeaturesEnabled && (
+        <p className={styles.muted}>
+          Or preview what they will see:{' '}
+          <a href={`https://${portal.hostname}/`} target="_blank" rel="noreferrer">
+            open the portal home page
+          </a>
+          .
+        </p>
+      )}
 
       <p className={styles.muted}>Or add it to your client:</p>
       <div className={styles.clientTabs} role="tablist" aria-label="MCP client">

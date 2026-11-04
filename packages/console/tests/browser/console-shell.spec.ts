@@ -140,12 +140,19 @@ for (const theme of ['light', 'dark']) {
     await expect(toggle).toHaveAttribute('aria-controls', 'console-sidebar');
     await expect(rail).toHaveCSS('width', '264px');
     await expect(rail.locator('..')).toHaveCSS('border-radius', '24px');
-    await expect(page.locator('main').locator('..')).toHaveCSS('border-radius', '16px');
+    const pane = page.locator('main').locator('..');
+    await expect(pane).toHaveCSS('border-radius', '0px');
+    await expect(pane).toHaveCSS('margin', '0px');
+    await expect(pane).toHaveCSS('border-top-width', '0px');
+    await expect(page.locator('header')).toHaveCSS('border-bottom-width', '0px');
+    const headerBox = await page.locator('header').boundingBox();
+    const paneBox = await pane.boundingBox();
+    expect(headerBox).not.toBeNull();
+    expect(paneBox).not.toBeNull();
+    expect(paneBox?.x).toBe(headerBox?.x);
+    expect(paneBox?.width).toBe(headerBox?.width);
+    expect(paneBox?.y).toBe((headerBox?.y ?? 0) + (headerBox?.height ?? 0));
     await expect(rail.locator('..')).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
-    await expect(page.locator('main').locator('..')).toHaveCSS(
-      'border-top-color',
-      'rgba(0, 0, 0, 0)'
-    );
     const switcher = page.getByRole('button', { name: 'Current tenant' });
     await expect(switcher).toHaveCSS('border-top-width', '0px');
     await expect(switcher.locator('..')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');

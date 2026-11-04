@@ -266,7 +266,7 @@ export default function kuboRoutes<T extends ManagementApiRouter>(
     const { body } = ctx.guard;
     if (
       !access.operator &&
-      (!['full', 'lite'].includes(body.template) ||
+      (!['full', 'lite', 'v1'].includes(body.template) ||
         (body.mode !== undefined && body.mode !== 'Direct') ||
         (body.authProvider !== undefined && body.authProvider !== 'logto') ||
         body.operators !== undefined)

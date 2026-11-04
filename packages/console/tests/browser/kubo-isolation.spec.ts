@@ -182,12 +182,13 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   await page.getByRole('link', { name: '/new', exact: true }).click();
   await expect(page.getByText('V1 demo', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: /V1 demo/ }).click();
-  await expect(page.getByText('An infrastructure operator must launch the V1 demo.')).toBeVisible();
-  await expect(page.getByRole('button', { name: /general.next/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /general.next/ })).toBeEnabled();
   await page
     .getByRole('button', { name: /Foundation/ })
     .first()
     .click();
+  await expect(page.getByRole('button', { name: /general.next/ })).toBeEnabled();
+  await page.getByRole('button', { name: /V1 demo/ }).click();
   await page.getByRole('button', { name: /general.next/ }).click();
   await page.getByPlaceholder('acme').fill('namespace-slug');
   await expect(page.getByPlaceholder('Direct')).toHaveCount(0);
@@ -198,7 +199,7 @@ test('owned A/B/operator routes never reuse old scope data and restrict actions'
   await expect(page.getByText('Fixture readiness revoked')).toBeVisible();
   await expect(page.getByRole('button', { name: /general.create/ })).toBeDisabled();
   expect(writes[0]?.body).toEqual({
-    template: 'full',
+    template: 'v1',
     tenant: 'namespace-slug',
     mode: 'Direct',
     authProvider: 'logto',

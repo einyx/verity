@@ -173,32 +173,35 @@ describe('signed Kubo caller isolation', () => {
     });
   });
 
-  it('signs create bytes with server owner distinct from namespace slug', async () => {
-    const fetchSpy = jest
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response('{}', { status: 201 }));
-    expect(
-      (
-        await request(createApp())
-          .post('/kubo/stacks')
-          .set('Authorization', `Bearer ${await token()}`)
-          .send({
-            template: 'lite',
-            tenant: 'new-namespace',
-            mode: 'Direct',
-            authProvider: 'logto',
-          })
-      ).status
-    ).toBe(201);
-    const [, init] = fetchSpy.mock.calls[0] ?? [];
-    expect(JSON.parse(String(init?.body))).toMatchObject({ tenant: 'new-namespace' });
-    const proof = new Headers(init?.headers).get('X-Kubo-Console-Context') ?? '';
-    expect((await jwtVerify(proof, proofKey)).payload).toMatchObject({
-      tenantId: 'tenant-a',
-      method: 'POST',
-      path: '/api/stacks',
-    });
-  });
+  it.each(['full', 'lite', 'v1'])(
+    'signs %s create bytes with server owner distinct from namespace slug',
+    async (template) => {
+      const fetchSpy = jest
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(new Response('{}', { status: 201 }));
+      expect(
+        (
+          await request(createApp())
+            .post('/kubo/stacks')
+            .set('Authorization', `Bearer ${await token()}`)
+            .send({
+              template,
+              tenant: 'new-namespace',
+              mode: 'Direct',
+              authProvider: 'logto',
+            })
+        ).status
+      ).toBe(201);
+      const [, init] = fetchSpy.mock.calls[0] ?? [];
+      expect(JSON.parse(String(init?.body))).toMatchObject({ tenant: 'new-namespace' });
+      const proof = new Headers(init?.headers).get('X-Kubo-Console-Context') ?? '';
+      expect((await jwtVerify(proof, proofKey)).payload).toMatchObject({
+        tenantId: 'tenant-a',
+        method: 'POST',
+        path: '/api/stacks',
+      });
+    }
+  );
 
   it.each([
     { template: 'lite', tenant: 'new', consoleTenantId: 'foreign' },

@@ -36,7 +36,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--shell-rail);
+  background: var(--shell-content);
 }
 
 .breadcrumb {
@@ -61,9 +61,9 @@
   flex-grow: 1;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  margin: 0 8px 8px;
+  // Only the outer shell clips rounded corners; the header and page share one surface.
+  border-radius: 0;
+  margin: 0;
   background: var(--shell-content);
 }
 

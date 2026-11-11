@@ -70,21 +70,12 @@ const resourceCards = [
 const tenantPattern = /^[\da-z]([\da-z-]{0,61}[\da-z])?$/;
 const canCreate = (selected: StackOption | undefined, tenantValid: boolean, canMutate: boolean) =>
   Boolean(selected?.template) && tenantValid && canMutate;
-const needsOperator = (selected: StackOption | undefined, operator: boolean) =>
-  selected?.template === 'v1' && !operator;
 const canProceed = (
   step: number,
   selected: StackOption | undefined,
   tenantValid: boolean,
-  access: { canMutate: boolean; operator: boolean }
-) =>
-  access.canMutate &&
-  !needsOperator(selected, access.operator) &&
-  (step === 1 ? Boolean(selected?.available) : tenantValid);
-
-function OperatorRequirement({ isRequired }: { readonly isRequired: boolean }) {
-  return isRequired ? <p role="note">An infrastructure operator must launch the V1 demo.</p> : null;
-}
+  access: { canMutate: boolean }
+) => access.canMutate && (step === 1 ? Boolean(selected?.available) : tenantValid);
 
 // The template preview endpoint for the review step, or null until a template and tenant are set.
 function previewUrl(
@@ -130,7 +121,7 @@ function KuboWizard() {
     if (
       !selected?.template ||
       !access.canMutate ||
-      (!access.operator && !['full', 'lite'].includes(selected.template))
+      (!access.operator && !['full', 'lite', 'v1'].includes(selected.template))
     ) {
       return;
     }
@@ -163,7 +154,6 @@ function KuboWizard() {
   };
 
   const tenantValid = tenantPattern.test(tenant);
-  const requiresOperator = needsOperator(selected, access.operator);
   const canContinue = canProceed(step, selected, tenantValid, access);
 
   return (
@@ -235,7 +225,6 @@ function KuboWizard() {
                 </li>
               ))}
             </ul>
-            <OperatorRequirement isRequired={requiresOperator} />
           </>
         )}
 
